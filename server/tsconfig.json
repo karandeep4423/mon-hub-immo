@@ -1,0 +1,16 @@
+{
+	"compilerOptions": {
+		"strict": true,
+		"target": "ESNext", // Latest JS version for ES module compatibility
+		"module": "CommonJS", // Use ES modules
+		"moduleResolution": "node", // Node-style module resolution
+		"esModuleInterop": true, // Allow default imports from non-ESM modules
+		"skipLibCheck": true, // Skip library check for faster compilation
+		"forceConsistentCasingInFileNames": true,
+		"outDir": "./dist", // Output directory for compiled JS files
+		"rootDir": "./src", // Root directory for TypeScript files
+		"resolveJsonModule": true // Allow importing .json files
+	},
+	"include": ["src/**/*"], // Include the server.ts file
+	"exclude": ["node_modules"] // Exclude node_modules
+}
