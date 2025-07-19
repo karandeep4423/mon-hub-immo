@@ -6,7 +6,10 @@ import {
   verifyEmail,
   resendVerificationCode,
   getProfile,
-  updateProfile
+  updateProfile,
+  forgotPassword,
+  resetPassword,
+  completeProfile
 } from '../controllers/authController';
 import { authenticateToken } from '../middleware/auth';
 
@@ -48,7 +51,7 @@ const validateSignup = [
   
   body('userType')
     .optional()
-    .isIn(['buyer', 'seller'])
+    .isIn(['buyer', 'seller', 'agent'])
     .withMessage('User type must be either buyer or seller'),
 ];
 
@@ -111,9 +114,68 @@ const validateUpdateProfile = [
     .withMessage('Profile image must be a valid URL'),
 ];
 
+// Add these validation middlewares
+const validateForgotPassword = [
+  body('email')
+    .isEmail()
+    .withMessage('Please provide a valid email address')
+    .normalizeEmail(),
+];
+
+const validateResetPassword = [
+  body('email')
+    .isEmail()
+    .withMessage('Please provide a valid email address')
+    .normalizeEmail(),
+  
+  body('code')
+    .isLength({ min: 6, max: 6 })
+    .withMessage('Reset code must be 6 digits')
+    .isNumeric()
+    .withMessage('Reset code must contain only numbers'),
+    
+  body('newPassword')
+    .isLength({ min: 6, max: 128 })
+    .withMessage('Password must be between 6 and 128 characters')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+    .withMessage('Password must contain at least one uppercase letter, one lowercase letter, and one number'),
+];
+
+const validateCompleteProfile = [
+  body('professionalInfo.postalCode')
+    .optional()
+    .isLength({ min: 5, max: 5 })
+    .withMessage('Code postal must be 5 digits'),
+  
+  body('professionalInfo.city')
+    .optional()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('City must be between 2 and 100 characters'),
+  
+  body('professionalInfo.interventionRadius')
+    .optional()
+    .isInt({ min: 1, max: 200 })
+    .withMessage('Intervention radius must be between 1 and 200 km'),
+  
+  body('professionalInfo.siretNumber')
+    .optional()
+    .isLength({ min: 14, max: 14 })
+    .withMessage('SIRET number must be 14 digits'),
+  
+  body('professionalInfo.yearsExperience')
+    .optional()
+    .isInt({ min: 0, max: 50 })
+    .withMessage('Years of experience must be between 0 and 50'),
+];
+
+// Add this route
+router.post('/complete-profile', authenticateToken, validateCompleteProfile, completeProfile);
+
 // Auth routes
 router.post('/signup', validateSignup, signup);
 router.post('/login', validateLogin, login);
+router.post('/forgot-password', validateForgotPassword, forgotPassword);
+router.post('/reset-password', validateResetPassword, resetPassword);
 
 // Email verification routes
 router.post('/verify-email', validateVerifyCode, verifyEmail);
