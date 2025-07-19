@@ -95,9 +95,7 @@ export const LoginWithUserType: React.FC = () => {
     <div className="min-h-screen bg-white flex flex-col">
       {/* Header */}
       <div className="text-center pt-8 sm:pt-12 pb-6 sm:pb-8 px-4 sm:px-6">
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 sm:mb-6">
-          hub<span className="text-cyan-500">immo</span>
-        </h1>
+       
         <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 max-w-md mx-auto">
           Le 1er réseau social immobilier collaboratif
         </p>

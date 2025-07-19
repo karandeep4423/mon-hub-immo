@@ -34,7 +34,7 @@ export const UserTypeSelection: React.FC = () => {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Header */}
-      <div className="flex-shrink-0 text-center pt-16 pb-8 px-6">
+      {/* <div className="flex-shrink-0 text-center pt-16 pb-8 px-6">
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
           hub<span className="text-cyan-500">immo</span>
         </h1>
@@ -46,7 +46,7 @@ export const UserTypeSelection: React.FC = () => {
           <p className="text-lg text-gray-600">
             Le 1er réseau social immobilier collaboratif
           </p>
-        </div>
+        </div> */}
        
       </div>
 
