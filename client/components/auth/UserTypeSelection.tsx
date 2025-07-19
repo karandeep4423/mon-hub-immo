@@ -47,10 +47,7 @@ export const UserTypeSelection: React.FC = () => {
             Le 1er réseau social immobilier collaboratif
           </p>
         </div>
-
-        <h2 className="text-lg font-medium text-gray-800 mb-8">
-          Choisissez votre accès:
-        </h2>
+       
       </div>
 
       {/* User Type Cards */}
