@@ -1,6 +1,6 @@
-// app/auth/login/page.tsx
 import type { Metadata } from 'next';
 import { LoginWithUserType } from '@/components/auth/LoginWithUserType';
+import Header from './components/Header';
 
 export const metadata: Metadata = {
   title: 'Connexion - HubImmo',
@@ -8,5 +8,10 @@ export const metadata: Metadata = {
 };
 
 export default function LoginPage() {
-  return <LoginWithUserType />;
+  return (
+    <>
+      <Header />
+      <LoginWithUserType />
+    </>
+  );
 }
