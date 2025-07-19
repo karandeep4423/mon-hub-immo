@@ -64,17 +64,17 @@ export const DashboardContent: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header - Same as before */}
       <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
+        {/* <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16"> */}
+            {/* <div className="flex items-center">
               <div className="flex-shrink-0">
                 <h1 className="text-xl font-bold text-gray-900">
                   hub<span className="text-cyan-500">immo</span>
                 </h1>
               </div>
-            </div>
+            </div> */}
             
-            <div className="flex items-center space-x-4">
+            {/* <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-cyan-600 rounded-full flex items-center justify-center overflow-hidden">
                   {user.profileImage ? (
@@ -114,9 +114,9 @@ export const DashboardContent: React.FC = () => {
                 </svg>
                 Déconnexion
               </Button>
-            </div>
-          </div>
-        </div>
+            </div> */}
+          {/* </div>
+        </div> */}
       </header>
 
       {/* Profile Completion Alert for Agents */}

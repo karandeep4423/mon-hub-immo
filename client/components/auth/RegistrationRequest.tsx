@@ -157,17 +157,17 @@ export const RegistrationRequest: React.FC = () => {
     <div className="min-h-screen bg-white flex flex-col">
       {/* Header */}
       <div className="text-center pt-12 pb-8 px-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
+        {/* <h1 className="text-3xl font-bold text-gray-900 mb-8">
           hub<span className="text-cyan-500">immo</span>
-        </h1>
+        </h1> */}
         
         <div className="space-y-2">
           <h2 className="text-xl font-semibold text-gray-800">
             Créer votre compte
           </h2>
-          <p className="text-gray-600 text-sm px-4">
+          {/* <p className="text-gray-600 text-sm px-4">
             Remplissez le formulaire pour rejoindre HubImmo
-          </p>
+          </p> */}
         </div>
       </div>
 

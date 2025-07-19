@@ -14,7 +14,7 @@ export const LoginWithUserType: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();
-  
+
   const [selectedUserType, setSelectedUserType] = useState('agent');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<LoginData>({
@@ -32,7 +32,7 @@ export const LoginWithUserType: React.FC = () => {
 
   const userTypes = [
     { id: 'agent', icon: '👤', title: 'Agent Immobilier' },
-    { id: 'apporteur', icon: '💝', title: 'Apporteur d\'affaires' },
+    { id: 'apporteur', icon: '💝', title: "Apporteur d'affaires" },
     { id: 'partenaire', icon: '🏢', title: 'Accès Partenaire' },
   ];
 
@@ -55,12 +55,11 @@ export const LoginWithUserType: React.FC = () => {
       const response = await authService.login({
         ...formData,
       });
-      
+
       if (response.success && response.token && response.user) {
         login(response.token, response.user);
         toast.success(response.message);
-        
-        // Check if profile completion is required
+
         if (response.requiresProfileCompletion) {
           router.push('/auth/complete-profile');
         } else {
@@ -72,17 +71,15 @@ export const LoginWithUserType: React.FC = () => {
       } else {
         toast.error(response.message);
       }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       if (error.errors) {
         const validationErrors: Record<string, string> = {};
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         error.errors.forEach((err: any) => {
           validationErrors[err.path[0]] = err.message;
         });
         setErrors(validationErrors);
       } else {
-        toast.error(error.response?.data?.message || 'Something went wrong');
+        toast.error(error.response?.data?.message || 'Une erreur est survenue.');
       }
     } finally {
       setLoading(false);
@@ -95,102 +92,103 @@ export const LoginWithUserType: React.FC = () => {
     <div className="min-h-screen bg-white flex flex-col">
       {/* Header */}
       <div className="text-center pt-8 sm:pt-12 pb-6 sm:pb-8 px-4 sm:px-6">
-       
-        <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 max-w-md mx-auto">
+        {/* <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 max-w-md mx-auto">
           Le 1er réseau social immobilier collaboratif
-        </p>
+        </p> */}
       </div>
 
-      {/* Content Container */}
+      {/* Content */}
       <div className="flex-1 px-4 sm:px-6 lg:px-8">
         <div className="max-w-sm sm:max-w-md mx-auto">
-          {/* User Type Selection */}
+          {/* User Type Buttons */}
           <div className="mb-6 sm:mb-8">
-            <div className="bg-gray-50 rounded-xl p-4 mb-6 transition-all duration-200">
-              <div className="flex items-center justify-center sm:justify-start space-x-3">
-                <div className="text-2xl sm:text-3xl">{selectedType?.icon}</div>
-                <span className="font-semibold text-gray-900 text-sm sm:text-base text-center sm:text-left">
-                  {selectedType?.title}
-                </span>
-              </div>
+            {/* <p className="text-xs sm:text-sm text-gray-500 text-center mb-4">
+              Choisissez votre type d&apos;accès :
+            </p> */}
+            <div className="flex flex-wrap justify-center gap-3">
+              {userTypes.map((type) => {
+                const isSelected = type.id === selectedUserType;
+
+                return (
+                  <button
+                    key={type.id}
+                    onClick={() => setSelectedUserType(type.id)}
+                    className={`flex items-center space-x-2 px-4 py-3 rounded-xl border transition-all duration-200
+                      ${isSelected ? 'bg-cyan-100 border-cyan-500 text-cyan-700' : 'bg-white border-gray-300 hover:border-gray-400 text-gray-700'}
+                      active:scale-[0.98]`}
+                  >
+                    <span className="text-lg">{type.icon}</span>
+                    <span className="text-sm sm:text-base font-medium">{type.title}</span>
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
-            {/* Login Form */}
-            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
-              <Input
-                label=""
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                error={errors.email}
-                placeholder="E-mail"
-                required
-                className="text-base sm:text-sm"
-              />
-
-              <Input
-                label=""
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                error={errors.password}
-                placeholder="Mot de passe"
-                required
-                className="text-base sm:text-sm"
-              />
-
-              <div className="pt-2">
-                <Button
-                  type="submit"
-                  loading={loading}
-                  className="w-full bg-cyan-500 hover:bg-cyan-600 text-white transition-colors duration-200"
-                  size="lg"
-                >
-                  <span className="text-sm sm:text-base">
-                    Connexion {selectedType?.title.split(' ')[0]}
-                  </span>
-                </Button>
-              </div>
-            </form>
-
-            {/* Alternative Access Types */}
-            <div className="mt-6 sm:mt-8 space-y-3">
-              <p className="text-xs sm:text-sm text-gray-500 text-center mb-4">
-                Ou choisir un autre type d&apos;accès:
-              </p>
-              {userTypes.filter(type => type.id !== selectedUserType).map((type) => (
-                <button
-                  key={type.id}
-                  onClick={() => setSelectedUserType(type.id)}
-                  className="w-full bg-white border border-gray-300 rounded-xl p-3 sm:p-4 text-left hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 active:scale-[0.98]"
-                >
-                  <div className="flex items-center justify-center sm:justify-start space-x-3">
-                    <div className="text-lg sm:text-xl">{type.icon}</div>
-                    <span className="font-medium text-gray-700 text-sm sm:text-base">
-                      {type.title}
-                    </span>
-                  </div>
-                </button>
-              ))}
+          {/* Selected User Type Display */}
+          {/* <div className="bg-gray-50 rounded-xl p-4 mb-6 transition-all duration-200">
+            <div className="flex items-center justify-center sm:justify-start space-x-3">
+              <div className="text-2xl sm:text-3xl">{selectedType?.icon}</div>
+              <span className="font-semibold text-gray-900 text-sm sm:text-base text-center sm:text-left">
+                {selectedType?.title}
+              </span>
             </div>
+          </div> */}
 
-            {/* Sign Up Link */}
-            <div className="text-center mt-8 sm:mt-10 pb-6">
-              <button
-                type="button"
-                onClick={() => router.push(`/auth/signup?type=${selectedUserType}`)}
-                className="text-cyan-600 hover:text-cyan-500 font-medium text-sm sm:text-base transition-colors duration-200 underline-offset-4 hover:underline"
+          {/* Login Form */}
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+            <Input
+              label=""
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              error={errors.email}
+              placeholder="E-mail"
+              required
+              className="text-base sm:text-sm"
+            />
+
+            <Input
+              label=""
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              error={errors.password}
+              placeholder="Mot de passe"
+              required
+              className="text-base sm:text-sm"
+            />
+
+            <div className="pt-2">
+              <Button
+                type="submit"
+                loading={loading}
+                className="w-full bg-cyan-500 hover:bg-cyan-600 text-white transition-colors duration-200"
+                size="lg"
               >
-                Pas encore inscrit ? Créer un compte
-              </button>
+                <span className="text-sm sm:text-base">
+                  Connexion {selectedType?.title.split(' ')[0]}
+                </span>
+              </Button>
             </div>
+          </form>
+
+          {/* Sign Up Link */}
+          <div className="text-center mt-8 sm:mt-10 pb-6">
+            <button
+              type="button"
+              onClick={() => router.push(`/auth/signup?type=${selectedUserType}`)}
+              className="text-cyan-600 hover:text-cyan-500 font-medium text-sm sm:text-base transition-colors duration-200 underline-offset-4 hover:underline"
+            >
+              Pas encore inscrit ? Créer un compte
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Bottom Safe Area for Mobile */}
+      {/* Bottom Safe Area */}
       <div className="pb-safe-area-inset-bottom sm:pb-0"></div>
     </div>
   );
