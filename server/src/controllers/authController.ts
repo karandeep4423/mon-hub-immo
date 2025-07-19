@@ -215,7 +215,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
 		res.json({
 			success: true,
-			message: 'Login successful',
+			message: 'Connexion réussie',
 			user: {
 				_id: user._id,
 				firstName: user.firstName,

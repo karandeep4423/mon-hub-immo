@@ -61,7 +61,7 @@ export const LoginWithUserType: React.FC = () => {
         toast.success(response.message);
 
         if (response.requiresProfileCompletion) {
-          router.push('/auth/complete-profile');
+          router.push('/home');
         } else {
           router.push('/dashboard');
         }
