@@ -101,9 +101,6 @@ export const LoginWithUserType: React.FC = () => {
         <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 max-w-md mx-auto">
           Le 1er réseau social immobilier collaboratif
         </p>
-        <h2 className="text-base sm:text-lg font-medium text-gray-800 mb-4 sm:mb-6">
-          Choisissez votre accès:
-        </h2>
       </div>
 
       {/* Content Container */}
