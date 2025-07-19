@@ -1,12 +1,12 @@
-// app/page.tsx (Home page with user type selection)
+// app/auth/login/page.tsx
 import type { Metadata } from 'next';
-import { UserTypeSelection } from '@/components/auth/UserTypeSelection';
+import { LoginWithUserType } from '@/components/auth/LoginWithUserType';
 
 export const metadata: Metadata = {
-  title: 'HubImmo - Le 1er réseau social immobilier collaboratif',
-  description: 'Choisissez votre accès à HubImmo',
+  title: 'Connexion - HubImmo',
+  description: 'Connectez-vous à votre compte HubImmo',
 };
 
-export default function HomePage() {
-  return <UserTypeSelection />;
+export default function LoginPage() {
+  return <LoginWithUserType />;
 }
