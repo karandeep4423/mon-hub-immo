@@ -32,6 +32,36 @@ const properties = [
     sector: 'Marseille',
   },
 
+    {
+    id: 4,
+    image: '/maison5.jpg',
+    price: 150000,
+    additionalImages: ['/maison5.jpg', '/maison5.jpg'],
+    agentName: 'Pierre Martin',
+    type: 'Terrain',
+    sector: 'Marseille',
+  },
+
+
+ {
+    id: 5,
+    image: '/maison5.jpg',
+    price: 150000,
+    additionalImages: ['/maison5.jpg', '/maison5.jpg'],
+    agentName: 'Pierre Martin',
+    type: 'Terrain',
+    sector: 'Marseille',
+  },
+
+ {
+    id: 6,
+    image: '/maison5.jpg',
+    price: 150000,
+    additionalImages: ['/maison5.jpg', '/maison5.jpg'],
+    agentName: 'Pierre Martin',
+    type: 'Terrain',
+    sector: 'Marseille',
+  },
 
 ];
 
