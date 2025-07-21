@@ -86,7 +86,7 @@ export const ForgotPasswordForm: React.FC = () => {
               
               <button
                 type="button"
-                onClick={() => router.push('/auth/login')}
+                onClick={() => router.push("/")}
                 className="text-cyan-600 hover:text-cyan-500 text-sm font-medium"
               >
                 Retour à la connexion

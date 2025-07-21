@@ -263,7 +263,7 @@ export const ResetPasswordForm: React.FC = () => {
             <div>
               <button
                 type="button"
-                onClick={() => router.push('/auth/login')}
+                onClick={() => router.push('/')}
                 className="text-gray-600 hover:text-gray-500 text-sm"
               >
                 Retour à la connexion

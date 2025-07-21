@@ -343,7 +343,7 @@ export const RegistrationRequest: React.FC = () => {
           <div className="text-center mt-8">
             <button
               type="button"
-              onClick={() => router.push(`/auth/login?type=${userType}`)}
+              onClick={() => router.push(`/`)}
               className="text-cyan-600 hover:text-cyan-500 font-medium"
             >
               Déjà inscrit ? Se connecter
