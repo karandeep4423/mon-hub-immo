@@ -51,8 +51,8 @@ const validateSignup = [
   
   body('userType')
     .optional()
-    .isIn(['buyer', 'seller', 'agent'])
-    .withMessage('User type must be either buyer or seller'),
+    .isIn(['agent', 'apporteur'])
+    .withMessage('User type must be either agent or apporteur'),
 ];
 
 const validateLogin = [

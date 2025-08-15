@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { AuthProvider } from '@/providers/AuthProvider';
 import { ToastContainer } from 'react-toastify';
+import Header from '@/components/header/Header';
 import 'react-toastify/dist/ReactToastify.css';
 import './globals.css';
 
@@ -21,6 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        <Header />
         <AuthProvider>
           {children}
           <ToastContainer

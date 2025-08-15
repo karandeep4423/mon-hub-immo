@@ -80,7 +80,7 @@ export const useUserTypeHelpers = () => {
     const userType = user?.userType;
     return {
       canAddProperties: userType === 'agent',
-      canViewListings: ['agent', 'apporteur', 'partenaire'].includes(userType || ''),
+      canViewListings: ['agent', 'apporteur'].includes(userType || ''),
       canManageProfile: !!user,
       canCollaborate: userType === 'agent' && user?.profileCompleted,
     };

@@ -79,7 +79,7 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 			email,
 			password,
 			phone,
-			userType: userType || 'buyer',
+			userType: userType,
 			isEmailVerified: false,
 			emailVerificationCode: verificationCode,
 			emailVerificationExpires: verificationExpires,
@@ -647,7 +647,6 @@ export const updateProfile = async (
 				userType: user.userType,
 				isEmailVerified: user.isEmailVerified,
 				profileImage: user.profileImage,
-				
 			},
 		});
 	} catch (error) {

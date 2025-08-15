@@ -7,7 +7,7 @@ export interface IUser extends Document {
     email: string;
     password: string;
     phone?: string;
-    userType: 'agent' | 'apporteur' | 'partenaire';
+    userType: 'agent' | 'apporteur';
     isEmailVerified: boolean;
     profileImage?: string;
     
@@ -85,8 +85,8 @@ const userSchema = new Schema<IUser>(
         },
         userType: {
             type: String,
-            enum: ['agent', 'apporteur', 'partenaire'],
-            required: [true, 'Type d\'utilisateur est requis'],
+            enum: ['agent', 'apporteur'],
+            required: [false, 'Type d\'utilisateur est requis'],
         },
         isEmailVerified: {
             type: Boolean,

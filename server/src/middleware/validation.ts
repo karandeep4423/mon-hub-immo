@@ -34,10 +34,10 @@ export const signupValidation = [
     .isLength({ max: 20 })
     .withMessage('Phone number cannot exceed 20 characters'),
     
-  body('userType')
-    .optional()
-    .isIn(['buyer', 'seller', 'agent'])
-    .withMessage('User type must be buyer, seller, or agent')
+  // body('userType')
+  //   .optional()
+  //   .isIn(['agent','apporteur'])
+  //   .withMessage('User type must be apporteur or agent')
 ];
 
 export const loginValidation = [

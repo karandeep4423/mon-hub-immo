@@ -1,6 +1,6 @@
 // app/auth/login/page.tsx
 import type { Metadata } from 'next';
-import { LoginWithUserType } from '@/components/auth/LoginWithUserType';
+import { LoginWithUserType } from '@/components/auth/LoginForm';
 
 export const metadata: Metadata = {
   title: 'Connexion - HubImmo',

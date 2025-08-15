@@ -16,7 +16,7 @@ export interface User {
   lastName: string;
   email: string;
   phone: string;
-  userType: 'agent' | 'apporteur' | 'partenaire';
+  userType: 'agent' | 'apporteur';
   isEmailVerified: boolean;
   profileImage?: string;
   profileCompleted: boolean; // Make sure this is included
@@ -63,7 +63,7 @@ export interface SignUpData {
   email: string;
   password: string;
   phone: string;
-  userType: 'buyer' | 'seller' | 'agent';
+  userType: 'agent' | 'apporteur';
 }
 
 export interface LoginData {
