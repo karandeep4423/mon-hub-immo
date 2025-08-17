@@ -109,7 +109,7 @@ export const VerifyEmailForm: React.FC = () => {
 			{/* Header */}
 			<div className="text-center pt-8 sm:pt-12 pb-6 sm:pb-8 px-4 sm:px-6">
 				<h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">
-					hub<span className="text-cyan-500">immo</span>
+					mon<span className="text-cyan-500">hubimmo</span>
 				</h1>
 
 				<div className="space-y-3 sm:space-y-4">

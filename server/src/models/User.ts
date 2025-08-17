@@ -18,9 +18,9 @@ export interface IUser extends Document {
     professionalInfo?: {
         postalCode?: string;
         city?: string;
-        interventionRadius?: number; // in km
+        interventionRadius?: number;
         coveredCities?: string[];
-        network?: string; // IAD, Century21, etc.
+        network?: string;
         siretNumber?: string;
         mandateTypes?: ('simple' | 'exclusif' | 'co-mandat')[];
         yearsExperience?: number;
@@ -53,6 +53,7 @@ const userSchema = new Schema<IUser>(
             trim: true,
             minlength: [2, 'Le prénom doit contenir au moins 2 caractères'],
             maxlength: [50, 'Le prénom doit contenir moins de 50 caractères'],
+            match: [/^[a-zA-ZÀ-ÿ\u0100-\u017F\s'-]+$/, 'Prénom invalide'],
         },
         lastName: {
             type: String,
@@ -60,6 +61,7 @@ const userSchema = new Schema<IUser>(
             trim: true,
             minlength: [2, 'Le nom doit contenir au moins 2 caractères'],
             maxlength: [50, 'Le nom doit contenir moins de 50 caractères'],
+            match: [/^[a-zA-ZÀ-ÿ\u0100-\u017F\s'-]+$/, 'Nom invalide'],
         },
         email: {
             type: String,
@@ -67,26 +69,38 @@ const userSchema = new Schema<IUser>(
             unique: true,
             lowercase: true,
             trim: true,
+            maxlength: [254, 'Email trop long'],
             match: [
-                /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
+                /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/,
                 'Veuillez entrer un email valide',
             ],
         },
         password: {
             type: String,
             required: [true, 'Mot de passe est requis'],
-            minlength: [6, 'Le mot de passe doit contenir au moins 6 caractères'],
+            minlength: [8, 'Le mot de passe doit contenir au moins 8 caractères'],
+            maxlength: [128, 'Le mot de passe est trop long'],
             select: false,
+            validate: {
+                validator: function(password: string) {
+                    return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])?.*$/.test(password);
+                },
+                message: 'Le mot de passe doit contenir au moins une minuscule, une majuscule et un chiffre'
+            }
         },
         phone: {
             type: String,
             trim: true,
             sparse: true,
+            match: [/^(?:(?:\+33|0)[1-9])(?:[0-9]{8})$/, 'Numéro de téléphone français invalide'],
         },
         userType: {
             type: String,
-            enum: ['agent', 'apporteur'],
-            required: [false, 'Type d\'utilisateur est requis'],
+            enum: {
+                values: ['agent', 'apporteur'],
+                message: 'Type d\'utilisateur doit être "agent" ou "apporteur"'
+            },
+            required: [true, 'Type d\'utilisateur est requis'],
         },
         isEmailVerified: {
             type: Boolean,
@@ -95,6 +109,19 @@ const userSchema = new Schema<IUser>(
         profileImage: {
             type: String,
             default: null,
+            maxlength: [500, 'URL de l\'image trop longue'],
+            validate: {
+                validator: function(url: string) {
+                    if (!url) return true;
+                    try {
+                        new URL(url);
+                        return url.startsWith('http://') || url.startsWith('https://');
+                    } catch {
+                        return false;
+                    }
+                },
+                message: 'URL de l\'image invalide'
+            }
         },
         profileCompleted: {
             type: Boolean,
@@ -110,6 +137,7 @@ const userSchema = new Schema<IUser>(
                 type: String,
                 trim: true,
                 maxlength: [100, 'Nom de ville trop long'],
+                match: [/^[a-zA-ZÀ-ÿ\u0100-\u017F\s'-]+$/, 'Nom de ville invalide'],
             },
             interventionRadius: {
                 type: Number,
@@ -120,10 +148,15 @@ const userSchema = new Schema<IUser>(
             coveredCities: [{
                 type: String,
                 trim: true,
+                maxlength: [100, 'Nom de ville trop long'],
+                match: [/^[a-zA-ZÀ-ÿ\u0100-\u017F\s'-]+$/, 'Nom de ville invalide'],
             }],
             network: {
                 type: String,
-                enum: ['IAD', 'Century21', 'Orpi', 'Independant', 'Autre'],
+                enum: {
+                    values: ['IAD', 'Century21', 'Orpi', 'Independant', 'Autre'],
+                    message: 'Réseau invalide'
+                },
                 default: 'IAD',
             },
             siretNumber: {
@@ -133,7 +166,10 @@ const userSchema = new Schema<IUser>(
             },
             mandateTypes: [{
                 type: String,
-                enum: ['simple', 'exclusif', 'co-mandat'],
+                enum: {
+                    values: ['simple', 'exclusif', 'co-mandat'],
+                    message: 'Type de mandat invalide'
+                }
             }],
             yearsExperience: {
                 type: Number,
@@ -162,13 +198,17 @@ const userSchema = new Schema<IUser>(
             },
             alertFrequency: {
                 type: String,
-                enum: ['quotidien', 'hebdomadaire'],
+                enum: {
+                    values: ['quotidien', 'hebdomadaire'],
+                    message: 'Fréquence d\'alerte invalide'
+                },
                 default: 'quotidien',
             },
         },
         emailVerificationCode: {
             type: String,
             select: false,
+            match: [/^[0-9]{6}$/, 'Code de vérification invalide'],
         },
         emailVerificationExpires: {
             type: Date,
@@ -177,6 +217,7 @@ const userSchema = new Schema<IUser>(
         passwordResetCode: {
             type: String,
             select: false,
+            match: [/^[0-9]{6}$/, 'Code de réinitialisation invalide'],
         },
         passwordResetExpires: {
             type: Date,
@@ -188,29 +229,31 @@ const userSchema = new Schema<IUser>(
     },
 );
 
-// Indexes for performance
+// Indexes for performance (without lockUntil)
+userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ emailVerificationCode: 1 });
 userSchema.index({ emailVerificationExpires: 1 });
+userSchema.index({ passwordResetCode: 1 });
+userSchema.index({ passwordResetExpires: 1 });
 userSchema.index({ userType: 1 });
 userSchema.index({ profileCompleted: 1 });
 userSchema.index({ 'professionalInfo.postalCode': 1 });
 userSchema.index({ 'professionalInfo.city': 1 });
 
-// Compound index for verification queries
+// Compound indexes
 userSchema.index({
     email: 1,
     emailVerificationCode: 1,
     emailVerificationExpires: 1,
 });
 
-// Compound index for geographic searches
 userSchema.index({
     userType: 1,
     'professionalInfo.postalCode': 1,
     'professionalInfo.interventionRadius': 1,
 });
 
-// Hash password before saving
+// Pre-save middleware for password hashing
 userSchema.pre('save', async function (next) {
     if (!this.isModified('password')) return next();
 
@@ -221,6 +264,14 @@ userSchema.pre('save', async function (next) {
     } catch (error) {
         next(error as Error);
     }
+});
+
+// Pre-save middleware for phone number normalization
+userSchema.pre('save', function (next) {
+    if (this.phone) {
+        this.phone = this.phone.replace(/\s+/g, '').replace(/^(\+33)/, '0');
+    }
+    next();
 });
 
 // Compare password method
