@@ -11,6 +11,8 @@ export interface AuthResponse {
 
 // Update User interface
 export interface User {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    id: any;
 	_id: string;
 	firstName: string;
 	lastName: string;
@@ -56,7 +58,7 @@ export interface ValidationError {
 	message: string;
 }
 
-export type SignUpFormData = {
+export type SignUpData = {
     firstName: string;
     lastName: string;
     email: string;
