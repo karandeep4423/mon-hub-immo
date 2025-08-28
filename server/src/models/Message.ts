@@ -30,11 +30,19 @@ const messageSchema: Schema<IMessage> = new mongoose.Schema(
 		image: {
 			type: String,
 		},
-		isRead: { type: Boolean, default: false },
+		isRead: {
+			type: Boolean,
+			default: false,
+			index: true, // Add index for better performance on unread count queries
+		},
 		readAt: { type: Date },
 	},
 	{ timestamps: true },
 );
+
+// Add compound index for better performance on unread count queries
+messageSchema.index({ receiverId: 1, isRead: 1 });
+messageSchema.index({ senderId: 1, receiverId: 1 });
 
 const Message = mongoose.model<IMessage>('Message', messageSchema);
 export default Message;

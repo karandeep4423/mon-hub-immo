@@ -5,207 +5,289 @@ import { useChat } from '../../hooks/useChat';
 import { useAuth } from '../../hooks/useAuth';
 import { useSocket } from '../../context/SocketContext';
 import { api } from '@/lib/api';
+import MessageBubble from './MessageBubble';
+import {
+	isMyMessage,
+	isNearBottom,
+	isNearTop,
+	calculateScrollDelta,
+} from './messageUtils';
+import {
+	NoConversationSelected,
+	EmptyConversation,
+	LoadingMessages,
+} from './ui';
+import TypingIndicator from './TypingIndicator';
 
-// Helper Components
-const MessageBubble: React.FC<{
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  message: any;
-  isMyMessage: boolean;
-}> = React.memo(({ message, isMyMessage }) => {
-  return (
-    <div className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'} mb-4 px-4`}>
-      <div className={`
-        max-w-[70%] sm:max-w-[85%] rounded-lg px-4 py-2 shadow-sm
-        ${isMyMessage 
-          ? 'bg-blue-500 text-white rounded-br-sm' 
-          : 'bg-white text-gray-800 border border-gray-200 rounded-bl-sm'
-        }
-      `}>
-        {/* Message Text */}
-        {message.text && (
-          <p className="text-sm leading-relaxed break-words">{message.text}</p>
-        )}
-        
-        {/* Message Image */}
-        {message.image && (
-          <img 
-            src={message.image} 
-            alt="Message" 
-            className="max-w-full h-auto rounded mt-2 cursor-pointer hover:opacity-90 transition-opacity" 
-          />
-        )}
-        
-        {/* Message footer with time and read status */}
-        <div className="flex items-center justify-end mt-1 space-x-1">
-          <span className={`text-xs ${isMyMessage ? 'text-blue-100' : 'text-gray-500'}`}>
-            {new Date(message.createdAt).toLocaleTimeString([], { 
-              hour: '2-digit', 
-              minute: '2-digit' 
-            })}
-          </span>
-          
-          {/* Read receipts for sent messages */}
-          {isMyMessage && (
-            <div className="flex items-center space-x-1">
-              {/* Single tick - message sent */}
-              <svg className="w-3 h-3 text-blue-100" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-              
-              {/* Double tick - message read */}
-              {message.isRead && (
-                <svg className="w-3 h-3 text-blue-200 -ml-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-});
+// ============================================================================
+// HELPER COMPONENTS
+// ============================================================================
 
-MessageBubble.displayName = 'MessageBubble';
+/**
+ * Scroll to bottom button component
+ */
+const ScrollToBottomButton: React.FC<{
+	onClick: () => void;
+}> = ({ onClick }) => (
+	<button
+		onClick={onClick}
+		className="absolute bottom-4 right-4 bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+		title="Scroll to bottom"
+	>
+		<svg
+			className="w-5 h-5"
+			fill="none"
+			stroke="currentColor"
+			viewBox="0 0 24 24"
+		>
+			<path
+				strokeLinecap="round"
+				strokeLinejoin="round"
+				strokeWidth={2}
+				d="M19 14l-7 7m0 0l-7-7m7 7V3"
+			/>
+		</svg>
+	</button>
+);
 
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+
+/**
+ * Main chat messages component that handles:
+ * - Message rendering and scrolling
+ * - Auto-scroll to latest messages
+ * - Infinite scroll for older messages
+ * - Read receipts and typing indicators
+ */
 const ChatMessages: React.FC = () => {
-  const { messages, selectedUser, isMessagesLoading, getMessages, typingUsers } = useChat();
-  const { user } = useAuth();
-  const { socket } = useSocket();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const currentUserId = user?._id || user?.id;
+	// ============================================================================
+	// HOOKS & STATE
+	// ============================================================================
 
-  // Auto scroll to bottom
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
+	const {
+		messages,
+		selectedUser,
+		isMessagesLoading,
+		getMessages,
+		loadOlderMessages,
+		typingUsers,
+	} = useChat();
 
-  // Fetch messages when user is selected
-  useEffect(() => {
-    if (selectedUser?._id) {
-      console.log('📱 ChatMessages: Loading messages for user:', selectedUser._id);
-      getMessages(selectedUser._id);
-    }
-  }, [selectedUser?._id, getMessages]);
+	const { user } = useAuth();
+	const { socket } = useSocket();
 
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
+	// Refs for scroll management
+	const messagesEndRef = useRef<HTMLDivElement>(null);
+	const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  // Mark messages as read when user opens chat
-  useEffect(() => {
-    const markAsRead = async () => {
-      if (selectedUser?._id && messages.length > 0) {
-        try {
-          await api.put(`/message/read/${selectedUser._id}`);
-        } catch (error) {
-          console.error('Error marking messages as read:', error);
-        }
-      }
-    };
+	// Auto-scroll state
+	const [shouldAutoScroll, setShouldAutoScroll] = React.useState(true);
 
-    markAsRead();
-  }, [selectedUser?._id, messages.length]);
+	// Current user ID for message ownership
+	const currentUserId = user?._id || user?.id;
 
-  // Listen for read receipts
-  useEffect(() => {
-    if (!socket) return;
+	// ============================================================================
+	// SCROLL MANAGEMENT
+	// ============================================================================
 
-    const handleMessagesRead = (data: { readBy: string; senderId: string }) => {
-      console.log('Messages read by:', data.readBy);
-      // You can update the UI to show read receipts here
-    };
+	/**
+	 * Smooth scroll to bottom of messages
+	 */
+	const scrollToBottom = useCallback(() => {
+		messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+	}, []);
 
-    socket.on('messagesRead', handleMessagesRead);
+	/**
+	 * Handle scroll events to:
+	 * - Determine if user has scrolled up (disable auto-scroll)
+	 * - Trigger infinite scroll when near top
+	 */
+	const handleScroll = useCallback(async () => {
+		const container = messagesContainerRef.current;
+		if (!container) return;
 
-    return () => {
-      socket.off('messagesRead', handleMessagesRead);
-    };
-  }, [socket]);
+		const { scrollTop, scrollHeight, clientHeight } = container;
+		const nearBottom = isNearBottom(
+			scrollTop,
+			scrollHeight,
+			clientHeight,
+			100,
+		);
 
-  const renderedMessages = useMemo(() => {
-    return messages.map((message) => (
-      <MessageBubble
-        key={message._id}
-        message={message}
-        isMyMessage={message.senderId === currentUserId}
-      />
-    ));
-  }, [messages, currentUserId]);
+		setShouldAutoScroll(nearBottom);
 
-  const isTyping = selectedUser && typingUsers.includes(selectedUser._id);
+		// Infinite scroll: load older when near top
+		if (isNearTop(scrollTop, 24) && selectedUser?._id) {
+			const prevHeight = container.scrollHeight;
+			const prevScrollTop = container.scrollTop;
 
-  if (!selectedUser) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-gray-50">
-        <div className="text-center max-w-md mx-auto px-4">
-          <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">Welcome to Chat</h3>
-          <p className="text-gray-500">Select a conversation from the sidebar to start chatting</p>
-        </div>
-      </div>
-    );
-  }
+			const older = await loadOlderMessages();
+			if (older && older.length > 0) {
+				// Preserve viewport by adjusting scrollTop by height delta
+				const newHeight = container.scrollHeight;
+				container.scrollTop = calculateScrollDelta(
+					prevHeight,
+					newHeight,
+					prevScrollTop,
+				);
+			}
+		}
+	}, [selectedUser?._id, loadOlderMessages]);
 
-  if (isMessagesLoading) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
-          <p className="text-gray-500">Loading messages...</p>
-        </div>
-      </div>
-    );
-  }
+	// ============================================================================
+	// EFFECTS
+	// ============================================================================
 
-  return (
-    <div className="flex-1 flex flex-col bg-gray-50">
-      {/* Messages container */}
-      <div className="flex-1 overflow-y-auto py-4">
-        {messages.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center max-w-md mx-auto px-4">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-              </div>
-              <h3 className="text-base font-medium text-gray-700 mb-1">Start the conversation</h3>
-              <p className="text-sm text-gray-500">Send a message to begin chatting with {selectedUser.firstName || selectedUser.name || selectedUser.email}</p>
-            </div>
-          </div>
-        ) : (
-          <>
-            {renderedMessages}
-            
-            {/* Typing indicator */}
-            {isTyping && (
-              <div className="px-4 mb-4">
-                <div className="flex justify-start">
-                  <div className="bg-white border border-gray-200 rounded-lg rounded-bl-sm px-4 py-2 shadow-sm">
-                    <div className="flex items-center space-x-1">
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                      </div>
-                      <span className="text-xs text-gray-500 ml-2">typing...</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-    </div>
-  );
+	/**
+	 * Fetch messages when a user is selected
+	 */
+	useEffect(() => {
+		if (selectedUser?._id) {
+			console.log(
+				'📱 ChatMessages: Loading messages for user:',
+				selectedUser._id,
+			);
+			getMessages(selectedUser._id);
+			setShouldAutoScroll(true);
+		}
+	}, [selectedUser?._id, getMessages]);
+
+	/**
+	 * Auto-scroll to latest messages after loading completes
+	 */
+	useEffect(() => {
+		if (selectedUser?._id && !isMessagesLoading) {
+			setShouldAutoScroll(true);
+			// Wait for DOM to paint, then jump without animation to avoid flicker
+			requestAnimationFrame(() => {
+				messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+			});
+		}
+	}, [selectedUser?._id, isMessagesLoading]);
+
+	/**
+	 * Auto-scroll when new messages arrive (if user is near bottom)
+	 */
+	useEffect(() => {
+		if (shouldAutoScroll) {
+			scrollToBottom();
+		}
+	}, [messages, scrollToBottom, shouldAutoScroll]);
+
+	/**
+	 * Mark messages as read when user opens chat
+	 */
+	useEffect(() => {
+		const markAsRead = async () => {
+			if (selectedUser?._id && messages.length > 0) {
+				try {
+					await api.put(`/message/read/${selectedUser._id}`);
+				} catch (error) {
+					console.error('Error marking messages as read:', error);
+				}
+			}
+		};
+
+		markAsRead();
+	}, [selectedUser?._id, messages.length]);
+
+	/**
+	 * Listen for read receipts from other users
+	 */
+	useEffect(() => {
+		if (!socket) return;
+
+		const handleMessagesRead = (data: {
+			readBy: string;
+			senderId: string;
+		}) => {
+			console.log('Messages read by:', data.readBy);
+			// You can update the UI to show read receipts here
+		};
+
+		socket.on('messagesRead', handleMessagesRead);
+
+		return () => {
+			socket.off('messagesRead', handleMessagesRead);
+		};
+	}, [socket]);
+
+	// ============================================================================
+	// COMPUTED VALUES
+	// ============================================================================
+
+	/**
+	 * Memoized message list to prevent unnecessary re-renders
+	 */
+	const renderedMessages = useMemo(() => {
+		return messages.map((message) => (
+			<MessageBubble
+				key={message._id}
+				message={message}
+				isMyMessage={isMyMessage(message, currentUserId)}
+			/>
+		));
+	}, [messages, currentUserId]);
+
+	// ============================================================================
+	// RENDER LOGIC
+	// ============================================================================
+
+	// No user selected - show welcome message
+	if (!selectedUser) {
+		return <NoConversationSelected />;
+	}
+
+	// Loading messages - show spinner
+	if (isMessagesLoading) {
+		return <LoadingMessages />;
+	}
+
+	// ============================================================================
+	// MAIN RENDER
+	// ============================================================================
+
+	return (
+		<div className="flex-1 flex flex-col bg-gray-50 h-full relative">
+			{/* Messages container with scroll handling */}
+			<div
+				className="flex-1 overflow-y-auto py-4 min-h-0"
+				ref={messagesContainerRef}
+				onScroll={handleScroll}
+			>
+				{/* Empty state or messages */}
+				{messages.length === 0 ? (
+					<EmptyConversation selectedUser={selectedUser} />
+				) : (
+					<>
+						{/* Render all messages */}
+						{renderedMessages}
+
+						{/* Typing indicator */}
+						<TypingIndicator
+							selectedUser={selectedUser}
+							typingUsers={typingUsers}
+						/>
+					</>
+				)}
+
+				{/* Invisible element for scroll-to-bottom reference */}
+				<div ref={messagesEndRef} />
+			</div>
+
+			{/* Scroll to bottom button - only show when auto-scroll is disabled */}
+			{!shouldAutoScroll && messages.length > 0 && (
+				<ScrollToBottomButton
+					onClick={() => {
+						setShouldAutoScroll(true);
+						scrollToBottom();
+					}}
+				/>
+			)}
+		</div>
+	);
 };
 
 export default ChatMessages;

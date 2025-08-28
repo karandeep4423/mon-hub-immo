@@ -1,0 +1,468 @@
+// ============================================================================
+// MESSAGE UTILITY FUNCTIONS
+// ============================================================================
+
+/**
+ * Pure utility functions for message handling, formatting, and validation
+ * These functions are framework-agnostic and easily testable
+ */
+
+// ============================================================================
+// TYPES & INTERFACES
+// ============================================================================
+
+export interface User {
+	_id: string;
+	firstName?: string;
+	lastName?: string;
+	name?: string;
+	email: string;
+	isOnline?: boolean;
+	lastSeen?: string;
+	isTyping?: boolean;
+	unreadCount?: number;
+}
+
+export interface Message {
+	_id: string;
+	senderId: string;
+	receiverId: string;
+	text?: string;
+	image?: string;
+	createdAt: string;
+	isRead?: boolean;
+	readAt?: string;
+}
+
+// ============================================================================
+// USER UTILITIES
+// ============================================================================
+
+/**
+ * Get display name for a user (firstName > name > email)
+ */
+export const getUserDisplayName = (user: User | null): string => {
+	if (!user) return '';
+	return user.firstName || user.name || user.email;
+};
+
+/**
+ * Get user initials for avatar display
+ */
+export const getUserInitials = (user: User | null): string => {
+	if (!user) return '';
+
+	const displayName = getUserDisplayName(user);
+	const nameParts = displayName.split(' ');
+
+	if (nameParts.length >= 2) {
+		return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
+	}
+
+	return displayName.substring(0, 2).toUpperCase();
+};
+
+/**
+ * Check if user is currently online
+ */
+export const isUserOnline = (user: User | null): boolean => {
+	return Boolean(user?.isOnline);
+};
+
+/**
+ * Check if user is currently typing
+ */
+export const isUserTyping = (
+	user: User | null,
+	typingUsers: string[],
+): boolean => {
+	return Boolean(user && typingUsers.includes(user._id));
+};
+
+// ============================================================================
+// MESSAGE VALIDATION
+// ============================================================================
+
+/**
+ * Validate if message content is valid for sending
+ */
+export const isValidMessageContent = (
+	text?: string,
+	image?: string,
+): boolean => {
+	return Boolean(text?.trim() || image?.trim());
+};
+
+/**
+ * Validate if message can be sent (has content and recipient)
+ */
+export const canSendMessage = (
+	text?: string,
+	image?: string,
+	selectedUser?: User | null,
+): boolean => {
+	return Boolean(selectedUser && isValidMessageContent(text, image));
+};
+
+/**
+ * Validate message length
+ */
+export const isMessageWithinLimit = (
+	text: string,
+	maxLength: number = 1000,
+): boolean => {
+	return text.length <= maxLength;
+};
+
+// ============================================================================
+// MESSAGE FORMATTING
+// ============================================================================
+
+/**
+ * Format timestamp for message display (HH:MM format)
+ */
+export const formatMessageTime = (timestamp: string): string => {
+	try {
+		return new Date(timestamp).toLocaleTimeString([], {
+			hour: '2-digit',
+			minute: '2-digit',
+		});
+	} catch (error) {
+		console.error('Error formatting message time:', error);
+		return '';
+	}
+};
+
+/**
+ * Format timestamp for full date display
+ */
+export const formatMessageDate = (timestamp: string): string => {
+	try {
+		return new Date(timestamp).toLocaleDateString([], {
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric',
+		});
+	} catch (error) {
+		console.error('Error formatting message date:', error);
+		return '';
+	}
+};
+
+/**
+ * Format last seen timestamp with relative time
+ */
+export const formatLastSeen = (lastSeen: string): string => {
+	try {
+		const date = new Date(lastSeen);
+		const now = new Date();
+		const diffMs = now.getTime() - date.getTime();
+		const diffMinutes = Math.floor(diffMs / (1000 * 60));
+		const diffHours = Math.floor(diffMinutes / 60);
+		const diffDays = Math.floor(diffHours / 24);
+
+		if (diffMinutes < 1) return 'Just now';
+		if (diffMinutes < 60) return `${diffMinutes}m ago`;
+		if (diffHours < 24) return `${diffHours}h ago`;
+		if (diffDays < 7) return `${diffDays}d ago`;
+
+		return date.toLocaleDateString();
+	} catch (error) {
+		console.error('Error formatting last seen:', error);
+		return 'Unknown';
+	}
+};
+
+/**
+ * Truncate message text for preview
+ */
+export const truncateMessage = (
+	text: string,
+	maxLength: number = 50,
+): string => {
+	if (text.length <= maxLength) return text;
+	return `${text.substring(0, maxLength)}...`;
+};
+
+// ============================================================================
+// MESSAGE COMPARISON & SORTING
+// ============================================================================
+
+/**
+ * Check if two messages are the same
+ */
+export const isSameMessage = (msg1: Message, msg2: Message): boolean => {
+	return msg1._id === msg2._id;
+};
+
+/**
+ * Check if message belongs to current user
+ */
+export const isMyMessage = (
+	message: Message,
+	currentUserId?: string,
+): boolean => {
+	if (!currentUserId) return false;
+	return String(message.senderId) === String(currentUserId);
+};
+
+/**
+ * Sort messages by creation time (oldest first)
+ */
+export const sortMessagesByTime = (messages: Message[]): Message[] => {
+	return [...messages].sort(
+		(a, b) =>
+			new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+	);
+};
+
+/**
+ * Group messages by date for display sections
+ */
+export const groupMessagesByDate = (
+	messages: Message[],
+): Record<string, Message[]> => {
+	return messages.reduce(
+		(groups, message) => {
+			const dateKey = formatMessageDate(message.createdAt);
+			if (!groups[dateKey]) {
+				groups[dateKey] = [];
+			}
+			groups[dateKey].push(message);
+			return groups;
+		},
+		{} as Record<string, Message[]>,
+	);
+};
+
+// ============================================================================
+// SCROLL & PAGINATION UTILITIES
+// ============================================================================
+
+/**
+ * Check if user is near the bottom of scroll container
+ */
+export const isNearBottom = (
+	scrollTop: number,
+	scrollHeight: number,
+	clientHeight: number,
+	threshold: number = 100,
+): boolean => {
+	const distanceFromBottom = scrollHeight - clientHeight - scrollTop;
+	return distanceFromBottom <= threshold;
+};
+
+/**
+ * Check if user is near the top of scroll container
+ */
+export const isNearTop = (
+	scrollTop: number,
+	threshold: number = 24,
+): boolean => {
+	return scrollTop <= threshold;
+};
+
+/**
+ * Calculate scroll position delta for infinite scroll
+ */
+export const calculateScrollDelta = (
+	oldHeight: number,
+	newHeight: number,
+	oldScrollTop: number,
+): number => {
+	return newHeight - oldHeight + oldScrollTop;
+};
+
+// ============================================================================
+// NOTIFICATION UTILITIES
+// ============================================================================
+
+/**
+ * Get notification text for new message
+ */
+export const getMessageNotificationText = (
+	message: Message,
+	senderName: string,
+): string => {
+	if (message.image && message.text) {
+		return `${senderName} sent a photo: ${truncateMessage(message.text, 30)}`;
+	}
+
+	if (message.image) {
+		return `${senderName} sent a photo`;
+	}
+
+	if (message.text) {
+		return `${senderName}: ${truncateMessage(message.text, 50)}`;
+	}
+
+	return `${senderName} sent a message`;
+};
+
+/**
+ * Check if message should trigger notification
+ */
+export const shouldShowNotification = (
+	message: Message,
+	currentUserId?: string,
+	isWindowFocused: boolean = true,
+): boolean => {
+	// Don't notify for own messages
+	if (isMyMessage(message, currentUserId)) {
+		return false;
+	}
+
+	// Don't notify if window is focused (user is actively chatting)
+	if (isWindowFocused) {
+		return false;
+	}
+
+	return true;
+};
+
+// ============================================================================
+// KEYBOARD UTILITIES
+// ============================================================================
+
+/**
+ * Check if Enter key was pressed without modifiers
+ */
+export const isEnterKeyPress = (event: React.KeyboardEvent): boolean => {
+	return (
+		event.key === 'Enter' &&
+		!event.shiftKey &&
+		!event.ctrlKey &&
+		!event.metaKey
+	);
+};
+
+/**
+ * Check if Escape key was pressed
+ */
+export const isEscapeKeyPress = (event: React.KeyboardEvent): boolean => {
+	return event.key === 'Escape';
+};
+
+// ============================================================================
+// STATUS UTILITIES
+// ============================================================================
+
+/**
+ * Get user status text with online/offline and last seen
+ */
+export const getUserStatusText = (user: User | null): string => {
+	if (!user) return 'Select a conversation to start chatting';
+
+	const displayName = getUserDisplayName(user);
+
+	if (user.isOnline) {
+		return `${displayName} is online`;
+	}
+
+	if (user.lastSeen) {
+		const lastSeenText = formatLastSeen(user.lastSeen);
+		return `${displayName} was last seen ${lastSeenText}`;
+	}
+
+	return `Ready to chat with ${displayName}`;
+};
+
+/**
+ * Get detailed user presence text for chat header (moved from ChatPage.tsx)
+ */
+export const getDetailedUserPresenceText = (
+	selectedUser: User | null,
+	onlineUsers: string[],
+	userStatuses: Record<string, { lastSeen?: string }>,
+	users: User[],
+): string => {
+	if (!selectedUser) return '';
+
+	const isOnline = onlineUsers.includes(selectedUser._id);
+	if (isOnline) return 'Online';
+
+	const lastSeen = selectedUser._id
+		? userStatuses[selectedUser._id]?.lastSeen ||
+			selectedUser.lastSeen ||
+			users.find((u) => u._id === selectedUser._id)?.lastSeen
+		: undefined;
+
+	if (!lastSeen) return 'Offline';
+
+	const last = new Date(lastSeen);
+	const diffMins = Math.floor((Date.now() - last.getTime()) / 60000);
+
+	if (diffMins < 1) return 'Last seen just now';
+	if (diffMins < 60) return `Last seen ${diffMins}m ago`;
+
+	const hours = Math.floor(diffMins / 60);
+	if (hours < 24) return `Last seen ${hours}h ago`;
+
+	const days = Math.floor(hours / 24);
+	if (days < 7) return `Last seen ${days}d ago`;
+
+	return `Last seen ${last.toLocaleDateString()}`;
+};
+
+/**
+ * Get CSS classes for status indicator
+ */
+export const getStatusIndicatorClasses = (isOnline?: boolean): string => {
+	return isOnline ? 'text-green-500' : 'text-gray-500';
+};
+
+// ============================================================================
+// ARRAY UTILITIES
+// ============================================================================
+
+/**
+ * Deduplicate messages by ID
+ */
+export const deduplicateMessages = (messages: Message[]): Message[] => {
+	const seen = new Set<string>();
+	return messages.filter((message) => {
+		const id = String(message._id);
+		if (seen.has(id)) {
+			return false;
+		}
+		seen.add(id);
+		return true;
+	});
+};
+
+/**
+ * Merge and deduplicate message arrays
+ */
+export const mergeMessages = (...messageArrays: Message[][]): Message[] => {
+	const allMessages = messageArrays.flat();
+	const deduplicated = deduplicateMessages(allMessages);
+	return sortMessagesByTime(deduplicated);
+};
+
+/**
+ * Find message by ID
+ */
+export const findMessageById = (
+	messages: Message[],
+	messageId: string,
+): Message | undefined => {
+	return messages.find(
+		(message) => String(message._id) === String(messageId),
+	);
+};
+
+/**
+ * Count unread messages for a user
+ */
+export const countUnreadMessages = (
+	messages: Message[],
+	userId: string,
+	currentUserId: string,
+): number => {
+	return messages.filter(
+		(message) =>
+			String(message.senderId) === String(userId) &&
+			String(message.receiverId) === String(currentUserId) &&
+			!message.isRead,
+	).length;
+};
