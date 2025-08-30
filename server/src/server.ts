@@ -5,8 +5,8 @@ import { createServer } from 'http';
 import dotenv from 'dotenv';
 import { connectDB } from './config/database';
 import authRoutes from './routes/auth';
-import messageRoutes from './routes/message';
-import { createSocketServer, createSocketService } from './socket';
+import messageRoutes from './routes/chat';
+import { createSocketServer, createSocketService } from './chat';
 
 dotenv.config();
 

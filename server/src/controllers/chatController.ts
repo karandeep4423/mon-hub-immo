@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../types/auth';
 import { User } from '../models/User';
-import Message from '../models/Message';
+import Message from '../models/Chat';
 import { getSocketService } from '../server';
 import { Types } from 'mongoose';
 
@@ -9,28 +9,6 @@ import { Types } from 'mongoose';
 // HELPER FUNCTIONS
 // ============================================================================
 
-/**
- * Format user's last seen time into human-readable format
- * @param lastSeen - Last seen timestamp
- * @returns Formatted time string
- */
-const formatLastSeen = (lastSeen: Date): string => {
-	const now = new Date();
-	const diffInMinutes = Math.floor(
-		(now.getTime() - lastSeen.getTime()) / (1000 * 60),
-	);
-
-	if (diffInMinutes < 1) return 'Just now';
-	if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-
-	const diffInHours = Math.floor(diffInMinutes / 60);
-	if (diffInHours < 24) return `${diffInHours}h ago`;
-
-	const diffInDays = Math.floor(diffInHours / 24);
-	if (diffInDays < 7) return `${diffInDays}d ago`;
-
-	return lastSeen.toLocaleDateString();
-};
 
 /**
  * Sort conversations by most recent activity

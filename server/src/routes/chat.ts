@@ -4,7 +4,7 @@ import {
 	sendMessage,
 	getUsersForSidebar,
 	markMessagesAsRead,
-} from '../controllers/messageController';
+} from '../controllers/chatController';
 import { authenticateToken } from '../middleware/auth';
 
 const router: Router = express.Router();

@@ -54,3 +54,9 @@ export { UnreadBadge } from './UnreadBadge';
 // ============================================================================
 
 export { MessageTime } from './MessageTime';
+
+// ============================================================================
+// DATE COMPONENTS
+// ============================================================================
+
+export { default as DateSeparator } from './DateSeparator';

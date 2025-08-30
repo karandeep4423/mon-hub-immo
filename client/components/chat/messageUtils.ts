@@ -217,22 +217,98 @@ export const sortMessagesByTime = (messages: Message[]): Message[] => {
 };
 
 /**
- * Group messages by date for display sections
+ * Get relative date text for chat grouping (WhatsApp-style)
+ */
+export const getRelativeDateText = (date: Date): string => {
+	const now = new Date();
+	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+	const yesterday = new Date(today);
+	yesterday.setDate(yesterday.getDate() - 1);
+
+	const messageDate = new Date(
+		date.getFullYear(),
+		date.getMonth(),
+		date.getDate(),
+	);
+
+	// Today
+	if (messageDate.getTime() === today.getTime()) {
+		return 'Today';
+	}
+
+	// Yesterday
+	if (messageDate.getTime() === yesterday.getTime()) {
+		return 'Yesterday';
+	}
+
+	// This week (show day name)
+	const diffDays = Math.floor(
+		(today.getTime() - messageDate.getTime()) / (1000 * 60 * 60 * 24),
+	);
+	if (diffDays <= 7 && diffDays > 1) {
+		return date.toLocaleDateString('en-US', { weekday: 'long' });
+	}
+
+	// Older dates (show full date)
+	return date.toLocaleDateString('en-US', {
+		day: '2-digit',
+		month: '2-digit',
+		year: 'numeric',
+	});
+};
+
+/**
+ * Group messages by date with relative date keys
  */
 export const groupMessagesByDate = (
 	messages: Message[],
-): Record<string, Message[]> => {
-	return messages.reduce(
-		(groups, message) => {
-			const dateKey = formatMessageDate(message.createdAt);
-			if (!groups[dateKey]) {
-				groups[dateKey] = [];
+): { dateKey: string; date: Date; messages: Message[] }[] => {
+	// Group messages by date string
+	const groups = messages.reduce(
+		(acc, message) => {
+			const date = new Date(message.createdAt);
+			const dateString = date.toDateString(); // Use date string as key for grouping
+
+			if (!acc[dateString]) {
+				acc[dateString] = {
+					date,
+					messages: [],
+				};
 			}
-			groups[dateKey].push(message);
-			return groups;
+
+			acc[dateString].messages.push(message);
+			return acc;
 		},
-		{} as Record<string, Message[]>,
+		{} as Record<string, { date: Date; messages: Message[] }>,
 	);
+
+	// Convert to array and sort by date (newest first)
+	return Object.entries(groups)
+		.map(([_, group]) => ({
+			dateKey: getRelativeDateText(group.date),
+			date: group.date,
+			messages: group.messages.sort(
+				(a, b) =>
+					new Date(a.createdAt).getTime() -
+					new Date(b.createdAt).getTime(),
+			),
+		}))
+		.sort((a, b) => a.date.getTime() - b.date.getTime());
+};
+
+/**
+ * Check if a date should show as a separator (different day from previous message)
+ */
+export const shouldShowDateSeparator = (
+	currentMessage: Message,
+	previousMessage?: Message,
+): boolean => {
+	if (!previousMessage) return true;
+
+	const currentDate = new Date(currentMessage.createdAt);
+	const previousDate = new Date(previousMessage.createdAt);
+
+	return currentDate.toDateString() !== previousDate.toDateString();
 };
 
 // ============================================================================

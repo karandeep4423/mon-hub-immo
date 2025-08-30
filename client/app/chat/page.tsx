@@ -1,12 +1,11 @@
-
-import ChatPage from '../../components/message/ChatPage';
+import ChatPage from '../../components/chat/ChatPage';
 
 const ChatPageRoute = () => {
-  return (
-    <div>
-      <ChatPage />
-    </div>
-  );
+	return (
+		<div>
+			<ChatPage />
+		</div>
+	);
 };
 
 export default ChatPageRoute;

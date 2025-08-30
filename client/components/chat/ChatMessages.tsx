@@ -11,11 +11,13 @@ import {
 	isNearBottom,
 	isNearTop,
 	calculateScrollDelta,
+	groupMessagesByDate,
 } from './messageUtils';
 import {
 	NoConversationSelected,
 	EmptyConversation,
 	LoadingMessages,
+	DateSeparator,
 } from './ui';
 import TypingIndicator from './TypingIndicator';
 
@@ -219,15 +221,27 @@ const ChatMessages: React.FC = () => {
 	// ============================================================================
 
 	/**
-	 * Memoized message list to prevent unnecessary re-renders
+	 * Memoized message list grouped by date to prevent unnecessary re-renders
 	 */
 	const renderedMessages = useMemo(() => {
-		return messages.map((message) => (
-			<MessageBubble
-				key={message._id}
-				message={message}
-				isMyMessage={isMyMessage(message, currentUserId)}
-			/>
+		// Group messages by date
+		const messageGroups = groupMessagesByDate(messages);
+
+		// Render each group with date separator
+		return messageGroups.map((group, groupIndex) => (
+			<React.Fragment key={group.date.toISOString()}>
+				{/* Date separator */}
+				<DateSeparator dateText={group.dateKey} />
+
+				{/* Messages for this date */}
+				{group.messages.map((message) => (
+					<MessageBubble
+						key={message._id}
+						message={message}
+						isMyMessage={isMyMessage(message, currentUserId)}
+					/>
+				))}
+			</React.Fragment>
 		));
 	}, [messages, currentUserId]);
 
