@@ -3,6 +3,7 @@ import {
 	getMessages,
 	sendMessage,
 	getUsersForSidebar,
+	getUserById,
 	markMessagesAsRead,
 } from '../controllers/chatController';
 import { authenticateToken } from '../middleware/auth';
@@ -10,6 +11,7 @@ import { authenticateToken } from '../middleware/auth';
 const router: Router = express.Router();
 
 router.get('/users', authenticateToken, getUsersForSidebar as RequestHandler);
+router.get('/user/:id', authenticateToken, getUserById as RequestHandler);
 router.get('/:id', authenticateToken, getMessages as RequestHandler);
 router.post('/send/:id', authenticateToken, sendMessage as RequestHandler);
 router.put(

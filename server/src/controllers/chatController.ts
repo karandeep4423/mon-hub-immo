@@ -9,7 +9,6 @@ import { Types } from 'mongoose';
 // HELPER FUNCTIONS
 // ============================================================================
 
-
 /**
  * Sort conversations by most recent activity
  * @param conversations - Array of conversations with users
@@ -37,7 +36,8 @@ const sortConversationsByActivity = (conversations: any[]) => {
 // ============================================================================
 
 /**
- * Get all users for sidebar conversations with last message and unread count
+ * Get users with existing conversations for sidebar with last message and unread count
+ * Only returns users that the current user has actually exchanged messages with
  * @param req - Express request with authenticated user
  * @param res - Express response
  */
@@ -50,14 +50,48 @@ export const getUsersForSidebar = async (req: AuthRequest, res: Response) => {
 
 		const loggedInUserId = new Types.ObjectId(req.userId);
 
-		// Get all users except current user
-		const allUsers = await User.find({
-			_id: { $ne: loggedInUserId },
+		// First, find all unique user IDs that have exchanged messages with the current user
+		const messagesWithOthers = await Message.aggregate([
+			{
+				$match: {
+					$or: [
+						{ senderId: loggedInUserId },
+						{ receiverId: loggedInUserId },
+					],
+				},
+			},
+			{
+				$group: {
+					_id: {
+						$cond: [
+							{ $eq: ['$senderId', loggedInUserId] },
+							'$receiverId',
+							'$senderId',
+						],
+					},
+					count: { $sum: 1 },
+				},
+			},
+		]);
+
+		const conversationUserIds = messagesWithOthers.map((item) => item._id);
+
+		if (conversationUserIds.length === 0) {
+			console.log(
+				'No existing conversations found for user:',
+				req.userId,
+			);
+			return res.status(200).json([]);
+		}
+
+		// Get user details for these conversation participants
+		const conversationUsers = await User.find({
+			_id: { $in: conversationUserIds },
 		}).select('-password');
 
 		// Get conversation data for each user
 		const conversationsWithUsers = await Promise.all(
-			allUsers.map(async (user) => {
+			conversationUsers.map(async (user) => {
 				// Get last message between current user and this user
 				const lastMessage = await Message.findOne({
 					$or: [
@@ -97,7 +131,7 @@ export const getUsersForSidebar = async (req: AuthRequest, res: Response) => {
 		);
 
 		console.log(
-			'Returning conversations with unread counts:',
+			'Returning existing conversations with unread counts:',
 			sortedConversations.map((u) => ({
 				name: u.firstName || u.email,
 				unreadCount: u.unreadCount,
@@ -268,6 +302,54 @@ export const markMessagesAsRead = async (req: AuthRequest, res: Response) => {
 		});
 	} catch (error: any) {
 		console.error('Error marking messages as read:', error);
+		res.status(500).json({ error: 'Internal server error' });
+	}
+};
+
+/**
+ * Get user details by ID for initiating new conversations
+ * @param req - Express request with user ID parameter
+ * @param res - Express response
+ */
+export const getUserById = async (req: AuthRequest, res: Response) => {
+	try {
+		// Validate authentication
+		if (!req.userId) {
+			return res.status(401).json({ error: 'Unauthorized' });
+		}
+
+		const { id: targetUserId } = req.params;
+
+		// Ensure user isn't trying to get their own details
+		if (targetUserId === req.userId) {
+			return res
+				.status(400)
+				.json({ error: 'Cannot get your own details' });
+		}
+
+		// Find the target user
+		const targetUser =
+			await User.findById(targetUserId).select('-password');
+
+		if (!targetUser) {
+			return res.status(404).json({ error: 'User not found' });
+		}
+
+		// Return user details formatted for chat
+		const userForChat = {
+			...targetUser.toObject(),
+			lastMessage: null,
+			unreadCount: 0,
+		};
+
+		console.log(
+			'User details fetched for new conversation:',
+			userForChat.firstName || userForChat.email,
+		);
+
+		res.status(200).json(userForChat);
+	} catch (error: any) {
+		console.error('Error in getUserById:', error.message);
 		res.status(500).json({ error: 'Internal server error' });
 	}
 };

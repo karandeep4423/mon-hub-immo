@@ -175,7 +175,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
 		const bubbleClasses = getBubbleClasses(isMyMessage);
 
 		return (
-			<div className={`${containerClasses} ${className}`}>
+			<div
+				className={`${containerClasses} ${className}`}
+				data-message-id={message._id}
+			>
 				<div className={bubbleClasses}>
 					<MessageContent text={message.text} image={message.image} />
 

@@ -339,7 +339,7 @@ export const isNearTop = (
 };
 
 /**
- * Calculate scroll position delta for infinite scroll
+ * Calculate scroll position delta for infinite scroll (legacy method)
  */
 export const calculateScrollDelta = (
 	oldHeight: number,
@@ -347,6 +347,125 @@ export const calculateScrollDelta = (
 	oldScrollTop: number,
 ): number => {
 	return newHeight - oldHeight + oldScrollTop;
+};
+
+/**
+ * Enhanced scroll anchor interface for better position preservation
+ */
+export interface ScrollAnchor {
+	messageId: string;
+	offsetFromTop: number;
+	elementHeight: number;
+}
+
+/**
+ * Create a scroll anchor from a visible message element
+ */
+export const createScrollAnchor = (
+	container: HTMLElement,
+	messageElement: HTMLElement,
+	messageId: string,
+): ScrollAnchor => {
+	const containerRect = container.getBoundingClientRect();
+	const messageRect = messageElement.getBoundingClientRect();
+
+	return {
+		messageId,
+		offsetFromTop: messageRect.top - containerRect.top,
+		elementHeight: messageRect.height,
+	};
+};
+
+/**
+ * Find the best anchor message (first visible message from the top)
+ */
+export const findBestAnchorMessage = (
+	container: HTMLElement,
+): ScrollAnchor | null => {
+	const messageElements = container.querySelectorAll('[data-message-id]');
+
+	for (const element of messageElements) {
+		const rect = element.getBoundingClientRect();
+		const containerRect = container.getBoundingClientRect();
+
+		// Find first message that's visible in the viewport
+		if (
+			rect.bottom > containerRect.top &&
+			rect.top < containerRect.bottom
+		) {
+			const messageId = element.getAttribute('data-message-id');
+			if (messageId) {
+				return createScrollAnchor(
+					container,
+					element as HTMLElement,
+					messageId,
+				);
+			}
+		}
+	}
+
+	return null;
+};
+
+/**
+ * Restore scroll position using an anchor message
+ */
+export const restoreScrollPosition = (
+	container: HTMLElement,
+	anchor: ScrollAnchor,
+): void => {
+	const messageElement = container.querySelector(
+		`[data-message-id="${anchor.messageId}"]`,
+	);
+	if (!messageElement) {
+		console.warn(
+			'Could not find anchor message for scroll restoration:',
+			anchor.messageId,
+		);
+		return;
+	}
+
+	const messageRect = messageElement.getBoundingClientRect();
+	const containerRect = container.getBoundingClientRect();
+
+	// Calculate the new scroll position to maintain the same visual position
+	const currentOffsetFromTop = messageRect.top - containerRect.top;
+	const scrollAdjustment = currentOffsetFromTop - anchor.offsetFromTop;
+
+	container.scrollTop += scrollAdjustment;
+};
+
+/**
+ * Debounce function for scroll handlers
+ */
+export const debounce = <T extends (...args: any[]) => any>(
+	func: T,
+	wait: number,
+): T => {
+	let timeout: NodeJS.Timeout | null = null;
+
+	return ((...args: any[]) => {
+		if (timeout) clearTimeout(timeout);
+		timeout = setTimeout(() => func(...args), wait);
+	}) as T;
+};
+
+/**
+ * Throttle function for scroll handlers
+ */
+export const throttle = <T extends (...args: any[]) => any>(
+	func: T,
+	limit: number,
+): T => {
+	let inThrottle: boolean;
+
+	return ((...args: any[]) => {
+		if (!inThrottle) {
+			func(...args);
+			inThrottle = true;
+			setTimeout(() => (inThrottle = false), limit);
+		}
+	}) as T;
 };
 
 // ============================================================================

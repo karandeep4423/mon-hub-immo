@@ -1,4 +1,4 @@
-import { api } from '@/lib/api';
+import { ChatApi } from '@/lib/api/chatApi';
 import { toast } from 'react-toastify';
 
 // ============================================================================
@@ -56,7 +56,10 @@ export interface ChatActions {
 	setMessages: (messages: Message[]) => void;
 	addMessage: (message: Message) => void;
 	handleIncomingMessage: (message: Message, currentUserId?: string) => void;
-	markMessagesAsRead: (senderId: string, receiverId?: string) => void;
+	markMessagesAsRead: (
+		senderId: string,
+		receiverId?: string,
+	) => Promise<void>;
 	setUserTyping: (userId: string, isTyping: boolean) => void;
 	updateUserStatus: (
 		userId: string,
@@ -68,6 +71,7 @@ export interface ChatActions {
 
 	// API methods
 	getUsers: () => Promise<void>;
+	getUserById: (userId: string) => Promise<User | null>;
 	getMessages: (userId: string) => Promise<void>;
 	loadOlderMessages: () => Promise<Message[]>;
 	sendMessage: (messageData: {
@@ -90,11 +94,21 @@ export interface ChatStore extends ChatState, ChatActions {
  */
 const dedupeAndSortMessages = (messages: Message[]): Message[] => {
 	const byId = new Map<string, Message>();
+	const duplicates: string[] = [];
 
 	// Keep only the first occurrence of each message ID
 	for (const message of messages) {
 		const id = String(message._id);
-		if (!byId.has(id)) byId.set(id, message);
+		if (!byId.has(id)) {
+			byId.set(id, message);
+		} else {
+			duplicates.push(id);
+		}
+	}
+
+	// Log duplicates for debugging
+	if (duplicates.length > 0) {
+		console.warn('🔄 ChatStore: Removed duplicate messages:', duplicates);
 	}
 
 	// Sort by creation time (oldest first for UI rendering)
@@ -120,26 +134,35 @@ const sortUsersByRecentActivity = (users: User[]): User[] => {
 };
 
 /**
- * Update user's last message in users array
+ * Update user's last message in users array, or add user if not present
  */
 const updateUserLastMessage = (
 	users: User[],
 	userId: string,
 	message: Message,
 ): User[] => {
-	return users.map((user) => {
-		if (user._id === userId) {
-			return {
-				...user,
-				lastMessage: {
-					text: message.text || '',
-					createdAt: message.createdAt,
-					senderId: message.senderId,
-				},
-			};
-		}
-		return user;
-	});
+	const existingUserIndex = users.findIndex((user) => user._id === userId);
+
+	if (existingUserIndex !== -1) {
+		// Update existing user
+		const updatedUsers = [...users];
+		updatedUsers[existingUserIndex] = {
+			...updatedUsers[existingUserIndex],
+			lastMessage: {
+				text: message.text || '',
+				createdAt: message.createdAt,
+				senderId: message.senderId,
+			},
+		};
+		return updatedUsers;
+	} else {
+		// User not found - this shouldn't happen in normal flow, but handle gracefully
+		console.warn(
+			'⚠️ ChatStore: Trying to update last message for user not in sidebar:',
+			userId,
+		);
+		return users;
+	}
 };
 
 /**
@@ -225,6 +248,25 @@ export const createChatStore = (): ChatStore => {
 
 	// Track processed message ids to prevent duplicate processing
 	let processedMessageIds = new Set<string>();
+
+	// Debug function for development
+	const debugDuplicates = () => {
+		const messageIds = state.messages.map((m) => m._id);
+		const uniqueIds = new Set(messageIds);
+		const duplicates = messageIds.filter(
+			(id, index) => messageIds.indexOf(id) !== index,
+		);
+
+		console.log('🔍 ChatStore Debug:');
+		console.log('Total messages:', messageIds.length);
+		console.log('Unique messages:', uniqueIds.size);
+		console.log('Processed IDs:', Array.from(processedMessageIds));
+		if (duplicates.length > 0) {
+			console.warn('🚨 Duplicate message IDs found:', duplicates);
+		}
+
+		return { total: messageIds.length, unique: uniqueIds.size, duplicates };
+	};
 
 	// Listeners for state changes
 	const listeners = new Set<() => void>();
@@ -322,6 +364,18 @@ export const createChatStore = (): ChatStore => {
 	};
 
 	const addMessage = (message: Message): void => {
+		const messageId = String(message._id);
+
+		// Check if message was already processed to prevent duplicates
+		if (processedMessageIds.has(messageId)) {
+			console.log(
+				'🔄 ChatStore: Skipping duplicate message in addMessage:',
+				messageId,
+			);
+			return;
+		}
+		processedMessageIds.add(messageId);
+
 		const next = dedupeAndSortMessages([...state.messages, message]);
 
 		setState({ messages: next });
@@ -349,6 +403,7 @@ export const createChatStore = (): ChatStore => {
 
 		// Prevent duplicate processing which leads to unread overcounting
 		if (processedMessageIds.has(messageId)) {
+			console.log('🔄 ChatStore: Skipping duplicate message:', messageId);
 			return;
 		}
 		processedMessageIds.add(messageId);
@@ -376,33 +431,61 @@ export const createChatStore = (): ChatStore => {
 		}
 
 		// Update the peer's last message in the users list so the sidebar reorders
-		const usersWithLastMessage = updateUserLastMessage(
-			state.users,
-			peerUserId,
-			message,
-		);
-		const reorderedUsers = sortUsersByRecentActivity(usersWithLastMessage);
-		setState({ users: reorderedUsers });
+		// Only if the user exists in the sidebar (they should after sending/receiving messages)
+		const userExists = state.users.some((u) => u._id === peerUserId);
+		if (userExists) {
+			const usersWithLastMessage = updateUserLastMessage(
+				state.users,
+				peerUserId,
+				message,
+			);
+			const reorderedUsers =
+				sortUsersByRecentActivity(usersWithLastMessage);
+			setState({ users: reorderedUsers });
+
+			console.log(
+				`📝 Updated last message for user ${peerUserId}: "${message.text}" at ${message.createdAt}`,
+			);
+		} else {
+			console.log(
+				'⚠️ ChatStore: Received message from user not in sidebar:',
+				peerUserId,
+			);
+			// Could fetch user details here if needed, but this should be rare
+		}
 	};
 
-	const markMessagesAsRead = (
+	const markMessagesAsRead = async (
 		senderId: string,
 		receiverId?: string,
-	): void => {
-		// Update message read status locally
-		const updatedMessages = markMessagesAsReadLocally(
-			state.messages,
-			senderId,
-			receiverId,
-		);
-		setState({ messages: updatedMessages });
+	): Promise<void> => {
+		console.log('📖 ChatStore: Marking messages as read from:', senderId);
 
-		// Clear unread count for this sender
-		const updatedUsers = receiverId
-			? clearUnreadCountForUser(state.users, senderId)
-			: clearUnreadCountForUser(state.users, senderId);
+		try {
+			await ChatApi.markMessagesAsRead(senderId);
+			console.log('✅ ChatStore: Messages marked as read');
 
-		setState({ users: updatedUsers });
+			// Update message read status locally
+			const updatedMessages = markMessagesAsReadLocally(
+				state.messages,
+				senderId,
+				receiverId,
+			);
+			// Use deduplication for consistency (though shouldn't be needed here)
+			setState({ messages: dedupeAndSortMessages(updatedMessages) });
+
+			// Clear unread count for this sender
+			const updatedUsers = receiverId
+				? clearUnreadCountForUser(state.users, senderId)
+				: clearUnreadCountForUser(state.users, senderId);
+
+			setState({ users: updatedUsers });
+		} catch (error: any) {
+			console.error(
+				'❌ ChatStore: Error marking messages as read:',
+				error,
+			);
+		}
 	};
 
 	const setUserTyping = (userId: string, isTyping: boolean): void => {
@@ -447,9 +530,9 @@ export const createChatStore = (): ChatStore => {
 		setUsersLoading(true);
 
 		try {
-			const res = await api.get('/message/users');
-			console.log('✅ ChatStore: Users fetched:', res.data);
-			setUsers(res.data);
+			const users = await ChatApi.getConversationUsers();
+			console.log('✅ ChatStore: Users fetched:', users);
+			setUsers(users);
 		} catch (error: any) {
 			console.error('❌ ChatStore: Error fetching users:', error);
 			toast.error(
@@ -460,16 +543,62 @@ export const createChatStore = (): ChatStore => {
 		}
 	};
 
+	const getUserById = async (userId: string): Promise<User | null> => {
+		console.log('🔍 ChatStore: Fetching user by ID:', userId);
+
+		try {
+			const user = await ChatApi.getUserById(userId);
+			console.log('✅ ChatStore: User fetched by ID:', user);
+
+			// Add the user to the users list if not already present
+			const currentUsers = state.users;
+			const existingUser = currentUsers.find((u) => u._id === userId);
+
+			if (!existingUser) {
+				const updatedUsers = [user, ...currentUsers];
+				setUsers(updatedUsers);
+			}
+
+			return user;
+		} catch (error: any) {
+			console.error('❌ ChatStore: Error fetching user by ID:', error);
+			toast.error(error.response?.data?.message || 'Error fetching user');
+			return null;
+		}
+	};
+
 	const getMessages = async (userId: string): Promise<void> => {
 		console.log('🔍 ChatStore: Fetching messages for user:', userId);
+
+		// Ensure we're only loading messages for the currently selected user
+		if (state.selectedUser?._id !== userId) {
+			console.log(
+				'🚫 ChatStore: Ignoring messages fetch for non-selected user:',
+				userId,
+			);
+			return;
+		}
+
 		setMessagesLoading(true);
 
 		try {
-			const res = await api.get(`/message/${userId}`, {
-				params: { limit: 30 },
-			});
-			console.log('✅ ChatStore: Messages fetched:', res.data);
-			setMessages(res.data);
+			const messages = await ChatApi.getMessages(userId, { limit: 30 });
+			console.log(
+				'✅ ChatStore: Messages fetched for user:',
+				userId,
+				'- Count:',
+				messages.length,
+			);
+
+			// Double-check the user is still selected before setting messages
+			if (state.selectedUser?._id === userId) {
+				setMessages(messages);
+			} else {
+				console.log(
+					'🚫 ChatStore: User changed during fetch, ignoring messages for:',
+					userId,
+				);
+			}
 		} catch (error: any) {
 			console.error('❌ ChatStore: Error fetching messages:', error);
 			toast.error(
@@ -490,11 +619,11 @@ export const createChatStore = (): ChatStore => {
 		const oldest = state.messages[0]?.createdAt;
 
 		try {
-			const res = await api.get(`/message/${peerId}`, {
-				params: { before: oldest, limit: 30 },
+			const older = await ChatApi.getMessages(peerId, {
+				before: oldest,
+				limit: 30,
 			});
 
-			const older: Message[] = res.data || [];
 			if (older.length === 0) {
 				// No more messages to load
 				const cursors = { ...state.messageCursors };
@@ -548,11 +677,66 @@ export const createChatStore = (): ChatStore => {
 		setSendingMessage(true);
 
 		try {
-			const res = await api.post(
-				`/message/send/${state.selectedUser._id}`,
+			const newMessage = await ChatApi.sendMessage(
+				state.selectedUser._id,
 				messageData,
 			);
-			console.log('✅ ChatStore: Message sent:', res.data);
+			console.log('✅ ChatStore: Message sent:', newMessage);
+			console.log(
+				'📋 ChatStore: Current processed IDs before add:',
+				Array.from(processedMessageIds),
+			);
+
+			// Store sent message ID to prevent duplicate when socket echoes it back
+			processedMessageIds.add(String(newMessage._id));
+			console.log(
+				'📋 ChatStore: Added message ID to processed:',
+				String(newMessage._id),
+			);
+
+			// Add message to current conversation immediately for better UX - use deduplication
+			const updatedMessages = dedupeAndSortMessages([
+				...state.messages,
+				newMessage,
+			]);
+			setState({ messages: updatedMessages });
+			console.log(
+				'📋 ChatStore: Messages after send:',
+				updatedMessages.length,
+			);
+
+			// Ensure the selected user is in the users list (for new conversations)
+			const existingUser = state.users.find(
+				(u) => u._id === state.selectedUser!._id,
+			);
+			if (!existingUser) {
+				console.log(
+					'📝 ChatStore: Adding new user to sidebar:',
+					state.selectedUser!._id,
+				);
+				const updatedUsers = [
+					{
+						...state.selectedUser!,
+						lastMessage: {
+							text: newMessage.text || '',
+							createdAt: newMessage.createdAt,
+							senderId: newMessage.senderId,
+						},
+						unreadCount: 0,
+					},
+					...state.users,
+				];
+				setState({ users: updatedUsers });
+			} else {
+				// Update existing user's last message
+				const updatedUsers = updateUserLastMessage(
+					state.users,
+					state.selectedUser._id,
+					newMessage,
+				);
+				const reorderedUsers = sortUsersByRecentActivity(updatedUsers);
+				setState({ users: reorderedUsers });
+			}
 		} catch (error: any) {
 			console.error('❌ ChatStore: Error sending message:', error);
 			toast.error(
@@ -579,7 +763,7 @@ export const createChatStore = (): ChatStore => {
 		setMessages,
 		addMessage,
 		handleIncomingMessage,
-		markMessagesAsRead,
+		markMessagesAsRead: markMessagesAsRead,
 		setUserTyping,
 		updateUserStatus,
 		setUsersLoading,
@@ -588,9 +772,13 @@ export const createChatStore = (): ChatStore => {
 
 		// API methods
 		getUsers,
+		getUserById,
 		getMessages,
 		loadOlderMessages,
 		sendMessage,
+
+		// Debug methods (only in development)
+		debugDuplicates,
 	};
 };
 
@@ -599,3 +787,8 @@ export const createChatStore = (): ChatStore => {
 // ============================================================================
 
 export const chatStore = createChatStore();
+
+// Expose debug function globally for development
+if (typeof window !== 'undefined') {
+	(window as any).chatStoreDebug = chatStore.debugDuplicates;
+}

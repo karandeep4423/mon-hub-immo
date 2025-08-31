@@ -8,7 +8,11 @@ import { useChat } from '../../hooks/useChat';
 import { useSocket } from '../../context/SocketContext';
 import { getDetailedUserPresenceText } from './messageUtils';
 
-const ChatPage: React.FC = () => {
+interface ChatPageProps {
+	contextMessage?: React.ReactNode;
+}
+
+const ChatPage: React.FC<ChatPageProps> = ({ contextMessage }) => {
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 	const { selectedUser, userStatuses, users } = useChat();
 	const { onlineUsers } = useSocket();
@@ -85,6 +89,13 @@ const ChatPage: React.FC = () => {
 						</>
 					)}
 				</div>
+
+				{/* Context Message */}
+				{contextMessage && selectedUser && (
+					<div className="px-4 py-3 bg-gray-50 border-b">
+						{contextMessage}
+					</div>
+				)}
 
 				{/* Messages */}
 				<div className="flex-1 overflow-hidden">

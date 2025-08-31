@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { connectDB } from './config/database';
 import authRoutes from './routes/auth';
 import messageRoutes from './routes/chat';
+import propertyRoutes from './routes/property';
 import { createSocketServer, createSocketService } from './chat';
 
 dotenv.config();
@@ -53,6 +54,7 @@ app.get('/api/health', (req, res) => {
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/message', messageRoutes);
+app.use('/api/property', propertyRoutes);
 
 // Handle 404 routes
 app.use('*', (req, res) => {

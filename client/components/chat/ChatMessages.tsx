@@ -12,11 +12,16 @@ import {
 	isNearTop,
 	calculateScrollDelta,
 	groupMessagesByDate,
+	findBestAnchorMessage,
+	restoreScrollPosition,
+	debounce,
+	type ScrollAnchor,
 } from './messageUtils';
 import {
 	NoConversationSelected,
 	EmptyConversation,
 	LoadingMessages,
+	LoadingOlderMessages,
 	DateSeparator,
 } from './ui';
 import TypingIndicator from './TypingIndicator';
@@ -87,6 +92,14 @@ const ChatMessages: React.FC = () => {
 	// Auto-scroll state
 	const [shouldAutoScroll, setShouldAutoScroll] = React.useState(true);
 
+	// Loading older messages state
+	const [isLoadingOlder, setIsLoadingOlder] = React.useState(false);
+
+	// Scroll anchor for position preservation
+	const [scrollAnchor, setScrollAnchor] = React.useState<ScrollAnchor | null>(
+		null,
+	);
+
 	// Current user ID for message ownership
 	const currentUserId = user?._id || user?.id;
 
@@ -102,13 +115,11 @@ const ChatMessages: React.FC = () => {
 	}, []);
 
 	/**
-	 * Handle scroll events to:
-	 * - Determine if user has scrolled up (disable auto-scroll)
-	 * - Trigger infinite scroll when near top
+	 * Enhanced scroll handler with improved position preservation
 	 */
 	const handleScroll = useCallback(async () => {
 		const container = messagesContainerRef.current;
-		if (!container) return;
+		if (!container || isLoadingOlder) return;
 
 		const { scrollTop, scrollHeight, clientHeight } = container;
 		const nearBottom = isNearBottom(
@@ -120,23 +131,49 @@ const ChatMessages: React.FC = () => {
 
 		setShouldAutoScroll(nearBottom);
 
-		// Infinite scroll: load older when near top
-		if (isNearTop(scrollTop, 24) && selectedUser?._id) {
-			const prevHeight = container.scrollHeight;
-			const prevScrollTop = container.scrollTop;
+		// Load older messages when near top - with better UX
+		if (isNearTop(scrollTop, 50) && selectedUser?._id && !isLoadingOlder) {
+			console.log('🔄 Loading older messages...');
+			setIsLoadingOlder(true);
 
-			const older = await loadOlderMessages();
-			if (older && older.length > 0) {
-				// Preserve viewport by adjusting scrollTop by height delta
-				const newHeight = container.scrollHeight;
-				container.scrollTop = calculateScrollDelta(
-					prevHeight,
-					newHeight,
-					prevScrollTop,
-				);
+			// Find and store the current anchor message for scroll restoration
+			const anchor = findBestAnchorMessage(container);
+			if (anchor) {
+				setScrollAnchor(anchor);
+				console.log('📍 Scroll anchor set:', anchor.messageId);
+			}
+
+			try {
+				const older = await loadOlderMessages();
+				if (older && older.length > 0) {
+					console.log(`✅ Loaded ${older.length} older messages`);
+
+					// Restore scroll position after DOM update
+					requestAnimationFrame(() => {
+						if (anchor && container) {
+							restoreScrollPosition(container, anchor);
+							console.log(
+								'🎯 Scroll position restored to anchor:',
+								anchor.messageId,
+							);
+						}
+						setScrollAnchor(null);
+					});
+				} else {
+					console.log('📭 No more older messages to load');
+				}
+			} catch (error) {
+				console.error('❌ Error loading older messages:', error);
+			} finally {
+				setIsLoadingOlder(false);
 			}
 		}
-	}, [selectedUser?._id, loadOlderMessages]);
+	}, [selectedUser?._id, loadOlderMessages, isLoadingOlder]);
+
+	// Debounced version of scroll handler to prevent excessive calls
+	const debouncedHandleScroll = useCallback(debounce(handleScroll, 100), [
+		handleScroll,
+	]);
 
 	// ============================================================================
 	// EFFECTS
@@ -153,6 +190,12 @@ const ChatMessages: React.FC = () => {
 			);
 			getMessages(selectedUser._id);
 			setShouldAutoScroll(true);
+			setIsLoadingOlder(false); // Reset loading state for new conversation
+			setScrollAnchor(null); // Clear any existing anchor
+		} else {
+			console.log('📱 ChatMessages: No user selected, clearing messages');
+			setIsLoadingOlder(false);
+			setScrollAnchor(null);
 		}
 	}, [selectedUser?._id, getMessages]);
 
@@ -269,8 +312,11 @@ const ChatMessages: React.FC = () => {
 			<div
 				className="flex-1 overflow-y-auto py-4 min-h-0"
 				ref={messagesContainerRef}
-				onScroll={handleScroll}
+				onScroll={debouncedHandleScroll}
 			>
+				{/* Loading indicator for older messages */}
+				<LoadingOlderMessages isLoading={isLoadingOlder} />
+
 				{/* Empty state or messages */}
 				{messages.length === 0 ? (
 					<EmptyConversation selectedUser={selectedUser} />

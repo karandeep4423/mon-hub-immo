@@ -17,6 +17,8 @@ export {
 	ButtonSpinner,
 } from './LoadingSpinner';
 
+export { default as LoadingOlderMessages } from './LoadingOlderMessages';
+
 // ============================================================================
 // USER COMPONENTS
 // ============================================================================

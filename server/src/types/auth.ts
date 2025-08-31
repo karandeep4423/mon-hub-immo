@@ -1,6 +1,10 @@
 import { Request } from 'express';
 
 export interface AuthRequest extends Request {
-  userId?: string;
-  clientIP?: string;
+	userId?: string;
+	user?: {
+		id: string;
+		userType: 'agent' | 'apporteur';
+	};
+	clientIP?: string;
 }

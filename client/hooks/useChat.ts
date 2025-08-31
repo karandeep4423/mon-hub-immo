@@ -25,8 +25,22 @@ interface TypingActions {
 	stopTyping: () => void;
 }
 
+interface User {
+	_id: string;
+	firstName?: string;
+	lastName?: string;
+	email: string;
+	lastMessage?: {
+		text: string;
+		createdAt: string;
+		senderId: string;
+	} | null;
+	unreadCount?: number;
+}
+
 interface ChatActions {
 	getUsers: () => Promise<void>;
+	getUserById: (userId: string) => Promise<User | null>;
 	getMessages: (userId: string) => Promise<void>;
 	loadOlderMessages: () => Promise<any[]>;
 	sendMessage: (messageData: {
@@ -224,6 +238,7 @@ const useChatActions = (): ChatActions => {
 	const actions = useMemo(
 		() => ({
 			getUsers: chatStore.getUsers,
+			getUserById: chatStore.getUserById,
 			getMessages: chatStore.getMessages,
 			loadOlderMessages: chatStore.loadOlderMessages,
 			sendMessage: chatStore.sendMessage,
