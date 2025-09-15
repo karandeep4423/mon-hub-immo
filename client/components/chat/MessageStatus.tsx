@@ -1,11 +1,8 @@
 'use client';
 
 import React from 'react';
-import {
-	getUserDisplayName,
-	getUserStatusText,
-	formatMessageTime,
-} from './messageUtils';
+import { getUserDisplayName, getUserStatusText } from './utils/userUtils';
+import { formatMessageTime } from './utils/messageUtils';
 import { OnlineIndicator } from './ui';
 
 // ============================================================================
@@ -53,7 +50,7 @@ interface MessageTimestampProps {
  * Get status indicator color
  */
 const getStatusColor = (isOnline?: boolean): string => {
-	return isOnline ? 'text-green-500' : 'text-gray-500';
+	return isOnline ? 'text-[#00b4d8]' : 'text-gray-500';
 };
 
 // ============================================================================
@@ -121,10 +118,10 @@ DoubleCheckmark.displayName = 'DoubleCheckmark';
  * @param colorClass - Custom color classes for styling
  */
 export const ReadReceipt: React.FC<ReadReceiptProps> = React.memo(
-	({ isRead, colorClass = 'text-blue-100' }) => (
+	({ isRead, colorClass = 'text-white/70' }) => (
 		<div className="flex items-center space-x-1">
 			<SingleCheckmark className={colorClass} />
-			{isRead && <DoubleCheckmark className="text-blue-200" />}
+			{isRead && <DoubleCheckmark className="text-white/90" />}
 		</div>
 	),
 );
@@ -143,7 +140,7 @@ ReadReceipt.displayName = 'ReadReceipt';
 export const MessageTimestamp: React.FC<MessageTimestampProps> = React.memo(
 	({ timestamp, isMyMessage, className = '' }) => {
 		const formattedTime = formatMessageTime(timestamp);
-		const textColor = isMyMessage ? 'text-blue-100' : 'text-gray-500';
+		const textColor = isMyMessage ? 'text-white/70' : 'text-gray-500';
 
 		return (
 			<span className={`text-xs ${textColor} ${className}`}>

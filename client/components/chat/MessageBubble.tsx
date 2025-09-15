@@ -56,7 +56,7 @@ const getBubbleClasses = (isMyMessage: boolean): string => {
 		'max-w-[70%] sm:max-w-[85%] rounded-lg px-4 py-2 shadow-sm';
 
 	if (isMyMessage) {
-		return `${baseClasses} bg-blue-500 text-white rounded-br-sm`;
+		return `${baseClasses} bg-[#00b4d8] text-white rounded-br-sm`;
 	}
 
 	return `${baseClasses} bg-white text-gray-800 border border-gray-200 rounded-bl-sm`;
@@ -134,7 +134,7 @@ const MessageFooter: React.FC<MessageFooterProps> = React.memo(
 			{isMyMessage && (
 				<ReadReceipt
 					isRead={Boolean(isRead)}
-					colorClass="text-blue-100"
+					colorClass="text-white/70"
 				/>
 			)}
 		</div>

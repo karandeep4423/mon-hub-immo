@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '../ui/Button';
 import PropertyManager from '../property/PropertyManager';
+import Link from 'next/link';
 
 const Home = () => {
 	const { logout, user } = useAuth();
@@ -106,12 +107,11 @@ const Home = () => {
 							</svg>
 						</div>
 						<div className="ml-4">
+							<Link href="/chat" className="hover:underline">	
 							<h3 className="text-lg font-semibold text-gray-900">
 								Messages
 							</h3>
-							<p className="text-2xl font-bold text-purple-600">
-								0
-							</p>
+							</Link>
 						</div>
 					</div>
 				</div>

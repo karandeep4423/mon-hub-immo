@@ -6,7 +6,7 @@ import ChatMessages from './ChatMessages';
 import MessageInput from './MessageInput';
 import { useChat } from '../../hooks/useChat';
 import { useSocket } from '../../context/SocketContext';
-import { getDetailedUserPresenceText } from './messageUtils';
+import { getDetailedUserPresenceText } from './utils';
 
 interface ChatPageProps {
 	contextMessage?: React.ReactNode;
@@ -69,7 +69,7 @@ const ChatPage: React.FC<ChatPageProps> = ({ contextMessage }) => {
 
 					{selectedUser && (
 						<>
-							<div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+							<div className="w-10 h-10 bg-gradient-to-br from-[#00b4d8] to-[#0094b3] rounded-full flex items-center justify-center text-white font-semibold">
 								{selectedUser.firstName?.[0] ||
 									selectedUser.firstName?.[0] ||
 									'?'}

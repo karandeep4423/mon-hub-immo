@@ -39,7 +39,8 @@ export * from './ui';
 // UTILITIES
 // ============================================================================
 
-export * from './messageUtils';
+// Re-export everything from utils for backwards compatibility
+export * from './utils';
 
 // ============================================================================
 // DATE GROUPING UTILITIES
@@ -49,10 +50,10 @@ export {
 	groupMessagesByDate,
 	getRelativeDateText,
 	shouldShowDateSeparator,
-} from './messageUtils';
+} from './utils/dateUtils';
 
 // ============================================================================
 // TYPE EXPORTS
 // ============================================================================
 
-export type { User, Message } from './messageUtils';
+export type { User, Message } from './utils';

@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { getUserDisplayName, isUserTyping } from './messageUtils';
+import { getUserDisplayName, isUserTyping } from './utils/userUtils';
 import { TypingDots } from './ui';
+import { CHAT_TEXT } from '@/lib/constants/text';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -60,7 +61,7 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = React.memo(
 				<div className="flex items-center space-x-2">
 					<TypingDots size="md" color="bg-gray-400" />
 					<span className="select-none">
-						{displayName} is typing...
+						{displayName} {CHAT_TEXT.typingIndicator}
 					</span>
 				</div>
 			</div>

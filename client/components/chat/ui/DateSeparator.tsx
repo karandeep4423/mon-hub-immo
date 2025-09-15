@@ -37,8 +37,8 @@ const DateSeparator: React.FC<DateSeparatorProps> = React.memo(
 	({ dateText, className = '' }) => {
 		return (
 			<div className={`flex justify-center my-6 px-4 ${className}`}>
-				<div className="bg-blue-600 rounded-lg px-3 py-1.5 shadow-sm border border-blue-600 ">
-					<span className="text-xs font-medium text-gray-100  select-none tracking-wide">
+				<div className="bg-[#00b4d8] rounded-lg px-3 py-1.5 shadow-sm border border-[#00b4d8] ">
+					<span className="text-xs font-medium text-white select-none tracking-wide">
 						{dateText}
 					</span>
 				</div>

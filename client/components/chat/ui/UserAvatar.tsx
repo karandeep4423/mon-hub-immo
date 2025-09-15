@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { getUserDisplayName, getUserInitials } from '../messageUtils';
+import { getUserDisplayName, getUserInitials } from '../utils/userUtils';
 
 // ============================================================================
 // USER AVATAR COMPONENTS
@@ -63,14 +63,14 @@ const getAvatarSize = (size: 'sm' | 'md' | 'lg' | 'xl'): string => {
  */
 const getAvatarColor = (userId: string): string => {
 	const colors = [
-		'bg-blue-500',
-		'bg-green-500',
-		'bg-purple-500',
-		'bg-pink-500',
-		'bg-indigo-500',
-		'bg-red-500',
-		'bg-yellow-500',
-		'bg-teal-500',
+		'bg-[#00b4d8]',
+		'bg-[#0094b3]',
+		'bg-[#007a94]',
+		'bg-[#006075]',
+		'bg-[#004656]',
+		'bg-[#6ab7db]',
+		'bg-[#4da8d4]',
+		'bg-[#2f99cd]',
 	];
 
 	// Use user ID to consistently pick same color
@@ -98,7 +98,7 @@ export const OnlineIndicator: React.FC<OnlineIndicatorProps> = React.memo(
 
 		return (
 			<div
-				className={`${positionClass} ${sizeClass} bg-green-500 border-2 border-white rounded-full`}
+				className={`${positionClass} ${sizeClass} bg-[#00b4d8] border-2 border-white rounded-full`}
 			/>
 		);
 	},

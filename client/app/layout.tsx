@@ -5,6 +5,7 @@ import { AuthProvider } from '@/providers/AuthProvider';
 import { ToastContainer } from 'react-toastify';
 import { SocketWrapper } from '@/components/chat/SocketWrapper';
 import Header from '@/components/header/Header';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import 'react-toastify/dist/ReactToastify.css';
 import './globals.css';
 
@@ -23,22 +24,24 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body className={inter.className}>
-				<Header />
-				<AuthProvider>
-					<SocketWrapper>{children}</SocketWrapper>
-					<ToastContainer
-						position="top-right"
-						autoClose={5000}
-						hideProgressBar={false}
-						newestOnTop={false}
-						closeOnClick
-						rtl={false}
-						pauseOnFocusLoss
-						draggable
-						pauseOnHover
-						theme="light"
-					/>
-				</AuthProvider>
+				<ErrorBoundary>
+					<Header />
+					<AuthProvider>
+						<SocketWrapper>{children}</SocketWrapper>
+						<ToastContainer
+							position="top-right"
+							autoClose={5000}
+							hideProgressBar={false}
+							newestOnTop={false}
+							closeOnClick
+							rtl={false}
+							pauseOnFocusLoss
+							draggable
+							pauseOnHover
+							theme="light"
+						/>
+					</AuthProvider>
+				</ErrorBoundary>
 			</body>
 		</html>
 	);

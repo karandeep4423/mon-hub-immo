@@ -6,17 +6,17 @@ import { useAuth } from '../../hooks/useAuth';
 import { useSocket } from '../../context/SocketContext';
 import { api } from '@/lib/api';
 import MessageBubble from './MessageBubble';
+import { isMyMessage } from './utils/messageUtils';
+import { groupMessagesByDate } from './utils/dateUtils';
 import {
-	isMyMessage,
 	isNearBottom,
 	isNearTop,
 	calculateScrollDelta,
-	groupMessagesByDate,
 	findBestAnchorMessage,
 	restoreScrollPosition,
 	debounce,
 	type ScrollAnchor,
-} from './messageUtils';
+} from './utils/scrollUtils';
 import {
 	NoConversationSelected,
 	EmptyConversation,
@@ -25,6 +25,7 @@ import {
 	DateSeparator,
 } from './ui';
 import TypingIndicator from './TypingIndicator';
+import { CHAT_TEXT } from '@/lib/constants/text';
 
 // ============================================================================
 // HELPER COMPONENTS
@@ -38,8 +39,8 @@ const ScrollToBottomButton: React.FC<{
 }> = ({ onClick }) => (
 	<button
 		onClick={onClick}
-		className="absolute bottom-4 right-4 bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
-		title="Scroll to bottom"
+		className="absolute bottom-4 right-4 bg-[#00b4d8] hover:bg-[#0094b3] text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+		title="Défiler vers le bas"
 	>
 		<svg
 			className="w-5 h-5"

@@ -75,7 +75,7 @@ export const UnreadBadge: React.FC<UnreadBadgeProps> = React.memo(
 		count,
 		maxCount = 99,
 		size = 'md',
-		color = 'bg-blue-500 text-white',
+		color = 'bg-[#00b4d8] text-white',
 		className = '',
 	}) => {
 		// Don't render if no unread messages

@@ -41,8 +41,8 @@ const getSpinnerSize = (size: 'sm' | 'md' | 'lg'): string => {
 export const LoadingSpinner: React.FC<LoadingSpinnerProps> = React.memo(
 	({
 		size = 'md',
-		color = 'border-blue-500',
-		text = 'Loading...',
+		color = 'border-[#00b4d8]',
+		text = 'Chargement...',
 		showText = false,
 		className = '',
 	}) => {
@@ -69,7 +69,7 @@ LoadingSpinner.displayName = 'LoadingSpinner';
 export const CenteredLoading: React.FC<{
 	text?: string;
 	className?: string;
-}> = React.memo(({ text = 'Loading...', className = '' }) => (
+}> = React.memo(({ text = 'Chargement...', className = '' }) => (
 	<div className={`flex-1 flex items-center justify-center ${className}`}>
 		<div className="text-center">
 			<LoadingSpinner size="md" showText />

@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { getUserDisplayName } from '../messageUtils';
+import { getUserDisplayName } from '../utils/userUtils';
+import { CHAT_TEXT } from '@/lib/constants/text';
 
 // ============================================================================
 // EMPTY STATE COMPONENTS
@@ -34,7 +35,7 @@ interface NoConversationSelectedProps {
 const ChatIcon: React.FC<{ className?: string }> = React.memo(
 	({ className = '' }) => (
 		<svg
-			className={`w-8 h-8 text-blue-500 ${className}`}
+			className={`w-8 h-8 text-[#00b4d8] ${className}`}
 			fill="none"
 			stroke="currentColor"
 			viewBox="0 0 24 24"
@@ -57,7 +58,7 @@ ChatIcon.displayName = 'ChatIcon';
 const MessageIcon: React.FC<{ className?: string }> = React.memo(
 	({ className = '' }) => (
 		<svg
-			className={`w-8 h-8 text-blue-500 ${className}`}
+			className={`w-8 h-8 text-[#00b4d8] ${className}`}
 			fill="none"
 			stroke="currentColor"
 			viewBox="0 0 24 24"
@@ -89,14 +90,15 @@ export const NoConversationSelected: React.FC<NoConversationSelectedProps> =
 			className={`flex-1 flex items-center justify-center bg-gray-50 ${className}`}
 		>
 			<div className="text-center max-w-md mx-auto px-4">
-				<div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+				<div className="w-16 h-16 bg-[#e6f7ff] rounded-full flex items-center justify-center mx-auto mb-4">
 					<ChatIcon />
 				</div>
 				<h3 className="text-lg font-semibold text-gray-700 mb-2">
-					Welcome to Chat
+					Bienvenue dans le Chat
 				</h3>
 				<p className="text-gray-500">
-					Select a conversation from the sidebar to start chatting
+					Sélectionnez une conversation dans la barre latérale pour
+					commencer à discuter
 				</p>
 			</div>
 		</div>
@@ -120,14 +122,14 @@ export const EmptyConversation: React.FC<EmptyConversationProps> = React.memo(
 				className={`flex-1 flex items-center justify-center ${className}`}
 			>
 				<div className="text-center max-w-md mx-auto px-4">
-					<div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+					<div className="w-16 h-16 bg-[#e6f7ff] rounded-full flex items-center justify-center mx-auto mb-4">
 						<MessageIcon />
 					</div>
 					<h3 className="text-lg font-semibold text-gray-700 mb-2">
-						No messages yet
+						Aucun message pour le moment
 					</h3>
 					<p className="text-gray-500">
-						Start a conversation with {displayName}
+						Commencez une conversation avec {displayName}
 					</p>
 				</div>
 			</div>
@@ -148,8 +150,8 @@ export const LoadingMessages: React.FC<{ className?: string }> = React.memo(
 			className={`flex-1 flex items-center justify-center bg-gray-50 ${className}`}
 		>
 			<div className="text-center">
-				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
-				<p className="text-gray-500">Loading messages...</p>
+				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00b4d8] mx-auto mb-2"></div>
+				<p className="text-gray-500">{CHAT_TEXT.loadingMessages}</p>
 			</div>
 		</div>
 	),
@@ -168,8 +170,8 @@ export const LoadingUsers: React.FC<{ className?: string }> = React.memo(
 			className={`h-full bg-white border-r border-gray-200 flex items-center justify-center ${className}`}
 		>
 			<div className="text-center">
-				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-				<p className="text-gray-500 mt-2">Loading conversations...</p>
+				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00b4d8] mx-auto"></div>
+				<p className="text-gray-500 mt-2">{CHAT_TEXT.loadingUsers}</p>
 			</div>
 		</div>
 	),

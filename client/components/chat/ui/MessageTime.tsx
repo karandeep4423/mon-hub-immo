@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { formatMessageTime } from '../messageUtils';
+import { formatMessageTime } from '../utils/messageUtils';
 
 // ============================================================================
 // MESSAGE TIME COMPONENT
@@ -28,7 +28,7 @@ interface MessageTimeProps {
  * Get text color based on message ownership
  */
 const getTimeColor = (isMyMessage: boolean): string => {
-	return isMyMessage ? 'text-blue-100' : 'text-gray-500';
+	return isMyMessage ? 'text-white/70' : 'text-gray-500';
 };
 
 /**

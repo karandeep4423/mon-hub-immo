@@ -189,11 +189,11 @@ const ChatPageRoute = () => {
 						/>
 					</svg>
 					<span className="text-sm font-medium text-green-800">
-						Demande d'information
+						Demande d&apos;information
 					</span>
 				</div>
 				<p className="text-sm text-green-700 mt-1">
-					Vous contactez l'agent à propos de cette annonce immobilière
+					Vous contactez l&apos;agent à propos de cette annonce immobilière
 					{propertyDetails && (
 						<>
 							:{' '}

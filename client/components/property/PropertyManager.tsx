@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import PropertyForm from './PropertyForm';
 import { useAuth } from '@/hooks/useAuth';
+import { PROPERTY_TEXT, getPropertyCountText } from '@/lib/constants/text';
 import {
 	PropertyService,
 	Property,
@@ -30,11 +31,13 @@ const PropertyManager: React.FC = () => {
 			setLoading(true);
 			const data = await PropertyService.getMyProperties();
 			setProperties(data.properties);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error fetching properties:', error);
-			setError(
-				error.message || 'Erreur lors de la récupération de vos biens',
-			);
+			const errorMessage =
+				error instanceof Error
+					? error.message
+					: 'Erreur lors de la récupération de vos biens';
+			setError(errorMessage);
 		} finally {
 			setLoading(false);
 		}
@@ -56,9 +59,13 @@ const PropertyManager: React.FC = () => {
 
 			// Show success message (you could use a toast notification here)
 			alert('Annonce créée avec succès !');
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error creating property:', error);
-			setError(error.message || 'Erreur lors de la création du bien');
+			const errorMessage =
+				error instanceof Error
+					? error.message
+					: 'Erreur lors de la création du bien';
+			setError(errorMessage);
 
 			// Scroll to top to show error
 			window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -87,9 +94,13 @@ const PropertyManager: React.FC = () => {
 			setEditingProperty(null);
 			setShowForm(false);
 			setError(null);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error updating property:', error);
-			setError(error.message || 'Erreur lors de la mise à jour du bien');
+			const errorMessage =
+				error instanceof Error
+					? error.message
+					: 'Erreur lors de la mise à jour du bien';
+			setError(errorMessage);
 		} finally {
 			setFormLoading(false);
 		}
@@ -101,9 +112,13 @@ const PropertyManager: React.FC = () => {
 		try {
 			await PropertyService.deleteProperty(propertyId);
 			setProperties((prev) => prev.filter((p) => p._id !== propertyId));
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error deleting property:', error);
-			setError(error.message || 'Erreur lors de la suppression du bien');
+			const errorMessage =
+				error instanceof Error
+					? error.message
+					: 'Erreur lors de la suppression du bien';
+			setError(errorMessage);
 		}
 	};
 
@@ -119,11 +134,13 @@ const PropertyManager: React.FC = () => {
 			setProperties((prev) =>
 				prev.map((p) => (p._id === propertyId ? updatedProperty : p)),
 			);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error updating status:', error);
-			setError(
-				error.message || 'Erreur lors de la mise à jour du statut',
-			);
+			const errorMessage =
+				error instanceof Error
+					? error.message
+					: 'Erreur lors de la mise à jour du statut';
+			setError(errorMessage);
 		}
 	};
 
@@ -160,8 +177,8 @@ const PropertyManager: React.FC = () => {
 		return (
 			<div className="text-center py-12">
 				<p className="text-gray-600">
-					Vous devez être connecté en tant qu'agent ou apporteur pour
-					gérer des annonces.
+					Vous devez être connecté en tant&apos;agent ou apporteur
+					pour gérer des annonces.
 				</p>
 			</div>
 		);
@@ -217,11 +234,11 @@ const PropertyManager: React.FC = () => {
 						</div>
 						<div>
 							<h1 className="text-2xl font-bold text-gray-900">
-								Mes annonces immobilières
+								{PROPERTY_TEXT.title}
 							</h1>
 							<p className="text-gray-600">
-								Gérez et publiez vos biens • {properties.length}{' '}
-								annonce{properties.length !== 1 ? 's' : ''}
+								{PROPERTY_TEXT.subtitle} •{' '}
+								{getPropertyCountText(properties.length)}
 							</p>
 						</div>
 					</div>
@@ -243,7 +260,7 @@ const PropertyManager: React.FC = () => {
 									d="M12 6v6m0 0v6m0-6h6m-6 0H6"
 								/>
 							</svg>
-							Nouvelle annonce
+							{PROPERTY_TEXT.newProperty}
 						</Button>
 					</div>
 				</div>
@@ -322,15 +339,15 @@ const PropertyManager: React.FC = () => {
 							className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
 						>
 							<div className="flex">
-								<div className="w-48 h-32 bg-gray-200 flex-shrink-0">
+								<div className="w-48 h-32 bg-gray-200 flex-shrink-0 relative">
 									<img
-										src={property.mainImage}
+										src={
+											property.mainImage ||
+											'/placeholder-property.jpg'
+										}
 										alt={property.title}
-										className="w-full h-full object-cover"
-										onError={(e) => {
-											(e.target as HTMLImageElement).src =
-												'/placeholder-property.jpg';
-										}}
+										fill
+										className="object-cover"
 									/>
 								</div>
 								<div className="flex-1 p-4">

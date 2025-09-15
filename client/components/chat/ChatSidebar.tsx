@@ -7,10 +7,10 @@ import {
 	getUserDisplayName,
 	getUserInitials,
 	formatLastSeen,
-	formatMessageTime,
-	truncateMessage,
-} from './messageUtils';
+} from './utils/userUtils';
+import { formatMessageTime, truncateMessage } from './utils/messageUtils';
 import { UserAvatar, LoadingUsers, UnreadBadge } from './ui';
+import { CHAT_TEXT } from '@/lib/constants/text';
 
 interface ChatSidebarProps {
 	onClose?: () => void;
@@ -42,7 +42,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const formatLastMessage = (lastMessage: any) => {
-		if (!lastMessage) return 'No messages yet';
+		if (!lastMessage) return CHAT_TEXT.noMessagesYet;
 		return truncateMessage(lastMessage.text || '', 30);
 	};
 
@@ -52,11 +52,11 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
 		const isOnline = onlineUsers.includes(userId);
 
 		if (isOnline) {
-			return 'Online';
+			return CHAT_TEXT.online;
 		}
 
 		const effectiveLastSeen = status?.lastSeen || userObj?.lastSeen;
-		if (!effectiveLastSeen) return 'Offline';
+		if (!effectiveLastSeen) return CHAT_TEXT.offline;
 
 		return formatLastSeen(effectiveLastSeen);
 	};
@@ -76,7 +76,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
 			<div className="p-4 border-b border-gray-200">
 				<div className="flex items-center justify-between mb-4">
 					<h2 className="text-xl font-semibold text-gray-900">
-						Chats
+						{CHAT_TEXT.title}
 					</h2>
 					<div className="flex items-center space-x-2">
 						{/* Refresh button */}
@@ -88,7 +88,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
 								getUsers();
 							}}
 							className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-							title="Refresh conversations"
+							title="Rafraîchir les conversations"
 						>
 							<svg
 								className="w-5 h-5 text-gray-600"
@@ -131,10 +131,10 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
 				<div className="relative">
 					<input
 						type="text"
-						placeholder="Search conversations..."
+						placeholder={CHAT_TEXT.searchUsers}
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
-						className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+						className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00b4d8] focus:border-[#00b4d8] outline-none"
 					/>
 					<svg
 						className="absolute left-3 top-2.5 w-5 h-5 text-gray-400"
@@ -157,8 +157,8 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
 				{filteredUsers.length === 0 ? (
 					<div className="p-4 text-center text-gray-500">
 						{searchQuery
-							? 'No conversations found'
-							: 'No conversations yet'}
+							? CHAT_TEXT.noUsersFound
+							: CHAT_TEXT.noConversation}
 					</div>
 				) : (
 					<div className="divide-y divide-gray-200">
@@ -173,7 +173,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
 									onClick={() => handleUserSelect(user)}
 									className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
 										isSelected
-											? 'bg-blue-50 border-r-4 border-blue-500'
+											? 'bg-[#e6f7ff] border-r-4 border-[#00b4d8]'
 											: ''
 									}`}
 								>

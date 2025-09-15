@@ -2,10 +2,12 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useChat } from '../../hooks/useChat';
-import { isValidMessageContent, isEnterKeyPress } from './messageUtils';
+import { isValidMessageContent } from './utils/messageUtils';
+import { isEnterKeyPress } from './utils/keyboardUtils';
 import TypingIndicator from './TypingIndicator';
 import MessageStatus from './MessageStatus';
 import { ButtonSpinner } from './ui';
+import { CHAT_TEXT } from '@/lib/constants/text';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -28,19 +30,17 @@ interface MessageInputProps {
  * Get appropriate placeholder text based on user selection
  */
 const getPlaceholderText = (
-	selectedUser: any,
+	selectedUser: unknown,
 	customPlaceholder?: string,
 ): string => {
 	if (customPlaceholder) return customPlaceholder;
-	return selectedUser
-		? 'Type a message...'
-		: 'Select a user to start chatting';
+	return selectedUser ? CHAT_TEXT.typeMessage : CHAT_TEXT.selectUserToChat;
 };
 
 /**
  * Validate message content before sending
  */
-const isValidMessage = (message: string, selectedUser: any): boolean => {
+const isValidMessage = (message: string, selectedUser: unknown): boolean => {
 	return Boolean(selectedUser && isValidMessageContent(message));
 };
 
@@ -60,10 +60,12 @@ const SendButton: React.FC<{
 		type="submit"
 		disabled={isDisabled}
 		onClick={onClick}
-		className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-		aria-label={isSending ? 'Sending message...' : 'Send message'}
+		className="px-6 py-3 bg-[#00b4d8] text-white rounded-lg hover:bg-[#0094b3] disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[#00b4d8] focus:ring-offset-2"
+		aria-label={
+			isSending ? CHAT_TEXT.sendingMessage : CHAT_TEXT.sendMessageButton
+		}
 	>
-		{isSending ? <ButtonSpinner /> : 'Send'}
+		{isSending ? <ButtonSpinner /> : CHAT_TEXT.send}
 	</button>
 ));
 
@@ -88,11 +90,11 @@ const MessageInputField: React.FC<{
 				onChange={(e) => onChange(e.target.value)}
 				onKeyPress={onKeyPress}
 				placeholder={placeholder}
-				className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 resize-none"
+				className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00b4d8] focus:border-transparent disabled:bg-gray-100 resize-none"
 				disabled={disabled}
 				maxLength={maxLength}
 				autoComplete="off"
-				aria-label="Message input"
+				aria-label={CHAT_TEXT.messageInput}
 			/>
 			{maxLength && (
 				<div className="absolute -bottom-5 right-0 text-xs text-gray-400">
@@ -222,7 +224,7 @@ const MessageInput: React.FC<MessageInputProps> = React.memo(
 			(e: React.KeyboardEvent) => {
 				if (isEnterKeyPress(e)) {
 					e.preventDefault();
-					handleSubmit(e as any);
+					handleSubmit(e as unknown as React.FormEvent);
 				}
 			},
 			[handleSubmit],
