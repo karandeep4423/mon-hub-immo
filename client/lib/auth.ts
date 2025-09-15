@@ -1,3 +1,4 @@
+// client/lib/auth.ts
 import { api } from './api';
 import {
 	SignUpData,
