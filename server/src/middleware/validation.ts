@@ -583,3 +583,76 @@ export const updatePropertyStatusValidation = [
 		.isIn(['active', 'sold', 'rented', 'draft', 'archived'])
 		.withMessage('Statut invalide'),
 ];
+
+// Collaboration validation rules
+export const proposeCollaborationValidation = [
+	body('propertyId').isMongoId().withMessage('ID de propriété invalide'),
+	body('collaboratorId')
+		.optional()
+		.isMongoId()
+		.withMessage('ID de collaborateur invalide'),
+	body('commissionPercentage')
+		.isFloat({ min: 0, max: 100 })
+		.withMessage('Le pourcentage de commission doit être entre 0 et 100'),
+	body('message')
+		.optional()
+		.trim()
+		.isLength({ max: 500 })
+		.withMessage('Le message ne peut pas dépasser 500 caractères'),
+];
+
+export const collaborationIdValidation = [
+	body('collaborationId')
+		.isMongoId()
+		.withMessage('ID de collaboration invalide'),
+];
+
+export const respondToCollaborationValidation = [
+	body('response')
+		.isIn(['accepted', 'rejected'])
+		.withMessage('Réponse invalide'),
+];
+
+export const addCollaborationNoteValidation = [
+	body('content')
+		.trim()
+		.isLength({ min: 1, max: 1000 })
+		.withMessage('La note doit contenir entre 1 et 1000 caractères'),
+];
+
+export const updateProgressStatusValidation = [
+	body('targetStep')
+		.isIn([
+			'proposal',
+			'accepted',
+			'visit_planned',
+			'visit_completed',
+			'negotiation',
+			'offer_made',
+			'compromise_signed',
+			'final_act',
+		])
+		.withMessage('Étape de progression invalide'),
+	body('notes')
+		.optional()
+		.trim()
+		.isLength({ max: 500 })
+		.withMessage('Les notes ne peuvent pas dépasser 500 caractères'),
+];
+
+export const updateContractValidation = [
+	body('contractText')
+		.optional()
+		.trim()
+		.isLength({ max: 10000 })
+		.withMessage(
+			'Le texte du contrat ne peut pas dépasser 10000 caractères',
+		),
+	body('additionalTerms')
+		.optional()
+		.trim()
+		.isLength({ max: 2000 })
+		.withMessage(
+			'Les termes additionnels ne peuvent pas dépasser 2000 caractères',
+		),
+];

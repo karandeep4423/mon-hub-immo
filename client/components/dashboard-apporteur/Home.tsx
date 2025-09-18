@@ -3,12 +3,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '../ui/Button';
 import PropertyManager from '../property/PropertyManager';
 import Link from 'next/link';
+import { CollaborationList } from '../collaboration/CollaborationList';
 
 const Home = () => {
 	const { logout, user } = useAuth();
-	const [activeTab, setActiveTab] = useState<'overview' | 'properties'>(
-		'overview',
-	);
+	const [activeTab, setActiveTab] = useState<
+		'overview' | 'properties' | 'collaborations'
+	>('overview');
 
 	const handleLogout = () => {
 		logout();
@@ -22,7 +23,7 @@ const Home = () => {
 				</h2>
 				<p className="text-blue-100">
 					Gérez vos annonces immobilières et développez votre activité
-					d'apporteur d'affaires.
+					d&apos;apporteur d&apos;affaires.
 				</p>
 			</div>
 
@@ -107,10 +108,10 @@ const Home = () => {
 							</svg>
 						</div>
 						<div className="ml-4">
-							<Link href="/chat" className="hover:underline">	
-							<h3 className="text-lg font-semibold text-gray-900">
-								Messages
-							</h3>
+							<Link href="/chat" className="hover:underline">
+								<h3 className="text-lg font-semibold text-gray-900">
+									Messages
+								</h3>
 							</Link>
 						</div>
 					</div>
@@ -219,7 +220,7 @@ const Home = () => {
 											: 'text-gray-600 hover:text-gray-900'
 									}`}
 								>
-									Vue d'ensemble
+									Vue d&apos;ensemble
 								</button>
 								<button
 									onClick={() => setActiveTab('properties')}
@@ -230,6 +231,18 @@ const Home = () => {
 									}`}
 								>
 									Mes annonces
+								</button>
+								<button
+									onClick={() =>
+										setActiveTab('collaborations')
+									}
+									className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+										activeTab === 'collaborations'
+											? 'bg-blue-100 text-blue-700'
+											: 'text-gray-600 hover:text-gray-900'
+									}`}
+								>
+									Mes collaborations
 								</button>
 							</nav>
 						</div>
@@ -261,6 +274,19 @@ const Home = () => {
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 				{activeTab === 'overview' && renderOverview()}
 				{activeTab === 'properties' && <PropertyManager />}
+				{activeTab === 'collaborations' && user && (
+					<div className="space-y-6">
+						<div className="flex items-center justify-between">
+							<h2 className="text-2xl font-bold text-gray-900">
+								Mes Collaborations
+							</h2>
+						</div>
+						<CollaborationList
+							currentUserId={user.id}
+							onClose={() => {}}
+						/>
+					</div>
+				)}
 			</div>
 		</div>
 	);

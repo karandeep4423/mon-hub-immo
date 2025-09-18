@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
+import { ProposeCollaborationModal } from '@/components/collaboration/ProposeCollaborationModal';
 import { useAuth } from '@/hooks/useAuth';
+import { collaborationApi } from '@/lib/api/collaborationApi';
 
 interface Property {
 	_id: string;
@@ -61,14 +63,13 @@ export default function PropertyDetailsPage() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [currentImageIndex, setCurrentImageIndex] = useState(0);
+	const [showCollaborationModal, setShowCollaborationModal] = useState(false);
+	const [hasBlockingCollab, setHasBlockingCollab] = useState<boolean>(false);
+	const [blockingStatus, setBlockingStatus] = useState<
+		'pending' | 'accepted' | 'active' | null
+	>(null);
 
-	useEffect(() => {
-		if (propertyId) {
-			fetchProperty();
-		}
-	}, [propertyId]);
-
-	const fetchProperty = async () => {
+	const fetchProperty = useCallback(async () => {
 		try {
 			setLoading(true);
 			const response = await fetch(
@@ -91,7 +92,40 @@ export default function PropertyDetailsPage() {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [propertyId]);
+
+	useEffect(() => {
+		if (propertyId) {
+			fetchProperty();
+		}
+	}, [propertyId, fetchProperty]);
+
+	// Fetch collaborations for this property to determine if proposal should be disabled
+	const loadPropertyCollaborations = useCallback(async () => {
+		try {
+			if (!propertyId) return;
+			const { collaborations } =
+				await collaborationApi.getPropertyCollaborations(propertyId);
+			const blocking = collaborations.find((c) =>
+				['pending', 'accepted', 'active'].includes(c.status as string),
+			);
+			if (blocking) {
+				setHasBlockingCollab(true);
+				setBlockingStatus(
+					blocking.status as 'pending' | 'accepted' | 'active',
+				);
+			} else {
+				setHasBlockingCollab(false);
+				setBlockingStatus(null);
+			}
+		} catch (e) {
+			console.warn('Failed to load property collaborations', e);
+		}
+	}, [propertyId]);
+
+	useEffect(() => {
+		loadPropertyCollaborations();
+	}, [loadPropertyCollaborations]);
 
 	const handleContactOwner = () => {
 		if (!user) {
@@ -113,12 +147,7 @@ export default function PropertyDetailsPage() {
 			return;
 		}
 
-		if (property) {
-			// Navigate to chat with collaboration request
-			router.push(
-				`/chat?userId=${property.owner._id}&propertyId=${property._id}&type=collaboration`,
-			);
-		}
+		setShowCollaborationModal(true);
 	};
 
 	const allImages = property ? [property.mainImage, ...property.images] : [];
@@ -681,31 +710,49 @@ export default function PropertyDetailsPage() {
 											</svg>
 											Contacter l&lsquo;agent
 										</Button>
-										{user &&
-											user.userType === 'agent' &&
-											property.owner.userType ===
-												'apporteur' && (
-												<Button
-													onClick={handleCollaborate}
-													variant="outline"
-													className="w-full"
-												>
-													<svg
-														className="w-5 h-5 mr-2"
-														fill="none"
-														stroke="currentColor"
-														viewBox="0 0 24 24"
+										{user && user.userType === 'agent' && (
+											<>
+												{hasBlockingCollab ? (
+													<div className="w-full p-3 rounded-md border bg-gray-50 text-gray-700 text-sm flex items-center justify-center">
+														<span className="mr-2">
+															🚫
+														</span>
+														{blockingStatus ===
+															'pending' &&
+															'Propriété déjà en collaboration (en attente).'}
+														{blockingStatus ===
+															'accepted' &&
+															'Propriété déjà en collaboration (acceptée).'}
+														{blockingStatus ===
+															'active' &&
+															'Propriété déjà en collaboration (active).'}
+													</div>
+												) : (
+													<Button
+														onClick={
+															handleCollaborate
+														}
+														variant="outline"
+														className="w-full"
 													>
-														<path
-															strokeLinecap="round"
-															strokeLinejoin="round"
-															strokeWidth="2"
-															d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-														/>
-													</svg>
-													Proposer de collaborer
-												</Button>
-											)}
+														<svg
+															className="w-5 h-5 mr-2"
+															fill="none"
+															stroke="currentColor"
+															viewBox="0 0 24 24"
+														>
+															<path
+																strokeLinecap="round"
+																strokeLinejoin="round"
+																strokeWidth="2"
+																d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+															/>
+														</svg>
+														Proposer de collaborer
+													</Button>
+												)}
+											</>
+										)}
 									</div>
 								)}
 							</div>
@@ -757,6 +804,33 @@ export default function PropertyDetailsPage() {
 					</div>
 				</div>
 			</div>
+
+			{/* Collaboration Modal */}
+			{property && (
+				<ProposeCollaborationModal
+					isOpen={showCollaborationModal}
+					onClose={() => setShowCollaborationModal(false)}
+					propertyId={property._id}
+					property={{
+						_id: property._id,
+						title: property.title,
+						price: property.price,
+						location: {
+							city: property.city,
+							postalCode: property.postalCode,
+						},
+						propertyType: property.propertyType,
+						surface: property.surface,
+						rooms: property.rooms || 0,
+						mainImage: property.mainImage,
+					}}
+					onSuccess={() => {
+						// Close modal and refresh collaboration info to reflect new blocking state
+						setShowCollaborationModal(false);
+						loadPropertyCollaborations();
+					}}
+				/>
+			)}
 		</div>
 	);
 }
