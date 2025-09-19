@@ -7,7 +7,7 @@
 // TYPE EXPORTS
 // ============================================================================
 
-export type { User } from './userUtils';
+export type { ChatUser as User } from '@/types/chat';
 export type { Message, MessageCursor } from './messageUtils';
 export type { ScrollAnchor } from './scrollUtils';
 export type { MessageDateGroup } from './dateUtils';

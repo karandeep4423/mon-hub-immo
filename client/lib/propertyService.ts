@@ -27,6 +27,7 @@ export interface Property {
 	hasGarden?: boolean;
 	hasElevator?: boolean;
 	hasBalcony?: boolean;
+	hasTerrace?: boolean;
 	hasGarage?: boolean;
 	hasCellar?: boolean;
 	hasSwimmingPool?: boolean;
@@ -220,10 +221,11 @@ export class PropertyService {
 				propertyData,
 			);
 			return response.data.data;
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error creating property:', error);
+			const err = error as { response?: { data?: { message?: string } } };
 			const errorMessage =
-				error.response?.data?.message ||
+				err.response?.data?.message ||
 				'Erreur lors de la création du bien';
 			throw new Error(errorMessage);
 		}
@@ -242,10 +244,11 @@ export class PropertyService {
 				propertyData,
 			);
 			return response.data.data;
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error updating property:', error);
+			const err = error as { response?: { data?: { message?: string } } };
 			const errorMessage =
-				error.response?.data?.message ||
+				err.response?.data?.message ||
 				'Erreur lors de la mise à jour du bien';
 			throw new Error(errorMessage);
 		}
@@ -257,10 +260,11 @@ export class PropertyService {
 	static async deleteProperty(id: string): Promise<void> {
 		try {
 			await api.delete(`/property/${id}`);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error deleting property:', error);
+			const err = error as { response?: { data?: { message?: string } } };
 			const errorMessage =
-				error.response?.data?.message ||
+				err.response?.data?.message ||
 				'Erreur lors de la suppression du bien';
 			throw new Error(errorMessage);
 		}
@@ -279,10 +283,11 @@ export class PropertyService {
 				{ status },
 			);
 			return response.data.data;
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error('Error updating property status:', error);
+			const err = error as { response?: { data?: { message?: string } } };
 			const errorMessage =
-				error.response?.data?.message ||
+				err.response?.data?.message ||
 				'Erreur lors de la mise à jour du statut';
 			throw new Error(errorMessage);
 		}

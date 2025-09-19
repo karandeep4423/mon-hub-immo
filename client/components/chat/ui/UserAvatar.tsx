@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { getUserDisplayName, getUserInitials } from '../utils/userUtils';
+import { getUserInitials } from '../utils/userUtils';
 
 // ============================================================================
 // USER AVATAR COMPONENTS

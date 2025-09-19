@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/lib/auth';
 import { loginSchema } from '@/lib/validation';
 import { LoginData } from '@/types/auth';
+import { AUTH_TEXT } from '@/lib/constants/text';
 import Link from 'next/link';
 export const LoginWithUserType: React.FC = () => {
 	const router = useRouter();
@@ -30,8 +31,8 @@ export const LoginWithUserType: React.FC = () => {
 	}, [searchParams]);
 
 	const userTypes = [
-		{ id: 'agent', icon: '👤', title: 'Agent Immobilier' },
-		{ id: 'apporteur', icon: '💝', title: "Apporteur d'affaires" },
+		{ id: 'agent', icon: '👤', title: AUTH_TEXT.agentTitle },
+		{ id: 'apporteur', icon: '💝', title: AUTH_TEXT.providerTitle },
 		// { id: 'partenaire', icon: '🏢', title: 'Accès Partenaire' },
 	];
 
@@ -84,7 +85,8 @@ export const LoginWithUserType: React.FC = () => {
 				setErrors(validationErrors);
 			} else {
 				toast.error(
-					error.response?.data?.message || 'Something went wrong',
+					error.response?.data?.message ||
+						AUTH_TEXT.somethingWentWrong,
 				);
 			}
 		} finally {
@@ -99,13 +101,16 @@ export const LoginWithUserType: React.FC = () => {
 			{/* Header */}
 			<div className="text-center pt-8 sm:pt-12 pb-6 sm:pb-8 px-4 sm:px-6">
 				<h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 sm:mb-6">
-					mon<span className="text-cyan-500">hubimmo</span>
+					{AUTH_TEXT.brandName.split('hub')[0]}
+					<span className="text-cyan-500">
+						hub{AUTH_TEXT.brandName.split('hub')[1]}
+					</span>
 				</h1>
 				<p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 max-w-md mx-auto">
-					Le 1er réseau social immobilier collaboratif
+					{AUTH_TEXT.collaborativeNetwork}
 				</p>
 				<h2 className="text-base sm:text-lg font-medium text-gray-800 mb-4 sm:mb-6">
-					Choisissez votre accès:
+					{AUTH_TEXT.chooseAccess}
 				</h2>
 			</div>
 
@@ -137,7 +142,7 @@ export const LoginWithUserType: React.FC = () => {
 								value={formData.email}
 								onChange={handleChange}
 								error={errors.email}
-								placeholder="E-mail"
+								placeholder={AUTH_TEXT.emailPlaceholder}
 								required
 								className="text-base sm:text-sm"
 							/>
@@ -149,7 +154,7 @@ export const LoginWithUserType: React.FC = () => {
 								value={formData.password}
 								onChange={handleChange}
 								error={errors.password}
-								placeholder="Mot de passe"
+								placeholder={AUTH_TEXT.passwordPlaceholder}
 								required
 								className="text-base sm:text-sm"
 							/>
@@ -157,7 +162,7 @@ export const LoginWithUserType: React.FC = () => {
 								className="text-sm left hover:text-blue-600 hover:font-semibold"
 								href="/auth/forgot-password"
 							>
-								Mot de passe oublié ?
+								{AUTH_TEXT.forgotPassword}
 							</Link>
 							<div className="pt-2">
 								<Button
@@ -167,7 +172,7 @@ export const LoginWithUserType: React.FC = () => {
 									size="lg"
 								>
 									<span className="text-sm sm:text-base">
-										Connexion{' '}
+										{AUTH_TEXT.loginButton}{' '}
 										{selectedType?.title.split(' ')[0]}
 									</span>
 								</Button>
@@ -177,7 +182,7 @@ export const LoginWithUserType: React.FC = () => {
 						{/* Alternative Access Types */}
 						<div className="mt-6 sm:mt-8 space-y-3">
 							<p className="text-xs sm:text-sm text-gray-500 text-center mb-4">
-								Ou choisir un autre type d&apos;accès:
+								{AUTH_TEXT.orChooseAnother}
 							</p>
 							{userTypes
 								.filter((type) => type.id !== selectedUserType)
@@ -205,14 +210,10 @@ export const LoginWithUserType: React.FC = () => {
 						<div className="text-center mt-8 sm:mt-10 pb-6">
 							<button
 								type="button"
-								onClick={() =>
-									router.push(
-										"/auth/signup",
-									)
-								}
+								onClick={() => router.push('/auth/signup')}
 								className="text-cyan-600 hover:text-cyan-500 font-medium text-sm sm:text-base transition-colors duration-200 underline-offset-4 hover:underline"
 							>
-								Pas encore inscrit ? Créer un compte
+								{AUTH_TEXT.noAccount} {AUTH_TEXT.signUpHere}
 							</button>
 						</div>
 					</div>

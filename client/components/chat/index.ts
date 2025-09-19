@@ -46,11 +46,7 @@ export * from './utils';
 // DATE GROUPING UTILITIES
 // ============================================================================
 
-export {
-	groupMessagesByDate,
-	getRelativeDateText,
-	shouldShowDateSeparator,
-} from './utils/dateUtils';
+export { groupMessagesByDate, getRelativeDateText } from './utils/dateUtils';
 
 // ============================================================================
 // TYPE EXPORTS

@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Button } from '../../ui/Button';
 import { Modal } from '../../ui/Modal';
+import { StepIndicator } from '../../ui/StepIndicator';
 import {
 	PROGRESS_STEPS_CONFIG,
 	ProgressStep,
 	ProgressStatusUpdate,
 	ProgressStepData,
 } from './types';
+import { STEP_ORDER } from '../../../lib/constants/stepOrder';
 
 interface ProgressStatusModalProps {
 	isOpen: boolean;
@@ -24,19 +26,8 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 	onUpdateStatus,
 }) => {
 	// Find the next uncompleted step as default selection
-	const stepOrder: ProgressStep[] = [
-		'proposal',
-		'accepted',
-		'visit_planned',
-		'visit_completed',
-		'negotiation',
-		'offer_made',
-		'compromise_signed',
-		'final_act',
-	];
-
 	const nextUncompletedStep =
-		stepOrder.find((stepId) => {
+		STEP_ORDER.find((stepId) => {
 			const stepData = steps?.find((s) => s.id === stepId);
 			return !stepData?.completed;
 		}) || currentStep;
@@ -74,11 +65,17 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 						Sélectionner l&apos;étape
 					</label>
 					<div className="space-y-2">
-						{stepOrder.map((step) => {
+						{STEP_ORDER.map((step) => {
 							const config = PROGRESS_STEPS_CONFIG[step];
 							const stepData = steps?.find((s) => s.id === step);
 							const isCompleted = stepData?.completed || false;
 							const isDisabled = isCompleted; // Disable already completed steps
+
+							const stepState = isCompleted
+								? 'completed'
+								: selectedStep === step
+									? 'current'
+									: 'upcoming';
 
 							return (
 								<div
@@ -94,33 +91,12 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 										!isDisabled && setSelectedStep(step)
 									}
 								>
-									<div
-										className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium mr-3 ${
-											isCompleted
-												? 'bg-green-500 text-white'
-												: selectedStep === step
-													? 'bg-blue-100 text-blue-800'
-													: 'bg-gray-200 text-gray-600'
-										}`}
-									>
-										{isCompleted ? (
-											<svg
-												className="w-4 h-4"
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24"
-											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth="2"
-													d="M5 13l4 4L19 7"
-												/>
-											</svg>
-										) : (
-											config.icon
-										)}
-									</div>
+									<StepIndicator
+										state={stepState}
+										icon={config.icon}
+										size="sm"
+										className="mr-3"
+									/>
 									<div className="flex-1">
 										<div className="flex items-center space-x-2">
 											<span

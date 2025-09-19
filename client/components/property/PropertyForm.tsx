@@ -201,7 +201,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 
 			<div>
 				<label className="block text-sm font-medium text-gray-700 mb-2">
-					Titre de l'annonce *
+					Titre de l&apos;annonce *
 				</label>
 				<Input
 					type="text"

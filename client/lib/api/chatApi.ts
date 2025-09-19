@@ -1,37 +1,10 @@
 // client/lib/api/chatApi.ts
 import { api } from '../api';
-
-export interface User {
-	_id: string;
-	firstName?: string;
-	lastName?: string;
-	email: string;
-	lastMessage?: {
-		text: string;
-		createdAt: string;
-		senderId: string;
-	} | null;
-	unreadCount?: number;
-	isOnline?: boolean;
-	lastSeen?: string;
-	isTyping?: boolean;
-}
-
-export interface Message {
-	_id: string;
-	senderId: string;
-	receiverId: string;
-	text?: string;
-	image?: string;
-	createdAt: string;
-	isRead?: boolean;
-	readAt?: string;
-}
-
-export interface SendMessageData {
-	text?: string;
-	image?: string;
-}
+import type {
+	ChatUser as User,
+	ChatMessage as Message,
+	SendMessageData,
+} from '@/types/chat';
 
 export class ChatApi {
 	/**

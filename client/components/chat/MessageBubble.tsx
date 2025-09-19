@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { MessageTimestamp, ReadReceipt } from './MessageStatus';
+import { ReadReceipt } from './MessageStatus';
 import { MessageTime } from './ui';
+import { formatTimeOnly } from './utils/messageUtils';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -128,7 +129,11 @@ MessageContent.displayName = 'MessageContent';
 const MessageFooter: React.FC<MessageFooterProps> = React.memo(
 	({ createdAt, isMyMessage, isRead }) => (
 		<div className="flex items-center justify-end mt-1 space-x-1">
-			<MessageTime timestamp={createdAt} isMyMessage={isMyMessage} />
+			<MessageTime
+				timestamp={createdAt}
+				isMyMessage={isMyMessage}
+				format={formatTimeOnly}
+			/>
 
 			{/* Show read receipts only for sent messages */}
 			{isMyMessage && (

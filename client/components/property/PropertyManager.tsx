@@ -346,8 +346,7 @@ const PropertyManager: React.FC = () => {
 											'/placeholder-property.jpg'
 										}
 										alt={property.title}
-										fill
-										className="object-cover"
+										className="object-cover w-full h-full"
 									/>
 								</div>
 								<div className="flex-1 p-4">

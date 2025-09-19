@@ -26,18 +26,10 @@ import {
 	PROGRESS_STEPS_CONFIG,
 	ProgressUpdate,
 } from '@/components/collaboration/progress-tracking/types';
+import type { Property } from '@/lib/propertyService';
 
 // Property type for when propertyId is populated
-interface PropertyDetails {
-	_id: string;
-	id?: string;
-	title?: string;
-	price?: number;
-	address?: string;
-	formattedPrice?: string;
-	displaySurface?: string;
-	isNewProperty?: boolean;
-}
+type PropertyDetails = Partial<Property> & { id?: string };
 
 export default function CollaborationPage() {
 	const params = useParams();

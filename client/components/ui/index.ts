@@ -13,3 +13,6 @@ export { Modal } from './Modal';
 export { FormSection, FormField } from './Form';
 export { Alert } from './Alert';
 export { ErrorBoundary } from './ErrorBoundary';
+export { CheckmarkIcon } from './CheckmarkIcon';
+export { StepIndicator } from './StepIndicator';
+export { StatusBadge } from './StatusBadge';

@@ -3,20 +3,29 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSocket } from '../context/SocketContext';
 import { useAuth } from './useAuth';
 import { chatStore } from '@/store/chatStore';
+import type {
+	ChatUser,
+	ChatMessage,
+	ReadReceiptEvent,
+	TypingEvent,
+} from '@/types/chat';
+import type { User as AuthUser } from '@/types/auth';
+import type { Socket } from 'socket.io-client';
+import { SOCKET_EVENTS } from '@/lib/constants/socket';
 
 // ============================================================================
 // TYPES & INTERFACES
 // ============================================================================
 
 interface SocketEventHandlers {
-	handleNewMessage: (msg: any) => void;
-	handleUserTyping: (data: { senderId: string; isTyping: boolean }) => void;
+	handleNewMessage: (msg: ChatMessage) => void;
+	handleUserTyping: (data: TypingEvent) => void;
 	handleUserStatusUpdate: (data: {
 		userId: string;
 		status: string;
 		lastSeen: string;
 	}) => void;
-	handleMessagesRead: (data: { readBy: string; senderId: string }) => void;
+	handleMessagesRead: (data: ReadReceiptEvent) => void;
 }
 
 interface TypingActions {
@@ -25,29 +34,16 @@ interface TypingActions {
 	stopTyping: () => void;
 }
 
-interface User {
-	_id: string;
-	firstName?: string;
-	lastName?: string;
-	email: string;
-	lastMessage?: {
-		text: string;
-		createdAt: string;
-		senderId: string;
-	} | null;
-	unreadCount?: number;
-}
-
 interface ChatActions {
 	getUsers: () => Promise<void>;
-	getUserById: (userId: string) => Promise<User | null>;
+	getUserById: (userId: string) => Promise<ChatUser | null>;
 	getMessages: (userId: string) => Promise<void>;
-	loadOlderMessages: () => Promise<any[]>;
+	loadOlderMessages: () => Promise<ChatMessage[]>;
 	sendMessage: (messageData: {
 		text?: string;
 		image?: string;
 	}) => Promise<void>;
-	setSelectedUser: (user: any) => void;
+	setSelectedUser: (user: ChatUser | null) => void;
 	markMessagesAsRead: (senderId: string) => Promise<void>;
 }
 
@@ -79,7 +75,7 @@ const useChatStoreState = () => {
  */
 const useSocketEventHandlers = (
 	state: ReturnType<typeof useChatStoreState>,
-	user: any,
+	user: AuthUser | null,
 ): SocketEventHandlers => {
 	const markMessagesAsRead = useCallback(async (senderId: string) => {
 		try {
@@ -90,7 +86,7 @@ const useSocketEventHandlers = (
 	}, []);
 
 	const handleNewMessage = useCallback(
-		(msg: any) => {
+		(msg: ChatMessage) => {
 			console.log('📨 Received newMessage in useChat:', msg);
 			const currentUser = user?._id || user?.id;
 			const selectedUserId = state.selectedUser?._id;
@@ -111,7 +107,7 @@ const useSocketEventHandlers = (
 	);
 
 	const handleUserTyping = useCallback(
-		(data: { senderId: string; isTyping: boolean }) => {
+		(data: TypingEvent) => {
 			console.log('⌨️ User typing event:', data);
 			if (data.senderId === state.selectedUser?._id) {
 				chatStore.setUserTyping(data.senderId, data.isTyping);
@@ -132,7 +128,7 @@ const useSocketEventHandlers = (
 	);
 
 	const handleMessagesRead = useCallback(
-		(data: { readBy: string; senderId: string }) => {
+		(data: ReadReceiptEvent) => {
 			console.log('✅ Messages read by:', data.readBy);
 			const currentUser = user?._id || user?.id;
 
@@ -156,10 +152,9 @@ const useSocketEventHandlers = (
  * Hook for managing socket event listeners
  */
 const useSocketEventListeners = (
-	socket: any,
+	socket: Socket | null,
 	isConnected: boolean,
 	handlers: SocketEventHandlers,
-	dependencies: any[],
 ) => {
 	useEffect(() => {
 		if (!socket || !isConnected) {
@@ -170,32 +165,51 @@ const useSocketEventListeners = (
 		console.log('🔌 Subscribing to socket events in useChat');
 
 		// Register all event handlers
-		socket.on('newMessage', handlers.handleNewMessage);
-		socket.on('userTyping', handlers.handleUserTyping);
-		socket.on('userStatusUpdate', handlers.handleUserStatusUpdate);
-		socket.on('messagesRead', handlers.handleMessagesRead);
+		socket.on(SOCKET_EVENTS.NEW_MESSAGE, handlers.handleNewMessage);
+		socket.on(SOCKET_EVENTS.USER_TYPING, handlers.handleUserTyping);
+		socket.on(
+			SOCKET_EVENTS.USER_STATUS_UPDATE,
+			handlers.handleUserStatusUpdate,
+		);
+		socket.on(SOCKET_EVENTS.MESSAGES_READ, handlers.handleMessagesRead);
 
 		// Cleanup event listeners
 		return () => {
-			socket.off('newMessage', handlers.handleNewMessage);
-			socket.off('userTyping', handlers.handleUserTyping);
-			socket.off('userStatusUpdate', handlers.handleUserStatusUpdate);
-			socket.off('messagesRead', handlers.handleMessagesRead);
+			socket.off(SOCKET_EVENTS.NEW_MESSAGE, handlers.handleNewMessage);
+			socket.off(SOCKET_EVENTS.USER_TYPING, handlers.handleUserTyping);
+			socket.off(
+				SOCKET_EVENTS.USER_STATUS_UPDATE,
+				handlers.handleUserStatusUpdate,
+			);
+			socket.off(
+				SOCKET_EVENTS.MESSAGES_READ,
+				handlers.handleMessagesRead,
+			);
 		};
-	}, [socket, isConnected, handlers, ...dependencies]);
+	}, [
+		socket,
+		isConnected,
+		handlers.handleNewMessage,
+		handlers.handleUserTyping,
+		handlers.handleUserStatusUpdate,
+		handlers.handleMessagesRead,
+	]);
 };
 
 /**
  * Hook for managing typing functionality
  */
-const useTypingActions = (socket: any, selectedUser: any): TypingActions => {
+const useTypingActions = (
+	socket: Socket | null,
+	selectedUser: ChatUser | null,
+): TypingActions => {
 	const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
 	const sendTypingStatus = useCallback(
 		(isTyping: boolean) => {
 			if (!socket || !selectedUser) return;
 
-			socket.emit('typing', {
+			socket.emit(SOCKET_EVENTS.TYPING, {
 				receiverId: selectedUser._id,
 				isTyping,
 			});
@@ -283,10 +297,7 @@ export const useChat = () => {
 	const eventHandlers = useSocketEventHandlers(state, user);
 
 	// Set up socket listeners
-	useSocketEventListeners(socket, isConnected, eventHandlers, [
-		state.selectedUser?._id,
-		user,
-	]);
+	useSocketEventListeners(socket, isConnected, eventHandlers);
 
 	// Create typing actions
 	const typingActions = useTypingActions(socket, state.selectedUser);

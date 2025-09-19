@@ -4,6 +4,7 @@ import { Button } from '../ui/Button';
 import PropertyManager from '../property/PropertyManager';
 import Link from 'next/link';
 import { CollaborationList } from '../collaboration/CollaborationList';
+import { DASHBOARD_TEXT } from '@/lib/constants/text';
 
 const Home = () => {
 	const { logout, user } = useAuth();
@@ -209,7 +210,7 @@ const Home = () => {
 					<div className="flex items-center justify-between h-16">
 						<div className="flex items-center space-x-8">
 							<h1 className="text-xl font-semibold text-gray-900">
-								Dashboard Apporteur
+								{DASHBOARD_TEXT.apporteurDashboard}
 							</h1>
 							<nav className="flex space-x-6">
 								<button
@@ -220,7 +221,7 @@ const Home = () => {
 											: 'text-gray-600 hover:text-gray-900'
 									}`}
 								>
-									Vue d&apos;ensemble
+									{DASHBOARD_TEXT.overview}
 								</button>
 								<button
 									onClick={() => setActiveTab('properties')}
@@ -230,7 +231,7 @@ const Home = () => {
 											: 'text-gray-600 hover:text-gray-900'
 									}`}
 								>
-									Mes annonces
+									{DASHBOARD_TEXT.myProperties}
 								</button>
 								<button
 									onClick={() =>
@@ -242,7 +243,7 @@ const Home = () => {
 											: 'text-gray-600 hover:text-gray-900'
 									}`}
 								>
-									Mes collaborations
+									{DASHBOARD_TEXT.myCollaborations}
 								</button>
 							</nav>
 						</div>
@@ -265,7 +266,7 @@ const Home = () => {
 									d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
 								/>
 							</svg>
-							Déconnexion
+							{DASHBOARD_TEXT.logout}
 						</Button>
 					</div>
 				</div>

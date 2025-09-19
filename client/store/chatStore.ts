@@ -1,38 +1,13 @@
 import { ChatApi } from '@/lib/api/chatApi';
 import { toast } from 'react-toastify';
 import { chatLogger } from '@/lib/utils/logger';
+import type { ChatUser as User, ChatMessage as Message } from '@/types/chat';
 
 // ============================================================================
 // TYPES & INTERFACES
 // ============================================================================
 
-export interface User {
-	firstName?: string;
-	lastName?: string;
-	_id: string;
-	name?: string;
-	email: string;
-	lastMessage?: {
-		text: string;
-		createdAt: string;
-		senderId: string;
-	} | null;
-	unreadCount?: number;
-	isOnline?: boolean;
-	lastSeen?: string;
-	isTyping?: boolean;
-}
-
-export interface Message {
-	_id: string;
-	senderId: string;
-	receiverId: string;
-	text?: string;
-	image?: string;
-	createdAt: string;
-	isRead?: boolean;
-	readAt?: string;
-}
+// Types moved to '@/types/chat' to keep shapes consistent across modules
 
 export interface ChatState {
 	messages: Message[];

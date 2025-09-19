@@ -8,6 +8,7 @@ import { Button } from '../ui/Button';
 import { AgentProfileCard } from './AgentProfileCard';
 import PropertyManager from '../property/PropertyManager';
 import { CollaborationList } from '../collaboration/CollaborationList';
+import { DASHBOARD_AGENT, DASHBOARD_TEXT } from '@/lib/constants/text';
 import Link from 'next/link';
 
 export const DashboardContent: React.FC = () => {
@@ -129,7 +130,7 @@ export const DashboardContent: React.FC = () => {
 						Bienvenue, {user.firstName} !
 					</h2>
 					<p className="text-gray-600">
-						Voici votre tableau de bord HubImmo.
+						{DASHBOARD_TEXT.welcomeAgent}
 					</p>
 					<Button
 						variant="outline"
@@ -150,7 +151,7 @@ export const DashboardContent: React.FC = () => {
 								d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
 							/>
 						</svg>
-						Déconnexion
+						{DASHBOARD_TEXT.logout}
 					</Button>
 				</div>
 
@@ -481,7 +482,10 @@ export const DashboardContent: React.FC = () => {
 								Mes Collaborations
 							</h2>
 						</div>
-						<CollaborationList currentUserId={user.id} />
+						<CollaborationList
+							currentUserId={user.id}
+							onClose={() => {}}
+						/>
 					</div>
 				)}
 			</main>

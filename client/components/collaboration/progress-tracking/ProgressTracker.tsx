@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
+import { StepIndicator } from '../../ui/StepIndicator';
 import { ProgressTrackingProps, PROGRESS_STEPS_CONFIG } from './types';
 import { ProgressStatusModal } from './ProgressStatusModal';
+import { STEP_ORDER } from '../../../lib/constants/stepOrder';
 
 export const ProgressTracker: React.FC<ProgressTrackingProps> = ({
 	currentStep,
@@ -14,18 +16,6 @@ export const ProgressTracker: React.FC<ProgressTrackingProps> = ({
 	const completedSteps = steps.filter((step) => step.completed).length;
 	const totalSteps = steps.length;
 	const progressPercentage = (completedSteps / totalSteps) * 100;
-
-	// Convert step ID to index for progress bar
-	const stepOrder: Array<keyof typeof PROGRESS_STEPS_CONFIG> = [
-		'proposal',
-		'accepted',
-		'visit_planned',
-		'visit_completed',
-		'negotiation',
-		'offer_made',
-		'compromise_signed',
-		'final_act',
-	];
 
 	return (
 		<Card className="p-6">
@@ -64,11 +54,17 @@ export const ProgressTracker: React.FC<ProgressTrackingProps> = ({
 
 			{/* Steps display */}
 			<div className="space-y-4">
-				{stepOrder.map((stepId, index) => {
+				{STEP_ORDER.map((stepId, index) => {
 					const stepData = steps.find((step) => step.id === stepId);
 					const config = PROGRESS_STEPS_CONFIG[stepId];
 					const isCompleted = stepData?.completed || false;
 					const isCurrent = stepId === currentStep && !isCompleted;
+
+					const stepState = isCompleted
+						? 'completed'
+						: isCurrent
+							? 'current'
+							: 'upcoming';
 
 					return (
 						<div
@@ -76,36 +72,13 @@ export const ProgressTracker: React.FC<ProgressTrackingProps> = ({
 							className="flex items-start space-x-4"
 						>
 							{/* Step indicator */}
-							<div
-								className={`flex items-center justify-center w-10 h-10 rounded-full text-sm font-medium ${
-									isCompleted
-										? 'bg-green-500 text-white'
-										: isCurrent
-											? 'bg-blue-500 text-white'
-											: 'bg-gray-200 text-gray-600'
-								}`}
-							>
-								{isCompleted ? (
-									<svg
-										className="w-5 h-5"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path
-											strokeLinecap="round"
-											strokeLinejoin="round"
-											strokeWidth="2"
-											d="M5 13l4 4L19 7"
-										/>
-									</svg>
-								) : (
-									<span>{config.icon}</span>
-								)}
-							</div>
+							<StepIndicator
+								state={stepState}
+								icon={config.icon}
+							/>
 
 							{/* Connector line */}
-							{index < stepOrder.length - 1 && (
+							{index < STEP_ORDER.length - 1 && (
 								<div className="absolute left-5 mt-10 w-0.5 h-8 bg-gray-300" />
 							)}
 

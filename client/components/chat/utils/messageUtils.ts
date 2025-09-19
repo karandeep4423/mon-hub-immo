@@ -74,6 +74,17 @@ export const formatMessageTime = (timestamp: string): string => {
 };
 
 /**
+ * Format time only (HH:MM) regardless of date
+ */
+export const formatTimeOnly = (timestamp: string): string => {
+	const date = new Date(timestamp);
+	return date.toLocaleTimeString('fr-FR', {
+		hour: '2-digit',
+		minute: '2-digit',
+	});
+};
+
+/**
  * Format message date for display
  */
 export const formatMessageDate = (timestamp: string): string => {

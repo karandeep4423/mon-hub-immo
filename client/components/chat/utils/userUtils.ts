@@ -4,18 +4,7 @@
  */
 
 import { CHAT_TEXT } from '@/lib/constants/text';
-
-export interface User {
-	_id: string;
-	firstName?: string;
-	lastName?: string;
-	name?: string;
-	email: string;
-	isOnline?: boolean;
-	lastSeen?: string;
-	isTyping?: boolean;
-	unreadCount?: number;
-}
+import type { ChatUser as User } from '@/types/chat';
 
 /**
  * Get display name for a user (firstName > name > email)

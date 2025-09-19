@@ -8,6 +8,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { authService } from '@/lib/auth';
 import { signUpSchema, type SignUpFormData } from '@/lib/validation';
+import { AUTH_TEXT } from '@/lib/constants/text';
 import { ZodError } from 'zod';
 
 export const SignUpForm: React.FC = () => {
@@ -113,11 +114,12 @@ export const SignUpForm: React.FC = () => {
 				email: validatedData.email,
 				phone: validatedData.phone,
 				password: validatedData.password,
+				confirmPassword: validatedData.confirmPassword,
 				userType: validatedData.userType as '' | 'agent' | 'apporteur',
 			});
 
 			if (response.success) {
-				toast.success('Inscription réussie ! Vérifiez votre email.');
+				toast.success(AUTH_TEXT.signupSuccess);
 				router.push(
 					`/auth/verify-email?email=${encodeURIComponent(validatedData.email)}&redirect=profile`,
 				);
@@ -145,7 +147,7 @@ export const SignUpForm: React.FC = () => {
 			} else {
 				toast.error(
 					error.response?.data?.message ||
-						"Erreur lors de l'inscription",
+						AUTH_TEXT.somethingWentWrong,
 				);
 			}
 		} finally {
@@ -382,7 +384,7 @@ export const SignUpForm: React.FC = () => {
 											placeholder="Numéro SIREN (optionnel)"
 										/>
 										<Input
-											label="Numéro d'inscription RSAC"
+											label={AUTH_TEXT.rsacNumber}
 											type="text"
 											name="rsacNumber"
 											value={formData.rsacNumber}

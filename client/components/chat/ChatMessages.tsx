@@ -11,11 +11,9 @@ import { groupMessagesByDate } from './utils/dateUtils';
 import {
 	isNearBottom,
 	isNearTop,
-	calculateScrollDelta,
 	findBestAnchorMessage,
 	restoreScrollPosition,
 	debounce,
-	type ScrollAnchor,
 } from './utils/scrollUtils';
 import {
 	NoConversationSelected,
@@ -25,7 +23,7 @@ import {
 	DateSeparator,
 } from './ui';
 import TypingIndicator from './TypingIndicator';
-import { CHAT_TEXT } from '@/lib/constants/text';
+// import { CHAT_TEXT } from '@/lib/constants/text';
 
 // ============================================================================
 // HELPER COMPONENTS
@@ -96,10 +94,7 @@ const ChatMessages: React.FC = () => {
 	// Loading older messages state
 	const [isLoadingOlder, setIsLoadingOlder] = React.useState(false);
 
-	// Scroll anchor for position preservation
-	const [scrollAnchor, setScrollAnchor] = React.useState<ScrollAnchor | null>(
-		null,
-	);
+	// Scroll anchor managed locally during load; no state needed
 
 	// Current user ID for message ownership
 	const currentUserId = user?._id || user?.id;
@@ -140,7 +135,6 @@ const ChatMessages: React.FC = () => {
 			// Find and store the current anchor message for scroll restoration
 			const anchor = findBestAnchorMessage(container);
 			if (anchor) {
-				setScrollAnchor(anchor);
 				console.log('📍 Scroll anchor set:', anchor.messageId);
 			}
 
@@ -158,7 +152,6 @@ const ChatMessages: React.FC = () => {
 								anchor.messageId,
 							);
 						}
-						setScrollAnchor(null);
 					});
 				} else {
 					console.log('📭 No more older messages to load');
@@ -172,9 +165,10 @@ const ChatMessages: React.FC = () => {
 	}, [selectedUser?._id, loadOlderMessages, isLoadingOlder]);
 
 	// Debounced version of scroll handler to prevent excessive calls
-	const debouncedHandleScroll = useCallback(debounce(handleScroll, 100), [
-		handleScroll,
-	]);
+	const debouncedHandleScroll = React.useMemo(
+		() => debounce(handleScroll, 100),
+		[handleScroll],
+	);
 
 	// ============================================================================
 	// EFFECTS
@@ -192,11 +186,9 @@ const ChatMessages: React.FC = () => {
 			getMessages(selectedUser._id);
 			setShouldAutoScroll(true);
 			setIsLoadingOlder(false); // Reset loading state for new conversation
-			setScrollAnchor(null); // Clear any existing anchor
 		} else {
 			console.log('📱 ChatMessages: No user selected, clearing messages');
 			setIsLoadingOlder(false);
-			setScrollAnchor(null);
 		}
 	}, [selectedUser?._id, getMessages]);
 
@@ -272,7 +264,7 @@ const ChatMessages: React.FC = () => {
 		const messageGroups = groupMessagesByDate(messages);
 
 		// Render each group with date separator
-		return messageGroups.map((group, groupIndex) => (
+		return messageGroups.map((group) => (
 			<React.Fragment key={group.date.toISOString()}>
 				{/* Date separator */}
 				<DateSeparator dateText={group.dateKey} />

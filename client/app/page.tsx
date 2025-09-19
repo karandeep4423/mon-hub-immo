@@ -1,5 +1,7 @@
 'use client';
 import { useRef, useState, useEffect } from 'react';
+import { ContactApi, type ContactFormData } from '@/lib/api/contactApi';
+import { LANDING_TEXT } from '@/lib/constants/text';
 import {
 	FaInstagram,
 	FaLinkedin,
@@ -41,34 +43,18 @@ export default function LandingPage() {
 		};
 
 		try {
-			const res = await fetch(
-				'https://www.monhubimmo.com/api/send-email',
-				{
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify(data),
-				},
-			);
+			const result = await ContactApi.sendContactForm(data);
 
-			if (res.ok) {
-				setMessage(
-					'Votre message a été envoyé avec succès. Nous vous contacterons bientôt.',
-				);
+			if (result.success) {
+				setMessage(result.message);
 				setMessageType('success');
 				formRef.current.reset();
 			} else {
-				const err = await res.json();
-				setMessage(
-					err.error || "Une erreur est survenue lors de l'envoi.",
-				);
+				setMessage(result.message);
 				setMessageType('error');
 			}
-		} catch (error) {
-			setMessage(
-				"Une erreur est survenue lors de l'envoi. Veuillez réessayer.",
-			);
+		} catch {
+			setMessage(LANDING_TEXT.sendError);
 			setMessageType('error');
 		} finally {
 			setLoading(false);
@@ -94,9 +80,11 @@ export default function LandingPage() {
 		return (
 			<div className="min-h-screen bg-gray-50 flex items-center justify-center">
 				<div className="text-center">
-					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600 mx-auto mb-4"></div>
+					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto mb-4"></div>
 					<p className="text-gray-600">
-						{isRedirecting ? 'Redirection...' : 'Chargement...'}
+						{isRedirecting
+							? LANDING_TEXT.redirecting
+							: LANDING_TEXT.loading}
 					</p>
 				</div>
 			</div>
@@ -108,23 +96,23 @@ export default function LandingPage() {
 		return null;
 	}
 	return (
-		<main className="bg-[#00b4d8] min-h-screen text-white font-sans">
+		<main className="bg-brand min-h-screen text-white font-sans">
 			{/* PAGE 1 - HERO */}
-			<section className="min-h-screen flex flex-col justify-center items-center text-center px-6 bg-[#00b4d8] text-white">
+			<section className="min-h-screen flex flex-col justify-center items-center text-center px-6 bg-brand text-white">
 				<p className="text-lg md:text-xl font-medium mb-2 max-w-2xl">
-					Ici, peu importe votre réseau:
+					{LANDING_TEXT.heroIntro}
 					<br />
 					<span className="font-bold">
-						ce qui compte : c&apos;est de conclure
-						<br />
-						plus de ventes,ensemble.
+						{LANDING_TEXT.heroIntroMain}
 					</span>
 				</p>
 
 				<h1 className="text-3xl md:text-6xl font-bold mb-4">
-					Découvrez
+					{LANDING_TEXT.heroMainTitle}
 					<br />
-					<span className="text-white">monhubimmo</span>
+					<span className="text-white">
+						{LANDING_TEXT.heroBrandName}
+					</span>
 				</h1>
 
 				{/* Feature items with icons */}
@@ -132,18 +120,14 @@ export default function LandingPage() {
 					<div className="flex items-center justify-center gap-4">
 						<LuMessageCircle className="w-12 h-12 text-white " />
 						<p className="text-lg md:text-xl font-medium text-left">
-							Le 1ère réseau collaboratif entre
-							<br />
-							tous professionnels de l&apos;immobilier.
+							{LANDING_TEXT.networkTitle}
 						</p>
 					</div>
 
 					<div className="flex mr-3 items-center justify-center gap-4">
 						<LuHandshake className="w-12 h-12 text-white" />
 						<p className="text-lg md:text-xl font-medium text-left">
-							Partagez biens et clients
-							<br />
-							de toutes enseignes confondues.
+							{LANDING_TEXT.sharingTitle}
 						</p>
 					</div>
 				</div>
@@ -152,135 +136,101 @@ export default function LandingPage() {
 					onClick={scrollToForm}
 					className="bg-white text-gray-900 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors duration-200 shadow-lg"
 				>
-					Je veux être informé dès maintenant
+					{LANDING_TEXT.wantToBeInformed}
 				</button>
 			</section>
 
 			{/* SECTION BÉNÉFICES - après le HERO */}
 			<section className="bg-white py-16 px-6">
-				<h2 className="text-3xl font-bold text-center text-[#034752] mb-10">
-					Pourquoi rejoindre MonHubimmo ?
+				<h2 className="text-3xl font-bold text-center text-brand-deep mb-10">
+					{LANDING_TEXT.whyJoin}
 				</h2>
 
-				<div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto text-[#034752]">
-					<div className="border-2 border-[#00b4d8] p-6 rounded shadow">
+				<div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto text-brand-deep">
+					<div className="border-2 border-brand p-6 rounded shadow">
 						<h3 className="font-bold text-lg mb-2">
-							Partage de biens
+							{LANDING_TEXT.benefitShareProperties}
 						</h3>
-						<p>
-							Partagez votre stock (mandats simples, exclusifs ou
-							off market) avec d&apos;autres mandataires.
-						</p>
+						<p>{LANDING_TEXT.benefitSharePropertiesDesc}</p>
 					</div>
 
-					<div className="border-2 border-[#00b4d8] p-6 rounded shadow">
+					<div className="border-2 border-brand p-6 rounded shadow">
 						<h3 className="font-bold text-lg mb-2">
-							Visibilité en temps réel
+							{LANDING_TEXT.benefitRealTimeVisibility}
 						</h3>
-						<p>
-							Visualisez les biens disponibles sur votre secteur
-							et ceux de vos confrères en un coup d&apos;œil.
-						</p>
+						<p>{LANDING_TEXT.benefitRealTimeVisibilityDesc}</p>
 					</div>
 
-					<div className="border-2 border-[#00b4d8]  p-6 rounded shadow">
+					<div className="border-2 border-brand  p-6 rounded shadow">
 						<h3 className="font-bold text-lg mb-2">
-							Trouvez pour vos clients
+							{LANDING_TEXT.benefitFindForClients}
 						</h3>
-						<p>
-							Accédez aux biens des autres mandataires pour
-							satisfaire les besoins de vos clients.
-						</p>
+						<p>{LANDING_TEXT.benefitFindForClientsDesc}</p>
 					</div>
 
-					<div className="border-2 border-[#00b4d8] p-6 rounded shadow">
+					<div className="border-2 border-brand p-6 rounded shadow">
 						<h3 className="font-bold text-lg mb-2">
-							Recherches clients ciblées
+							{LANDING_TEXT.benefitTargetedSearches}
 						</h3>
-						<p>
-							Déposez des recherches et recevez des propositions
-							adaptées automatiquement.
-						</p>
+						<p>{LANDING_TEXT.benefitTargetedSearchesDesc}</p>
 					</div>
 
-					<div className="border-2 border-[#00b4d8] p-6 rounded shadow">
+					<div className="border-2 border-brand p-6 rounded shadow">
 						<h3 className="font-bold text-lg mb-2">
-							Collaboration multi-réseaux
+							{LANDING_TEXT.benefitMultiNetworkCollab}
 						</h3>
-						<p>
-							Collaborez facilement avec d&apos;autres
-							mandataires, quelle que soit leur enseigne.
-						</p>
+						<p>{LANDING_TEXT.benefitMultiNetworkCollabDesc}</p>
 					</div>
 
-					<div className="border-2 border-[#00b4d8] p-6 rounded shadow">
+					<div className="border-2 border-brand p-6 rounded shadow">
 						<h3 className="font-bold text-lg mb-2">
-							Messagerie privée
+							{LANDING_TEXT.benefitPrivateMessaging}
 						</h3>
-						<p>
-							Consultez l&apos;historique de vos échanges et
-							discutez en toute confidentialité.
-						</p>
+						<p>{LANDING_TEXT.benefitPrivateMessagingDesc}</p>
 					</div>
 
-					<div className="border-2  border-[#00b4d8] p-6 rounded shadow md:col-span-2 lg:col-span-3">
+					<div className="border-2  border-brand p-6 rounded shadow md:col-span-2 lg:col-span-3">
 						<h3 className="font-bold text-lg mb-2">
-							Tableau de bord intuitif
+							{LANDING_TEXT.benefitIntuitiveBoard}
 						</h3>
-						<p>
-							Gérez vos fiches clients, mandats et recherches
-							simplement depuis un espace unique.
-						</p>
+						<p>{LANDING_TEXT.benefitIntuitiveBoardDesc}</p>
 					</div>
 				</div>
 			</section>
 
-			<section className="bg-white py-16 px-6 text-[#034752]">
+			<section className="bg-white py-16 px-6 text-brand-deep">
 				<div className="max-w-4xl mx-auto text-center">
 					<h2 className="text-xl md:text-2xl font-bold mb-6">
 						<span className="inline-flex items-center gap-2">
 							<span></span>
-							<span>
-								Vous êtes mandataire immobiliers, agent
-								immobilier ou négociateurs vrp chez IAD, MAISON
-								ROUGE, SAFTI, GUY HOCQUET, BSK, NAOS, LAFORET,
-								EFFICITY ou un autre réseau ?
-							</span>
+							<span>{LANDING_TEXT.professionalTitle}</span>
 						</span>
 					</h2>
 
 					<p className="mb-4 text-md md:text-lg">
-						Vous travaillez dur pour vos clients, mais vous êtes
-						souvent seul face à vos annonces, vos recherches
-						acquéreurs ou vos exclusivités à diffuser…
+						{LANDING_TEXT.professionalSubtitle}
 					</p>
 
 					<p className="text-md md:text-lg font-semibold">
-						<strong>MonHubImmo</strong> est le{' '}
-						<strong>
-							1er réseau de collaboration 100% entre
-							professionnels de l&apos;immobilier
-						</strong>
-						, toutes enseignes confondues de l&apos;immobilier.
+						<strong>{LANDING_TEXT.professionalDescription}</strong>
 					</p>
 				</div>
 			</section>
 
 			{/* PAGE 2 - FORMULAIRE */}
-			<section className="bg-[#00b4d8] py-16 px-6 flex flex-col items-center text-center">
+			<section className="bg-brand py-16 px-6 flex flex-col items-center text-center">
 				<h2 className="text-xl font-semibold mb-2 text-white">
-					Offre de lancement! Inscrivez-vous maintenant!
+					{LANDING_TEXT.launchOfferTitle}
 					<br />
-					Profitez de 3 mois offerts pour les 100 premiers inscrits
+					{LANDING_TEXT.launchOfferSubtitle}
 				</h2>
 				<p className="mb-6 text-white max-w-xl">
-					Rejoignez la <strong>1er plateforme collaborative</strong>{' '}
-					de l&apos;immobilier
+					{LANDING_TEXT.launchOfferDescription}
 				</p>
 				<div className="flex  flex-col-reverse sm:flex-row items-center justify-center gap-14">
 					<div className="bg-white text-gray-900 w-full max-w-md p-6 rounded-lg shadow">
 						<h3 className="text-lg font-semibold mb-4">
-							Entrez vos informations :
+							{LANDING_TEXT.formTitle}
 						</h3>
 						<form
 							className="space-y-4"
@@ -290,34 +240,34 @@ export default function LandingPage() {
 							<input
 								type="text"
 								name="name"
-								placeholder="Nom"
-								className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#0077b6] focus:border-transparent"
+								placeholder={LANDING_TEXT.namePlaceholder}
+								className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--brand-focus)] focus:border-transparent"
 								required
 								disabled={loading}
 							/>
 							<input
 								type="email"
 								name="email"
-								placeholder="Adresse e-mail"
-								className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#0077b6] focus:border-transparent"
+								placeholder={LANDING_TEXT.emailPlaceholder}
+								className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--brand-focus)] focus:border-transparent"
 								required
 								disabled={loading}
 							/>
 							<input
 								type="tel"
 								name="phone"
-								placeholder="Numéro de téléphone"
-								className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#0077b6] focus:border-transparent"
+								placeholder={LANDING_TEXT.phonePlaceholder}
+								className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--brand-focus)] focus:border-transparent"
 								disabled={loading}
 							/>
 							<button
 								type="submit"
 								disabled={loading}
-								className="bg-[#00b4d8] text-white w-full py-2 rounded font-semibold hover:bg-[#0094b3] transition disabled:opacity-50 disabled:cursor-not-allowed"
+								className="bg-brand text-white w-full py-2 rounded font-semibold hover:bg-brand-dark transition disabled:opacity-50 disabled:cursor-not-allowed"
 							>
 								{loading
-									? 'Envoi en cours...'
-									: 'Inscrivez vous maintenant'}
+									? LANDING_TEXT.submitting
+									: LANDING_TEXT.signUpNow}
 							</button>
 						</form>
 
@@ -337,7 +287,7 @@ export default function LandingPage() {
 			</section>
 
 			{/* SECTION POST-FORMULAIRE */}
-			<section className="bg-white py-16 px-6 text-[#034752]">
+			<section className="bg-white py-16 px-6 text-brand-deep">
 				<div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-center">
 					{/* Texte principal */}
 					<div className="flex flex-col items-center text-center">
@@ -352,7 +302,7 @@ export default function LandingPage() {
 						<ul className="flex flex-col text-left">
 							<li className="flex items-center gap-3">
 								<svg
-									className="w-5 h-5 text-[#00b4d8] flex-shrink-0"
+									className="w-5 h-5 text-brand flex-shrink-0"
 									fill="none"
 									stroke="currentColor"
 									strokeWidth={2}
@@ -365,7 +315,7 @@ export default function LandingPage() {
 							</li>
 							<li className="flex items-center gap-3">
 								<svg
-									className="w-5 h-5 text-[#00b4d8] flex-shrink-0"
+									className="w-5 h-5 text-brand flex-shrink-0"
 									fill="none"
 									stroke="currentColor"
 									strokeWidth={2}
@@ -377,7 +327,7 @@ export default function LandingPage() {
 							</li>
 							<li className="flex items-center gap-3">
 								<svg
-									className="w-5 h-5 text-[#00b4d8] flex-shrink-0"
+									className="w-5 h-5 text-brand flex-shrink-0"
 									fill="none"
 									stroke="currentColor"
 									strokeWidth={2}
@@ -391,7 +341,7 @@ export default function LandingPage() {
 						</ul>
 						<button
 							onClick={scrollToForm}
-							className="mt-6 bg-[#00b4d8] text-white px-6 py-2 rounded-full font-semibold hover:bg-[#0094b3] transition"
+							className="mt-6 bg-brand text-white px-6 py-2 rounded-full font-semibold hover:bg-brand-dark transition"
 						>
 							Je réserve ma place
 						</button>
@@ -419,7 +369,7 @@ export default function LandingPage() {
 						>
 							<div className="w-20 h-20 bg-white rounded-full flex items-center justify-center">
 								<svg
-									className="w-12 h-12 text-[#00b4d8]"
+									className="w-12 h-12 text-brand"
 									fill="currentColor"
 									viewBox="0 0 20 20"
 								>
@@ -431,7 +381,7 @@ export default function LandingPage() {
 				</div>
 
 				{/* Fonctionnalités clés */}
-				<section className="bg-white py-16 px-6 text-[#034752]">
+				<section className="bg-white py-16 px-6 text-brand-deep">
 					<div className="max-w-6xl mx-auto">
 						<h3 className="text-2xl font-bold text-center mb-12">
 							Fonctionnalités clés
@@ -442,7 +392,7 @@ export default function LandingPage() {
 							<div className="flex items-start gap-4">
 								<div className="flex-shrink-0">
 									<svg
-										className="w-6 h-6 text-[#00b4d8]"
+										className="w-6 h-6 text-brand"
 										fill="none"
 										stroke="currentColor"
 										strokeWidth={2}
@@ -466,7 +416,7 @@ export default function LandingPage() {
 							<div className="flex items-start gap-4">
 								<div className="flex-shrink-0">
 									<svg
-										className="w-6 h-6 text-[#00b4d8]"
+										className="w-6 h-6 text-brand"
 										fill="none"
 										stroke="currentColor"
 										strokeWidth={2}
@@ -491,7 +441,7 @@ export default function LandingPage() {
 							<div className="flex items-start gap-4">
 								<div className="flex-shrink-0">
 									<svg
-										className="w-6 h-6 text-[#00b4d8]"
+										className="w-6 h-6 text-brand"
 										fill="none"
 										stroke="currentColor"
 										strokeWidth={2}
@@ -516,7 +466,7 @@ export default function LandingPage() {
 							<div className="flex items-start gap-4">
 								<div className="flex-shrink-0">
 									<svg
-										className="w-6 h-6 text-[#00b4d8]"
+										className="w-6 h-6 text-brand"
 										fill="none"
 										stroke="currentColor"
 										strokeWidth={2}
@@ -559,7 +509,7 @@ export default function LandingPage() {
 					>
 						<div className="w-20 h-20 bg-white rounded-full flex items-center justify-center">
 							<svg
-								className="w-12 h-12 text-[#00b4d8]"
+								className="w-12 h-12 text-brand"
 								fill="currentColor"
 								viewBox="0 0 20 20"
 							>
@@ -571,13 +521,13 @@ export default function LandingPage() {
 				<hr className="my-10 border-gray-300 max-w-6xl mx-auto" />
 
 				{/* POUR QUI + TESTEZ MAINTENANT */}
-				<section className="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-10 text-[#034752]">
+				<section className="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-10 text-brand-deep">
 					{/* Colonne gauche */}
 					<div>
 						<h4 className="text-lg font-bold mb-6">Pour qui ?</h4>
 
 						<div className="flex items-start gap-3 mb-6">
-							<FaUser className="w-9 h-9 text-[#00b4d8] flex-shrink-0" />
+							<FaUser className="w-9 h-9 text-brand flex-shrink-0" />
 							<div>
 								<p className="font-semibold">
 									Agents immobiliers
@@ -590,7 +540,7 @@ export default function LandingPage() {
 						</div>
 
 						<div className="flex items-start gap-3">
-							<FaUserCog className="w-10 h-10 text-[#00b4d8] flex-shrink-0" />
+							<FaUserCog className="w-10 h-10 text-brand flex-shrink-0" />
 							<div>
 								<p className="font-semibold">
 									Apporteurs d&apos;affaires
@@ -621,21 +571,21 @@ export default function LandingPage() {
 						</h4>
 						<ul className="space-y-2 text-sm text-gray-700 mb-6">
 							<li className="flex items-center gap-2">
-								<span className="text-[#00b4d8]">✓</span> Créez
-								un compte gratuit
+								<span className="text-brand">✓</span> Créez un
+								compte gratuit
 							</li>
 							<li className="flex items-center gap-2">
-								<span className="text-[#00b4d8]">✓</span> Sans
+								<span className="text-brand">✓</span> Sans
 								engagement
 							</li>
 							<li className="flex items-center gap-2">
-								<span className="text-[#00b4d8]">✓</span>{' '}
-								Version MVP + évolutive
+								<span className="text-brand">✓</span> Version
+								MVP + évolutive
 							</li>
 						</ul>
 						<button
 							onClick={scrollToForm}
-							className="bg-[#00b4d8] text-white px-6 py-2 rounded-full font-semibold hover:bg-[#0094b3] transition self-start"
+							className="bg-brand text-white px-6 py-2 rounded-full font-semibold hover:bg-brand-dark transition self-start"
 						>
 							M&apos;inscrire en avant première
 						</button>
@@ -643,15 +593,15 @@ export default function LandingPage() {
 				</section>
 			</section>
 
-			<footer className="bg-[#f9f9f9] text-[#333] py-10 px-6 sm:px-16">
+			<footer className="bg-muted text-muted py-10 px-6 sm:px-16">
 				<div className=" max-w-7xl mx-auto  justify-center grid md:grid-cols-3 gap-4 md:gap-16">
 					{/* Logo */}
 					<div className="mb-4">
 						<h2 className="text-2xl font-bold">
 							<span className="text-black">mon</span>
-							<span className="text-[#00b4d8]">hubimmo</span>
+							<span className="text-brand">hubimmo</span>
 						</h2>
-						<p className="text-sm font-medium text-[#00b4d8] mt-2">
+						<p className="text-sm font-medium text-brand mt-2">
 							Le 1er réseau collaboratif des
 							<br />
 							professionnels de l&apos;immobilier
@@ -660,7 +610,7 @@ export default function LandingPage() {
 						<div className="my-4 space-y-3">
 							<div className="flex items-center space-x-2">
 								<svg
-									className="w-5 h-5 text-[#00b4d8]"
+									className="w-5 h-5 text-brand"
 									fill="currentColor"
 									viewBox="0 0 20 20"
 								>
@@ -676,7 +626,7 @@ export default function LandingPage() {
 							</div>
 							<div className="flex items-center space-x-2">
 								<svg
-									className="w-5 h-5 text-[#00b4d8]"
+									className="w-5 h-5 text-brand"
 									fill="currentColor"
 									viewBox="0 0 20 20"
 								>
@@ -697,25 +647,25 @@ export default function LandingPage() {
 						<h3 className="font-semibold mb-4">Liens utiles</h3>
 						<div className=" text-left space-y-2 text-sm">
 							<div>
-								<a href="#" className="hover:text-[#00b4d8]">
+								<a href="#" className="hover:text-brand">
 									Découvrir MonHubImmo
 								</a>
 							</div>
 							<div>
-								<a href="#" className="hover:text-[#00b4d8]">
+								<a href="#" className="hover:text-brand">
 									Inscription (3 mois offerts)
 								</a>
 							</div>
 							<div>
 								<a
 									href="/mentions-legales"
-									className="hover:text-[#00b4d8]"
+									className="hover:text-brand"
 								>
 									Conditions générales
 								</a>
 							</div>
 							<div>
-								<a href="#" className="hover:text-[#00b4d8]">
+								<a href="#" className="hover:text-brand">
 									Politique de confidentialité
 								</a>
 							</div>
@@ -728,25 +678,25 @@ export default function LandingPage() {
 						<div className="flex  space-x-4">
 							<a
 								href="https://www.instagram.com/monhubimmo/"
-								className="text-[#00b4d8] hover:opacity-80"
+								className="text-brand hover:opacity-80"
 							>
 								<FaInstagram className="w-6 h-6" />
 							</a>
 							<a
 								href="https://www.linkedin.com/in/mon-hub-immo-a65904379?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app"
-								className="text-[#00b4d8] hover:opacity-80"
+								className="text-brand hover:opacity-80"
 							>
 								<FaLinkedin className="w-6 h-6" />
 							</a>
 							<a
 								href="https://www.facebook.com/profile.php?viewas=100000686899395&id=61579213881250"
-								className="text-[#00b4d8] hover:opacity-80"
+								className="text-brand hover:opacity-80"
 							>
 								<FaFacebook className="w-6 h-6" />
 							</a>
 							<a
 								href="https://www.tiktok.com/@hubimmo?_t=ZN-8yqbaoADaXG&_r=1"
-								className="text-[#00b4d8] hover:opacity-80"
+								className="text-brand hover:opacity-80"
 							>
 								<FaTiktok className="w-6 h-6" />
 							</a>

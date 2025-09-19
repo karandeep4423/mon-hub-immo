@@ -29,7 +29,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 }) => {
 	const variantClasses: Record<Variant, string> = {
 		danger: 'bg-red-600 hover:bg-red-700 text-white',
-		primary: 'bg-blue-600 hover:bg-blue-700 text-white',
+		primary: 'bg-brand-600 hover:bg-brand-700 text-white',
 		warning: 'bg-yellow-600 hover:bg-yellow-700 text-white',
 	};
 

@@ -1,29 +1,28 @@
+/* eslint-disable @next/next/no-img-element */
 import React, { useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { collaborationApi } from '../../lib/api/collaborationApi';
 import { toast } from 'react-toastify';
-
-interface PropertyDetails {
-	_id: string;
-	title: string;
-	price: number;
-	location: {
-		city: string;
-		postalCode: string;
-	};
-	propertyType: string;
-	surface: number;
-	rooms: number;
-	mainImage?: string;
-}
+import type { Property } from '@/lib/propertyService';
 
 interface ProposeCollaborationModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	propertyId: string;
-	property: PropertyDetails;
+	property: Pick<
+		Property,
+		| '_id'
+		| 'title'
+		| 'price'
+		| 'city'
+		| 'postalCode'
+		| 'propertyType'
+		| 'surface'
+		| 'rooms'
+		| 'mainImage'
+	>;
 	onSuccess?: () => void;
 }
 
@@ -101,15 +100,17 @@ export const ProposeCollaborationModal: React.FC<
 								{property.title}
 							</h4>
 							<p className="text-sm text-gray-600 mb-1">
-								{property.location.city},{' '}
-								{property.location.postalCode}
+								{property.city}
+								{property.postalCode
+									? `, ${property.postalCode}`
+									: ''}
 							</p>
 							<div className="flex items-center space-x-4 text-sm text-gray-500">
 								<span>{property.propertyType}</span>
 								<span>{property.surface}m²</span>
 								<span>{property.rooms} pièces</span>
 							</div>
-							<p className="text-lg font-bold text-blue-600 mt-2">
+							<p className="text-lg font-bold text-brand-600 mt-2">
 								{property.price.toLocaleString()}€
 							</p>
 						</div>
@@ -171,7 +172,7 @@ export const ProposeCollaborationModal: React.FC<
 								handleInputChange('message', e.target.value)
 							}
 							placeholder="Expliquez pourquoi cette collaboration serait bénéfique..."
-							className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+							className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-600 focus:border-brand-600"
 							maxLength={500}
 						/>
 						<div className="text-xs text-gray-500 mt-1">
