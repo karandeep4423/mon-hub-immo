@@ -128,7 +128,7 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 	};
 
 	const handleOpenChat = () => {
-		router.push(`/chat?collaboration=${collaboration._id}`);
+		router.push(`/chat?userId=${ownerUser._id}`);
 	};
 
 	const handleCancel = () => {

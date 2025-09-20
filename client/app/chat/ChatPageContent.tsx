@@ -21,6 +21,7 @@ export const ChatPageContent = () => {
 	} | null>(null);
 
 	const userId = searchParams?.get('userId');
+	console.log('ChatPageContent - userId from URL:', userId);
 	const propertyId = searchParams?.get('propertyId');
 	const collaborationType = searchParams?.get('type');
 
