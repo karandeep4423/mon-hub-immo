@@ -5,11 +5,12 @@ import PropertyManager from '../property/PropertyManager';
 import Link from 'next/link';
 import { CollaborationList } from '../collaboration/CollaborationList';
 import { DASHBOARD_TEXT } from '@/lib/constants/text';
+import { MySearches } from '../search-ads/MySearches';
 
 const Home = () => {
 	const { logout, user } = useAuth();
 	const [activeTab, setActiveTab] = useState<
-		'overview' | 'properties' | 'collaborations'
+		'overview' | 'properties' | 'collaborations' | 'searches'
 	>('overview');
 
 	const handleLogout = () => {
@@ -245,6 +246,16 @@ const Home = () => {
 								>
 									{DASHBOARD_TEXT.myCollaborations}
 								</button>
+								<button
+									onClick={() => setActiveTab('searches')}
+									className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+										activeTab === 'searches'
+											? 'bg-blue-100 text-blue-700'
+											: 'text-gray-600 hover:text-gray-900'
+									}`}
+								>
+									Mes Recherches
+								</button>
 							</nav>
 						</div>
 						<Button
@@ -288,6 +299,7 @@ const Home = () => {
 						/>
 					</div>
 				)}
+				{activeTab === 'searches' && <MySearches />}
 			</div>
 		</div>
 	);

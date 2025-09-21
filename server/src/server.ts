@@ -9,6 +9,7 @@ import messageRoutes from './routes/chat';
 import propertyRoutes from './routes/property';
 import collaborationRoutes from './routes/collaboration';
 import contractRoutes from './routes/contract';
+import searchAdRoutes from './routes/searchAds';
 import { createSocketServer, createSocketService } from './chat';
 
 dotenv.config();
@@ -59,6 +60,7 @@ app.use('/api/message', messageRoutes);
 app.use('/api/property', propertyRoutes);
 app.use('/api/collaboration', collaborationRoutes);
 app.use('/api/contract', contractRoutes);
+app.use('/api/search-ads', searchAdRoutes);
 
 // Handle 404 routes
 app.use('*', (req, res) => {
