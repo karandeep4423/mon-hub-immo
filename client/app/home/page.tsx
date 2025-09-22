@@ -192,9 +192,9 @@ export default function Home() {
 		<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 			{/* Header with unified title and stats */}
 			<div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-				<h1 className="text-3xl font-bold text-gray-900">
+				{/* <h1 className="text-3xl font-bold text-gray-900">
 					Annonces récentes
-				</h1>
+				</h1> */}
 				<div className="text-sm text-gray-600">
 					{properties.length} bien{properties.length > 1 ? 's' : ''} •{' '}
 					{filteredSearchAdsCount} recherche
