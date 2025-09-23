@@ -5,7 +5,8 @@ import { useChat } from '../../hooks/useChat';
 import { useSocket } from '../../context/SocketContext';
 import { getUserDisplayName, formatLastSeen } from './utils/userUtils';
 import { formatMessageTime, truncateMessage } from './utils/messageUtils';
-import { UserAvatar, LoadingUsers, UnreadBadge } from './ui';
+import { LoadingUsers, UnreadBadge } from './ui';
+import { ProfileAvatar } from '../ui';
 import { CHAT_TEXT } from '@/lib/constants/text';
 
 interface ChatSidebarProps {
@@ -174,7 +175,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
 									}`}
 								>
 									<div className="flex items-center space-x-3">
-										<UserAvatar
+										<ProfileAvatar
 											user={user}
 											size="lg"
 											showOnlineStatus={true}

@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useAuth } from '@/hooks/useAuth';
-import { authService } from '@/lib/auth';
+import { authService } from '@/lib/api/authApi';
 import { verifyEmailSchema } from '@/lib/validation';
 
 export const VerifyEmailForm: React.FC = () => {

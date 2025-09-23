@@ -7,7 +7,7 @@ export interface SearchAd {
 		_id: string;
 		firstName: string;
 		lastName: string;
-		avatar?: string;
+		profileImage?: string;
 	};
 	authorType: 'agent' | 'apporteur';
 	status: 'active' | 'paused' | 'fulfilled' | 'sold' | 'rented' | 'archived';

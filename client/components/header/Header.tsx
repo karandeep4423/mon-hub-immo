@@ -1,16 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { ProfileAvatar } from '../ui/ProfileAvatar';
 
 export default function Header() {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-	const [user, setUser] = useState<{ name: string } | null>(null);
-
-	useEffect(() => {
-		const storedUser = localStorage.getItem('user');
-		if (storedUser) setUser(JSON.parse(storedUser));
-	}, []);
+	const { user } = useAuth();
 
 	return (
 		<header className="bg-white shadow-lg relative z-10">
@@ -57,11 +54,26 @@ export default function Header() {
 							</svg>
 						</button>
 
-						<button className="text-gray-500 hover:text-[#6AD1E3]">
+						<div className="flex items-center space-x-2">
 							{user ? (
-								<span>{(user.name as string) || 'Profil'}</span>
+								<Link
+									href="/dashboard"
+									className="flex items-center space-x-2 hover:opacity-80"
+								>
+									<ProfileAvatar
+										user={user}
+										size="sm"
+										className="w-8 h-8"
+									/>
+									<span className="text-gray-700 text-sm">
+										{user.firstName} {user.lastName}
+									</span>
+								</Link>
 							) : (
-								<Link href="/dashboard">
+								<Link
+									href="/auth/login"
+									className="text-gray-500 hover:text-[#6AD1E3]"
+								>
 									<svg
 										className="h-6 w-6"
 										fill="none"
@@ -77,7 +89,7 @@ export default function Header() {
 									</svg>
 								</Link>
 							)}
-						</button>
+						</div>
 
 						<button
 							className="md:hidden text-gray-500 hover:text-[#6AD1E3]"

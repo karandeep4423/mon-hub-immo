@@ -2,19 +2,16 @@ import { Router } from 'express';
 import {
 	getProperties,
 	getPropertyById,
-	createProperty,
-	updateProperty,
 	deleteProperty,
 	getMyProperties,
 	updatePropertyStatus,
 	getPropertyStats,
+	createProperty,
+	updateProperty,
 } from '../controllers/propertyController';
 import { authenticateToken } from '../middleware/auth';
-import {
-	createPropertyValidation,
-	updatePropertyValidation,
-	updatePropertyStatusValidation,
-} from '../middleware/validation';
+import { updatePropertyStatusValidation } from '../middleware/validation';
+import { uploadProperty } from '../middleware/uploadMiddleware';
 
 const router = Router();
 
@@ -22,12 +19,19 @@ const router = Router();
 router.get('/', getProperties);
 router.get('/:id', getPropertyById);
 
+// Combined property creation with image upload
+router.post(
+	'/create-property',
+	authenticateToken,
+	uploadProperty,
+	createProperty,
+);
+
 // Protected routes (require authentication)
 router.use(authenticateToken);
 
-// Property CRUD operations
-router.post('/', createPropertyValidation, createProperty);
-router.put('/:id', updatePropertyValidation, updateProperty);
+// Combined property update with image upload
+router.put('/:id/update', uploadProperty, updateProperty);
 router.delete('/:id', deleteProperty);
 
 // User-specific routes

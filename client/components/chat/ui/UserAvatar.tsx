@@ -1,20 +1,13 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { getUserInitials } from '../utils/userUtils';
+import type { User } from '@/types/auth';
 
 // ============================================================================
 // USER AVATAR COMPONENTS
 // ============================================================================
-
-interface User {
-	_id: string;
-	firstName?: string;
-	lastName?: string;
-	name?: string;
-	email: string;
-	isOnline?: boolean;
-}
 
 interface UserAvatarProps {
 	/** User object */
@@ -137,13 +130,54 @@ export const UserAvatar: React.FC<UserAvatarProps> = React.memo(
 		const sizeClass = getAvatarSize(size);
 		const bgColor = getAvatarColor(user._id);
 		const initials = getUserInitials(user);
+		const hasProfileImage =
+			user.profileImage && user.profileImage.trim() !== '';
 
 		return (
 			<div className={`relative inline-block ${className}`}>
 				<div
-					className={`${sizeClass} ${bgColor} rounded-full flex items-center justify-center text-white font-semibold select-none`}
+					className={`${sizeClass} ${bgColor} rounded-full flex items-center justify-center text-white font-semibold select-none overflow-hidden`}
 				>
-					{initials}
+					{hasProfileImage ? (
+						<Image
+							src={user.profileImage!}
+							alt={`${user.firstName || 'User'} profile`}
+							width={
+								size === 'sm'
+									? 32
+									: size === 'md'
+										? 40
+										: size === 'lg'
+											? 48
+											: 64
+							}
+							height={
+								size === 'sm'
+									? 32
+									: size === 'md'
+										? 40
+										: size === 'lg'
+											? 48
+											: 64
+							}
+							className="w-full h-full object-cover"
+							onError={(e) => {
+								// Fallback to initials if image fails to load
+								const target = e.target as HTMLImageElement;
+								target.style.display = 'none';
+								if (target.parentElement) {
+									target.parentElement.innerHTML = initials;
+									target.parentElement.className =
+										target.parentElement.className.replace(
+											'overflow-hidden',
+											'',
+										);
+								}
+							}}
+						/>
+					) : (
+						initials
+					)}
 				</div>
 
 				{showOnlineStatus && isOnline && (

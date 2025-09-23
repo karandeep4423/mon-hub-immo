@@ -9,7 +9,8 @@ import {
 	PropertyService,
 	Property,
 	PropertyFormData,
-} from '@/lib/propertyService';
+} from '@/lib/api/propertyApi';
+import { getImageUrl } from '@/lib/utils/imageUtils';
 
 const PropertyManager: React.FC = () => {
 	const { user } = useAuth();
@@ -48,19 +49,21 @@ const PropertyManager: React.FC = () => {
 			setFormLoading(true);
 			setError(null);
 
-			console.log('Creating property with data:', formData);
+			console.log('Property created in form:', formData);
 
-			const newProperty = await PropertyService.createProperty(formData);
-			console.log('Property created successfully:', newProperty);
+			// Property is already created by PropertyForm using createPropertyWithImages
+			// Just update the local state and close form
+			if ('_id' in formData && formData._id) {
+				setProperties((prev) => [formData as Property, ...prev]);
+			}
 
-			setProperties((prev) => [newProperty, ...prev]);
 			setShowForm(false);
 			setError(null);
 
 			// Show success message (you could use a toast notification here)
 			alert('Annonce créée avec succès !');
 		} catch (error: unknown) {
-			console.error('Error creating property:', error);
+			console.error('Error in property creation callback:', error);
 			const errorMessage =
 				error instanceof Error
 					? error.message
@@ -81,26 +84,35 @@ const PropertyManager: React.FC = () => {
 
 		try {
 			setFormLoading(true);
-			const updatedProperty = await PropertyService.updateProperty(
-				editingProperty._id,
-				formData,
-			);
+			setError(null);
 
+			console.log('Property updated in form:', formData);
+
+			// Property is already updated by PropertyForm using updatePropertyWithImages
+			// Just update the local state and close form
+			const updatedProperty = formData as Property;
 			setProperties((prev) =>
 				prev.map((p) =>
 					p._id === editingProperty._id ? updatedProperty : p,
 				),
 			);
+
 			setEditingProperty(null);
 			setShowForm(false);
 			setError(null);
+
+			// Show success message (you could use a toast notification here)
+			alert('Annonce mise à jour avec succès !');
 		} catch (error: unknown) {
-			console.error('Error updating property:', error);
+			console.error('Error in property update callback:', error);
 			const errorMessage =
 				error instanceof Error
 					? error.message
 					: 'Erreur lors de la mise à jour du bien';
 			setError(errorMessage);
+
+			// Scroll to top to show error
+			window.scrollTo({ top: 0, behavior: 'smooth' });
 		} finally {
 			setFormLoading(false);
 		}
@@ -341,10 +353,10 @@ const PropertyManager: React.FC = () => {
 							<div className="flex">
 								<div className="w-48 h-32 bg-gray-200 flex-shrink-0 relative">
 									<img
-										src={
-											property.mainImage ||
-											'/placeholder-property.jpg'
-										}
+										src={getImageUrl(
+											property.mainImage,
+											'medium',
+										)}
 										alt={property.title}
 										className="object-cover w-full h-full"
 									/>

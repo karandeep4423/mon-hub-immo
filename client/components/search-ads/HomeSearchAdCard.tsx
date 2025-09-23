@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { SearchAd } from '@/types/searchAd';
+import { ProfileAvatar } from '../ui/ProfileAvatar';
 
 interface HomeSearchAdCardProps {
 	searchAd: SearchAd;
@@ -143,12 +144,11 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 
 					<div className="flex items-center justify-between mt-auto">
 						<div className="flex items-center space-x-2">
-							<div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
-								<span className="text-white font-semibold text-xs">
-									{searchAd.authorId.firstName[0]}
-									{searchAd.authorId.lastName[0]}
-								</span>
-							</div>
+							<ProfileAvatar
+								user={searchAd.authorId}
+								size="sm"
+								className="w-8 h-8"
+							/>
 							<div>
 								<p className="text-gray-700 font-medium text-sm">
 									{searchAd.authorId.firstName}{' '}

@@ -4,11 +4,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
+import { ImageLightbox } from '@/components/ui/ImageLightbox';
 import { ProposeCollaborationModal } from '@/components/collaboration/ProposeCollaborationModal';
+import { ProfileAvatar } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { collaborationApi } from '@/lib/api/collaborationApi';
 import { api } from '@/lib/api';
-import type { Property } from '@/lib/propertyService';
+import type { Property } from '@/lib/api/propertyApi';
+import { getImageUrl } from '@/lib/utils/imageUtils';
 
 export default function PropertyDetailsPage() {
 	const params = useParams();
@@ -25,6 +28,8 @@ export default function PropertyDetailsPage() {
 	const [blockingStatus, setBlockingStatus] = useState<
 		'pending' | 'accepted' | 'active' | null
 	>(null);
+	const [showLightbox, setShowLightbox] = useState(false);
+	const [lightboxInitialIndex, setLightboxInitialIndex] = useState(0);
 
 	const fetchProperty = useCallback(async () => {
 		try {
@@ -100,8 +105,25 @@ export default function PropertyDetailsPage() {
 	};
 
 	const allImages = property
-		? [property.mainImage, ...(property.images ?? [])]
+		? [property.mainImage, ...(property.galleryImages ?? [])]
 		: [];
+
+	// Helper function to get image URL
+	const getImageSrc = (image: string | { url: string; key: string }) => {
+		return typeof image === 'string' ? image : image.url;
+	};
+
+	// Convert images for lightbox
+	const lightboxImages = allImages.map((image, index) => ({
+		url: getImageSrc(image),
+		alt: `Image ${index + 1}`,
+	}));
+
+	// Handle opening lightbox
+	const openLightbox = (index: number) => {
+		setLightboxInitialIndex(index);
+		setShowLightbox(true);
+	};
 
 	if (loading) {
 		return (
@@ -152,12 +174,17 @@ export default function PropertyDetailsPage() {
 							{/* Main Image */}
 							<div className="relative h-96 bg-gray-200">
 								<img
-									src={allImages[currentImageIndex]}
+									src={getImageSrc(
+										allImages[currentImageIndex],
+									)}
 									alt={property.title}
-									className="w-full h-full object-cover"
+									className="w-full h-full object-cover cursor-pointer"
+									onClick={() =>
+										openLightbox(currentImageIndex)
+									}
 									onError={(e) => {
 										(e.target as HTMLImageElement).src =
-											'/placeholder-property.jpg';
+											getImageUrl(undefined, 'medium');
 									}}
 								/>
 
@@ -238,17 +265,22 @@ export default function PropertyDetailsPage() {
 										{allImages.map((image, index) => (
 											<button
 												key={index}
-												onClick={() =>
-													setCurrentImageIndex(index)
+												onClick={() => {
+													setCurrentImageIndex(index);
+													// Optional: uncomment to open lightbox on thumbnail click
+													// openLightbox(index);
+												}}
+												onDoubleClick={() =>
+													openLightbox(index)
 												}
 												className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
 													currentImageIndex === index
 														? 'border-brand-600'
 														: 'border-gray-200'
-												}`}
+												} hover:border-brand-400 transition-colors`}
 											>
 												<img
-													src={image}
+													src={getImageSrc(image)}
 													alt={`Image ${index + 1}`}
 													className="w-full h-full object-cover"
 												/>
@@ -578,16 +610,10 @@ export default function PropertyDetailsPage() {
 										: 'Contact'}
 								</h3>
 								<div className="flex items-center space-x-3 mb-3">
-									<div className="w-12 h-12 bg-gray-300 rounded-full overflow-hidden">
-										<img
-											src={
-												property.owner.profileImage ||
-												`https://ui-avatars.com/api/?name=${encodeURIComponent(property.owner.firstName + ' ' + property.owner.lastName)}&background=3b82f6&color=ffffff`
-											}
-											alt={`${property.owner.firstName} ${property.owner.lastName}`}
-											className="w-full h-full object-cover"
-										/>
-									</div>
+									<ProfileAvatar
+										user={property.owner}
+										size="lg"
+									/>
 									<div>
 										<p className="font-medium text-gray-900">
 											{property.owner.firstName}{' '}
@@ -780,6 +806,14 @@ export default function PropertyDetailsPage() {
 					}}
 				/>
 			)}
+
+			{/* Image Lightbox */}
+			<ImageLightbox
+				isOpen={showLightbox}
+				images={lightboxImages}
+				initialIndex={lightboxInitialIndex}
+				onClose={() => setShowLightbox(false)}
+			/>
 		</div>
 	);
 }

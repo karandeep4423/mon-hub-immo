@@ -6,10 +6,12 @@ import {
 	PropertyService,
 	Property,
 	PropertyFilters,
-} from '@/lib/propertyService';
+} from '@/lib/api/propertyApi';
 import searchAdApi from '@/lib/api/searchAdApi';
 import { SearchAd } from '@/types/searchAd';
 import { HomeSearchAdCard } from '@/components/search-ads/HomeSearchAdCard';
+import { getImageUrl } from '@/lib/utils/imageUtils';
+import { ProfileAvatar } from '@/components/ui';
 
 type FeedItem = {
 	type: 'property' | 'searchAd';
@@ -187,6 +189,8 @@ export default function Home() {
 
 	// Count filtered search ads for display
 	const filteredSearchAdsCount = filterSearchAds(searchAds).length;
+
+	console.log('properties', properties);
 
 	return (
 		<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -406,12 +410,14 @@ const PropertyCard = ({ property }: { property: Property }) => (
 			{/* Property Image and Badges */}
 			<div className="relative">
 				<img
-					src={property.mainImage}
+					src={getImageUrl(property.mainImage, 'medium')}
 					alt={property.title}
 					className="w-full h-48 object-cover"
 					onError={(e) => {
-						(e.target as HTMLImageElement).src =
-							'/placeholder-property.jpg';
+						(e.target as HTMLImageElement).src = getImageUrl(
+							undefined,
+							'medium',
+						);
 					}}
 				/>
 				<div className="absolute top-2 left-2 flex flex-col space-y-1">
@@ -469,20 +475,7 @@ const PropertyCard = ({ property }: { property: Property }) => (
 
 				<div className="flex items-center justify-between mt-auto">
 					<div className="flex items-center space-x-2">
-						<div className="w-8 h-8 bg-gray-300 rounded-full overflow-hidden">
-							<img
-								src={
-									property.owner.profileImage ||
-									`https://ui-avatars.com/api/?name=${encodeURIComponent(
-										property.owner.firstName +
-											' ' +
-											property.owner.lastName,
-									)}&background=3b82f6&color=ffffff`
-								}
-								alt={`${property.owner.firstName} ${property.owner.lastName}`}
-								className="w-full h-full object-cover"
-							/>
-						</div>
+						<ProfileAvatar user={property.owner} size="sm" />
 						<div>
 							<p className="text-gray-700 font-medium text-sm">
 								{property.owner.firstName}{' '}

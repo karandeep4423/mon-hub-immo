@@ -1,5 +1,5 @@
 // client/lib/propertyService.ts
-import { api } from './api';
+import { api } from '../api';
 
 export interface Property {
 	_id: string;
@@ -50,7 +50,16 @@ export interface Property {
 		| 'Nord-Ouest'
 		| 'Sud-Est'
 		| 'Sud-Ouest';
-	mainImage: string;
+	mainImage:
+		| {
+				url: string;
+				key: string;
+		  }
+		| string; // Support legacy format
+	galleryImages?: Array<{
+		url: string;
+		key: string;
+	}>;
 	images?: string[];
 	isExclusive?: boolean;
 	isFeatured?: boolean;
@@ -101,7 +110,17 @@ export interface PropertyFormData {
 	yearBuilt?: number;
 	heatingType?: Property['heatingType'];
 	orientation?: Property['orientation'];
-	mainImage: string;
+	mainImage:
+		| {
+				url: string;
+				key: string;
+		  }
+		| string
+		| null;
+	galleryImages?: Array<{
+		url: string;
+		key: string;
+	}>;
 	images?: string[];
 	isExclusive?: boolean;
 	isFeatured?: boolean;
@@ -210,15 +229,48 @@ export class PropertyService {
 	}
 
 	/**
-	 * Create a new property
+	 * Create a new property with images in single request
 	 */
 	static async createProperty(
-		propertyData: PropertyFormData,
+		propertyData: Omit<PropertyFormData, 'mainImage' | 'galleryImages'>,
+		mainImageFile?: File,
+		galleryImageFiles: File[] = [],
 	): Promise<Property> {
 		try {
+			const formData = new FormData();
+
+			// Add property data
+			Object.entries(propertyData).forEach(([key, value]) => {
+				if (value !== undefined && value !== null) {
+					if (Array.isArray(value)) {
+						value.forEach((item, index) => {
+							formData.append(`${key}[${index}]`, String(item));
+						});
+					} else {
+						formData.append(key, String(value));
+					}
+				}
+			});
+
+			// Add main image
+			if (mainImageFile) {
+				formData.append('mainImage', mainImageFile);
+			}
+
+			// Add gallery images
+			galleryImageFiles.forEach((file) => {
+				formData.append('galleryImages', file);
+			});
+
 			const response = await api.post<PropertyResponse>(
-				'/property',
-				propertyData,
+				'property/create-property',
+				formData,
+				{
+					headers: {
+						'Content-Type': 'multipart/form-data',
+					},
+					timeout: 120000, // 2 minutes timeout for image uploads
+				},
 			);
 			return response.data.data;
 		} catch (error: unknown) {
@@ -232,16 +284,66 @@ export class PropertyService {
 	}
 
 	/**
-	 * Update an existing property
+	 * Update a property with images in single request
 	 */
 	static async updateProperty(
-		id: string,
-		propertyData: Partial<PropertyFormData>,
+		propertyId: string,
+		propertyData: Omit<PropertyFormData, 'mainImage' | 'galleryImages'>,
+		newMainImageFile?: File,
+		newGalleryImageFiles: File[] = [],
+		existingMainImage?: { url: string; key: string } | null,
+		existingGalleryImages: Array<{ url: string; key: string }> = [],
 	): Promise<Property> {
 		try {
+			const formData = new FormData();
+
+			// Add property data
+			Object.entries(propertyData).forEach(([key, value]) => {
+				if (value !== undefined && value !== null) {
+					if (Array.isArray(value)) {
+						value.forEach((item, index) => {
+							formData.append(`${key}[${index}]`, String(item));
+						});
+					} else {
+						formData.append(key, String(value));
+					}
+				}
+			});
+
+			// Add new main image if provided
+			if (newMainImageFile) {
+				formData.append('mainImage', newMainImageFile);
+			}
+
+			// Add new gallery images
+			newGalleryImageFiles.forEach((file) => {
+				formData.append('galleryImages', file);
+			});
+
+			// Add existing images to keep
+			if (existingMainImage) {
+				formData.append(
+					'existingMainImage',
+					JSON.stringify(existingMainImage),
+				);
+			}
+
+			if (existingGalleryImages.length > 0) {
+				formData.append(
+					'existingGalleryImages',
+					JSON.stringify(existingGalleryImages),
+				);
+			}
+
 			const response = await api.put<PropertyResponse>(
-				`/property/${id}`,
-				propertyData,
+				`/property/${propertyId}/update`,
+				formData,
+				{
+					headers: {
+						'Content-Type': 'multipart/form-data',
+					},
+					timeout: 120000, // 2 minutes timeout for image uploads
+				},
 			);
 			return response.data.data;
 		} catch (error: unknown) {
