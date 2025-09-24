@@ -124,8 +124,8 @@ export const getUserCollaborations = async (
 			$or: [{ propertyOwnerId: userId }, { collaboratorId: userId }],
 		})
 			.populate('propertyId', 'title address price')
-			.populate('propertyOwnerId', 'firstName lastName')
-			.populate('collaboratorId', 'firstName lastName')
+			.populate('propertyOwnerId', 'firstName lastName profileImage')
+			.populate('collaboratorId', 'firstName lastName profileImage')
 			.sort({ createdAt: -1 });
 
 		res.status(200).json({
@@ -276,8 +276,8 @@ export const getCollaborationsByProperty = async (
 		}
 
 		const collaborations = await Collaboration.find({ propertyId })
-			.populate('propertyOwnerId', 'firstName lastName')
-			.populate('collaboratorId', 'firstName lastName')
+			.populate('propertyOwnerId', 'firstName lastName profileImage')
+			.populate('collaboratorId', 'firstName lastName profileImage')
 			.sort({ createdAt: -1 });
 
 		res.status(200).json({
@@ -308,8 +308,14 @@ export const cancelCollaboration = async (
 
 		// Find the collaboration
 		const collaboration = await Collaboration.findById(id)
-			.populate('propertyOwnerId', 'firstName lastName email')
-			.populate('collaboratorId', 'firstName lastName email');
+			.populate(
+				'propertyOwnerId',
+				'firstName lastName email profileImage',
+			)
+			.populate(
+				'collaboratorId',
+				'firstName lastName email profileImage',
+			);
 
 		if (!collaboration) {
 			res.status(404).json({
@@ -396,8 +402,14 @@ export const updateProgressStatus = async (
 
 		// Find the collaboration
 		const collaboration = await Collaboration.findById(id)
-			.populate('propertyOwnerId', 'firstName lastName email')
-			.populate('collaboratorId', 'firstName lastName email');
+			.populate(
+				'propertyOwnerId',
+				'firstName lastName email profileImage',
+			)
+			.populate(
+				'collaboratorId',
+				'firstName lastName email profileImage',
+			);
 
 		if (!collaboration) {
 			res.status(404).json({
@@ -465,8 +477,14 @@ export const signCollaboration = async (
 
 		// Find the collaboration
 		const collaboration = await Collaboration.findById(id)
-			.populate('propertyOwnerId', 'firstName lastName email')
-			.populate('collaboratorId', 'firstName lastName email');
+			.populate(
+				'propertyOwnerId',
+				'firstName lastName email profileImage',
+			)
+			.populate(
+				'collaboratorId',
+				'firstName lastName email profileImage',
+			);
 
 		if (!collaboration) {
 			res.status(404).json({
@@ -507,8 +525,14 @@ export const completeCollaboration = async (
 		}
 
 		const collaboration = await Collaboration.findById(id)
-			.populate('propertyOwnerId', 'firstName lastName email')
-			.populate('collaboratorId', 'firstName lastName email');
+			.populate(
+				'propertyOwnerId',
+				'firstName lastName email profileImage',
+			)
+			.populate(
+				'collaboratorId',
+				'firstName lastName email profileImage',
+			);
 
 		if (!collaboration) {
 			res.status(404).json({

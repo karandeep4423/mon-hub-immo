@@ -500,12 +500,11 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 					</h3>
 
 					<div className="flex items-center space-x-3 mb-4">
-						<div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-							<span className="text-white font-medium">
-								{searchAd.authorId.firstName[0]}
-								{searchAd.authorId.lastName[0]}
-							</span>
-						</div>
+						<ProfileAvatar
+							user={searchAd.authorId}
+							size="lg"
+							className="w-12 h-12"
+						/>
 						<div>
 							<h4 className="font-semibold text-gray-900">
 								{searchAd.authorId.firstName}{' '}

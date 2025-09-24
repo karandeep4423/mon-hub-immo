@@ -14,6 +14,7 @@ interface PopulatedUser {
 	firstName: string;
 	lastName: string;
 	email: string;
+	profileImage?: string | null;
 }
 
 export const signContract = async (
@@ -30,8 +31,14 @@ export const signContract = async (
 		}
 
 		const collaboration = await Collaboration.findById(id)
-			.populate('propertyOwnerId', 'firstName lastName email')
-			.populate('collaboratorId', 'firstName lastName email');
+			.populate(
+				'propertyOwnerId',
+				'firstName lastName email profileImage',
+			)
+			.populate(
+				'collaboratorId',
+				'firstName lastName email profileImage',
+			);
 
 		if (!collaboration) {
 			res.status(404).json({
@@ -114,6 +121,9 @@ export const signContract = async (
 				email: (
 					collaboration.propertyOwnerId as unknown as PopulatedUser
 				).email,
+				profileImage:
+					(collaboration.propertyOwnerId as unknown as PopulatedUser)
+						.profileImage || null,
 			},
 			collaborator: {
 				id: collaboration.collaboratorId._id,
@@ -121,6 +131,9 @@ export const signContract = async (
 				email: (
 					collaboration.collaboratorId as unknown as PopulatedUser
 				).email,
+				profileImage:
+					(collaboration.collaboratorId as unknown as PopulatedUser)
+						.profileImage || null,
 			},
 			canEdit: isOwner || isCollaborator,
 			canSign:
@@ -159,8 +172,14 @@ export const updateContract = async (
 		}
 
 		const collaboration = await Collaboration.findById(id)
-			.populate('propertyOwnerId', 'firstName lastName email')
-			.populate('collaboratorId', 'firstName lastName email');
+			.populate(
+				'propertyOwnerId',
+				'firstName lastName email profileImage',
+			)
+			.populate(
+				'collaboratorId',
+				'firstName lastName email profileImage',
+			);
 
 		if (!collaboration) {
 			res.status(404).json({
@@ -242,6 +261,9 @@ export const updateContract = async (
 				email: (
 					collaboration.propertyOwnerId as unknown as PopulatedUser
 				).email,
+				profileImage:
+					(collaboration.propertyOwnerId as unknown as PopulatedUser)
+						.profileImage || null,
 			},
 			collaborator: {
 				id: collaboration.collaboratorId._id,
@@ -249,6 +271,9 @@ export const updateContract = async (
 				email: (
 					collaboration.collaboratorId as unknown as PopulatedUser
 				).email,
+				profileImage:
+					(collaboration.collaboratorId as unknown as PopulatedUser)
+						.profileImage || null,
 			},
 			canEdit: isOwner || isCollaborator,
 			canSign:
@@ -289,8 +314,14 @@ export const getContract = async (
 		}
 
 		const collaboration = await Collaboration.findById(id)
-			.populate('propertyOwnerId', 'firstName lastName email')
-			.populate('collaboratorId', 'firstName lastName email');
+			.populate(
+				'propertyOwnerId',
+				'firstName lastName email profileImage',
+			)
+			.populate(
+				'collaboratorId',
+				'firstName lastName email profileImage',
+			);
 
 		if (!collaboration) {
 			res.status(404).json({
@@ -390,6 +421,9 @@ Date : ${new Date().toLocaleDateString('fr-FR')}`;
 				email: (
 					collaboration.propertyOwnerId as unknown as PopulatedUser
 				).email,
+				profileImage:
+					(collaboration.propertyOwnerId as unknown as PopulatedUser)
+						.profileImage || null,
 			},
 			collaborator: {
 				id: collaboration.collaboratorId._id,
@@ -397,6 +431,9 @@ Date : ${new Date().toLocaleDateString('fr-FR')}`;
 				email: (
 					collaboration.collaboratorId as unknown as PopulatedUser
 				).email,
+				profileImage:
+					(collaboration.collaboratorId as unknown as PopulatedUser)
+						.profileImage || null,
 			},
 			canEdit: isOwner || isCollaborator,
 			canSign:

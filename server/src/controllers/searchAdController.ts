@@ -38,7 +38,7 @@ export const getAllSearchAds = async (
 ): Promise<void> => {
 	try {
 		const searchAds = await SearchAd.find({ status: 'active' })
-			.populate('authorId', 'firstName lastName avatar userType')
+			.populate('authorId', 'firstName lastName profileImage userType')
 			.sort({ createdAt: -1 });
 		res.status(200).json({ success: true, data: searchAds });
 	} catch (error) {
@@ -62,9 +62,9 @@ export const getMySearchAds = async (
 			});
 			return;
 		}
-		const searchAds = await SearchAd.find({ authorId: req.user.id }).sort({
-			createdAt: -1,
-		});
+		const searchAds = await SearchAd.find({ authorId: req.user.id })
+			.populate('authorId', 'firstName lastName profileImage userType')
+			.sort({ createdAt: -1 });
 		res.status(200).json({ success: true, data: searchAds });
 	} catch (error) {
 		res.status(500).json({
@@ -82,7 +82,7 @@ export const getSearchAdById = async (
 	try {
 		const searchAd = await SearchAd.findById(req.params.id).populate(
 			'authorId',
-			'firstName lastName avatar',
+			'firstName lastName profileImage',
 		);
 		if (!searchAd) {
 			res.status(404).json({

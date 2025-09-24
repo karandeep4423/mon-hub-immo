@@ -6,12 +6,15 @@ import Link from 'next/link';
 import { CollaborationList } from '../collaboration/CollaborationList';
 import { DASHBOARD_TEXT } from '@/lib/constants/text';
 import { MySearches } from '../search-ads/MySearches';
+import { ProfileUpdateModal } from '../dashboard-agent';
+import { User } from '@/types/auth';
 
 const Home = () => {
 	const { logout, user } = useAuth();
 	const [activeTab, setActiveTab] = useState<
 		'overview' | 'properties' | 'collaborations' | 'searches'
 	>('overview');
+	const [showUpdateModal, setShowUpdateModal] = useState(false);
 
 	const handleLogout = () => {
 		logout();
@@ -27,6 +30,18 @@ const Home = () => {
 					Gérez vos annonces immobilières et développez votre activité
 					d&apos;apporteur d&apos;affaires.
 				</p>
+				{user && (
+					<div className="mt-4 flex items-center gap-3">
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => setShowUpdateModal(true)}
+							className="bg-white/10 hover:bg-white/20 border-white text-white"
+						>
+							Modifier mon profil
+						</Button>
+					</div>
+				)}
 			</div>
 
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -205,103 +220,114 @@ const Home = () => {
 	);
 
 	return (
-		<div className="min-h-screen bg-gray-50">
-			<div className="bg-white shadow-sm border-b">
-				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-					<div className="flex items-center justify-between h-16">
-						<div className="flex items-center space-x-8">
-							<h1 className="text-xl font-semibold text-gray-900">
-								{DASHBOARD_TEXT.apporteurDashboard}
-							</h1>
-							<nav className="flex space-x-6">
-								<button
-									onClick={() => setActiveTab('overview')}
-									className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-										activeTab === 'overview'
-											? 'bg-blue-100 text-blue-700'
-											: 'text-gray-600 hover:text-gray-900'
-									}`}
-								>
-									{DASHBOARD_TEXT.overview}
-								</button>
-								<button
-									onClick={() => setActiveTab('properties')}
-									className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-										activeTab === 'properties'
-											? 'bg-blue-100 text-blue-700'
-											: 'text-gray-600 hover:text-gray-900'
-									}`}
-								>
-									{DASHBOARD_TEXT.myProperties}
-								</button>
-								<button
-									onClick={() =>
-										setActiveTab('collaborations')
-									}
-									className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-										activeTab === 'collaborations'
-											? 'bg-blue-100 text-blue-700'
-											: 'text-gray-600 hover:text-gray-900'
-									}`}
-								>
-									{DASHBOARD_TEXT.myCollaborations}
-								</button>
-								<button
-									onClick={() => setActiveTab('searches')}
-									className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-										activeTab === 'searches'
-											? 'bg-blue-100 text-blue-700'
-											: 'text-gray-600 hover:text-gray-900'
-									}`}
-								>
-									Mes Recherches
-								</button>
-							</nav>
-						</div>
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={handleLogout}
-							className="text-gray-700 border-gray-300 hover:bg-gray-50"
-						>
-							<svg
-								className="w-4 h-4 mr-2"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
+		<>
+			<div className="min-h-screen bg-gray-50">
+				<div className="bg-white shadow-sm border-b">
+					<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+						<div className="flex items-center justify-between h-16">
+							<div className="flex items-center space-x-8">
+								<h1 className="text-xl font-semibold text-gray-900">
+									{DASHBOARD_TEXT.apporteurDashboard}
+								</h1>
+								<nav className="flex space-x-6">
+									<button
+										onClick={() => setActiveTab('overview')}
+										className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+											activeTab === 'overview'
+												? 'bg-blue-100 text-blue-700'
+												: 'text-gray-600 hover:text-gray-900'
+										}`}
+									>
+										{DASHBOARD_TEXT.overview}
+									</button>
+									<button
+										onClick={() =>
+											setActiveTab('properties')
+										}
+										className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+											activeTab === 'properties'
+												? 'bg-blue-100 text-blue-700'
+												: 'text-gray-600 hover:text-gray-900'
+										}`}
+									>
+										{DASHBOARD_TEXT.myProperties}
+									</button>
+									<button
+										onClick={() =>
+											setActiveTab('collaborations')
+										}
+										className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+											activeTab === 'collaborations'
+												? 'bg-blue-100 text-blue-700'
+												: 'text-gray-600 hover:text-gray-900'
+										}`}
+									>
+										{DASHBOARD_TEXT.myCollaborations}
+									</button>
+									<button
+										onClick={() => setActiveTab('searches')}
+										className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+											activeTab === 'searches'
+												? 'bg-blue-100 text-blue-700'
+												: 'text-gray-600 hover:text-gray-900'
+										}`}
+									>
+										Mes Recherches
+									</button>
+								</nav>
+							</div>
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={handleLogout}
+								className="text-gray-700 border-gray-300 hover:bg-gray-50"
 							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth="2"
-									d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-								/>
-							</svg>
-							{DASHBOARD_TEXT.logout}
-						</Button>
+								<svg
+									className="w-4 h-4 mr-2"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth="2"
+										d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+									/>
+								</svg>
+								{DASHBOARD_TEXT.logout}
+							</Button>
+						</div>
 					</div>
 				</div>
-			</div>
 
-			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-				{activeTab === 'overview' && renderOverview()}
-				{activeTab === 'properties' && <PropertyManager />}
-				{activeTab === 'collaborations' && user && (
-					<div className="space-y-6">
-						<div className="flex items-center justify-between">
-							<h2 className="text-2xl font-bold text-gray-900">
-								Mes Collaborations
-							</h2>
+				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+					{activeTab === 'overview' && renderOverview()}
+					{activeTab === 'properties' && <PropertyManager />}
+					{activeTab === 'collaborations' && user && (
+						<div className="space-y-6">
+							<div className="flex items-center justify-between">
+								<h2 className="text-2xl font-bold text-gray-900">
+									Mes Collaborations
+								</h2>
+							</div>
+							<CollaborationList
+								currentUserId={user.id}
+								onClose={() => {}}
+							/>
 						</div>
-						<CollaborationList
-							currentUserId={user.id}
-							onClose={() => {}}
-						/>
-					</div>
-				)}
-				{activeTab === 'searches' && <MySearches />}
+					)}
+					{activeTab === 'searches' && <MySearches />}
+				</div>
 			</div>
-		</div>
+			{user && (
+				<ProfileUpdateModal
+					isOpen={showUpdateModal}
+					onClose={() => setShowUpdateModal(false)}
+					user={user as User}
+				/>
+			)}
+		</>
 	);
 };
 

@@ -289,6 +289,9 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 											.split(' ')
 											.slice(1)
 											.join(' ') || '',
+									profileImage:
+										contract.propertyOwner.profileImage ||
+										undefined,
 								}}
 								size="sm"
 								className="w-10 h-10"
@@ -331,6 +334,9 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 											.split(' ')
 											.slice(1)
 											.join(' ') || '',
+									profileImage:
+										contract.collaborator.profileImage ||
+										undefined,
 								}}
 								size="sm"
 								className="w-10 h-10"

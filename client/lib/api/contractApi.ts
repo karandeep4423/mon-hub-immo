@@ -15,11 +15,13 @@ export interface ContractData {
 		id: string;
 		name: string;
 		email: string;
+		profileImage?: string | null;
 	};
 	collaborator: {
 		id: string;
 		name: string;
 		email: string;
+		profileImage?: string | null;
 	};
 	canEdit: boolean;
 	canSign: boolean;
