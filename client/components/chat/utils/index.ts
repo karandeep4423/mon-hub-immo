@@ -44,6 +44,7 @@ export {
 	deduplicateMessages,
 	mergeMessages,
 	findMessageById,
+	formatFileSize,
 } from './messageUtils';
 
 // ============================================================================
@@ -81,3 +82,27 @@ export {
 	isEscapeKeyPress,
 	isCtrlEnterPress,
 } from './keyboardUtils';
+
+// S3 helpers reused across components
+export const extractS3KeyFromUrl = (url: string): string | null => {
+	try {
+		const u = new URL(url);
+		const path = u.pathname.startsWith('/')
+			? u.pathname.slice(1)
+			: u.pathname;
+		// if path begins with bucket name (virtual-hosted style), strip it
+		const host = u.hostname;
+		// e.g., bucket.s3.amazonaws.com => ignore
+		if (/\.s3[.-]([a-z0-9-]+)\.amazonaws\.com$/i.test(host)) {
+			return path;
+		}
+		// s3.amazonaws.com/bucket/key => path includes bucket; drop first segment
+		if (/^([^/]+)\//.test(path)) {
+			const [, , rest] = path.match(/^([^/]+)\/(.*)$/) || [];
+			return rest || path;
+		}
+		return path;
+	} catch {
+		return null;
+	}
+};

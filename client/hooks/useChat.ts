@@ -8,6 +8,7 @@ import type {
 	ChatMessage,
 	ReadReceiptEvent,
 	TypingEvent,
+	SendMessageData,
 } from '@/types/chat';
 import type { User as AuthUser } from '@/types/auth';
 import type { Socket } from 'socket.io-client';
@@ -26,6 +27,11 @@ interface SocketEventHandlers {
 		lastSeen: string;
 	}) => void;
 	handleMessagesRead: (data: ReadReceiptEvent) => void;
+	handleMessageDeleted: (data: {
+		messageId: string;
+		receiverId: string;
+		senderId: string;
+	}) => void;
 }
 
 interface TypingActions {
@@ -39,10 +45,7 @@ interface ChatActions {
 	getUserById: (userId: string) => Promise<ChatUser | null>;
 	getMessages: (userId: string) => Promise<void>;
 	loadOlderMessages: () => Promise<ChatMessage[]>;
-	sendMessage: (messageData: {
-		text?: string;
-		image?: string;
-	}) => Promise<void>;
+	sendMessage: (messageData: SendMessageData) => Promise<void>;
 	setSelectedUser: (user: ChatUser | null) => void;
 	markMessagesAsRead: (senderId: string) => Promise<void>;
 }
@@ -140,11 +143,23 @@ const useSocketEventHandlers = (
 		[user],
 	);
 
+	const handleMessageDeleted = useCallback(
+		(data: { messageId: string; receiverId: string; senderId: string }) => {
+			chatStore.setMessages(
+				chatStore
+					.getState()
+					.messages.filter((m) => m._id !== data.messageId),
+			);
+		},
+		[],
+	);
+
 	return {
 		handleNewMessage,
 		handleUserTyping,
 		handleUserStatusUpdate,
 		handleMessagesRead,
+		handleMessageDeleted,
 	};
 };
 
@@ -172,6 +187,7 @@ const useSocketEventListeners = (
 			handlers.handleUserStatusUpdate,
 		);
 		socket.on(SOCKET_EVENTS.MESSAGES_READ, handlers.handleMessagesRead);
+		socket.on(SOCKET_EVENTS.MESSAGE_DELETED, handlers.handleMessageDeleted);
 
 		// Cleanup event listeners
 		return () => {
@@ -185,6 +201,10 @@ const useSocketEventListeners = (
 				SOCKET_EVENTS.MESSAGES_READ,
 				handlers.handleMessagesRead,
 			);
+			socket.off(
+				SOCKET_EVENTS.MESSAGE_DELETED,
+				handlers.handleMessageDeleted,
+			);
 		};
 	}, [
 		socket,
@@ -193,6 +213,7 @@ const useSocketEventListeners = (
 		handlers.handleUserTyping,
 		handlers.handleUserStatusUpdate,
 		handlers.handleMessagesRead,
+		handlers.handleMessageDeleted,
 	]);
 };
 

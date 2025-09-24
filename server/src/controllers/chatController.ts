@@ -4,6 +4,7 @@ import { User } from '../models/User';
 import Message from '../models/Chat';
 import { getSocketService } from '../server';
 import { Types } from 'mongoose';
+import { s3Service } from '../services/s3Service';
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -14,7 +15,15 @@ import { Types } from 'mongoose';
  * @param conversations - Array of conversations with users
  * @returns Sorted conversations (most recent first)
  */
-const sortConversationsByActivity = (conversations: any[]) => {
+type ConversationLike = {
+	lastMessage?: { createdAt?: Date | string } | null;
+	createdAt?: Date | string;
+	firstName?: string;
+	email?: string;
+	unreadCount?: number;
+};
+
+const sortConversationsByActivity = (conversations: ConversationLike[]) => {
 	return conversations.sort((a, b) => {
 		const aTime = a.lastMessage?.createdAt || a.createdAt || new Date(0);
 		const bTime = b.lastMessage?.createdAt || b.createdAt || new Date(0);
@@ -140,8 +149,9 @@ export const getUsersForSidebar = async (req: AuthRequest, res: Response) => {
 		);
 
 		res.status(200).json(sortedConversations);
-	} catch (error: any) {
-		console.error('Error in getUsersForSidebar: ', error.message);
+	} catch (error: unknown) {
+		const msg = error instanceof Error ? error.message : String(error);
+		console.error('Error in getUsersForSidebar: ', msg);
 		res.status(500).json({ error: 'Internal server error' });
 	}
 };
@@ -189,8 +199,9 @@ export const getMessages = async (req: AuthRequest, res: Response) => {
 		const messagesAsc = results.reverse();
 
 		res.status(200).json(messagesAsc);
-	} catch (error: any) {
-		console.log('Error in getMessages controller: ', error.message);
+	} catch (error: unknown) {
+		const msg = error instanceof Error ? error.message : String(error);
+		console.log('Error in getMessages controller: ', msg);
 		res.status(500).json({ error: 'Internal server error' });
 	}
 };
@@ -207,11 +218,21 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
 			return res.status(401).json({ error: 'Unauthorized' });
 		}
 
-		const { text } = req.body;
+		const { text, attachments } = req.body as {
+			text?: string;
+			attachments?: Array<{
+				url: string;
+				name: string;
+				mime: string;
+				size: number;
+				type?: 'image' | 'pdf' | 'doc' | 'docx' | 'file';
+				thumbnailUrl?: string;
+			}>;
+		};
 		const { id: receiverId } = req.params;
 		const senderId = new Types.ObjectId(req.userId);
 
-		// TODO: Add image upload support
+		// Back-compat: preserve legacy image field if provided (not used in new flow)
 		let imageUrl: string | undefined;
 
 		// Create and save new message
@@ -220,6 +241,24 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
 			receiverId,
 			text,
 			image: imageUrl,
+			attachments: attachments?.map((a) => ({
+				url: a.url,
+				name: a.name,
+				mime: a.mime,
+				size: a.size,
+				type:
+					a.type ||
+					(a.mime.startsWith('image/')
+						? 'image'
+						: a.mime.includes('pdf')
+							? 'pdf'
+							: a.mime.includes('word') ||
+								  a.mime.includes('msword') ||
+								  a.mime.includes('officedocument')
+								? 'docx'
+								: 'file'),
+				thumbnailUrl: a.thumbnailUrl,
+			})),
 			isRead: false,
 		});
 
@@ -247,8 +286,9 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
 		socketService.emitNewMessage(messageWithSender);
 
 		res.status(201).json(newMessage);
-	} catch (error: any) {
-		console.log('Error in sendMessage controller: ', error.message);
+	} catch (error: unknown) {
+		const msg = error instanceof Error ? error.message : String(error);
+		console.log('Error in sendMessage controller: ', msg);
 		res.status(500).json({ error: 'Internal server error' });
 	}
 };
@@ -300,7 +340,7 @@ export const markMessagesAsRead = async (req: AuthRequest, res: Response) => {
 			message: 'Messages marked as read',
 			count: result.modifiedCount,
 		});
-	} catch (error: any) {
+	} catch (error: unknown) {
 		console.error('Error marking messages as read:', error);
 		res.status(500).json({ error: 'Internal server error' });
 	}
@@ -348,8 +388,80 @@ export const getUserById = async (req: AuthRequest, res: Response) => {
 		);
 
 		res.status(200).json(userForChat);
-	} catch (error: any) {
-		console.error('Error in getUserById:', error.message);
+	} catch (error: unknown) {
+		const msg = error instanceof Error ? error.message : String(error);
+		console.error('Error in getUserById:', msg);
 		res.status(500).json({ error: 'Internal server error' });
+	}
+};
+
+/**
+ * Delete a message (sender only) and remove its files from S3
+ */
+export const deleteMessage = async (req: AuthRequest, res: Response) => {
+	try {
+		if (!req.userId) {
+			return res.status(401).json({ error: 'Unauthorized' });
+		}
+
+		const { messageId } = req.params as { messageId: string };
+		const me = new Types.ObjectId(req.userId);
+
+		const message = await Message.findById(messageId);
+		if (!message) {
+			return res.status(404).json({ error: 'Message not found' });
+		}
+
+		if (String(message.senderId) !== String(me)) {
+			return res.status(403).json({ error: 'Forbidden' });
+		}
+
+		// Collect S3 keys from attachments and legacy image URL
+		const keys: string[] = [];
+		const extractKey = (url?: string): string | null => {
+			if (!url) return null;
+			const match = url.match(/amazonaws\.com\/(.+)$/);
+			return match ? match[1] : null;
+		};
+
+		if (Array.isArray(message.attachments)) {
+			for (const att of message.attachments) {
+				const key = extractKey(att.url);
+				if (key) keys.push(key);
+			}
+		}
+
+		const legacyKey = extractKey(message.image as unknown as string);
+		if (legacyKey) keys.push(legacyKey);
+
+		// Best-effort deletion of files
+		if (keys.length > 0) {
+			try {
+				await s3Service.deleteMultipleImages(keys);
+			} catch (e) {
+				console.warn(
+					'Warning deleting S3 objects for message:',
+					messageId,
+					e,
+				);
+			}
+		}
+
+		// Remove message from DB
+		await Message.deleteOne({ _id: messageId });
+
+		// Notify both users via socket
+		const socketService = getSocketService();
+		socketService.emitMessageDeleted({
+			messageId,
+			receiverId: String(message.receiverId),
+			senderId: String(message.senderId),
+		});
+
+		return res.status(200).json({ success: true });
+	} catch (error: unknown) {
+		const msg = error instanceof Error ? error.message : String(error);
+		console.error('Error in deleteMessage:', msg);
+		return res.status(500).json({ error: 'Internal server error' });
 	}
 };

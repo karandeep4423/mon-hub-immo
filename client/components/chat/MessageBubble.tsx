@@ -1,13 +1,26 @@
 'use client';
 
 import React from 'react';
+import { chatStore } from '@/store/chatStore';
+import Image from 'next/image';
 import { ReadReceipt } from './MessageStatus';
 import { MessageTime } from './ui';
-import { formatTimeOnly } from './utils/messageUtils';
+import { formatTimeOnly, formatFileSize } from './utils/messageUtils';
+import { getIconForMime } from './ui/FileTypeIcons';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 // ============================================================================
 // TYPES & INTERFACES
 // ============================================================================
+
+type Attachment = {
+	url: string;
+	name: string;
+	mime: string;
+	size: number;
+	type: 'image' | 'pdf' | 'doc' | 'docx' | 'file';
+	thumbnailUrl?: string;
+};
 
 interface Message {
 	_id: string;
@@ -15,25 +28,30 @@ interface Message {
 	receiverId: string;
 	text?: string;
 	image?: string;
+	attachments?: Attachment[];
 	createdAt: string;
 	isRead?: boolean;
-	readAt?: string;
 }
 
 interface MessageBubbleProps {
 	/** Message object to display */
 	message: Message;
-	/** Whether this message was sent by the current user */
+	/** Whether this is the current user's message */
 	isMyMessage: boolean;
-	/** Optional custom styling classes */
 	className?: string;
+	/** Open a full-screen viewer for a clicked image URL */
+	onImageClick?: (imageUrl: string) => void;
 }
 
 interface MessageContentProps {
 	/** Message text content */
 	text?: string;
-	/** Message image URL */
+	/** Legacy single image */
 	image?: string;
+	/** Modern attachments array */
+	attachments?: Attachment[];
+	/** Image click handler */
+	onImageClick?: (imageUrl: string) => void;
 }
 
 interface MessageFooterProps {
@@ -97,26 +115,138 @@ MessageText.displayName = 'MessageText';
 const MessageImage: React.FC<{
 	imageUrl: string;
 	altText?: string;
-}> = React.memo(({ imageUrl, altText = 'Message attachment' }) => (
-	<img
-		src={imageUrl}
-		alt={altText}
-		className="max-w-full h-auto rounded mt-2 cursor-pointer hover:opacity-90 transition-opacity"
-		onClick={() => handleImageClick(imageUrl)}
-		loading="lazy"
-	/>
+	onClick?: (url: string) => void;
+}> = React.memo(({ imageUrl, altText = 'Message attachment', onClick }) => (
+	<div className="mt-2">
+		<Image
+			src={imageUrl}
+			alt={altText}
+			width={600}
+			height={400}
+			className="h-auto w-auto max-w-full rounded cursor-pointer hover:opacity-90 transition-opacity"
+			onClick={() =>
+				onClick ? onClick(imageUrl) : handleImageClick(imageUrl)
+			}
+		/>
+	</div>
 ));
 
 MessageImage.displayName = 'MessageImage';
 
+const DocTile: React.FC<{
+	url: string;
+	name: string;
+	mime: string;
+	size?: number;
+}> = ({ url, name, mime, size }) => {
+	const fileSize =
+		typeof size === 'number' ? formatFileSize(size) : undefined;
+	const lower = mime.toLowerCase();
+	const isPdf = lower.includes('pdf');
+	const isWord =
+		lower.includes('word') ||
+		lower.includes('msword') ||
+		lower.includes('officedocument.word');
+	const isExcel =
+		lower.includes('sheet') ||
+		lower.includes('spreadsheet') ||
+		lower.includes('excel') ||
+		lower.includes('csv');
+	const isPpt =
+		lower.includes('presentation') || lower.includes('powerpoint');
+
+	const docLabel = isPdf
+		? 'PDF Document'
+		: isWord
+			? 'Microsoft Word Document'
+			: isExcel
+				? 'Excel Spreadsheet'
+				: isPpt
+					? 'PowerPoint Presentation'
+					: mime;
+
+	const badgeBg = isPdf
+		? 'bg-red-600'
+		: isWord
+			? 'bg-blue-600'
+			: isExcel
+				? 'bg-green-600'
+				: isPpt
+					? 'bg-orange-600'
+					: 'bg-gray-600';
+
+	// Brand-colored container using project accent #00b4d8
+	return (
+		<div className="mt-2 w-full max-w-[420px] rounded-xl border border-[#0094b3] bg-[#00b4d8] text-white shadow-sm">
+			<div className="flex items-center gap-3 px-4 pt-3">
+				<div
+					className={`h-12 w-12 ${badgeBg} rounded-md flex items-center justify-center select-none`}
+					aria-hidden
+				>
+					{(() => {
+						const Icon = getIconForMime(mime);
+						return <Icon className="w-6 h-6" />;
+					})()}
+				</div>
+				<div className="min-w-0">
+					<div className="truncate font-semibold leading-tight">
+						{name || 'Document'}
+					</div>
+					<div className="text-white/85 text-sm">
+						{fileSize ? `${fileSize}, ${docLabel}` : docLabel}
+					</div>
+				</div>
+			</div>
+			<div className="flex gap-3 px-4 py-3">
+				<a
+					href={url}
+					target="_blank"
+					rel="noreferrer"
+					className="flex-1 text-center rounded-md bg-white/15 hover:bg-white/25 px-3 py-2 text-sm font-semibold"
+				>
+					Open
+				</a>
+				<a
+					href={url}
+					download
+					className="flex-1 text-center rounded-md bg-white/15 hover:bg-white/25 px-3 py-2 text-sm font-semibold"
+				>
+					Save as...
+				</a>
+			</div>
+		</div>
+	);
+};
 /**
  * Message content container for text and/or images
  */
 const MessageContent: React.FC<MessageContentProps> = React.memo(
-	({ text, image }) => (
+	({ text, image, attachments, onImageClick }) => (
 		<>
 			{text && <MessageText text={text} />}
-			{image && <MessageImage imageUrl={image} />}
+			{image && <MessageImage imageUrl={image} onClick={onImageClick} />}
+			{attachments && attachments.length > 0 && (
+				<div className="flex flex-col">
+					{attachments.map((att, idx) =>
+						att.type === 'image' ? (
+							<MessageImage
+								key={idx}
+								imageUrl={att.url}
+								altText={att.name}
+								onClick={onImageClick}
+							/>
+						) : (
+							<DocTile
+								key={idx}
+								url={att.url}
+								name={att.name}
+								mime={att.mime}
+								size={att.size}
+							/>
+						),
+					)}
+				</div>
+			)}
 		</>
 	),
 );
@@ -175,23 +305,79 @@ MessageFooter.displayName = 'MessageFooter';
  * @param className - Optional custom styling classes
  */
 const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
-	({ message, isMyMessage, className = '' }) => {
+	({ message, isMyMessage, className = '', onImageClick }) => {
 		const containerClasses = getContainerClasses(isMyMessage);
 		const bubbleClasses = getBubbleClasses(isMyMessage);
+
+		const [confirmOpen, setConfirmOpen] = React.useState(false);
+		const [deleting, setDeleting] = React.useState(false);
+		const openConfirm = (e?: React.MouseEvent) => {
+			e?.preventDefault();
+			setConfirmOpen(true);
+		};
+		const handleConfirmDelete = async () => {
+			setDeleting(true);
+			try {
+				await chatStore.deleteMessage(message._id);
+			} catch (e) {
+				console.error('Failed to delete message', e);
+			} finally {
+				setDeleting(false);
+				setConfirmOpen(false);
+			}
+		};
 
 		return (
 			<div
 				className={`${containerClasses} ${className}`}
 				data-message-id={message._id}
 			>
-				<div className={bubbleClasses}>
-					<MessageContent text={message.text} image={message.image} />
+				<div className={`${bubbleClasses} relative group`}>
+					{/* Hover-only delete icon for my messages */}
+					{isMyMessage && (
+						<button
+							onClick={openConfirm}
+							className="hidden group-hover:flex items-center justify-center absolute -top-2 -right-2 w-7 h-7 rounded-full bg-red-600 text-white shadow hover:bg-red-700"
+							title="Delete message"
+							aria-label="Delete message"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 24 24"
+								fill="currentColor"
+								className="w-4 h-4"
+							>
+								<path d="M9 3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1h4a1 1 0 1 1 0 2h-1v13a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V6H4a1 1 0 1 1 0-2h5V3Zm2 1h2V4h-2V4Zm6 3H7v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6Zm-7 3a1 1 0 0 1 2 0v7a1 1 0 1 1-2 0V9Zm4 0a1 1 0 0 1 2 0v7a1 1 0 1 1-2 0V9Z" />
+							</svg>
+						</button>
+					)}
+					<MessageContent
+						text={message.text}
+						image={message.image}
+						attachments={message.attachments}
+						onImageClick={onImageClick}
+					/>
 
 					<MessageFooter
 						createdAt={message.createdAt}
 						isMyMessage={isMyMessage}
 						isRead={message.isRead}
 					/>
+
+					{/* Confirm dialog */}
+					{isMyMessage && (
+						<ConfirmDialog
+							isOpen={confirmOpen}
+							title="Ready to remove this?"
+							description="Are you sure you want to delete this message? This action cannot be undone."
+							onConfirm={handleConfirmDelete}
+							onCancel={() => setConfirmOpen(false)}
+							confirmText="Delete"
+							cancelText="Cancel"
+							variant="danger"
+							loading={deleting}
+						/>
+					)}
 				</div>
 			</div>
 		);

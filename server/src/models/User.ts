@@ -268,8 +268,8 @@ const userSchema = new Schema<IUser>(
 	},
 );
 
-// Indexes for performance (without lockUntil)
-userSchema.index({ email: 1 }, { unique: true });
+// Indexes for performance
+// 'email' already has `unique: true` on the schema path, so we don't redeclare it here to avoid duplicate index warnings
 userSchema.index({ emailVerificationCode: 1 });
 userSchema.index({ emailVerificationExpires: 1 });
 userSchema.index({ passwordResetCode: 1 });

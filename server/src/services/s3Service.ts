@@ -47,11 +47,42 @@ export class S3Service {
 		if (folder === 'users') {
 			return `users/profiles/${userId}/${fileName}`;
 		}
+		if (folder === 'chat') {
+			return `chat/${userId}/${fileName}`;
+		}
 		return `temp/${userId}/${fileName}`;
 	}
 
 	private getFileExtension(originalName: string): string {
 		return originalName.split('.').pop()?.toLowerCase() || 'jpg';
+	}
+
+	async uploadObject(params: {
+		buffer: Buffer;
+		originalName: string;
+		userId: string;
+		folder?: 'chat' | 'users' | 'properties' | 'temp';
+		contentType?: string;
+	}): Promise<{ key: string; url: string }> {
+		const fileName = this.generateFileName(params.originalName);
+		const key = this.generateKey(
+			params.folder ?? 'chat',
+			params.userId,
+			fileName,
+		);
+
+		await s3Client.send(
+			new PutObjectCommand({
+				Bucket: BUCKET_NAME,
+				Key: key,
+				Body: params.buffer,
+				ContentType: params.contentType ?? 'application/octet-stream',
+				CacheControl: 'max-age=31536000',
+			}),
+		);
+
+		const url = `https://${BUCKET_NAME}.s3.amazonaws.com/${key}`;
+		return { key, url };
 	}
 
 	private generateFileName(originalName: string): string {

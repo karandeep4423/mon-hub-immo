@@ -50,3 +50,43 @@ export const uploadProperty = uploadMiddleware.fields([
 	{ name: 'mainImage', maxCount: 1 },
 	{ name: 'galleryImages', maxCount: 20 },
 ]);
+
+// ========================
+// Chat files (images + docs)
+// ========================
+
+const chatFileFilter = (
+	req: MulterRequest,
+	file: Express.Multer.File,
+	cb: multer.FileFilterCallback,
+) => {
+	const allowedMimes = new Set([
+		'image/jpeg',
+		'image/jpg',
+		'image/png',
+		'image/webp',
+		'application/pdf',
+		'application/msword',
+		'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+		// Excel
+		'application/vnd.ms-excel',
+		'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+		'text/csv',
+		// PowerPoint
+		'application/vnd.ms-powerpoint',
+		'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+		// Google Docs/Sheets exports often come as above; accept native Sheets mime just in case
+		'application/vnd.google-apps.spreadsheet',
+	]);
+
+	if (allowedMimes.has(file.mimetype)) {
+		cb(null, true);
+	} else {
+		cb(new Error('Type de fichier non supporté.')); // Keep concise message
+	}
+};
+
+const chatUpload = multer({ storage, fileFilter: chatFileFilter, limits });
+
+// Single file for chat attachments (field name: 'file')
+export const uploadChatSingle = chatUpload.single('file');

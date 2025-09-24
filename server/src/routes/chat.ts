@@ -5,6 +5,7 @@ import {
 	getUsersForSidebar,
 	getUserById,
 	markMessagesAsRead,
+	deleteMessage,
 } from '../controllers/chatController';
 import { authenticateToken } from '../middleware/auth';
 
@@ -18,6 +19,12 @@ router.put(
 	'/read/:id',
 	authenticateToken,
 	markMessagesAsRead as RequestHandler,
+);
+
+router.delete(
+	'/:messageId',
+	authenticateToken,
+	deleteMessage as unknown as RequestHandler,
 );
 
 export default router;
