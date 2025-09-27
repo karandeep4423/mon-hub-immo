@@ -2,13 +2,17 @@ import React from 'react';
 import Link from 'next/link';
 import { Property } from '@/lib/api/propertyApi';
 import { getImageUrl } from '@/lib/utils/imageUtils';
-import { ProfileAvatar } from '../ui';
+import { ProfileAvatar, FavoriteButton } from '../ui';
 
 interface PropertyCardProps {
 	property: Property;
+	onFavoriteToggle?: (propertyId: string, isFavorite: boolean) => void;
 }
 
-export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
+export const PropertyCard: React.FC<PropertyCardProps> = ({
+	property,
+	onFavoriteToggle,
+}) => {
 	return (
 		<Link href={`/property/${property._id}`} className="block">
 			<div className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
@@ -36,6 +40,22 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
 								Exclusivité
 							</span>
 						)}
+					</div>
+					{/* Favorite Button */}
+					<div className="absolute top-2 right-2">
+						<FavoriteButton
+							propertyId={property._id}
+							size="md"
+							onToggle={
+								onFavoriteToggle
+									? (isFavorite) =>
+											onFavoriteToggle(
+												property._id,
+												isFavorite,
+											)
+									: undefined
+							}
+						/>
 					</div>
 				</div>
 
@@ -75,12 +95,24 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
 					</div>
 
 					{/* Owner info */}
-					<div className="flex items-center space-x-2">
-						<ProfileAvatar user={property.owner} size="sm" />
-						<div>
-							<p className="text-gray-700 font-medium text-sm">
-								{property.owner.firstName}{' '}
-								{property.owner.lastName}
+					<div className="flex items-center justify-between">
+						<div className="flex items-center space-x-2">
+							<ProfileAvatar user={property.owner} size="sm" />
+							<div>
+								<p className="text-gray-700 font-medium text-sm">
+									{property.owner.firstName}{' '}
+									{property.owner.lastName}
+								</p>
+								<p className="text-gray-500 text-xs capitalize">
+									{property.owner.userType}
+								</p>
+							</div>
+						</div>
+						<div className="text-right">
+							<p className="text-gray-500 text-xs">
+								{new Date(
+									property.publishedAt || property.createdAt,
+								).toLocaleDateString('fr-FR')}
 							</p>
 						</div>
 					</div>

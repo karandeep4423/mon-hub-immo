@@ -3,6 +3,7 @@
 import React, { createContext, useEffect, useState, useCallback } from 'react';
 import { User } from '@/types/auth';
 import { authService } from '@/lib/api/authApi';
+import { useFavoritesStore } from '@/store/favoritesStore';
 
 interface AuthContextType {
 	user: User | null;
@@ -23,6 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
 	const [user, setUser] = useState<User | null>(null);
 	const [loading, setLoading] = useState(true);
+	const { initializeFavorites, reset: resetFavorites } = useFavoritesStore();
 
 	const refreshUser = useCallback(async () => {
 		const token = localStorage.getItem('token');
@@ -46,21 +48,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 			const token = localStorage.getItem('token');
 			if (token) {
 				await refreshUser();
+				// Initialize favorites after user is refreshed
+				initializeFavorites();
 			}
 			setLoading(false);
 		};
 
 		initAuth();
-	}, [refreshUser]);
+	}, [refreshUser, initializeFavorites]);
 
 	const login = (token: string, userData: User) => {
 		localStorage.setItem('token', token);
 		setUser(userData);
+		// Initialize favorites when user logs in
+		initializeFavorites();
 	};
 
 	const logout = () => {
 		localStorage.removeItem('token');
 		setUser(null);
+		// Reset favorites when user logs out
+		resetFavorites();
 		window.location.href = '/auth/login';
 	};
 

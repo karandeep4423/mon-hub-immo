@@ -14,7 +14,7 @@ import { MySearches } from '../search-ads/MySearches';
 
 export const DashboardContent: React.FC = () => {
 	const router = useRouter();
-	const { user, logout, loading, refreshUser } = useAuth();
+	const { user, loading, refreshUser } = useAuth();
 	const [activeTab, setActiveTab] = useState<
 		'overview' | 'properties' | 'collaborations' | 'searches'
 	>('overview');
@@ -49,9 +49,6 @@ export const DashboardContent: React.FC = () => {
 		return null;
 	}
 
-	const handleLogout = () => {
-		logout();
-	};
 
 	// Check if user needs to complete profile
 	const showProfilePrompt =
@@ -125,7 +122,7 @@ export const DashboardContent: React.FC = () => {
 			)}
 
 			{/* Main Content */}
-			<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+			<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-x-hidden">
 				<div className="mb-8">
 					<h2 className="text-2xl font-bold text-gray-900 mb-2">
 						Bienvenue, {user.firstName} !
@@ -133,33 +130,12 @@ export const DashboardContent: React.FC = () => {
 					<p className="text-gray-600">
 						{DASHBOARD_TEXT.welcomeAgent}
 					</p>
-					<Button
-						variant="outline"
-						size="sm"
-						onClick={handleLogout}
-						className="text-gray-700 border-gray-300 hover:bg-gray-50"
-					>
-						<svg
-							className="w-4 h-4 mr-2"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth="2"
-								d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-							/>
-						</svg>
-						{DASHBOARD_TEXT.logout}
-					</Button>
 				</div>
 
 				{/* Tab Navigation */}
 				<div className="border-b border-gray-200 mb-8">
-					<div className="flex items-center justify-between">
-						<nav className="-mb-px flex space-x-8">
+					<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+						<nav className="-mb-px flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-x-8">
 							<button
 								onClick={() => setActiveTab('overview')}
 								className={`py-2 px-1 border-b-2 font-medium text-sm ${
@@ -242,26 +218,28 @@ export const DashboardContent: React.FC = () => {
 							</button>
 						</nav>
 						{/* Quick Create Property Button */}
-						<Button
-							onClick={() => setActiveTab('properties')}
-							className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg"
-							size="sm"
-						>
-							<svg
-								className="w-4 h-4 mr-2"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
+						<div className="w-full sm:w-auto sm:shrink-0">
+							<Button
+								onClick={() => setActiveTab('properties')}
+								className="w-full sm:w-auto bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg"
+								size="sm"
 							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth="2"
-									d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-								/>
-							</svg>
-							Créer une annonce
-						</Button>
+								<svg
+									className="w-4 h-4 mr-2"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth="2"
+										d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+									/>
+								</svg>
+								Créer une annonce
+							</Button>
+						</div>
 					</div>
 				</div>
 

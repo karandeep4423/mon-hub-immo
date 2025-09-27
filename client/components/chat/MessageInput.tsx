@@ -5,7 +5,6 @@ import { useChat } from '../../hooks/useChat';
 import { isValidMessageContent } from './utils/messageUtils';
 import { isEnterKeyPress } from './utils/keyboardUtils';
 import TypingIndicator from './TypingIndicator';
-import MessageStatus from './MessageStatus';
 import { ButtonSpinner } from './ui';
 import { ChatApi } from '@/lib/api/chatApi';
 import { CHAT_TEXT } from '@/lib/constants/text';
@@ -383,9 +382,6 @@ const MessageInput: React.FC<MessageInputProps> = React.memo(
 						/>
 					</div>
 				</form>
-
-				{/* Status Display - Shows user status and chat readiness */}
-				<MessageStatus selectedUser={selectedUser} />
 			</div>
 		);
 	},

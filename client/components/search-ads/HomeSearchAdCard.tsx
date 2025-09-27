@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { SearchAd } from '@/types/searchAd';
+import { FavoriteButton } from '../ui/FavoriteButton';
 import { ProfileAvatar } from '../ui/ProfileAvatar';
 
 interface HomeSearchAdCardProps {
@@ -49,10 +50,13 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 								</span>
 							)}
 						</div>
-						<div className="text-right">
-							<span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
-								Recherche Client
-							</span>
+						<div>
+							<FavoriteButton
+								itemId={searchAd._id}
+								itemType="searchAd"
+								className="!w-8 !h-8 !bg-white/20 hover:!bg-white/30"
+								size="md"
+							/>
 						</div>
 					</div>
 

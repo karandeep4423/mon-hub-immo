@@ -70,10 +70,7 @@ export const useNotifications = () => {
 		const userId: string | null = u?.id?.toString?.() ?? u?._id ?? null;
 		if (authLoading || !userId) return; // wait for authenticated user
 
-		// Re-bootstrap when user changes
-		const sameUser = lastUserIdRef.current === userId;
-		if (sameUser && bootstrappedRef.current) return;
-		bootstrappedRef.current = true;
+		// Re-bootstrap when user changes. Do not mark bootstrapped until state is applied.
 		lastUserIdRef.current = userId;
 		let isMounted = true;
 		const bootstrap = async () => {
@@ -96,24 +93,28 @@ export const useNotifications = () => {
 						unreadCount,
 						loading: false,
 					}));
+					bootstrappedRef.current = true;
 					return;
 				}
 
 				// Share in-flight fetch across remounts
 				if (userId && !bootstrapInflightMap.get(userId)) {
 					const inflight = (async () => {
+						const now = Date.now();
 						const [listRes, countRes] = await Promise.all([
 							api.get('/notifications', {
-								params: { limit: 20 },
+								params: { limit: 20, _ts: now },
 							}),
-							api.get('/notifications/count'),
+							api.get('/notifications/count', {
+								params: { _ts: now },
+							}),
 						]);
 						const items: NotificationItem[] =
-							listRes.data.items ?? [];
+							listRes.data?.items ?? [];
 						const data: BootData = {
 							items,
-							nextCursor: listRes.data.nextCursor ?? null,
-							unreadCount: countRes.data.unreadCount ?? 0,
+							nextCursor: listRes.data?.nextCursor ?? null,
+							unreadCount: countRes.data?.unreadCount ?? 0,
 						};
 						bootstrapCacheMap.set(userId, data);
 						// seed dedupe set
@@ -131,6 +132,7 @@ export const useNotifications = () => {
 					unreadCount: ready.unreadCount,
 					loading: false,
 				}));
+				bootstrappedRef.current = true;
 			} catch {
 				setState((s) => ({ ...s, loading: false }));
 			} finally {
@@ -215,7 +217,11 @@ export const useNotifications = () => {
 		loadingRef.current = true;
 		try {
 			const res = await api.get('/notifications', {
-				params: { cursor: state.nextCursor, limit: 20 },
+				params: {
+					cursor: state.nextCursor,
+					limit: 20,
+					_ts: Date.now(),
+				},
 			});
 			const incoming: NotificationItem[] = res.data.items ?? [];
 			const deduped = incoming.filter((n) => {

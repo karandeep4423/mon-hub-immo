@@ -18,4 +18,5 @@ export { Alert } from './Alert';
 export { ErrorBoundary } from './ErrorBoundary';
 export { CheckmarkIcon } from './CheckmarkIcon';
 export { StepIndicator } from './StepIndicator';
+export { FavoriteButton } from './FavoriteButton';
 export { StatusBadge } from './StatusBadge';

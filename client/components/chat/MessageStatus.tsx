@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { getUserDisplayName, getUserStatusText } from './utils/userUtils';
+import { getUserStatusText } from './utils/userUtils';
 import { formatMessageTime } from './utils/messageUtils';
 import { OnlineIndicator } from './ui';
 

@@ -3,6 +3,7 @@
 - collaboration-actions.md — Describes the collaboration details page actions, role permissions, and API wiring.
 - chat-attachments.md — Chat file attachments (images, PDF, Word) flow and API.
 - notifications.md — Server-side notifications feature and triggers.
+- favorites-feature.md — User favorites system for properties with heart buttons and dedicated page.
 
 ## Server
 
@@ -10,6 +11,16 @@
 - Health endpoint `/api/health`
 - Middleware: auth, error handling, rate limit
 - Validation: Zod schemas + middleware (see `docs/validation-zod.md`)
+
+## Core Features
+
+### Favorites System
+
+- Heart button on property cards for authenticated users
+- Dedicated `/favorites` page with pagination
+- Real-time updates using Zustand store
+- Automatic favorite count maintenance on properties
+- Bulk favorite status loading for performance
 
 ## Collaboration UI guards
 
