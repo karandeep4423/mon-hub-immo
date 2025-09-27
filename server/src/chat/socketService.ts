@@ -22,6 +22,7 @@ export interface SocketServiceAPI {
 	}) => void;
 	emitToUser: (userId: string, event: string, data: unknown) => void;
 	broadcastToOthers: (senderId: string, event: string, data: unknown) => void;
+	isChatThreadActive?: (userId: string, peerId: string) => boolean;
 	getIO: () => Server;
 }
 
@@ -48,6 +49,7 @@ export const createSocketService = (io: Server): SocketServiceAPI => {
 		getOnlineUsers: socketManager.getOnlineUsers,
 		emitToUser: socketManager.emitToUser,
 		broadcastToOthers: socketManager.broadcastToOthers,
+		isChatThreadActive: socketManager.isChatThreadActive,
 
 		// Message handler methods
 		emitNewMessage: messageHandler.emitNewMessage,

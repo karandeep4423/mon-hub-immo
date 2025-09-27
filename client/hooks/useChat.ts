@@ -326,6 +326,23 @@ export const useChat = () => {
 	// Create chat actions
 	const chatActions = useChatActions();
 
+	// Track active chat thread on the server to suppress redundant notifications
+	useEffect(() => {
+		if (!socket || !isConnected) return;
+
+		const peerId = state.selectedUser?._id;
+		if (peerId) {
+			// Notify server that this client is actively viewing a thread with peerId
+			socket.emit(SOCKET_EVENTS.CHAT_ACTIVE_THREAD, { peerId });
+		}
+
+		// On cleanup or when changing threads, mark inactive
+		return () => {
+			if (!socket || !isConnected) return;
+			socket.emit(SOCKET_EVENTS.CHAT_INACTIVE_THREAD);
+		};
+	}, [socket, isConnected, state.selectedUser?._id]);
+
 	// ============================================================================
 	// RETURN COMPOSED API
 	// ============================================================================

@@ -5,6 +5,8 @@ import Message from '../models/Chat';
 import { getSocketService } from '../server';
 import { Types } from 'mongoose';
 import { s3Service } from '../services/s3Service';
+import { notificationService } from '../services/notificationService';
+import { chatTexts } from '../utils/notificationTexts';
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -264,26 +266,88 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
 
 		await newMessage.save();
 
-		// Get sender info for notification
+		// Get sender info for notification and optional avatar
 		const sender = await User.findById(senderId).select(
-			'firstName lastName name email',
+			'firstName lastName email profileImage',
 		);
+
+		const senderName = sender
+			? sender.firstName
+				? `${sender.firstName} ${sender.lastName || ''}`.trim()
+				: sender.firstName || sender.email
+			: 'Someone';
 
 		// Prepare message payload with sender info and string IDs for socket emission
 		const messageWithSender = {
-			...newMessage.toObject(),
-			senderId: senderId.toString(),
-			receiverId: receiverId.toString(),
-			senderName: sender
-				? sender.firstName
-					? `${sender.firstName} ${sender.lastName}`
-					: sender.firstName || sender.email
-				: 'Someone',
+			_id: String(newMessage._id),
+			senderId: String(senderId),
+			receiverId: String(receiverId),
+			text,
+			image: imageUrl,
+			attachments: Array.isArray(newMessage.attachments)
+				? newMessage.attachments.map((a) => ({
+						url: a.url,
+						name: a.name,
+						mime: a.mime,
+						size: a.size,
+						type: a.type,
+						thumbnailUrl: a.thumbnailUrl,
+					}))
+				: [],
+			createdAt:
+				(
+					newMessage as unknown as { createdAt?: Date }
+				).createdAt?.toISOString() || new Date().toISOString(),
+			isRead: false,
+			senderName,
 		};
 
 		// Emit real-time updates via socket service
 		const socketService = getSocketService();
 		socketService.emitNewMessage(messageWithSender);
+
+		// Create persistent notification for receiver (skip self)
+		if (String(receiverId) !== String(senderId)) {
+			const actorName = senderName;
+			// Avoid DB writes in unit tests
+			if (process.env.NODE_ENV !== 'test') {
+				// Suppress notification if receiver is actively viewing this chat thread
+				const suppress = socketService.isChatThreadActive?.(
+					String(receiverId),
+					String(senderId),
+				)
+					? true
+					: false;
+				if (suppress) {
+					// still keep unread count emission consistent via sockets; skip persistence
+					// no-op for persisted notification creation
+				} else {
+					try {
+						await notificationService.create({
+							recipientId: receiverId,
+							actorId: senderId,
+							type: 'chat:new_message',
+							entity: { type: 'chat', id: senderId }, // open chat with sender
+							title: chatTexts.newMessageTitle({ actorName }),
+							message: chatTexts.newMessageBody({
+								actorName,
+								text: text || undefined,
+								attachmentCount: attachments?.length || 0,
+							}),
+							data: {
+								actorName,
+								senderId: String(senderId),
+								snippet: text ? text.slice(0, 120) : undefined,
+								attachmentCount: attachments?.length || 0,
+								actorAvatar: sender?.profileImage || undefined,
+							},
+						});
+					} catch (e) {
+						console.warn('Failed to create chat notification:', e);
+					}
+				}
+			}
+		}
 
 		res.status(201).json(newMessage);
 	} catch (error: unknown) {

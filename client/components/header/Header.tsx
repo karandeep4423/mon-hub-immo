@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { ProfileAvatar } from '../ui/ProfileAvatar';
+import NotificationBell from '../notifications/NotificationBell';
 
 export default function Header() {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -38,6 +39,7 @@ export default function Header() {
 					</nav>
 
 					<div className="flex items-center space-x-4">
+						<NotificationBell />
 						<button className="text-gray-500 hover:text-[#6AD1E3]">
 							<svg
 								className="h-6 w-6"

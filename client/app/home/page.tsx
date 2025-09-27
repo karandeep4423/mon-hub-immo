@@ -30,7 +30,7 @@ export default function Home() {
 	const [typeFilter, setTypeFilter] = useState('');
 	const [sectorFilter, setSectorFilter] = useState('');
 	const [priceFilter, setPriceFilter] = useState({ min: 0, max: 10000000 });
-	const [contentFilter, setContentFilter] = useState<ContentFilter>('all');
+	const [contentFilter, setContentFilter] = useState<ContentFilter>('all')
 
 	// Mapping function for property types between properties and search ads
 	const mapPropertyType = (propertyType: string): string[] => {
