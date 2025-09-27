@@ -27,8 +27,9 @@ export interface UserStatusUpdate {
 export interface SocketManagerAPI {
 	getReceiverSocketId: (userId: string) => string | undefined;
 	getOnlineUsers: () => string[];
-	emitToUser: (userId: string, event: string, data: any) => void;
-	broadcastToOthers: (senderId: string, event: string, data: any) => void;
+	emitToUser: (userId: string, event: string, data: unknown) => void;
+	broadcastToOthers: (senderId: string, event: string, data: unknown) => void;
+	isChatThreadActive: (userId: string, peerId: string) => boolean;
 }
 
 // ============================================================================
@@ -65,7 +66,8 @@ const removeUserFromMap = (
 	userSocketMap: UserSocketMap,
 	userId: string,
 ): UserSocketMap => {
-	const { [userId]: removed, ...rest } = userSocketMap;
+	const rest: UserSocketMap = { ...userSocketMap };
+	delete rest[userId];
 	return rest;
 };
 
@@ -77,7 +79,7 @@ const emitToUser = (
 	userSocketMap: UserSocketMap,
 	userId: string,
 	event: string,
-	data: any,
+	data: unknown,
 ): void => {
 	const socketId = getReceiverSocketId(userSocketMap, userId);
 	if (socketId) {
@@ -93,7 +95,7 @@ const broadcastToOthers = (
 	userSocketMap: UserSocketMap,
 	senderId: string,
 	event: string,
-	data: any,
+	data: unknown,
 ): void => {
 	const senderSocketId = getReceiverSocketId(userSocketMap, senderId);
 	if (senderSocketId) {
@@ -213,6 +215,8 @@ const setupSocketEventListeners = (
 	userId: string,
 	getUserSocketMap: () => UserSocketMap,
 	updateUserMap: (updater: (map: UserSocketMap) => UserSocketMap) => void,
+	getActiveThreads: () => Record<string, string | undefined>,
+	setActiveThread: (userId: string, peerId?: string) => void,
 ): void => {
 	// Handle typing events
 	socket.on('typing', (data: TypingData) => {
@@ -226,12 +230,24 @@ const setupSocketEventListeners = (
 
 	// Handle disconnection
 	socket.on('disconnect', async () => {
+		// Clear active thread on disconnect
+		setActiveThread(userId, undefined);
 		await handleDisconnection(
 			io,
 			getUserSocketMap(),
 			userId,
 			updateUserMap,
 		);
+	});
+
+	// Track active chat thread for notification suppression
+	socket.on('chat:activeThread', (data: { peerId: string }) => {
+		if (!data || !data.peerId) return;
+		setActiveThread(userId, data.peerId);
+	});
+
+	socket.on('chat:inactiveThread', () => {
+		setActiveThread(userId, undefined);
 	});
 };
 
@@ -243,6 +259,8 @@ const handleConnection = (
 	socket: Socket,
 	getUserSocketMap: () => UserSocketMap,
 	updateUserMap: (updater: (map: UserSocketMap) => UserSocketMap) => void,
+	getActiveThreads: () => Record<string, string | undefined>,
+	setActiveThread: (userId: string, peerId?: string) => void,
 ): void => {
 	console.log('🔌 User connected:', socket.id);
 	const userId = socket.handshake.query.userId as string;
@@ -265,6 +283,8 @@ const handleConnection = (
 		userId,
 		getUserSocketMap,
 		updateUserMap,
+		getActiveThreads,
+		setActiveThread,
 	);
 };
 
@@ -280,6 +300,8 @@ const handleConnection = (
 export const createSocketManager = (io: Server): SocketManagerAPI => {
 	// Private state using closure
 	let userSocketMap: UserSocketMap = {};
+	// Track which peer chat thread each user is actively viewing
+	const activeThreads: Record<string, string | undefined> = {};
 
 	// State management functions
 	const getUserSocketMap = (): UserSocketMap => userSocketMap;
@@ -291,7 +313,20 @@ export const createSocketManager = (io: Server): SocketManagerAPI => {
 
 	// Set up connection handler
 	io.on('connection', (socket: Socket) => {
-		handleConnection(io, socket, getUserSocketMap, updateUserMap);
+		const getActiveThreads = () => activeThreads;
+		const setActiveThread = (userId: string, peerId?: string) => {
+			if (!userId) return;
+			if (peerId) activeThreads[userId] = peerId;
+			else delete activeThreads[userId];
+		};
+		handleConnection(
+			io,
+			socket,
+			getUserSocketMap,
+			updateUserMap,
+			getActiveThreads,
+			setActiveThread,
+		);
 	});
 
 	// Return public API using function composition
@@ -301,10 +336,14 @@ export const createSocketManager = (io: Server): SocketManagerAPI => {
 
 		getOnlineUsers: () => getOnlineUsers(getUserSocketMap()),
 
-		emitToUser: (userId: string, event: string, data: any) =>
+		emitToUser: (userId: string, event: string, data: unknown) =>
 			emitToUser(io, getUserSocketMap(), userId, event, data),
 
-		broadcastToOthers: (senderId: string, event: string, data: any) =>
+		broadcastToOthers: (senderId: string, event: string, data: unknown) =>
 			broadcastToOthers(io, getUserSocketMap(), senderId, event, data),
+
+		isChatThreadActive: (userId: string, peerId: string) => {
+			return activeThreads[userId] === peerId;
+		},
 	};
 };

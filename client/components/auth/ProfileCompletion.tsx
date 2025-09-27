@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { ProfileImageUploader } from '../ui/ProfileImageUploader';
 import { useAuth } from '@/hooks/useAuth';
-import { authService } from '@/lib/auth';
+import { authService } from '@/lib/api/authApi';
 
 export const ProfileCompletion: React.FC = () => {
 	const router = useRouter();
@@ -104,6 +105,27 @@ export const ProfileCompletion: React.FC = () => {
 		}
 	};
 
+	const handleImageUploaded = (imageUrl: string) => {
+		setFormData((prev) => ({
+			...prev,
+			profileImage: imageUrl,
+		}));
+		// Clear error when image is uploaded
+		if (errors.profileImage) {
+			setErrors((prev) => ({
+				...prev,
+				profileImage: '',
+			}));
+		}
+	};
+
+	const handleImageRemove = () => {
+		setFormData((prev) => ({
+			...prev,
+			profileImage: '',
+		}));
+	};
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setErrors({});
@@ -147,7 +169,7 @@ export const ProfileCompletion: React.FC = () => {
 			} else {
 				toast.error(response.message);
 			}
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (error: any) {
 			toast.error(
 				error.response?.data?.message ||
@@ -196,20 +218,14 @@ export const ProfileCompletion: React.FC = () => {
 							/>
 
 							<div className="md:col-start-2 flex items-center justify-center">
-								<div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center">
-									{formData.profileImage ? (
-										<img
-											src={formData.profileImage}
-											alt="Profile"
-											className="w-full h-full object-cover rounded-full"
-										/>
-									) : (
-										<span className="text-gray-500 text-2xl">
-											{formData.firstName.charAt(0)}
-											{formData.lastName.charAt(0)}
-										</span>
-									)}
-								</div>
+								<ProfileImageUploader
+									currentImageUrl={formData.profileImage}
+									onImageUploaded={handleImageUploaded}
+									onRemove={handleImageRemove}
+									disabled={loading}
+									size="medium"
+									uploadingText="Uploading profile image..."
+								/>
 							</div>
 
 							<Input
@@ -232,24 +248,15 @@ export const ProfileCompletion: React.FC = () => {
 								disabled
 							/>
 
-							<div className="flex items-end">
-								<button
-									type="button"
-									className="text-cyan-500 font-medium hover:text-cyan-600"
-								>
-									Ajouter photo
-								</button>
-							</div>
+							<Input
+								label="Téléphone pro"
+								name="phone"
+								value={formData.phone}
+								onChange={handleChange}
+								error={errors.phone}
+								placeholder="0123456789"
+							/>
 						</div>
-
-						<Input
-							label="Téléphone pro"
-							name="phone"
-							value={formData.phone}
-							onChange={handleChange}
-							error={errors.phone}
-							placeholder="0123456789"
-						/>
 					</div>
 
 					{/* Geographic Activity Area */}

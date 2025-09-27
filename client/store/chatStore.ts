@@ -1,7 +1,11 @@
 import { ChatApi } from '@/lib/api/chatApi';
 import { toast } from 'react-toastify';
 import { chatLogger } from '@/lib/utils/logger';
-import type { ChatUser as User, ChatMessage as Message } from '@/types/chat';
+import type {
+	ChatUser as User,
+	ChatMessage as Message,
+	SendMessageData,
+} from '@/types/chat';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -50,10 +54,8 @@ export interface ChatActions {
 	getUserById: (userId: string) => Promise<User | null>;
 	getMessages: (userId: string) => Promise<void>;
 	loadOlderMessages: () => Promise<Message[]>;
-	sendMessage: (messageData: {
-		text?: string;
-		image?: string;
-	}) => Promise<void>;
+	sendMessage: (messageData: SendMessageData) => Promise<void>;
+	deleteMessage: (messageId: string) => Promise<void>;
 
 	// Debug methods (development only)
 	debugDuplicates: () => {
@@ -344,6 +346,13 @@ export const createChatStore = (): ChatStore => {
 			};
 			setState({ messageCursors: cursors });
 		}
+	};
+
+	// Helper to remove a message locally by id
+	const removeMessageById = (messageId: string): void => {
+		setState({
+			messages: state.messages.filter((m) => m._id !== messageId),
+		});
 	};
 
 	const addMessage = (message: Message): void => {
@@ -642,10 +651,7 @@ export const createChatStore = (): ChatStore => {
 		}
 	};
 
-	const sendMessage = async (messageData: {
-		text?: string;
-		image?: string;
-	}): Promise<void> => {
+	const sendMessage = async (messageData: SendMessageData): Promise<void> => {
 		if (!state.selectedUser) {
 			chatLogger.error('No selected user');
 			return;
@@ -733,6 +739,16 @@ export const createChatStore = (): ChatStore => {
 		}
 	};
 
+	const deleteMessage = async (messageId: string): Promise<void> => {
+		try {
+			await ChatApi.deleteMessage(messageId);
+			removeMessageById(messageId);
+		} catch (error) {
+			toast.error('Failed to delete message');
+			throw error as Error;
+		}
+	};
+
 	// ============================================================================
 	// RETURN STORE API
 	// ============================================================================
@@ -762,6 +778,7 @@ export const createChatStore = (): ChatStore => {
 		getMessages,
 		loadOlderMessages,
 		sendMessage,
+		deleteMessage,
 
 		// Debug methods (only in development)
 		debugDuplicates,

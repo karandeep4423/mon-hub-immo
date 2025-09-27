@@ -55,9 +55,33 @@ export class ChatApi {
 	}
 
 	/**
+	 * Upload a chat attachment (image/pdf/doc)
+	 */
+	static async uploadChatFile(file: File): Promise<{
+		url: string;
+		name: string;
+		mime: string;
+		size: number;
+	}> {
+		const form = new FormData();
+		form.append('file', file);
+		const resp = await api.post('/upload/chat-file', form, {
+			headers: { 'Content-Type': 'multipart/form-data' },
+		});
+		return resp.data.data;
+	}
+
+	/**
 	 * Mark messages as read
 	 */
 	static async markMessagesAsRead(senderId: string): Promise<void> {
 		await api.put(`/message/read/${senderId}`);
+	}
+
+	/**
+	 * Delete a message I sent
+	 */
+	static async deleteMessage(messageId: string): Promise<void> {
+		await api.delete(`/message/${messageId}`);
 	}
 }

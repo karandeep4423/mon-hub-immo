@@ -5,7 +5,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { collaborationApi } from '../../lib/api/collaborationApi';
 import { toast } from 'react-toastify';
-import type { Property } from '@/lib/propertyService';
+import type { Property } from '@/lib/api/propertyApi';
 
 interface ProposeCollaborationModalProps {
 	isOpen: boolean;
@@ -87,7 +87,11 @@ export const ProposeCollaborationModal: React.FC<
 						{property.mainImage && (
 							<div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
 								<img
-									src={property.mainImage}
+									src={
+										typeof property.mainImage === 'string'
+											? property.mainImage
+											: property.mainImage.url
+									}
 									alt={property.title}
 									width={80}
 									height={80}

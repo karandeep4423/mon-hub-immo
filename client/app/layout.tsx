@@ -25,9 +25,11 @@ export default function RootLayout({
 		<html lang="en">
 			<body className={inter.className}>
 				<ErrorBoundary>
-					<Header />
 					<AuthProvider>
-						<SocketWrapper>{children}</SocketWrapper>
+						<SocketWrapper>
+							<Header />
+							{children}
+						</SocketWrapper>
 						<ToastContainer
 							position="top-right"
 							autoClose={5000}

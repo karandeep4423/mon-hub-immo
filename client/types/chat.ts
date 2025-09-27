@@ -25,6 +25,14 @@ export interface ChatMessage {
 	receiverId: string;
 	text?: string;
 	image?: string;
+	attachments?: Array<{
+		url: string;
+		name: string;
+		mime: string;
+		size: number;
+		type: 'image' | 'pdf' | 'doc' | 'docx' | 'file';
+		thumbnailUrl?: string;
+	}>;
 	createdAt: string;
 	isRead?: boolean;
 	readAt?: string;
@@ -33,6 +41,14 @@ export interface ChatMessage {
 export interface SendMessageData {
 	text?: string;
 	image?: string;
+	attachments?: Array<{
+		url: string;
+		name: string;
+		mime: string;
+		size: number;
+		type?: 'image' | 'pdf' | 'doc' | 'docx' | 'file';
+		thumbnailUrl?: string;
+	}>;
 }
 
 export interface TypingEvent {

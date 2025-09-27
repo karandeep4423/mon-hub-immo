@@ -1,5 +1,5 @@
 // client/lib/auth.ts
-import { api } from './api';
+import { api } from '../api';
 import {
 	SignUpData,
 	LoginData,
@@ -46,23 +46,23 @@ export const authService = {
 	},
 
 	async updateProfile(data: {
-    firstName?: string;
-    lastName?: string;
-    phone?: string;
-    profileImage?: string;
-  }): Promise<AuthResponse> {
-    const response = await api.put('/auth/profile', data);
-    return response.data;
-  },
+		firstName?: string;
+		lastName?: string;
+		phone?: string;
+		profileImage?: string;
+	}): Promise<AuthResponse> {
+		const response = await api.put('/auth/profile', data);
+		return response.data;
+	},
 
-   async completeProfile(data: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    professionalInfo?: any;
-    profileImage?: string;
-  }): Promise<AuthResponse> {
-    const response = await api.post('/auth/complete-profile', data);
-    return response.data;
-  },
+	async completeProfile(data: {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		professionalInfo?: any;
+		profileImage?: string;
+	}): Promise<AuthResponse> {
+		const response = await api.post('/auth/complete-profile', data);
+		return response.data;
+	},
 
 	logout() {
 		localStorage.removeItem('token');

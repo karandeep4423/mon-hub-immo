@@ -1,6 +1,8 @@
 # Docs Overview
 
 - collaboration-actions.md — Describes the collaboration details page actions, role permissions, and API wiring.
+- chat-attachments.md — Chat file attachments (images, PDF, Word) flow and API.
+- notifications.md — Server-side notifications feature and triggers.
 
 ## Server
 

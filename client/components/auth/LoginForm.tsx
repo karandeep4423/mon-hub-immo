@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useAuth } from '@/hooks/useAuth';
-import { authService } from '@/lib/auth';
+import { authService } from '@/lib/api/authApi';
 import { loginSchema } from '@/lib/validation';
 import { LoginData } from '@/types/auth';
 import { AUTH_TEXT } from '@/lib/constants/text';

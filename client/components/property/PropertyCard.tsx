@@ -1,6 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
-import { Property } from '@/lib/propertyService';
+import { Property } from '@/lib/api/propertyApi';
+import { getImageUrl } from '@/lib/utils/imageUtils';
+import { ProfileAvatar } from '../ui';
 
 interface PropertyCardProps {
 	property: Property;
@@ -13,12 +15,14 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
 				{/* Image with badges */}
 				<div className="relative">
 					<img
-						src={property.mainImage}
+						src={getImageUrl(property.mainImage, 'medium')}
 						alt={property.title}
 						className="w-full h-48 object-cover"
 						onError={(e) => {
-							(e.target as HTMLImageElement).src =
-								'/placeholder-property.jpg';
+							(e.target as HTMLImageElement).src = getImageUrl(
+								undefined,
+								'medium',
+							);
 						}}
 					/>
 					<div className="absolute top-2 left-2 flex flex-col space-y-1">
@@ -72,20 +76,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
 
 					{/* Owner info */}
 					<div className="flex items-center space-x-2">
-						<div className="w-8 h-8 bg-gray-300 rounded-full overflow-hidden">
-							<img
-								src={
-									property.owner.profileImage ||
-									`https://ui-avatars.com/api/?name=${encodeURIComponent(
-										property.owner.firstName +
-											' ' +
-											property.owner.lastName,
-									)}&background=3b82f6&color=ffffff`
-								}
-								alt={`${property.owner.firstName} ${property.owner.lastName}`}
-								className="w-full h-full object-cover"
-							/>
-						</div>
+						<ProfileAvatar user={property.owner} size="sm" />
 						<div>
 							<p className="text-gray-700 font-medium text-sm">
 								{property.owner.firstName}{' '}

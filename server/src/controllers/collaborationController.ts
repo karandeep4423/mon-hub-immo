@@ -2,6 +2,10 @@ import { Request, Response } from 'express';
 import { Collaboration } from '../models/Collaboration';
 import { Property } from '../models/Property';
 import { Types } from 'mongoose';
+import type { IUser } from '../models/User';
+import { User } from '../models/User';
+import { notificationService } from '../services/notificationService';
+import { collabTexts } from '../utils/notificationTexts';
 
 interface AuthenticatedRequest extends Request {
 	user?: {
@@ -94,6 +98,36 @@ export const proposeCollaboration = async (
 
 		await collaboration.save();
 
+		// Notify property owner about new proposal
+		const owner = property.owner as Types.ObjectId | IUser;
+		let ownerId: Types.ObjectId;
+		if (owner instanceof Types.ObjectId) {
+			ownerId = owner;
+		} else {
+			ownerId = owner._id as unknown as Types.ObjectId;
+		}
+		// fetch actor for a better message
+		const actor = await User.findById(userId).select(
+			'firstName lastName email',
+		);
+		const actorName = actor
+			? actor.firstName
+				? `${actor.firstName} ${actor.lastName}`
+				: actor.firstName || actor.email
+			: 'Someone';
+		await notificationService.create({
+			recipientId: ownerId,
+			actorId: userId,
+			type: 'collab:proposal_received',
+			entity: { type: 'collaboration', id: collaboration._id },
+			title: collabTexts.proposalReceivedTitle,
+			message: collabTexts.proposalReceivedBody({
+				actorName,
+				commission: commissionPercentage,
+			}),
+			data: { propertyId, commissionPercentage, actorName },
+		});
+
 		res.status(201).json({
 			success: true,
 			message: 'Collaboration proposed successfully',
@@ -124,8 +158,8 @@ export const getUserCollaborations = async (
 			$or: [{ propertyOwnerId: userId }, { collaboratorId: userId }],
 		})
 			.populate('propertyId', 'title address price')
-			.populate('propertyOwnerId', 'firstName lastName')
-			.populate('collaboratorId', 'firstName lastName')
+			.populate('propertyOwnerId', 'firstName lastName profileImage')
+			.populate('collaboratorId', 'firstName lastName profileImage')
 			.sort({ createdAt: -1 });
 
 		res.status(200).json({
@@ -183,6 +217,34 @@ export const respondToCollaboration = async (
 		collaboration.status =
 			response === 'accepted' ? 'accepted' : 'rejected';
 		await collaboration.save();
+
+		// Notify collaborator about decision
+		const actor = await User.findById(userId).select(
+			'firstName lastName email',
+		);
+		const actorName = actor
+			? actor.firstName
+				? `${actor.firstName} ${actor.lastName}`
+				: actor.firstName || actor.email
+			: 'Someone';
+		await notificationService.create({
+			recipientId: collaboration.collaboratorId,
+			actorId: userId,
+			type:
+				response === 'accepted'
+					? 'collab:proposal_accepted'
+					: 'collab:proposal_rejected',
+			entity: { type: 'collaboration', id: collaboration._id },
+			title:
+				response === 'accepted'
+					? collabTexts.proposalAcceptedTitle({ actorName })
+					: collabTexts.proposalRejectedTitle({ actorName }),
+			message:
+				response === 'accepted'
+					? collabTexts.proposalAcceptedBody({ actorName })
+					: collabTexts.proposalRejectedBody({ actorName }),
+			data: { actorName },
+		});
 
 		res.status(200).json({
 			success: true,
@@ -253,6 +315,35 @@ export const addCollaborationNote = async (
 			message: 'Note added successfully',
 			collaboration,
 		});
+
+		// Notify the other party about the note
+		const noteRecipientId = isOwner
+			? collaboration.collaboratorId
+			: collaboration.propertyOwnerId;
+		// Enrich with actor details for better UX in notifications
+		const actor = await User.findById(userId).select(
+			'firstName lastName email profileImage',
+		);
+		const actorName = actor
+			? actor.firstName
+				? `${actor.firstName} ${actor.lastName || ''}`.trim()
+				: actor.firstName || actor.email
+			: 'Someone';
+		if (process.env.NODE_ENV !== 'test') {
+			await notificationService.create({
+				recipientId: noteRecipientId,
+				actorId: userId,
+				type: 'collab:note_added',
+				entity: { type: 'collaboration', id: collaboration._id },
+				title: `New note from ${actorName}`,
+				message: content,
+				data: {
+					content,
+					actorName,
+					actorAvatar: actor?.profileImage || undefined,
+				},
+			});
+		}
 	} catch (error) {
 		console.error('Error adding note:', error);
 		res.status(500).json({
@@ -276,8 +367,8 @@ export const getCollaborationsByProperty = async (
 		}
 
 		const collaborations = await Collaboration.find({ propertyId })
-			.populate('propertyOwnerId', 'firstName lastName')
-			.populate('collaboratorId', 'firstName lastName')
+			.populate('propertyOwnerId', 'firstName lastName profileImage')
+			.populate('collaboratorId', 'firstName lastName profileImage')
 			.sort({ createdAt: -1 });
 
 		res.status(200).json({
@@ -308,8 +399,14 @@ export const cancelCollaboration = async (
 
 		// Find the collaboration
 		const collaboration = await Collaboration.findById(id)
-			.populate('propertyOwnerId', 'firstName lastName email')
-			.populate('collaboratorId', 'firstName lastName email');
+			.populate(
+				'propertyOwnerId',
+				'firstName lastName email profileImage',
+			)
+			.populate(
+				'collaboratorId',
+				'firstName lastName email profileImage',
+			);
 
 		if (!collaboration) {
 			res.status(404).json({
@@ -351,6 +448,19 @@ export const cancelCollaboration = async (
 			success: true,
 			message: 'Collaboration cancelled successfully',
 			collaboration,
+		});
+
+		// Notify the other party about cancellation
+		const cancelRecipientId = isOwner
+			? collaboration.collaboratorId
+			: collaboration.propertyOwnerId;
+		await notificationService.create({
+			recipientId: cancelRecipientId,
+			actorId: userId,
+			type: 'collab:cancelled',
+			entity: { type: 'collaboration', id: collaboration._id },
+			title: collabTexts.cancelledTitle,
+			message: collabTexts.cancelledBody,
 		});
 	} catch (error) {
 		console.error('Error cancelling collaboration:', error);
@@ -396,8 +506,14 @@ export const updateProgressStatus = async (
 
 		// Find the collaboration
 		const collaboration = await Collaboration.findById(id)
-			.populate('propertyOwnerId', 'firstName lastName email')
-			.populate('collaboratorId', 'firstName lastName email');
+			.populate(
+				'propertyOwnerId',
+				'firstName lastName email profileImage',
+			)
+			.populate(
+				'collaboratorId',
+				'firstName lastName email profileImage',
+			);
 
 		if (!collaboration) {
 			res.status(404).json({
@@ -441,6 +557,20 @@ export const updateProgressStatus = async (
 			message: 'Progress status updated successfully',
 			collaboration,
 		});
+
+		// Notify the other party about progress update
+		const progressRecipientId = isOwner
+			? collaboration.collaboratorId
+			: collaboration.propertyOwnerId;
+		await notificationService.create({
+			recipientId: progressRecipientId,
+			actorId: userId,
+			type: 'collab:progress_updated',
+			entity: { type: 'collaboration', id: collaboration._id },
+			title: collabTexts.progressUpdatedTitle,
+			message: collabTexts.progressUpdatedBody({ step: targetStep }),
+			data: { targetStep, notes: notes || '' },
+		});
 	} catch (error) {
 		console.error('Error updating progress status:', error);
 		res.status(500).json({
@@ -465,8 +595,14 @@ export const signCollaboration = async (
 
 		// Find the collaboration
 		const collaboration = await Collaboration.findById(id)
-			.populate('propertyOwnerId', 'firstName lastName email')
-			.populate('collaboratorId', 'firstName lastName email');
+			.populate(
+				'propertyOwnerId',
+				'firstName lastName email profileImage',
+			)
+			.populate(
+				'collaboratorId',
+				'firstName lastName email profileImage',
+			);
 
 		if (!collaboration) {
 			res.status(404).json({
@@ -484,6 +620,34 @@ export const signCollaboration = async (
 			message: 'Contract signed successfully',
 			collaboration,
 		});
+
+		// Notify the other party about signing
+		const isOwner = collaboration.propertyOwnerId._id
+			? collaboration.propertyOwnerId._id.toString() === userId
+			: collaboration.propertyOwnerId.toString() === userId;
+		const signRecipientId = isOwner
+			? collaboration.collaboratorId
+			: collaboration.propertyOwnerId;
+		await notificationService.create({
+			recipientId: signRecipientId,
+			actorId: userId,
+			type: 'contract:signed',
+			entity: { type: 'collaboration', id: collaboration._id },
+			title: 'Contract signed',
+			message: 'The contract has been signed.',
+		});
+
+		// If both have signed and it became active, notify activation
+		if (collaboration.ownerSigned && collaboration.collaboratorSigned) {
+			await notificationService.create({
+				recipientId: signRecipientId, // both sides will be notified separately on their own action
+				actorId: userId,
+				type: 'collab:activated',
+				entity: { type: 'collaboration', id: collaboration._id },
+				title: 'Collaboration activated',
+				message: 'Collaboration is now active.',
+			});
+		}
 	} catch (error) {
 		console.error('Error signing collaboration:', error);
 		res.status(500).json({
@@ -507,8 +671,14 @@ export const completeCollaboration = async (
 		}
 
 		const collaboration = await Collaboration.findById(id)
-			.populate('propertyOwnerId', 'firstName lastName email')
-			.populate('collaboratorId', 'firstName lastName email');
+			.populate(
+				'propertyOwnerId',
+				'firstName lastName email profileImage',
+			)
+			.populate(
+				'collaboratorId',
+				'firstName lastName email profileImage',
+			);
 
 		if (!collaboration) {
 			res.status(404).json({
@@ -564,6 +734,19 @@ export const completeCollaboration = async (
 			success: true,
 			message: 'Collaboration completed successfully',
 			collaboration,
+		});
+
+		// Notify the other party about completion
+		const completeRecipientId = isOwner
+			? collaboration.collaboratorId
+			: collaboration.propertyOwnerId;
+		await notificationService.create({
+			recipientId: completeRecipientId,
+			actorId: userId,
+			type: 'collab:completed',
+			entity: { type: 'collaboration', id: collaboration._id },
+			title: collabTexts.completedTitle,
+			message: collabTexts.completedBody,
 		});
 	} catch (error) {
 		console.error('Error completing collaboration:', error);

@@ -9,6 +9,10 @@ export const SOCKET_EVENTS = {
 	USER_TYPING: 'userTyping',
 	NEW_MESSAGE: 'newMessage',
 	MESSAGES_READ: 'messagesRead',
+	MESSAGE_DELETED: 'messageDeleted',
+	// Chat thread focus tracking (for suppressing noisy notifications)
+	CHAT_ACTIVE_THREAD: 'chat:activeThread',
+	CHAT_INACTIVE_THREAD: 'chat:inactiveThread',
 } as const;
 
 export type SocketEventName =

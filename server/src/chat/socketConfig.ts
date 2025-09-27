@@ -45,6 +45,7 @@ export const SOCKET_EVENTS = {
 	USER_TYPING: 'userTyping',
 	NEW_MESSAGE: 'newMessage',
 	MESSAGES_READ: 'messagesRead',
+	MESSAGE_DELETED: 'messageDeleted',
 } as const;
 
 /**

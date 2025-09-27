@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
+import { ProfileAvatar } from '../ui/ProfileAvatar';
 import { contractApi, ContractData } from '@/lib/api/contractApi';
 import { useAuth } from '@/hooks/useAuth';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
@@ -272,15 +273,38 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 				{/* Parties Information */}
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
 					<div>
-						<h3 className="font-semibold text-gray-900 mb-2">
+						<h3 className="font-semibold text-gray-900 mb-3">
 							Propriétaire
 						</h3>
-						<p className="text-gray-600">
-							{contract.propertyOwner.name}
-						</p>
-						<p className="text-sm text-gray-500">
-							{contract.propertyOwner.email}
-						</p>
+						<div className="flex items-center space-x-3 mb-2">
+							<ProfileAvatar
+								user={{
+									_id: contract.propertyOwner.id,
+									firstName:
+										contract.propertyOwner.name.split(
+											' ',
+										)[0] || '',
+									lastName:
+										contract.propertyOwner.name
+											.split(' ')
+											.slice(1)
+											.join(' ') || '',
+									profileImage:
+										contract.propertyOwner.profileImage ||
+										undefined,
+								}}
+								size="sm"
+								className="w-10 h-10"
+							/>
+							<div>
+								<p className="text-gray-900 font-medium">
+									{contract.propertyOwner.name}
+								</p>
+								<p className="text-sm text-gray-500">
+									{contract.propertyOwner.email}
+								</p>
+							</div>
+						</div>
 						<div className="mt-2">
 							{contract.ownerSigned ? (
 								<span className="text-green-600 text-sm">
@@ -294,15 +318,38 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 						</div>
 					</div>
 					<div>
-						<h3 className="font-semibold text-gray-900 mb-2">
+						<h3 className="font-semibold text-gray-900 mb-3">
 							Collaborateur
 						</h3>
-						<p className="text-gray-600">
-							{contract.collaborator.name}
-						</p>
-						<p className="text-sm text-gray-500">
-							{contract.collaborator.email}
-						</p>
+						<div className="flex items-center space-x-3 mb-2">
+							<ProfileAvatar
+								user={{
+									_id: contract.collaborator.id,
+									firstName:
+										contract.collaborator.name.split(
+											' ',
+										)[0] || '',
+									lastName:
+										contract.collaborator.name
+											.split(' ')
+											.slice(1)
+											.join(' ') || '',
+									profileImage:
+										contract.collaborator.profileImage ||
+										undefined,
+								}}
+								size="sm"
+								className="w-10 h-10"
+							/>
+							<div>
+								<p className="text-gray-900 font-medium">
+									{contract.collaborator.name}
+								</p>
+								<p className="text-sm text-gray-500">
+									{contract.collaborator.email}
+								</p>
+							</div>
+						</div>
 						<div className="mt-2">
 							{contract.collaboratorSigned ? (
 								<span className="text-green-600 text-sm">

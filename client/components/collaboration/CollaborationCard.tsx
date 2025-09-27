@@ -3,8 +3,9 @@ import { useRouter } from 'next/navigation';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { CollaborationStatusBadge } from './CollaborationStatusBadge';
+import { ProfileAvatar } from '../ui/ProfileAvatar';
 import { Collaboration } from '../../types/collaboration';
-import { Property, propertyService } from '../../lib/propertyService';
+import { Property, propertyService } from '../../lib/api/propertyApi';
 import { PROGRESS_STEPS_CONFIG } from './progress-tracking/types';
 
 interface CollaborationCardProps {
@@ -85,9 +86,6 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 	const collaboratorUser = collaboration.collaboratorId;
 	const shortCollabId = collaboration._id.slice(-6);
 
-	const initials = (u: { firstName: string; lastName: string }) =>
-		`${u.firstName?.charAt(0) || ''}${u.lastName?.charAt(0) || ''}`.toUpperCase();
-
 	// Get current progress step info
 	const currentStepConfig =
 		PROGRESS_STEPS_CONFIG[collaboration.currentProgressStep];
@@ -103,7 +101,10 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 	const propertyLocation = property
 		? `${property.city}${property.postalCode ? ' (' + property.postalCode + ')' : ''}`
 		: 'Location inconnue';
-	const propertyImage = property?.mainImage || '/api/placeholder/300/200';
+	const propertyImage =
+		typeof property?.mainImage === 'string'
+			? property.mainImage
+			: property?.mainImage?.url || '/api/placeholder/300/200';
 	const propertyPrice = property?.price || 0;
 
 	const userCommission = isOwner
@@ -231,9 +232,11 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 						{/* Owner */}
 						<div className="flex items-center space-x-3">
-							<div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-semibold">
-								{initials(ownerUser)}
-							</div>
+							<ProfileAvatar
+								user={ownerUser}
+								size="sm"
+								className="w-8 h-8"
+							/>
 							<div className="min-w-0">
 								<p className="text-sm font-medium text-gray-900 truncate">
 									{ownerUser.firstName} {ownerUser.lastName}
@@ -257,9 +260,11 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 						</div>
 						{/* Collaborator */}
 						<div className="flex items-center space-x-3">
-							<div className="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-xs font-semibold">
-								{initials(collaboratorUser)}
-							</div>
+							<ProfileAvatar
+								user={collaboratorUser}
+								size="sm"
+								className="w-8 h-8"
+							/>
 							<div className="min-w-0">
 								<p className="text-sm font-medium text-gray-900 truncate">
 									{collaboratorUser.firstName}{' '}

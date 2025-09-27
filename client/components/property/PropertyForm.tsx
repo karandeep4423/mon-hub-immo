@@ -1,13 +1,29 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { PropertyFormData } from '@/lib/propertyService';
+import { PropertyImageManager } from './PropertyImageManager';
+import {
+	PropertyFormData,
+	PropertyService,
+	Property,
+} from '@/lib/api/propertyApi';
+
+interface ImageFile {
+	file: File;
+	preview: string;
+	id: string;
+}
+
+interface ExistingImage {
+	url: string;
+	key: string;
+}
 
 interface PropertyFormProps {
 	onSubmit: (data: PropertyFormData) => Promise<void>;
-	initialData?: Partial<PropertyFormData>;
+	initialData?: Partial<PropertyFormData> | Property;
 	isEditing?: boolean;
 	isLoading?: boolean;
 }
@@ -53,7 +69,59 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [currentStep, setCurrentStep] = useState(1);
+	const [mainImageFiles, setMainImageFiles] = useState<ImageFile[]>([]);
+	const [galleryImageFiles, setGalleryImageFiles] = useState<ImageFile[]>([]);
+	const [existingMainImage, setExistingMainImage] =
+		useState<ExistingImage | null>(null);
+	const [existingGalleryImages, setExistingGalleryImages] = useState<
+		ExistingImage[]
+	>([]);
+	const [isUploading, setIsUploading] = useState(false);
+	const [justNavigated, setJustNavigated] = useState(false);
 	const totalSteps = 4;
+
+	// Populate existing images when editing
+	useEffect(() => {
+		if (isEditing && initialData) {
+			// Set existing main image
+			if (
+				initialData.mainImage &&
+				typeof initialData.mainImage === 'object' &&
+				'url' in initialData.mainImage
+			) {
+				setExistingMainImage({
+					url: initialData.mainImage.url,
+					key: initialData.mainImage.key,
+				});
+			}
+
+			// Set existing gallery images
+			if (
+				initialData.galleryImages &&
+				Array.isArray(initialData.galleryImages)
+			) {
+				const galleryImages = initialData.galleryImages.filter(
+					(img): img is ExistingImage =>
+						typeof img === 'object' &&
+						img !== null &&
+						'url' in img &&
+						'key' in img,
+				);
+				setExistingGalleryImages(galleryImages);
+			}
+		}
+	}, [isEditing, initialData]);
+
+	// Handlers for removing existing images
+	const handleExistingMainImageRemove = () => {
+		setExistingMainImage(null);
+	};
+
+	const handleExistingGalleryImageRemove = (imageKey: string) => {
+		setExistingGalleryImages((prev) =>
+			prev.filter((img) => img.key !== imageKey),
+		);
+	};
 
 	const validateStep = (step: number): boolean => {
 		const newErrors: Record<string, string> = {};
@@ -104,26 +172,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 				break;
 			case 4:
 				// Images validation
-				if (!formData.mainImage) {
+				if (mainImageFiles.length === 0 && !existingMainImage) {
 					newErrors.mainImage = "L'image principale est requise";
-				}
-				// Validate additional images if they exist
-				if (formData.images && formData.images.length > 0) {
-					const invalidImages = formData.images.filter((img) => {
-						try {
-							new URL(img);
-							return !(
-								img.startsWith('http://') ||
-								img.startsWith('https://')
-							);
-						} catch {
-							return true;
-						}
-					});
-					if (invalidImages.length > 0) {
-						newErrors.images =
-							"Certaines URLs d'images sont invalides";
-					}
 				}
 				break;
 		}
@@ -144,8 +194,21 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 	};
 
 	const handleNext = () => {
+		console.log('🔄 handleNext called:', {
+			currentStep,
+			totalSteps,
+			isValidStep: validateStep(currentStep),
+		});
+
 		if (validateStep(currentStep)) {
-			setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
+			const nextStep = Math.min(currentStep + 1, totalSteps);
+			console.log('✅ Moving to step:', nextStep);
+			setJustNavigated(true);
+			setCurrentStep(nextStep);
+			// Clear the navigation flag after a short delay
+			setTimeout(() => setJustNavigated(false), 100);
+		} else {
+			console.log('❌ Validation failed, staying on step:', currentStep);
 		}
 	};
 
@@ -156,41 +219,84 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
+		console.log('🔍 Form submission attempted:', {
+			currentStep,
+			totalSteps,
+			isEditing,
+			hasInitialData: !!initialData,
+			mainImageFiles: mainImageFiles.length,
+			existingMainImage: !!existingMainImage,
+			galleryImageFiles: galleryImageFiles.length,
+			existingGalleryImages: existingGalleryImages.length,
+			justNavigated,
+		});
+
+		// Prevent submission if we just navigated to this step
+		if (justNavigated) {
+			console.warn(
+				'🚫 Preventing submission - just navigated to this step',
+			);
+			return;
+		}
+
 		// Only allow submission on the final step
 		if (currentStep !== totalSteps) {
-			console.warn('Form submitted before reaching final step');
+			console.warn('❌ Form submitted before reaching final step');
 			return;
 		}
 
 		// Validate the final step
 		if (!validateStep(currentStep)) {
-			console.warn('Validation failed on final step');
+			console.warn('❌ Validation failed on final step');
 			return;
 		}
 
+		console.log('✅ Proceeding with form submission...');
+		setIsUploading(true);
+
 		try {
-			console.log('Submitting form data:', formData);
-			await onSubmit(formData);
+			// Prepare form data without image fields
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			const { mainImage, galleryImages, images, ...cleanFormData } =
+				formData;
+
+			let property: Property;
+
+			if (isEditing && initialData && '_id' in initialData) {
+				// Update existing property with images
+				const propertyId = (initialData as Property)._id;
+				property = await PropertyService.updateProperty(
+					propertyId,
+					cleanFormData,
+					mainImageFiles[0]?.file,
+					galleryImageFiles.map((img) => img.file),
+					existingMainImage,
+					existingGalleryImages,
+				);
+				console.log('Property updated successfully:', property);
+			} else {
+				// Create new property with images
+				property = await PropertyService.createProperty(
+					cleanFormData,
+					mainImageFiles[0]?.file,
+					galleryImageFiles.map((img) => img.file),
+				);
+				console.log('Property created successfully:', property);
+			}
+
+			// Call the onSubmit callback with the property data
+			await onSubmit(property as unknown as PropertyFormData);
 		} catch (error) {
 			console.error('Error submitting form:', error);
+			setErrors({
+				submit:
+					error instanceof Error
+						? error.message
+						: "Erreur lors de la création de l'annonce",
+			});
+		} finally {
+			setIsUploading(false);
 		}
-	};
-
-	const addImage = () => {
-		const newImage = prompt("URL de l'image:");
-		if (newImage) {
-			setFormData((prev) => ({
-				...prev,
-				images: [...(prev.images || []), newImage],
-			}));
-		}
-	};
-
-	const removeImage = (index: number) => {
-		setFormData((prev) => ({
-			...prev,
-			images: (prev.images || []).filter((_, i) => i !== index),
-		}));
 	};
 
 	const renderStep1 = () => (
@@ -628,71 +734,19 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 				Images et finalisation
 			</h3>
 
-			<div>
-				<label className="block text-sm font-medium text-gray-700 mb-2">
-					Image principale * (URL)
-				</label>
-				<Input
-					type="url"
-					value={formData.mainImage}
-					onChange={(e) =>
-						handleInputChange('mainImage', e.target.value)
-					}
-					placeholder="https://example.com/image.jpg"
-					className={errors.mainImage ? 'border-red-500' : ''}
-				/>
-				{errors.mainImage && (
-					<p className="text-red-500 text-sm mt-1">
-						{errors.mainImage}
-					</p>
-				)}
-			</div>
+			<PropertyImageManager
+				onMainImageChange={setMainImageFiles}
+				onGalleryImagesChange={setGalleryImageFiles}
+				existingMainImage={existingMainImage}
+				existingGalleryImages={existingGalleryImages}
+				onExistingMainImageRemove={handleExistingMainImageRemove}
+				onExistingGalleryImageRemove={handleExistingGalleryImageRemove}
+				disabled={isUploading}
+			/>
 
-			<div>
-				<label className="block text-sm font-medium text-gray-700 mb-2">
-					Images supplémentaires
-				</label>
-				<div className="space-y-2">
-					{(formData.images || []).map((image, index) => (
-						<div
-							key={index}
-							className="flex items-center space-x-2"
-						>
-							<Input
-								type="url"
-								value={image}
-								onChange={(e) => {
-									const newImages = [
-										...(formData.images || []),
-									];
-									newImages[index] = e.target.value;
-									handleInputChange('images', newImages);
-								}}
-								placeholder="https://example.com/image.jpg"
-								className={
-									errors.images ? 'border-red-500' : ''
-								}
-							/>
-							<Button
-								type="button"
-								variant="outline"
-								size="sm"
-								onClick={() => removeImage(index)}
-							>
-								Supprimer
-							</Button>
-						</div>
-					))}
-					<Button type="button" variant="outline" onClick={addImage}>
-						Ajouter une image
-					</Button>
-					{errors.images && (
-						<p className="text-red-500 text-sm mt-1">
-							{errors.images}
-						</p>
-					)}
-				</div>
-			</div>
+			{errors.mainImage && (
+				<p className="text-red-500 text-sm">{errors.mainImage}</p>
+			)}
 
 			<div className="space-y-3">
 				<label className="flex items-center space-x-2">
@@ -702,10 +756,11 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 						onChange={(e) =>
 							handleInputChange('isExclusive', e.target.checked)
 						}
-						className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+						className="rounded border-gray-300 text-brand-600 focus:ring-brand-600"
+						disabled={isUploading}
 					/>
 					<span className="text-sm text-gray-700">
-						Annonce exclusive
+						Bien en exclusivité
 					</span>
 				</label>
 			</div>
@@ -723,6 +778,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 						)
 					}
 					className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+					disabled={isUploading}
 				>
 					<option value="draft">Brouillon</option>
 					<option value="active">Publier immédiatement</option>
@@ -731,6 +787,12 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 					<option value="archived">Archivé</option>
 				</select>
 			</div>
+
+			{errors.submit && (
+				<div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+					{errors.submit}
+				</div>
+			)}
 		</div>
 	);
 
@@ -812,14 +874,21 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 						) : (
 							<Button
 								type="submit"
-								disabled={isLoading}
+								disabled={isLoading || isUploading}
 								className="bg-green-600 hover:bg-green-700"
 							>
-								{isLoading
-									? 'Enregistrement...'
-									: isEditing
-										? 'Mettre à jour'
-										: "Créer l'annonce"}
+								{isUploading ? (
+									<>
+										<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+										Upload des images...
+									</>
+								) : isLoading ? (
+									'Enregistrement...'
+								) : isEditing ? (
+									'Mettre à jour'
+								) : (
+									"Créer l'annonce"
+								)}
 							</Button>
 						)}
 					</div>

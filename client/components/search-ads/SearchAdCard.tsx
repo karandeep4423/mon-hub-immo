@@ -3,6 +3,7 @@ import { SearchAd } from '@/types/searchAd';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { ProfileAvatar } from '../ui';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import searchAdApi from '@/lib/api/searchAdApi';
@@ -308,20 +309,7 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 				{/* Footer with date and author info - similar to PropertyCard */}
 				<div className="flex items-center justify-between pt-2 border-t border-gray-100">
 					<div className="flex items-center space-x-2">
-						<div className="w-6 h-6 bg-gray-300 rounded-full overflow-hidden">
-							<img
-								src={
-									searchAd.authorId.avatar ||
-									`https://ui-avatars.com/api/?name=${encodeURIComponent(
-										searchAd.authorId.firstName +
-											' ' +
-											searchAd.authorId.lastName,
-									)}&background=3b82f6&color=ffffff`
-								}
-								alt={`${searchAd.authorId.firstName} ${searchAd.authorId.lastName}`}
-								className="w-full h-full object-cover"
-							/>
-						</div>
+						<ProfileAvatar user={searchAd.authorId} size="xs" />
 						<div>
 							<p className="text-gray-700 font-medium text-xs">
 								{searchAd.authorId.firstName}{' '}

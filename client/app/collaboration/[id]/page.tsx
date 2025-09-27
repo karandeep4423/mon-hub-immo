@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 
 // Separated workflows
 import { OverallStatusManager } from '@/components/collaboration/overall-status';
@@ -26,7 +27,7 @@ import {
 	PROGRESS_STEPS_CONFIG,
 	ProgressUpdate,
 } from '@/components/collaboration/progress-tracking/types';
-import type { Property } from '@/lib/propertyService';
+import type { Property } from '@/lib/api/propertyApi';
 
 // Property type for when propertyId is populated
 type PropertyDetails = Partial<Property> & { id?: string };
@@ -426,11 +427,17 @@ export default function CollaborationPage() {
 								<Button
 									onClick={() =>
 										router.push(
-											`/chat?userId=${isOwner
-												? collaboration.collaboratorId?._id ||
-												  collaboration.collaboratorId
-												: collaboration.propertyOwnerId?._id ||
-												  collaboration.propertyOwnerId}`,
+											`/chat?userId=${
+												isOwner
+													? collaboration
+															.collaboratorId
+															?._id ||
+														collaboration.collaboratorId
+													: collaboration
+															.propertyOwnerId
+															?._id ||
+														collaboration.propertyOwnerId
+											}`,
 										)
 									}
 								>
@@ -644,15 +651,12 @@ export default function CollaborationPage() {
 												Propriétaire du bien
 											</h4>
 											<div className="flex items-center space-x-3">
-												<div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-													<span className="text-blue-600 font-medium text-sm">
-														{
-															collaboration
-																.propertyOwnerId
-																.firstName[0]
-														}
-													</span>
-												</div>
+												<ProfileAvatar
+													user={
+														collaboration.propertyOwnerId
+													}
+													size="sm"
+												/>
 												<div>
 													<p className="font-medium text-sm">
 														{
@@ -678,15 +682,12 @@ export default function CollaborationPage() {
 												Collaborateur
 											</h4>
 											<div className="flex items-center space-x-3">
-												<div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-													<span className="text-green-600 font-medium text-sm">
-														{
-															collaboration
-																.collaboratorId
-																.firstName[0]
-														}
-													</span>
-												</div>
+												<ProfileAvatar
+													user={
+														collaboration.collaboratorId
+													}
+													size="sm"
+												/>
 												<div>
 													<p className="font-medium text-sm">
 														{

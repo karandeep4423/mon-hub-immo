@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import ChatPage from '../../components/chat/ChatPage';
 import { useChat } from '../../hooks/useChat';
 import { api } from '@/lib/api';
-import type { Property } from '@/lib/propertyService';
+import type { Property } from '@/lib/api/propertyApi';
 import { SearchAd } from '@/types/searchAd';
 import searchAdApi from '@/lib/api/searchAdApi';
 

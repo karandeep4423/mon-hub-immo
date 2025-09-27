@@ -6,6 +6,14 @@ export interface IMessage extends Document {
 	receiverId: mongoose.Types.ObjectId;
 	text?: string;
 	image?: string;
+	attachments?: Array<{
+		url: string;
+		name: string;
+		mime: string;
+		size: number;
+		type: 'image' | 'pdf' | 'doc' | 'docx' | 'file';
+		thumbnailUrl?: string;
+	}>;
 	createdAt: Date;
 	updatedAt: Date;
 	isRead: boolean;
@@ -30,6 +38,23 @@ const messageSchema: Schema<IMessage> = new mongoose.Schema(
 		image: {
 			type: String,
 		},
+		attachments: [
+			new mongoose.Schema(
+				{
+					url: { type: String, required: true },
+					name: { type: String, required: true },
+					mime: { type: String, required: true },
+					size: { type: Number, required: true },
+					type: {
+						type: String,
+						enum: ['image', 'pdf', 'doc', 'docx', 'file'],
+						required: true,
+					},
+					thumbnailUrl: { type: String },
+				},
+				{ _id: false },
+			),
+		],
 		isRead: {
 			type: Boolean,
 			default: false,

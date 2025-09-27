@@ -5,11 +5,13 @@ export interface Collaboration {
 		_id: string;
 		firstName: string;
 		lastName: string;
+		profileImage?: string | null;
 	};
 	collaboratorId: {
 		_id: string;
 		firstName: string;
 		lastName: string;
+		profileImage?: string | null;
 	};
 	status:
 		| 'pending'

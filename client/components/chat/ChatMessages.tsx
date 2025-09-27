@@ -6,6 +6,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useSocket } from '../../context/SocketContext';
 import { api } from '@/lib/api';
 import MessageBubble from './MessageBubble';
+import { ImageLightbox } from '@/components/ui';
 import { isMyMessage } from './utils/messageUtils';
 import { groupMessagesByDate } from './utils/dateUtils';
 import {
@@ -93,6 +94,13 @@ const ChatMessages: React.FC = () => {
 
 	// Loading older messages state
 	const [isLoadingOlder, setIsLoadingOlder] = React.useState(false);
+
+	// Lightbox state for viewing images full-size
+	const [isLightboxOpen, setIsLightboxOpen] = React.useState(false);
+	const [lightboxImages, setLightboxImages] = React.useState<
+		Array<{ url: string; alt?: string }>
+	>([]);
+	const [lightboxIndex, setLightboxIndex] = React.useState(0);
 
 	// Scroll anchor managed locally during load; no state needed
 
@@ -214,6 +222,32 @@ const ChatMessages: React.FC = () => {
 		}
 	}, [messages, scrollToBottom, shouldAutoScroll]);
 
+	// Build image list for current conversation whenever messages change
+	useEffect(() => {
+		const imgs: Array<{ url: string; alt?: string }> = [];
+		for (const msg of messages) {
+			if (msg.image) imgs.push({ url: msg.image, alt: 'Image' });
+			if (Array.isArray(msg.attachments)) {
+				for (const att of msg.attachments) {
+					if (att.type === 'image' && att.url) {
+						imgs.push({ url: att.url, alt: att.name });
+					}
+				}
+			}
+		}
+		setLightboxImages(imgs);
+	}, [messages]);
+
+	// Open lightbox for a clicked image URL
+	const openImageLightbox = React.useCallback(
+		(imageUrl: string) => {
+			const idx = lightboxImages.findIndex((i) => i.url === imageUrl);
+			setLightboxIndex(idx >= 0 ? idx : 0);
+			setIsLightboxOpen(true);
+		},
+		[lightboxImages],
+	);
+
 	/**
 	 * Mark messages as read when user opens chat
 	 */
@@ -275,11 +309,12 @@ const ChatMessages: React.FC = () => {
 						key={message._id}
 						message={message}
 						isMyMessage={isMyMessage(message, currentUserId)}
+						onImageClick={openImageLightbox}
 					/>
 				))}
 			</React.Fragment>
 		));
-	}, [messages, currentUserId]);
+	}, [messages, currentUserId, openImageLightbox]);
 
 	// ============================================================================
 	// RENDER LOGIC
@@ -339,6 +374,14 @@ const ChatMessages: React.FC = () => {
 					}}
 				/>
 			)}
+
+			{/* Full-screen image lightbox */}
+			<ImageLightbox
+				isOpen={isLightboxOpen}
+				images={lightboxImages}
+				initialIndex={lightboxIndex}
+				onClose={() => setIsLightboxOpen(false)}
+			/>
 		</div>
 	);
 };

@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { Collaboration } from '../models/Collaboration';
+import { notificationService } from '../services/notificationService';
 import { Types } from 'mongoose';
+import { User } from '../models/User';
 
 interface AuthenticatedRequest extends Request {
 	user?: {
@@ -14,6 +16,7 @@ interface PopulatedUser {
 	firstName: string;
 	lastName: string;
 	email: string;
+	profileImage?: string | null;
 }
 
 export const signContract = async (
@@ -30,8 +33,14 @@ export const signContract = async (
 		}
 
 		const collaboration = await Collaboration.findById(id)
-			.populate('propertyOwnerId', 'firstName lastName email')
-			.populate('collaboratorId', 'firstName lastName email');
+			.populate(
+				'propertyOwnerId',
+				'firstName lastName email profileImage',
+			)
+			.populate(
+				'collaboratorId',
+				'firstName lastName email profileImage',
+			);
 
 		if (!collaboration) {
 			res.status(404).json({
@@ -114,6 +123,9 @@ export const signContract = async (
 				email: (
 					collaboration.propertyOwnerId as unknown as PopulatedUser
 				).email,
+				profileImage:
+					(collaboration.propertyOwnerId as unknown as PopulatedUser)
+						.profileImage || null,
 			},
 			collaborator: {
 				id: collaboration.collaboratorId._id,
@@ -121,6 +133,9 @@ export const signContract = async (
 				email: (
 					collaboration.collaboratorId as unknown as PopulatedUser
 				).email,
+				profileImage:
+					(collaboration.collaboratorId as unknown as PopulatedUser)
+						.profileImage || null,
 			},
 			canEdit: isOwner || isCollaborator,
 			canSign:
@@ -135,6 +150,44 @@ export const signContract = async (
 			message: 'Contract signed successfully',
 			contract: contractData,
 		});
+
+		// Notify the other party about signing
+		const signRecipientId = isOwner
+			? collaboration.collaboratorId._id
+			: collaboration.propertyOwnerId._id;
+		const signer = await User.findById(userId).select(
+			'firstName lastName email',
+		);
+		const signerName = signer
+			? signer.firstName
+				? `${signer.firstName} ${signer.lastName}`
+				: signer.firstName || signer.email
+			: 'Someone';
+		await notificationService.create({
+			recipientId: signRecipientId,
+			actorId: userId,
+			type: 'contract:signed',
+			entity: { type: 'collaboration', id: collaboration._id },
+			title: 'Contract signed',
+			message: `${signerName} signed the contract.`,
+			data: { actorName: signerName },
+		});
+
+		// If both have signed and it became active, notify activation
+		if (collaboration.ownerSigned && collaboration.collaboratorSigned) {
+			const otherPartyId = isOwner
+				? collaboration.propertyOwnerId._id
+				: collaboration.collaboratorId._id;
+			await notificationService.create({
+				recipientId: otherPartyId,
+				actorId: userId,
+				type: 'collab:activated',
+				entity: { type: 'collaboration', id: collaboration._id },
+				title: 'Collaboration activated',
+				message: `Collaboration is now active. Activated by ${signerName}.`,
+				data: { actorName: signerName },
+			});
+		}
 	} catch (error) {
 		console.error('Error signing contract:', error);
 		res.status(500).json({
@@ -159,8 +212,14 @@ export const updateContract = async (
 		}
 
 		const collaboration = await Collaboration.findById(id)
-			.populate('propertyOwnerId', 'firstName lastName email')
-			.populate('collaboratorId', 'firstName lastName email');
+			.populate(
+				'propertyOwnerId',
+				'firstName lastName email profileImage',
+			)
+			.populate(
+				'collaboratorId',
+				'firstName lastName email profileImage',
+			);
 
 		if (!collaboration) {
 			res.status(404).json({
@@ -242,6 +301,9 @@ export const updateContract = async (
 				email: (
 					collaboration.propertyOwnerId as unknown as PopulatedUser
 				).email,
+				profileImage:
+					(collaboration.propertyOwnerId as unknown as PopulatedUser)
+						.profileImage || null,
 			},
 			collaborator: {
 				id: collaboration.collaboratorId._id,
@@ -249,6 +311,9 @@ export const updateContract = async (
 				email: (
 					collaboration.collaboratorId as unknown as PopulatedUser
 				).email,
+				profileImage:
+					(collaboration.collaboratorId as unknown as PopulatedUser)
+						.profileImage || null,
 			},
 			canEdit: isOwner || isCollaborator,
 			canSign:
@@ -266,6 +331,22 @@ export const updateContract = async (
 			contract: contractData,
 			requiresResigning: contractChanged,
 		});
+
+		// Notify the other party on contract update when changed
+		if (contractChanged) {
+			const updateRecipientId = isOwner
+				? collaboration.collaboratorId._id
+				: collaboration.propertyOwnerId._id;
+			await notificationService.create({
+				recipientId: updateRecipientId,
+				actorId: userId,
+				type: 'contract:updated',
+				entity: { type: 'collaboration', id: collaboration._id },
+				title: 'Contract updated',
+				message:
+					'Contract content changed. Signatures reset; both must sign again.',
+			});
+		}
 	} catch (error) {
 		console.error('Error updating contract:', error);
 		res.status(500).json({
@@ -289,8 +370,14 @@ export const getContract = async (
 		}
 
 		const collaboration = await Collaboration.findById(id)
-			.populate('propertyOwnerId', 'firstName lastName email')
-			.populate('collaboratorId', 'firstName lastName email');
+			.populate(
+				'propertyOwnerId',
+				'firstName lastName email profileImage',
+			)
+			.populate(
+				'collaboratorId',
+				'firstName lastName email profileImage',
+			);
 
 		if (!collaboration) {
 			res.status(404).json({
@@ -390,6 +477,9 @@ Date : ${new Date().toLocaleDateString('fr-FR')}`;
 				email: (
 					collaboration.propertyOwnerId as unknown as PopulatedUser
 				).email,
+				profileImage:
+					(collaboration.propertyOwnerId as unknown as PopulatedUser)
+						.profileImage || null,
 			},
 			collaborator: {
 				id: collaboration.collaboratorId._id,
@@ -397,6 +487,9 @@ Date : ${new Date().toLocaleDateString('fr-FR')}`;
 				email: (
 					collaboration.collaboratorId as unknown as PopulatedUser
 				).email,
+				profileImage:
+					(collaboration.collaboratorId as unknown as PopulatedUser)
+						.profileImage || null,
 			},
 			canEdit: isOwner || isCollaborator,
 			canSign:

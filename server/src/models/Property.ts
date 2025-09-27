@@ -39,8 +39,17 @@ export interface IProperty extends Document {
 	energyRating?: 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
 
 	// Images
-	images: string[]; // Array of image URLs
-	mainImage: string; // URL of main image
+	mainImage: {
+		url: string;
+		key: string;
+	};
+	galleryImages: Array<{
+		url: string;
+		key: string;
+	}>;
+
+	// Legacy support for old URL format
+	images?: string[];
 
 	// Owner/Creator
 	owner: mongoose.Types.ObjectId | IUser;
@@ -215,43 +224,22 @@ const propertySchema = new Schema<IProperty>(
 		},
 
 		// Images
+		mainImage: {
+			type: {
+				url: { type: String, required: true },
+				key: { type: String, required: true },
+			},
+			required: [true, "L'image principale est requise"],
+		},
+		galleryImages: [
+			{
+				url: { type: String, required: true },
+				key: { type: String, required: true },
+			},
+		], // Legacy support for old URL format
 		images: {
 			type: [String],
 			default: [],
-			validate: {
-				validator: function (images: string[]) {
-					return images.every((url) => {
-						try {
-							new URL(url);
-							return (
-								url.startsWith('http://') ||
-								url.startsWith('https://')
-							);
-						} catch {
-							return false;
-						}
-					});
-				},
-				message: "URL d'image invalide",
-			},
-		},
-		mainImage: {
-			type: String,
-			required: [true, "L'image principale est requise"],
-			validate: {
-				validator: function (url: string) {
-					try {
-						new URL(url);
-						return (
-							url.startsWith('http://') ||
-							url.startsWith('https://')
-						);
-					} catch {
-						return false;
-					}
-				},
-				message: "URL d'image principale invalide",
-			},
 		},
 
 		// Owner
@@ -405,6 +393,7 @@ propertySchema.statics.findByLocation = function (
 	city?: string,
 	postalCode?: string,
 ) {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const query: any = { status: 'active' };
 
 	if (city) {

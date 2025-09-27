@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useChat } from '../../hooks/useChat';
 import { isValidMessageContent } from './utils/messageUtils';
 import { isEnterKeyPress } from './utils/keyboardUtils';
 import TypingIndicator from './TypingIndicator';
 import MessageStatus from './MessageStatus';
 import { ButtonSpinner } from './ui';
+import { ChatApi } from '@/lib/api/chatApi';
 import { CHAT_TEXT } from '@/lib/constants/text';
 
 // ============================================================================
@@ -21,6 +22,18 @@ interface MessageInputProps {
 	/** Custom placeholder text */
 	placeholder?: string;
 }
+
+type AttachmentType = 'image' | 'pdf' | 'doc' | 'docx' | 'file';
+
+const inferAttachmentType = (mime: string): AttachmentType => {
+	const m = mime.toLowerCase();
+	if (m.startsWith('image/')) return 'image';
+	if (m.includes('pdf')) return 'pdf';
+	// Only treat true Word docs as doc/docx; other Office docs map to 'file'
+	if (m.includes('msword')) return 'doc';
+	if (m.includes('officedocument.word')) return 'docx';
+	return 'file';
+};
 
 // ============================================================================
 // PURE UTILITY FUNCTIONS
@@ -143,6 +156,57 @@ const MessageInput: React.FC<MessageInputProps> = React.memo(
 		} = useChat();
 
 		const [message, setMessage] = useState('');
+		const fileInputRef = useRef<HTMLInputElement | null>(null);
+		const [isUploading, setIsUploading] = useState(false);
+
+		const onPickFile = useCallback(() => fileInputRef.current?.click(), []);
+
+		const handleFilesUpload = useCallback(
+			async (files: File[]) => {
+				if (files.length === 0 || !selectedUser) return;
+				try {
+					setIsUploading(true);
+					const uploaded = await Promise.all(
+						files.map((file) => ChatApi.uploadChatFile(file)),
+					);
+					const attachments = uploaded.map((data) => ({
+						url: data.url,
+						name: data.name,
+						mime: data.mime,
+						size: data.size,
+						type: inferAttachmentType(data.mime),
+					}));
+					await sendMessage({ attachments });
+				} catch (err) {
+					console.error('Failed to upload/send attachments', err);
+				} finally {
+					setIsUploading(false);
+					if (fileInputRef.current) fileInputRef.current.value = '';
+				}
+			},
+			[selectedUser, sendMessage],
+		);
+
+		const handleFileChange = useCallback(
+			async (e: React.ChangeEvent<HTMLInputElement>) => {
+				const files = e.target.files ? Array.from(e.target.files) : [];
+				await handleFilesUpload(files);
+			},
+			[handleFilesUpload],
+		);
+
+		const onDrop = useCallback(
+			async (e: React.DragEvent<HTMLDivElement>) => {
+				e.preventDefault();
+				const files = Array.from(e.dataTransfer.files || []);
+				await handleFilesUpload(files);
+			},
+			[handleFilesUpload],
+		);
+
+		const onDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+			e.preventDefault();
+		}, []);
 
 		// ============================================================================
 		// EFFECTS
@@ -254,7 +318,11 @@ const MessageInput: React.FC<MessageInputProps> = React.memo(
 		// ============================================================================
 
 		return (
-			<div className={`border-t bg-white ${className}`}>
+			<div
+				className={`border-t bg-white ${className}`}
+				onDrop={onDrop}
+				onDragOver={onDragOver}
+			>
 				{/* Typing Indicator - Shows when other users are typing */}
 				<TypingIndicator
 					selectedUser={selectedUser}
@@ -264,6 +332,41 @@ const MessageInput: React.FC<MessageInputProps> = React.memo(
 				{/* Message Form */}
 				<form onSubmit={handleSubmit} className="p-4">
 					<div className="flex items-end space-x-2">
+						{/* Hidden file input for attachments */}
+						<input
+							ref={fileInputRef}
+							type="file"
+							multiple
+							accept="image/*,application/pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.xls,application/vnd.ms-excel,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.csv,text/csv,application/csv,.ppt,application/vnd.ms-powerpoint,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+							className="hidden"
+							onChange={handleFileChange}
+							disabled={isDisabled}
+						/>
+						<button
+							type="button"
+							onClick={onPickFile}
+							disabled={isDisabled}
+							className="px-3 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 text-gray-600 hover:text-[#00b4d8]"
+							aria-label="Add attachment"
+						>
+							{isUploading ? (
+								<ButtonSpinner />
+							) : (
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									className="w-5 h-5"
+									aria-hidden
+								>
+									<path d="M21.44 11.05L12 20.5a6.5 6.5 0 01-9.19-9.19l9.43-9.43a4.5 4.5 0 116.36 6.36L9.41 17.32a2.5 2.5 0 11-3.54-3.54l7.78-7.78" />
+								</svg>
+							)}
+						</button>
 						<MessageInputField
 							value={message}
 							onChange={handleInputChange}

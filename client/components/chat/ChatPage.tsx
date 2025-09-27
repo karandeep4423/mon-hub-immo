@@ -7,6 +7,7 @@ import MessageInput from './MessageInput';
 import { useChat } from '../../hooks/useChat';
 import { useSocket } from '../../context/SocketContext';
 import { getDetailedUserPresenceText } from './utils';
+import { ProfileAvatar } from '../ui';
 
 interface ChatPageProps {
 	contextMessage?: React.ReactNode;
@@ -69,11 +70,14 @@ const ChatPage: React.FC<ChatPageProps> = ({ contextMessage }) => {
 
 					{selectedUser && (
 						<>
-							<div className="w-10 h-10 bg-gradient-to-br from-[#00b4d8] to-[#0094b3] rounded-full flex items-center justify-center text-white font-semibold">
-								{selectedUser.firstName?.[0] ||
-									selectedUser.firstName?.[0] ||
-									'?'}
-							</div>
+							<ProfileAvatar
+								user={selectedUser}
+								size="md"
+								showOnlineStatus={true}
+								isOnline={onlineUsers.includes(
+									selectedUser._id,
+								)}
+							/>
 							<div className="flex-1">
 								<h3 className="font-semibold text-gray-900">
 									{selectedUser.firstName &&

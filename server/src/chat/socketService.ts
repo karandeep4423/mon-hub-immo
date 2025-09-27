@@ -1,6 +1,6 @@
 import { Server } from 'socket.io';
-import { createSocketManager, SocketManagerAPI } from './socketManager';
-import { createMessageHandler, MessageHandlerAPI } from './messageHandler';
+import { createSocketManager } from './socketManager';
+import { createMessageHandler } from './messageHandler';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -9,10 +9,20 @@ import { createMessageHandler, MessageHandlerAPI } from './messageHandler';
 export interface SocketServiceAPI {
 	getReceiverSocketId: (userId: string) => string | undefined;
 	getOnlineUsers: () => string[];
-	emitNewMessage: (message: any) => void;
+	emitNewMessage: (message: {
+		senderId: string;
+		receiverId: string;
+		[k: string]: unknown;
+	}) => void;
 	emitReadReceipt: (senderId: string, readBy: string) => void;
-	emitToUser: (userId: string, event: string, data: any) => void;
-	broadcastToOthers: (senderId: string, event: string, data: any) => void;
+	emitMessageDeleted: (payload: {
+		messageId: string;
+		receiverId: string;
+		senderId: string;
+	}) => void;
+	emitToUser: (userId: string, event: string, data: unknown) => void;
+	broadcastToOthers: (senderId: string, event: string, data: unknown) => void;
+	isChatThreadActive?: (userId: string, peerId: string) => boolean;
 	getIO: () => Server;
 }
 
@@ -39,10 +49,12 @@ export const createSocketService = (io: Server): SocketServiceAPI => {
 		getOnlineUsers: socketManager.getOnlineUsers,
 		emitToUser: socketManager.emitToUser,
 		broadcastToOthers: socketManager.broadcastToOthers,
+		isChatThreadActive: socketManager.isChatThreadActive,
 
 		// Message handler methods
 		emitNewMessage: messageHandler.emitNewMessage,
 		emitReadReceipt: messageHandler.emitReadReceipt,
+		emitMessageDeleted: messageHandler.emitMessageDeleted,
 
 		// IO access
 		getIO: () => io,
