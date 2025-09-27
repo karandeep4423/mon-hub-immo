@@ -8,14 +8,15 @@ import { Button } from '../ui/Button';
 import { AgentProfileCard } from './AgentProfileCard';
 import PropertyManager from '../property/PropertyManager';
 import { CollaborationList } from '../collaboration/CollaborationList';
-import { DASHBOARD_AGENT, DASHBOARD_TEXT } from '@/lib/constants/text';
+import { DASHBOARD_TEXT } from '@/lib/constants/text';
 import Link from 'next/link';
+import { MySearches } from '../search-ads/MySearches';
 
 export const DashboardContent: React.FC = () => {
 	const router = useRouter();
 	const { user, logout, loading, refreshUser } = useAuth();
 	const [activeTab, setActiveTab] = useState<
-		'overview' | 'properties' | 'collaborations'
+		'overview' | 'properties' | 'collaborations' | 'searches'
 	>('overview');
 	const hasRefreshed = useRef(false);
 
@@ -214,6 +215,30 @@ export const DashboardContent: React.FC = () => {
 									/>
 								</svg>
 								Collaborations
+							</button>
+							<button
+								onClick={() => setActiveTab('searches')}
+								className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
+									activeTab === 'searches'
+										? 'border-cyan-500 text-cyan-600'
+										: 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+								}`}
+							>
+								<svg
+									className="w-4 h-4 mr-1"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+									xmlns="http://www.w3.org/2000/svg"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth="2"
+										d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+									></path>
+								</svg>
+								Mes Recherches
 							</button>
 						</nav>
 						{/* Quick Create Property Button */}
@@ -473,21 +498,13 @@ export const DashboardContent: React.FC = () => {
 
 				{/* Property Management Tab */}
 				{activeTab === 'properties' && <PropertyManager />}
-
-				{/* Collaborations Tab */}
 				{activeTab === 'collaborations' && user && (
-					<div className="space-y-6">
-						<div className="flex items-center justify-between">
-							<h2 className="text-2xl font-bold text-gray-900">
-								Mes Collaborations
-							</h2>
-						</div>
-						<CollaborationList
-							currentUserId={user.id}
-							onClose={() => {}}
-						/>
-					</div>
+					<CollaborationList
+						currentUserId={user.id}
+						onClose={() => {}}
+					/>
 				)}
+				{activeTab === 'searches' && <MySearches />}
 			</main>
 		</div>
 	);

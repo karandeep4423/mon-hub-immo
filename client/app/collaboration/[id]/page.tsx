@@ -426,7 +426,11 @@ export default function CollaborationPage() {
 								<Button
 									onClick={() =>
 										router.push(
-											`/chat?collaboration=${collaborationId}`,
+											`/chat?userId=${isOwner
+												? collaboration.collaboratorId?._id ||
+												  collaboration.collaboratorId
+												: collaboration.propertyOwnerId?._id ||
+												  collaboration.propertyOwnerId}`,
 										)
 									}
 								>
