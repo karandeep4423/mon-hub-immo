@@ -6,8 +6,6 @@ const baseRules = {
 		.exists({ checkFalsy: true })
 		.withMessage('Prénom requis')
 		.bail()
-		.trim()
-		.escape() // Prevent XSS
 		.isLength({ min: 2, max: 50 })
 		.withMessage('Le prénom doit contenir entre 2 et 50 caractères')
 		.matches(/^[a-zA-ZÀ-ÿ\u0100-\u017F\s'-]+$/) // Support French accents
@@ -19,8 +17,6 @@ const baseRules = {
 		.exists({ checkFalsy: true })
 		.withMessage('Nom requis')
 		.bail()
-		.trim()
-		.escape()
 		.isLength({ min: 2, max: 50 })
 		.withMessage('Le nom doit contenir entre 2 et 50 caractères')
 		.matches(/^[a-zA-ZÀ-ÿ\u0100-\u017F\s'-]+$/)
@@ -32,7 +28,6 @@ const baseRules = {
 		.exists({ checkFalsy: true })
 		.withMessage('Email requis')
 		.bail()
-		.trim()
 		.isEmail()
 		.withMessage('Veuillez fournir une adresse email valide')
 		.normalizeEmail({
@@ -58,7 +53,6 @@ const baseRules = {
 	// French phone number validation
 	phone: body('phone')
 		.optional({ checkFalsy: true })
-		.trim()
 		.matches(/^(?:(?:\+33|0)[1-9])(?:[0-9]{8})$/)
 		.withMessage('Veuillez fournir un numéro de téléphone français valide')
 		.customSanitizer((value) => {

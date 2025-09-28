@@ -49,6 +49,12 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 		}
 
 		const errors = validationResult(req);
+		console.log('Express-validator results:', {
+			hasErrors: !errors.isEmpty(),
+			errorCount: errors.array().length,
+			errors: errors.array(),
+		});
+
 		if (!errors.isEmpty()) {
 			console.log('Validation errors:', errors.array());
 			res.status(400).json({
@@ -61,6 +67,16 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 
 		const { firstName, lastName, email, password, phone, userType } =
 			req.body;
+
+		// Log the extracted values to see if they're still there
+		console.log('Extracted values from req.body:', {
+			firstName: typeof firstName + ' - ' + firstName,
+			lastName: typeof lastName + ' - ' + lastName,
+			userType: typeof userType + ' - ' + userType,
+			email: typeof email + ' - ' + email,
+			phone: typeof phone + ' - ' + phone,
+			password: password ? 'present' : 'missing',
+		});
 
 		// Check if user already exists
 		const existingUser = await User.findOne({ email });

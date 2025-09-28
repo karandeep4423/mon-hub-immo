@@ -20,6 +20,26 @@ Notes
 - CORS is configured to allow the production frontend origin (`process.env.FRONTEND_URL` or `https://mon-hub-immo.com`).
 - Client `SignUpForm` posts: `firstName`, `lastName`, `email`, `phone`, `password`, `confirmPassword`, `userType`. These map 1:1 with the server controller.
 
+## Root Cause Found
+
+The debugging logs revealed that the request body was being parsed correctly, but the values were becoming `undefined` after express-validator processing. The issue was with the sanitizers `.trim()` and `.escape()` in the validation rules, which were somehow clearing the field values in production.
+
+## Fix Applied
+
+Temporarily removed `.trim()` and `.escape()` sanitizers from:
+
+- `firstName` field validation
+- `lastName` field validation
+- `email` field validation (kept `normalizeEmail()`)
+- `password` field validation
+- `phone` field validation (kept custom sanitizer)
+
+The core validation logic remains:
+
+- `.exists({ checkFalsy: true })` to require fields
+- Length and pattern validation
+- Custom validation rules
+
 ## Debugging in Production
 
 If Mongoose validation errors persist despite the express-validator checks, the following debugging logs have been added:
