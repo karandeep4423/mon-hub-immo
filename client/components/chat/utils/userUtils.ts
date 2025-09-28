@@ -88,19 +88,14 @@ export const getDetailedUserPresenceText = (
 
 	if (!lastSeen) return CHAT_TEXT.offline;
 
-	const last = new Date(lastSeen);
-	const diffMins = Math.floor((Date.now() - last.getTime()) / 60000);
-
-	if (diffMins < 1) return 'Last seen just now';
-	if (diffMins < 60) return `Last seen ${diffMins}m ago`;
-
-	const hours = Math.floor(diffMins / 60);
-	if (hours < 24) return `Last seen ${hours}h ago`;
-
-	const days = Math.floor(hours / 24);
-	if (days < 7) return `Last seen ${days}d ago`;
-
-	return `Last seen ${last.toLocaleDateString()}`;
+	// Build a French phrase using our formatter without duplicating "il y a"
+	const base = formatLastSeen(lastSeen); // e.g., "Il y a 3h" or "À l'instant"
+	if (base.toLowerCase().startsWith('il y a')) {
+		// Normalize to lower-case 'il' and prefix with 'Vu'
+		const relative = 'il y a' + base.slice('Il y a'.length);
+		return `Vu ${relative}`;
+	}
+	return `Vu ${base}`; // "Vu à l'instant"
 };
 
 /**

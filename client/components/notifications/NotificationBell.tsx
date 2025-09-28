@@ -45,6 +45,7 @@ export const NotificationBell = () => {
 		}
 	};
 
+	console.log('Notifications state:', state);
 	return (
 		<div ref={ref} className="relative">
 			<button
@@ -66,21 +67,21 @@ export const NotificationBell = () => {
 						d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
 					/>
 				</svg>
-				{state.unreadCount > 0 && (
+				{state?.unreadCount > 0 && (
 					<span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1 min-w-[18px] h-[18px] flex items-center justify-center">
-						{state.unreadCount}
+						{state?.unreadCount}
 					</span>
 				)}
 			</button>
 			{open && (
 				<div className="absolute right-0 mt-2 w-80 bg-white shadow-lg rounded-lg border border-gray-200 max-h-96 overflow-auto z-50">
 					<div className="py-2">
-						{state.items.length === 0 ? (
+						{state?.items?.length === 0 ? (
 							<div className="p-4 text-sm text-gray-500 text-center">
 								No notifications
 							</div>
 						) : (
-							state.items.map((n) => (
+							state?.items?.map((n) => (
 								<div
 									key={n.id}
 									className="group px-4 py-3 hover:bg-gray-50 cursor-pointer relative"

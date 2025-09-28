@@ -233,7 +233,11 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 						{/* Owner */}
 						<div className="flex items-center space-x-3">
 							<ProfileAvatar
-								user={ownerUser}
+								user={{
+									...ownerUser,
+									profileImage:
+										ownerUser.profileImage ?? undefined,
+								}}
 								size="sm"
 								className="w-8 h-8"
 							/>
@@ -261,7 +265,12 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 						{/* Collaborator */}
 						<div className="flex items-center space-x-3">
 							<ProfileAvatar
-								user={collaboratorUser}
+								user={{
+									...collaboratorUser,
+									profileImage:
+										collaboratorUser.profileImage ??
+										undefined,
+								}}
 								size="sm"
 								className="w-8 h-8"
 							/>

@@ -32,7 +32,43 @@ export interface Property {
 	hasCellar?: boolean;
 	hasSwimmingPool?: boolean;
 	hasAirConditioning?: boolean;
-	energyRating?: 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
+	energyRating?:
+		| 'A'
+		| 'B'
+		| 'C'
+		| 'D'
+		| 'E'
+		| 'F'
+		| 'G'
+		| 'Non soumis au DPE';
+	gasEmissionClass?:
+		| 'A'
+		| 'B'
+		| 'C'
+		| 'D'
+		| 'E'
+		| 'F'
+		| 'G'
+		| 'Non soumis au DPE';
+
+	// Property condition and characteristics
+	condition?: 'new' | 'good' | 'refresh' | 'renovate';
+	propertyNature?: string;
+	characteristics?: string;
+	saleType?: 'ancien' | 'viager';
+
+	// Financial info
+	feesResponsibility?: 'buyer' | 'seller';
+	annualCondoFees?: number;
+	tariffLink?: string;
+
+	// Additional property details
+	landArea?: number; // Surface totale du terrain in m²
+	levels?: number; // Nombre de niveaux
+	parkingSpaces?: number; // Places de parking
+	exterior?: ('garden' | 'balcony' | 'terrace' | 'courtyard' | 'none')[];
+	availableFrom?: string; // Date string MM/YYYY format
+
 	yearBuilt?: number;
 	heatingType?:
 		| 'Gaz'
@@ -107,6 +143,19 @@ export interface PropertyFormData {
 	hasSwimmingPool?: boolean;
 	hasAirConditioning?: boolean;
 	energyRating?: Property['energyRating'];
+	gasEmissionClass?: Property['gasEmissionClass'];
+	condition?: Property['condition'];
+	propertyNature?: Property['propertyNature'];
+	characteristics?: Property['characteristics'];
+	saleType?: Property['saleType'];
+	feesResponsibility?: Property['feesResponsibility'];
+	annualCondoFees?: Property['annualCondoFees'];
+	tariffLink?: Property['tariffLink'];
+	landArea?: Property['landArea'];
+	levels?: Property['levels'];
+	parkingSpaces?: Property['parkingSpaces'];
+	exterior?: Property['exterior'];
+	availableFrom?: string; // Date string MM/YYYY format
 	yearBuilt?: number;
 	heatingType?: Property['heatingType'];
 	orientation?: Property['orientation'];

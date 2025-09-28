@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/Button';
+import { Button, ConfirmDialog } from '@/components/ui';
 import PropertyForm from './PropertyForm';
 import { useAuth } from '@/hooks/useAuth';
 import { PROPERTY_TEXT, getPropertyCountText } from '@/lib/constants/text';
@@ -11,6 +11,7 @@ import {
 	PropertyFormData,
 } from '@/lib/api/propertyApi';
 import { getImageUrl } from '@/lib/utils/imageUtils';
+import { toast } from 'react-toastify';
 
 const PropertyManager: React.FC = () => {
 	const { user } = useAuth();
@@ -22,6 +23,13 @@ const PropertyManager: React.FC = () => {
 		null,
 	);
 	const [formLoading, setFormLoading] = useState(false);
+
+	// Confirm dialog state
+	const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+	const [propertyToDelete, setPropertyToDelete] = useState<string | null>(
+		null,
+	);
+	const [deleteLoading, setDeleteLoading] = useState(false);
 
 	useEffect(() => {
 		fetchMyProperties();
@@ -60,8 +68,8 @@ const PropertyManager: React.FC = () => {
 			setShowForm(false);
 			setError(null);
 
-			// Show success message (you could use a toast notification here)
-			alert('Annonce créée avec succès !');
+			// Show success message with toast
+			toast.success('Annonce créée avec succès !');
 		} catch (error: unknown) {
 			console.error('Error in property creation callback:', error);
 			const errorMessage =
@@ -101,8 +109,8 @@ const PropertyManager: React.FC = () => {
 			setShowForm(false);
 			setError(null);
 
-			// Show success message (you could use a toast notification here)
-			alert('Annonce mise à jour avec succès !');
+			// Show success message with toast
+			toast.success('Annonce mise à jour avec succès !');
 		} catch (error: unknown) {
 			console.error('Error in property update callback:', error);
 			const errorMessage =
@@ -118,12 +126,23 @@ const PropertyManager: React.FC = () => {
 		}
 	};
 
-	const handleDeleteProperty = async (propertyId: string) => {
-		if (!confirm('Êtes-vous sûr de vouloir supprimer ce bien ?')) return;
+	const handleDeleteProperty = (propertyId: string) => {
+		setPropertyToDelete(propertyId);
+		setShowConfirmDialog(true);
+	};
+
+	const confirmDeleteProperty = async () => {
+		if (!propertyToDelete) return;
 
 		try {
-			await PropertyService.deleteProperty(propertyId);
-			setProperties((prev) => prev.filter((p) => p._id !== propertyId));
+			setDeleteLoading(true);
+			await PropertyService.deleteProperty(propertyToDelete);
+			setProperties((prev) =>
+				prev.filter((p) => p._id !== propertyToDelete),
+			);
+			toast.success('Bien supprimé avec succès !');
+			setShowConfirmDialog(false);
+			setPropertyToDelete(null);
 		} catch (error: unknown) {
 			console.error('Error deleting property:', error);
 			const errorMessage =
@@ -131,7 +150,15 @@ const PropertyManager: React.FC = () => {
 					? error.message
 					: 'Erreur lors de la suppression du bien';
 			setError(errorMessage);
+			toast.error(errorMessage);
+		} finally {
+			setDeleteLoading(false);
 		}
+	};
+
+	const cancelDeleteProperty = () => {
+		setShowConfirmDialog(false);
+		setPropertyToDelete(null);
 	};
 
 	const handleStatusChange = async (
@@ -469,6 +496,19 @@ const PropertyManager: React.FC = () => {
 					))}
 				</div>
 			)}
+
+			{/* Confirm Delete Dialog */}
+			<ConfirmDialog
+				isOpen={showConfirmDialog}
+				title="Supprimer le bien"
+				description="Êtes-vous sûr de vouloir supprimer ce bien ? Cette action est irréversible."
+				onConfirm={confirmDeleteProperty}
+				onCancel={cancelDeleteProperty}
+				confirmText="Supprimer"
+				cancelText="Annuler"
+				variant="danger"
+				loading={deleteLoading}
+			/>
 		</div>
 	);
 };

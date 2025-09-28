@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import {
 	PropertyService,
 	Property,
@@ -10,18 +9,16 @@ import {
 import searchAdApi from '@/lib/api/searchAdApi';
 import { SearchAd } from '@/types/searchAd';
 import { HomeSearchAdCard } from '@/components/search-ads/HomeSearchAdCard';
-import { getImageUrl } from '@/lib/utils/imageUtils';
-import { ProfileAvatar } from '@/components/ui';
+import { PropertyCard } from '@/components/property';
+import { useFavoritesStore } from '@/store/favoritesStore';
+import { useAuth } from '@/hooks/useAuth';
 
-type FeedItem = {
-	type: 'property' | 'searchAd';
-	data: Property | SearchAd;
-	createdAt: string;
-};
-
-type ContentFilter = 'all' | 'properties' | 'searchAds';
+type ContentFilter = 'all' | 'properties' | 'searchAds' | 'favorites';
 
 export default function Home() {
+	const { user } = useAuth();
+	const { favoritePropertyIds, favoriteSearchAdIds, initializeFavorites } =
+		useFavoritesStore();
 	const [properties, setProperties] = useState<Property[]>([]);
 	const [searchAds, setSearchAds] = useState<SearchAd[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -29,8 +26,11 @@ export default function Home() {
 	const [searchTerm, setSearchTerm] = useState('');
 	const [typeFilter, setTypeFilter] = useState('');
 	const [sectorFilter, setSectorFilter] = useState('');
+	const [profileFilter, setProfileFilter] = useState('');
 	const [priceFilter, setPriceFilter] = useState({ min: 0, max: 10000000 });
-	const [contentFilter, setContentFilter] = useState<ContentFilter>('all')
+	const [contentFilter, setContentFilter] = useState<ContentFilter>('all');
+
+	const isAuthenticated = !!user;
 
 	// Mapping function for property types between properties and search ads
 	const mapPropertyType = (propertyType: string): string[] => {
@@ -49,6 +49,11 @@ export default function Home() {
 		return searchAds.filter((searchAd) => {
 			// Filter by status (only active)
 			if (searchAd.status !== 'active') return false;
+
+			// Filter by profile (user type)
+			if (profileFilter && searchAd.authorType !== profileFilter) {
+				return false;
+			}
 
 			// Filter by property type
 			if (typeFilter) {
@@ -97,6 +102,32 @@ export default function Home() {
 		});
 	};
 
+	// Helper function to filter properties based on current filters
+	const filterProperties = (properties: Property[]): Property[] => {
+		return properties.filter((property) => {
+			// Filter by profile (user type)
+			if (profileFilter && property.owner.userType !== profileFilter) {
+				return false;
+			}
+
+			return true;
+		});
+	};
+
+	// Reset to 'all' if favorites is selected but user is not authenticated
+	useEffect(() => {
+		if (contentFilter === 'favorites' && !isAuthenticated) {
+			setContentFilter('all');
+		}
+	}, [contentFilter, isAuthenticated]);
+
+	// Initialize favorites store when user is authenticated
+	useEffect(() => {
+		if (isAuthenticated) {
+			initializeFavorites();
+		}
+	}, [isAuthenticated, initializeFavorites]);
+
 	// Debounce effect for search term
 	useEffect(() => {
 		const fetchData = async () => {
@@ -138,67 +169,15 @@ export default function Home() {
 		); // 500ms delay for search, immediate for others
 
 		return () => clearTimeout(debounceTimer);
-	}, [searchTerm, typeFilter, sectorFilter, priceFilter]);
-
-	// Create unified feed sorted by creation date
-	const createUnifiedFeed = (): FeedItem[] => {
-		const feedItems: FeedItem[] = [];
-
-		// Add properties to feed
-		properties.forEach((property) => {
-			feedItems.push({
-				type: 'property',
-				data: property,
-				createdAt: property.publishedAt || property.createdAt,
-			});
-		});
-
-		// Add filtered search ads to feed
-		const filteredSearchAds = filterSearchAds(searchAds);
-		filteredSearchAds.forEach((searchAd) => {
-			feedItems.push({
-				type: 'searchAd',
-				data: searchAd,
-				createdAt: searchAd.createdAt,
-			});
-		});
-
-		// Sort by creation date (latest first)
-		return feedItems.sort(
-			(a, b) =>
-				new Date(b.createdAt).getTime() -
-				new Date(a.createdAt).getTime(),
-		);
-	};
-
-	// Filter feed based on content filter
-	const getFilteredFeed = (): FeedItem[] => {
-		const unifiedFeed = createUnifiedFeed();
-
-		switch (contentFilter) {
-			case 'properties':
-				return unifiedFeed.filter((item) => item.type === 'property');
-			case 'searchAds':
-				return unifiedFeed.filter((item) => item.type === 'searchAd');
-			default:
-				return unifiedFeed;
-		}
-	};
-
-	const filteredFeed = getFilteredFeed();
+	}, [searchTerm, typeFilter, sectorFilter, priceFilter, profileFilter]);
 
 	// Count filtered search ads for display
 	const filteredSearchAdsCount = filterSearchAds(searchAds).length;
-
-	console.log('properties', properties);
 
 	return (
 		<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 			{/* Header with unified title and stats */}
 			<div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-				<h1 className="text-3xl font-bold text-gray-900">
-					Annonces récentes
-				</h1>
 				<div className="text-sm text-gray-600">
 					{properties.length} bien{properties.length > 1 ? 's' : ''} •{' '}
 					{filteredSearchAdsCount} recherche
@@ -268,11 +247,27 @@ export default function Home() {
 					>
 						Recherches clients ({filteredSearchAdsCount})
 					</button>
+					{isAuthenticated && (
+						<button
+							onClick={() => setContentFilter('favorites')}
+							className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+								contentFilter === 'favorites'
+									? 'bg-brand text-white'
+									: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+							}`}
+						>
+							Favoris (
+							{favoritePropertyIds.size +
+								favoriteSearchAdIds.size}
+							)
+						</button>
+					)}
 				</div>
 
 				{/* Property-specific Filters */}
 				{(contentFilter === 'all' ||
-					contentFilter === 'properties') && (
+					contentFilter === 'properties' ||
+					contentFilter === 'favorites') && (
 					<div className="flex flex-wrap gap-4">
 						<select
 							value={typeFilter}
@@ -296,6 +291,16 @@ export default function Home() {
 							onChange={(e) => setSectorFilter(e.target.value)}
 							className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
 						/>
+
+						<select
+							value={profileFilter}
+							onChange={(e) => setProfileFilter(e.target.value)}
+							className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+						>
+							<option value="">Tous les profils</option>
+							<option value="agent">Agent</option>
+							<option value="apporteur">Apporteur</option>
+						</select>
 
 						<div className="flex items-center space-x-2">
 							<input
@@ -350,154 +355,134 @@ export default function Home() {
 						Réessayer
 					</button>
 				</div>
-			) : filteredFeed.length === 0 ? (
-				<div className="text-center py-12 bg-gray-50 rounded-lg">
-					<div className="mx-auto w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
-						<svg
-							className="w-8 h-8 text-gray-400"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth="2"
-								d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-							/>
-						</svg>
-					</div>
-					<h3 className="text-lg font-semibold text-gray-900 mb-2">
-						Aucune annonce trouvée
-					</h3>
-					<p className="text-gray-600">
-						Essayez d&apos;ajuster vos filtres ou revenez plus tard
-						pour voir de nouvelles annonces.
-					</p>
-				</div>
 			) : (
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-					{filteredFeed.map((item) => {
-						const itemId =
-							item.type === 'property'
-								? (item.data as Property)._id
-								: (item.data as SearchAd)._id;
+				<div className="space-y-8">
+					{/* Properties Section */}
+					{(contentFilter === 'all' ||
+						contentFilter === 'properties' ||
+						contentFilter === 'favorites') && (
+						<div>
+							<h2 className="text-2xl font-bold text-gray-900 mb-6">
+								Les biens à vendre
+							</h2>
+							{(() => {
+								const propertiesToShow =
+									contentFilter === 'favorites'
+										? filterProperties(properties).filter(
+												(property) =>
+													favoritePropertyIds.has(
+														property._id,
+													),
+											)
+										: filterProperties(properties);
 
-						return (
-							<div key={`${item.type}-${itemId}`}>
-								{item.type === 'property' ? (
-									<PropertyCard
-										property={item.data as Property}
-									/>
+								return propertiesToShow.length === 0 ? (
+									<div className="text-center py-12 bg-gray-50 rounded-lg">
+										<div className="mx-auto w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+											<svg
+												className="w-8 h-8 text-gray-400"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth="2"
+													d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
+												/>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth="2"
+													d="M8 5a2 2 0 012-2h4a2 2 0 012 2v3H8V5z"
+												/>
+											</svg>
+										</div>
+										<h3 className="text-lg font-semibold text-gray-900 mb-2">
+											Aucun bien trouvé
+										</h3>
+										<p className="text-gray-600">
+											{contentFilter === 'favorites'
+												? "Vous n'avez pas encore de biens en favoris."
+												: "Essayez d'ajuster vos filtres pour voir des biens à vendre."}
+										</p>
+									</div>
 								) : (
-									<HomeSearchAdCard
-										searchAd={item.data as SearchAd}
-									/>
-								)}
-							</div>
-						);
-					})}
+									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+										{propertiesToShow.map((property) => (
+											<PropertyCard
+												key={property._id}
+												property={property}
+											/>
+										))}
+									</div>
+								);
+							})()}
+						</div>
+					)}
+
+					{/* Search Ads Section */}
+					{(contentFilter === 'all' ||
+						contentFilter === 'searchAds' ||
+						contentFilter === 'favorites') && (
+						<div>
+							<h2 className="text-2xl font-bold text-gray-900 mb-6">
+								Recherches clients
+							</h2>
+							{(() => {
+								const filteredSearchAdsToShow =
+									contentFilter === 'favorites'
+										? filterSearchAds(searchAds).filter(
+												(ad) =>
+													favoriteSearchAdIds.has(
+														ad._id,
+													),
+											)
+										: filterSearchAds(searchAds);
+
+								return filteredSearchAdsToShow.length === 0 ? (
+									<div className="text-center py-12 bg-gray-50 rounded-lg">
+										<div className="mx-auto w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+											<svg
+												className="w-8 h-8 text-gray-400"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth="2"
+													d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+												/>
+											</svg>
+										</div>
+										<h3 className="text-lg font-semibold text-gray-900 mb-2">
+											Aucune recherche trouvée
+										</h3>
+										<p className="text-gray-600">
+											Essayez d&apos;ajuster vos filtres
+											pour voir des recherches clients.
+										</p>
+									</div>
+								) : (
+									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+										{filteredSearchAdsToShow.map(
+											(searchAd) => (
+												<HomeSearchAdCard
+													key={searchAd._id}
+													searchAd={searchAd}
+												/>
+											),
+										)}
+									</div>
+								);
+							})()}
+						</div>
+					)}
 				</div>
 			)}
 		</div>
 	);
 }
-
-// Property Card Component
-const PropertyCard = ({ property }: { property: Property }) => (
-	<Link href={`/property/${property._id}`} className="block">
-		<div className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 h-full flex flex-col">
-			{/* Property Image and Badges */}
-			<div className="relative">
-				<img
-					src={getImageUrl(property.mainImage, 'medium')}
-					alt={property.title}
-					className="w-full h-48 object-cover"
-					onError={(e) => {
-						(e.target as HTMLImageElement).src = getImageUrl(
-							undefined,
-							'medium',
-						);
-					}}
-				/>
-				<div className="absolute top-2 left-2 flex flex-col space-y-1">
-					{property.isNewProperty && (
-						<span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-							Nouveau
-						</span>
-					)}
-					{property.isExclusive && (
-						<span className="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">
-							Exclusivité
-						</span>
-					)}
-				</div>
-				<div className="absolute top-2 right-2">
-					<span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
-						Bien
-					</span>
-				</div>
-			</div>
-
-			<div className="p-4 flex-1 flex flex-col">
-				<div className="flex items-center justify-between mb-2">
-					<div className="flex items-baseline space-x-2">
-						<p className="text-2xl font-bold text-black">
-							{property.price.toLocaleString()} €
-						</p>
-						<p className="text-sm text-gray-600">
-							{property.surface} m²
-						</p>
-					</div>
-				</div>
-
-				<h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-1">
-					{property.title}
-				</h3>
-
-				<p className="text-gray-600 text-sm mb-3 line-clamp-2">
-					{property.description}
-				</p>
-
-				<div className="flex space-x-2 mb-3">
-					<span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded">
-						{property.propertyType}
-					</span>
-					<span className="bg-gray-100 text-gray-800 text-xs font-semibold px-2 py-1 rounded">
-						{property.city}
-					</span>
-					{property.rooms && (
-						<span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">
-							{property.rooms} pièces
-						</span>
-					)}
-				</div>
-
-				<div className="flex items-center justify-between mt-auto">
-					<div className="flex items-center space-x-2">
-						<ProfileAvatar user={property.owner} size="sm" />
-						<div>
-							<p className="text-gray-700 font-medium text-sm">
-								{property.owner.firstName}{' '}
-								{property.owner.lastName}
-							</p>
-							<p className="text-xs text-gray-500">
-								{property.owner.userType === 'apporteur'
-									? 'Apporteur'
-									: 'Agent'}
-							</p>
-						</div>
-					</div>
-
-					<div className="text-right">
-						<p className="text-xs text-gray-500">
-							{new Date(
-								property.publishedAt || property.createdAt,
-							).toLocaleDateString('fr-FR')}
-						</p>
-					</div>
-				</div>
-			</div>
-		</div>
-	</Link>
-);

@@ -36,7 +36,42 @@ export interface IProperty extends Document {
 	hasGarage: boolean;
 
 	// Energy
-	energyRating?: 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
+	energyRating?:
+		| 'A'
+		| 'B'
+		| 'C'
+		| 'D'
+		| 'E'
+		| 'F'
+		| 'G'
+		| 'Non soumis au DPE';
+	gasEmissionClass?:
+		| 'A'
+		| 'B'
+		| 'C'
+		| 'D'
+		| 'E'
+		| 'F'
+		| 'G'
+		| 'Non soumis au DPE';
+
+	// Property condition and characteristics
+	condition?: 'new' | 'good' | 'refresh' | 'renovate';
+	propertyNature?: string;
+	characteristics?: string;
+	saleType?: 'ancien' | 'viager';
+
+	// Financial info
+	feesResponsibility?: 'buyer' | 'seller';
+	annualCondoFees?: number;
+	tariffLink?: string;
+
+	// Additional property details
+	landArea?: number; // Surface totale du terrain in m²
+	levels?: number; // Nombre de niveaux
+	parkingSpaces?: number; // Places de parking
+	exterior?: ('garden' | 'balcony' | 'terrace' | 'courtyard' | 'none')[];
+	availableFromDate?: string; // Date string MM/YYYY format
 
 	// Images
 	mainImage: {
@@ -218,9 +253,119 @@ const propertySchema = new Schema<IProperty>(
 		energyRating: {
 			type: String,
 			enum: {
-				values: ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+				values: [
+					'A',
+					'B',
+					'C',
+					'D',
+					'E',
+					'F',
+					'G',
+					'Non soumis au DPE',
+				],
 				message: 'Classe énergétique invalide',
 			},
+		},
+		gasEmissionClass: {
+			type: String,
+			enum: {
+				values: [
+					'A',
+					'B',
+					'C',
+					'D',
+					'E',
+					'F',
+					'G',
+					'Non soumis au DPE',
+				],
+				message: 'Classe GES invalide',
+			},
+		},
+
+		// Property condition and characteristics
+		condition: {
+			type: String,
+			enum: {
+				values: ['new', 'good', 'refresh', 'renovate'],
+				message: 'État du bien invalide',
+			},
+		},
+		propertyNature: {
+			type: String,
+			trim: true,
+			maxlength: [100, 'Nature du bien trop longue'],
+		},
+		characteristics: {
+			type: String,
+			trim: true,
+			maxlength: [200, 'Caractéristiques trop longues'],
+		},
+		saleType: {
+			type: String,
+			enum: {
+				values: ['ancien', 'viager'],
+				message: 'Type de vente invalide',
+			},
+		},
+
+		// Financial info
+		feesResponsibility: {
+			type: String,
+			enum: {
+				values: ['buyer', 'seller'],
+				message: 'Responsabilité des honoraires invalide',
+			},
+		},
+		annualCondoFees: {
+			type: Number,
+			min: [0, 'Les charges ne peuvent pas être négatives'],
+			max: [100000, 'Charges annuelles trop élevées'],
+		},
+		tariffLink: {
+			type: String,
+			trim: true,
+			maxlength: [500, 'Lien des tarifs trop long'],
+		},
+
+		// Additional property details
+		landArea: {
+			type: Number,
+			min: [1, 'Surface du terrain minimum: 1 m²'],
+			max: [1000000, 'Surface du terrain maximum: 1,000,000 m²'],
+		},
+		levels: {
+			type: Number,
+			min: [1, 'Nombre de niveaux minimum: 1'],
+			max: [20, 'Nombre de niveaux maximum: 20'],
+		},
+		parkingSpaces: {
+			type: Number,
+			min: [0, 'Nombre de places de parking minimum: 0'],
+			max: [50, 'Nombre de places de parking maximum: 50'],
+		},
+		exterior: [
+			{
+				type: String,
+				enum: {
+					values: [
+						'garden',
+						'balcony',
+						'terrace',
+						'courtyard',
+						'none',
+					],
+					message: "Type d'extérieur invalide",
+				},
+			},
+		],
+		availableFromDate: {
+			type: String,
+			trim: true,
+			match: [
+				/^\d{2}\/\d{4}$/,
+				'Format de date invalide (MM/YYYY attendu)',
+			],
 		},
 
 		// Images

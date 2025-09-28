@@ -61,7 +61,14 @@ export interface ProgressStepData {
 	completed: boolean;
 	completedAt?: string;
 	notes?: string;
-	completedBy?: string;
+	completedBy?:
+		| string
+		| {
+				_id: string;
+				firstName?: string;
+				lastName?: string;
+				profileImage?: string | null;
+		  };
 }
 
 export interface CollaborationActivity {

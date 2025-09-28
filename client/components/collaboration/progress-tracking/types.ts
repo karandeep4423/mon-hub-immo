@@ -19,6 +19,12 @@ export interface ProgressStepData {
 	current: boolean;
 	completedAt?: string;
 	notes?: string;
+	completedBy?: {
+		_id: string;
+		firstName?: string;
+		lastName?: string;
+		profileImage?: string | null;
+	};
 }
 
 export interface ProgressUpdate {

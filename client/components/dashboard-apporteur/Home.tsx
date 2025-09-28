@@ -10,15 +10,11 @@ import { ProfileUpdateModal } from '../dashboard-agent';
 import { User } from '@/types/auth';
 
 const Home = () => {
-	const { logout, user } = useAuth();
+	const { user } = useAuth();
 	const [activeTab, setActiveTab] = useState<
 		'overview' | 'properties' | 'collaborations' | 'searches'
 	>('overview');
 	const [showUpdateModal, setShowUpdateModal] = useState(false);
-
-	const handleLogout = () => {
-		logout();
-	};
 
 	const renderOverview = () => (
 		<div className="space-y-6">
@@ -276,27 +272,6 @@ const Home = () => {
 									</button>
 								</nav>
 							</div>
-							<Button
-								variant="outline"
-								size="sm"
-								onClick={handleLogout}
-								className="text-gray-700 border-gray-300 hover:bg-gray-50"
-							>
-								<svg
-									className="w-4 h-4 mr-2"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth="2"
-										d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-									/>
-								</svg>
-								{DASHBOARD_TEXT.logout}
-							</Button>
 						</div>
 					</div>
 				</div>

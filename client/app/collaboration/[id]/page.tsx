@@ -2,10 +2,16 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
+import ChatMessages from '@/components/chat/ChatMessages';
+import MessageInput from '@/components/chat/MessageInput';
+import { useChat } from '@/hooks/useChat';
+import { useSocket } from '@/context/SocketContext';
+import { getDetailedUserPresenceText } from '@/components/chat/utils';
 
 // Separated workflows
 import { OverallStatusManager } from '@/components/collaboration/overall-status';
@@ -50,6 +56,7 @@ export default function CollaborationPage() {
 	const [confirmLoading, setConfirmLoading] = useState(false);
 	const [pendingAction, setPendingAction] =
 		useState<OverallCollaborationStatus | null>(null);
+	const [isChatOpen, setIsChatOpen] = useState(false);
 
 	// Helper to determine user permissions
 	const userId = user?.id || user?._id;
@@ -67,6 +74,67 @@ export default function CollaborationPage() {
 			userId === collaboration.collaboratorId);
 	const canUpdate = Boolean(isOwner || isCollaborator);
 	const isActive = collaboration?.status === 'active';
+
+	// Chat integration
+	const { selectedUser, setSelectedUser, getUserById, users, getUsers } =
+		useChat();
+	const { onlineUsers } = useSocket();
+
+	// Initialize chat users when component mounts
+	useEffect(() => {
+		if (user && !loading) {
+			getUsers();
+		}
+	}, [user, loading, getUsers]);
+
+	// Chat peer resolution based on current user and collaboration
+	const resolvePeerId = useCallback((): string | null => {
+		if (!collaboration || !userId) return null;
+		const owner =
+			typeof collaboration.propertyOwnerId === 'string'
+				? collaboration.propertyOwnerId
+				: collaboration.propertyOwnerId?._id;
+		const collaborator =
+			typeof collaboration.collaboratorId === 'string'
+				? collaboration.collaboratorId
+				: collaboration.collaboratorId?._id;
+		if (!owner || !collaborator) return null;
+		return userId === owner ? collaborator : owner;
+	}, [collaboration, userId]);
+
+	// Get peer user and their unread count
+	const peerId = resolvePeerId();
+	const peerUser = users.find((u) => u._id === peerId);
+	const unreadCount = peerUser?.unreadCount || 0;
+
+	// Debug chat state
+	console.log('Chat Debug:', {
+		peerId,
+		peerUser,
+		unreadCount,
+		usersLoaded: users.length,
+		collaboration: !!collaboration,
+		isChatOpen,
+	});
+
+	const openChat = useCallback(async () => {
+		const peerId = resolvePeerId();
+		if (!peerId) return;
+		// If already selected, just open
+		if (selectedUser?._id === peerId) {
+			setIsChatOpen(true);
+			return;
+		}
+		// Fetch peer details via chat store and select
+		const user = await getUserById(peerId);
+		if (user) setSelectedUser(user);
+		setIsChatOpen(true);
+	}, [resolvePeerId, selectedUser?._id, getUserById, setSelectedUser]);
+
+	const closeChat = useCallback(() => {
+		setIsChatOpen(false);
+		// Do not clear selectedUser to keep context when reopening; server thread tracking is handled in useChat
+	}, []);
 
 	// Debug permissions (temporary)
 	console.log('Permission Debug:', {
@@ -109,6 +177,15 @@ export default function CollaborationPage() {
 				const transformedSteps = foundCollaboration.progressSteps.map(
 					(step) => {
 						const config = PROGRESS_STEPS_CONFIG[step.id];
+						// Handle completedBy - it might be a populated user object or a string ID
+						let completedByUser = undefined;
+						if (
+							step.completedBy &&
+							typeof step.completedBy === 'object'
+						) {
+							completedByUser = step.completedBy;
+						}
+
 						return {
 							id: step.id,
 							title: config?.title || step.id,
@@ -119,6 +196,7 @@ export default function CollaborationPage() {
 								step.id,
 							completedAt: step.completedAt,
 							notes: step.notes,
+							completedBy: completedByUser,
 						};
 					},
 				);
@@ -493,26 +571,44 @@ export default function CollaborationPage() {
 												).getTime() -
 												new Date(a.createdAt).getTime(),
 										)
-										.map((activity, index) => ({
-											id: `activity-${index}`,
-											type:
-												activity.type === 'note'
-													? 'note'
-													: 'status_update',
-											title:
-												activity.type === 'note'
-													? 'Note ajoutée'
-													: activity.message,
-											content: activity.message,
-											author: {
-												id:
-													activity.createdBy ||
-													'unknown',
-												name: 'Utilisateur', // Would need to fetch user details
-												role: 'agent' as const, // Would need to determine from user data
-											},
-											createdAt: activity.createdAt,
-										}))}
+										.map((activity, index) => {
+											// Resolve user data from collaboration participants
+											const isOwnerAction =
+												activity.createdBy ===
+												collaboration.propertyOwnerId
+													._id;
+											const userInfo = isOwnerAction
+												? collaboration.propertyOwnerId
+												: collaboration.collaboratorId;
+
+											return {
+												id: `activity-${index}`,
+												type:
+													activity.type === 'note'
+														? 'note'
+														: 'status_update',
+												title:
+													activity.type === 'note'
+														? 'Note ajoutée'
+														: activity.message,
+												content: activity.message,
+												author: {
+													id:
+														activity.createdBy ||
+														'unknown',
+													name: userInfo
+														? `${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() ||
+															'Utilisateur'
+														: 'Utilisateur',
+													role: isOwnerAction
+														? ('agent' as const)
+														: ('apporteur' as const),
+													profileImage:
+														userInfo?.profileImage,
+												},
+												createdAt: activity.createdAt,
+											};
+										})}
 									canAddActivity={canUpdate && isActive}
 									onAddActivity={handleAddActivity}
 									onRefresh={fetchCollaboration}
@@ -525,6 +621,53 @@ export default function CollaborationPage() {
 									<h3 className="text-lg font-medium text-gray-900 mb-4">
 										🏠 Bien immobilier
 									</h3>
+
+									{/* Property Main Image */}
+									{typeof collaboration.propertyId ===
+										'object' &&
+										(
+											collaboration.propertyId as PropertyDetails
+										)?.mainImage && (
+											<div className="mb-4">
+												<div className="w-full h-32 rounded-lg overflow-hidden bg-gray-100 relative">
+													<Image
+														src={
+															typeof (
+																collaboration.propertyId as PropertyDetails
+															).mainImage ===
+															'object'
+																? (
+																		(
+																			collaboration.propertyId as PropertyDetails
+																		)
+																			.mainImage as {
+																			url: string;
+																		}
+																	).url
+																: ((
+																		collaboration.propertyId as PropertyDetails
+																	)
+																		.mainImage as string)
+														}
+														alt={
+															(
+																collaboration.propertyId as PropertyDetails
+															).title ||
+															'Property image'
+														}
+														fill
+														className="object-cover"
+														onError={(e) => {
+															const target =
+																e.target as HTMLImageElement;
+															target.style.display =
+																'none';
+														}}
+													/>
+												</div>
+											</div>
+										)}
+
 									<div className="space-y-3">
 										<div>
 											<span className="text-sm text-gray-600">
@@ -652,9 +795,14 @@ export default function CollaborationPage() {
 											</h4>
 											<div className="flex items-center space-x-3">
 												<ProfileAvatar
-													user={
-														collaboration.propertyOwnerId
-													}
+													user={{
+														...collaboration.propertyOwnerId,
+														profileImage:
+															collaboration
+																.propertyOwnerId
+																.profileImage ||
+															undefined,
+													}}
 													size="sm"
 												/>
 												<div>
@@ -683,9 +831,14 @@ export default function CollaborationPage() {
 											</h4>
 											<div className="flex items-center space-x-3">
 												<ProfileAvatar
-													user={
-														collaboration.collaboratorId
-													}
+													user={{
+														...collaboration.collaboratorId,
+														profileImage:
+															collaboration
+																.collaboratorId
+																.profileImage ||
+															undefined,
+													}}
 													size="sm"
 												/>
 												<div>
@@ -858,6 +1011,110 @@ export default function CollaborationPage() {
 						</div>
 					</div>
 				</div>
+			)}
+
+			{/* Floating Chat Button */}
+			{!isChatOpen && collaboration && (
+				<button
+					onClick={openChat}
+					className="fixed bottom-6 right-6 z-30 bg-[#00b4d8] hover:bg-[#0094b3] text-white p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+					aria-label="Ouvrir le chat"
+					title={`Chat with collaboration partner${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+				>
+					{unreadCount > 0 && (
+						<span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] h-5 flex items-center justify-center font-bold">
+							{unreadCount}
+						</span>
+					)}
+					<svg
+						className="w-6 h-6"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							strokeWidth="2"
+							d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8-1.295 0-2.522-.21-3.634-.595L3 20l1.595-4.366C4.21 14.522 4 13.295 4 12c0-4.418 4.03-8 9-8s8 3.582 8 8z"
+						/>
+					</svg>
+				</button>
+			)}
+
+			{/* Right-hand chat panel */}
+			{isChatOpen && (
+				<>
+					{/* Overlay */}
+					<div
+						className="fixed inset-0 bg-black/30 z-40"
+						onClick={closeChat}
+					/>
+					{/* Panel */}
+					<div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[420px] bg-white shadow-xl flex flex-col">
+						{/* Panel header with peer info */}
+						<div className="flex items-center gap-3 p-4 border-b">
+							{selectedUser && (
+								<>
+									<ProfileAvatar
+										user={selectedUser}
+										size="sm"
+										showOnlineStatus={true}
+										isOnline={onlineUsers.includes(
+											selectedUser._id,
+										)}
+									/>
+									<div className="min-w-0">
+										<div className="font-medium truncate">
+											{selectedUser.firstName &&
+											selectedUser.lastName
+												? `${selectedUser.firstName} ${selectedUser.lastName}`
+												: selectedUser.name ||
+													selectedUser.email}
+										</div>
+										<div className="text-xs text-gray-500 truncate">
+											{getDetailedUserPresenceText(
+												selectedUser,
+												onlineUsers,
+												{},
+												[selectedUser],
+											)}
+										</div>
+									</div>
+								</>
+							)}
+							<button
+								onClick={closeChat}
+								className="ml-auto p-2 hover:bg-gray-100 rounded"
+								aria-label="Fermer"
+							>
+								<svg
+									className="w-5 h-5"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth="2"
+										d="M6 18L18 6M6 6l12 12"
+									/>
+								</svg>
+							</button>
+						</div>
+
+						{/* Chat body */}
+						<div className="flex-1 min-h-0 flex flex-col">
+							<div className="flex-1 min-h-0 overflow-hidden">
+								<ChatMessages />
+							</div>
+							<div className="flex-shrink-0 border-t">
+								<MessageInput />
+							</div>
+						</div>
+					</div>
+				</>
 			)}
 		</div>
 	);

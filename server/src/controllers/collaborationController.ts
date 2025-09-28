@@ -157,9 +157,13 @@ export const getUserCollaborations = async (
 		const collaborations = await Collaboration.find({
 			$or: [{ propertyOwnerId: userId }, { collaboratorId: userId }],
 		})
-			.populate('propertyId', 'title address price')
+			.populate('propertyId', 'title address price mainImage')
 			.populate('propertyOwnerId', 'firstName lastName profileImage')
 			.populate('collaboratorId', 'firstName lastName profileImage')
+			.populate(
+				'progressSteps.completedBy',
+				'firstName lastName profileImage',
+			)
 			.sort({ createdAt: -1 });
 
 		res.status(200).json({
