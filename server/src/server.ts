@@ -35,12 +35,28 @@ const socketService = createSocketService(io);
 app.use(helmet());
 app.use(
 	cors({
-		origin: ['http://localhost:3000', 'http://localhost:3001', process.env.FRONTEND_URL || 'https://mon-hub-immo.com'],
+		origin: [
+			'http://localhost:3000',
+			'http://localhost:3001',
+			process.env.FRONTEND_URL || 'https://mon-hub-immo.com',
+		],
 		credentials: true,
 	}),
-);		
+);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Debug middleware to log request parsing issues
+app.use('/api/auth', (req, res, next) => {
+	console.log(`Request to ${req.method} ${req.originalUrl}:`, {
+		contentType: req.headers['content-type'],
+		contentLength: req.headers['content-length'],
+		hasBody: !!req.body,
+		bodyType: typeof req.body,
+		bodyKeys: req.body ? Object.keys(req.body) : 'no body',
+	});
+	next();
+});
 
 // ============================================================================
 // ROUTES

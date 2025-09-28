@@ -8,8 +8,49 @@ import { AuthRequest } from '../types/auth';
 // Sign up controller with code-based email verification
 export const signup = async (req: Request, res: Response): Promise<void> => {
 	try {
+		// Debug logging for production issues
+		console.log('Signup request received:', {
+			headers: {
+				'content-type': req.headers['content-type'],
+				'user-agent': req.headers['user-agent']?.substring(0, 50),
+			},
+			bodyType: typeof req.body,
+			bodyKeys: req.body ? Object.keys(req.body) : 'no body',
+			bodyValues: req.body
+				? {
+						firstName:
+							typeof req.body.firstName +
+							' - ' +
+							(req.body.firstName || 'undefined/empty'),
+						lastName:
+							typeof req.body.lastName +
+							' - ' +
+							(req.body.lastName || 'undefined/empty'),
+						userType:
+							typeof req.body.userType +
+							' - ' +
+							(req.body.userType || 'undefined/empty'),
+						email:
+							typeof req.body.email +
+							' - ' +
+							(req.body.email || 'undefined/empty'),
+					}
+				: 'no body object',
+		});
+
+		// Check if body is completely missing or null
+		if (!req.body || typeof req.body !== 'object') {
+			console.log('Request body is missing or not an object');
+			res.status(400).json({
+				success: false,
+				message: 'Request body is required',
+			});
+			return;
+		}
+
 		const errors = validationResult(req);
 		if (!errors.isEmpty()) {
+			console.log('Validation errors:', errors.array());
 			res.status(400).json({
 				success: false,
 				message: 'Validation failed',
