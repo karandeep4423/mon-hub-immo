@@ -3,6 +3,9 @@ import { body } from 'express-validator';
 // Base validation rules
 const baseRules = {
 	firstName: body('firstName')
+		.exists({ checkFalsy: true })
+		.withMessage('Prénom requis')
+		.bail()
 		.trim()
 		.escape() // Prevent XSS
 		.isLength({ min: 2, max: 50 })
@@ -13,6 +16,9 @@ const baseRules = {
 		),
 
 	lastName: body('lastName')
+		.exists({ checkFalsy: true })
+		.withMessage('Nom requis')
+		.bail()
 		.trim()
 		.escape()
 		.isLength({ min: 2, max: 50 })
@@ -23,6 +29,9 @@ const baseRules = {
 		),
 
 	email: body('email')
+		.exists({ checkFalsy: true })
+		.withMessage('Email requis')
+		.bail()
 		.trim()
 		.isEmail()
 		.withMessage('Veuillez fournir une adresse email valide')
@@ -36,6 +45,9 @@ const baseRules = {
 		.withMessage("L'email ne peut pas dépasser 254 caractères"),
 
 	password: body('password')
+		.exists({ checkFalsy: true })
+		.withMessage('Le mot de passe est requis')
+		.bail()
 		.isLength({ min: 8, max: 128 }) // Increased minimum to match frontend
 		.withMessage('Le mot de passe doit contenir entre 8 et 128 caractères')
 		.matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])?.*$/)
@@ -56,7 +68,9 @@ const baseRules = {
 		}),
 
 	userType: body('userType')
-		.optional()
+		.exists({ checkFalsy: true })
+		.withMessage('Veuillez choisir votre rôle')
+		.bail()
 		.isIn(['agent', 'apporteur'])
 		.withMessage('Le type d\'utilisateur doit être "agent" ou "apporteur"'),
 };
