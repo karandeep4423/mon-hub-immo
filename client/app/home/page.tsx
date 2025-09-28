@@ -50,6 +50,11 @@ export default function Home() {
 			// Filter by status (only active)
 			if (searchAd.status !== 'active') return false;
 
+			// Filter by profile (user type)
+			if (profileFilter && searchAd.authorType !== profileFilter) {
+				return false;
+			}
+
 			// Filter by property type
 			if (typeFilter) {
 				const mappedTypes = mapPropertyType(typeFilter);

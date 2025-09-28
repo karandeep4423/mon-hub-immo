@@ -3,6 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import {
+	EnergyRatingSelector,
+	PropertyTypeSelector,
+	NumberInput,
+	Select,
+} from '@/components/ui';
 import { PropertyImageManager } from './PropertyImageManager';
 import {
 	PropertyFormData,
@@ -54,9 +60,20 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 		hasGarden: false,
 		hasElevator: false,
 		hasBalcony: false,
-
 		hasGarage: false,
 		energyRating: undefined,
+		gasEmissionClass: undefined,
+		condition: undefined,
+		propertyNature: undefined,
+		characteristics: undefined,
+		saleType: undefined,
+		feesResponsibility: undefined,
+		annualCondoFees: undefined,
+		tariffLink: undefined,
+		landArea: undefined,
+		levels: undefined,
+		parkingSpaces: undefined,
+		exterior: undefined,
 		yearBuilt: undefined,
 		heatingType: undefined,
 		orientation: undefined,
@@ -346,98 +363,176 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 			</div>
 
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<div>
-					<label className="block text-sm font-medium text-gray-700 mb-2">
-						Prix * (€)
-					</label>
-					<Input
-						type="number"
-						value={formData.price || ''}
-						onChange={(e) =>
-							handleInputChange(
-								'price',
-								parseInt(e.target.value) || 0,
-							)
-						}
-						placeholder="250000"
-						className={errors.price ? 'border-red-500' : ''}
-					/>
-					{errors.price && (
-						<p className="text-red-500 text-sm mt-1">
-							{errors.price}
-						</p>
-					)}
-				</div>
+				<NumberInput
+					label="Prix de vente"
+					value={formData.price}
+					onChange={(value) => handleInputChange('price', value || 0)}
+					name="price"
+					unit="€"
+					placeholder="250000"
+					min={1000}
+					max={50000000}
+					required
+				/>
 
-				<div>
-					<label className="block text-sm font-medium text-gray-700 mb-2">
-						Surface * (m²)
-					</label>
-					<Input
-						type="number"
-						value={formData.surface || ''}
-						onChange={(e) =>
-							handleInputChange(
-								'surface',
-								parseInt(e.target.value) || 0,
-							)
-						}
-						placeholder="100"
-						className={errors.surface ? 'border-red-500' : ''}
-					/>
-					{errors.surface && (
-						<p className="text-red-500 text-sm mt-1">
-							{errors.surface}
-						</p>
-					)}
-				</div>
+				<NumberInput
+					label="Surface habitable"
+					value={formData.surface}
+					onChange={(value) =>
+						handleInputChange('surface', value || 0)
+					}
+					name="surface"
+					unit="m²"
+					placeholder="100"
+					min={1}
+					max={10000}
+					required
+				/>
+			</div>
+
+			<PropertyTypeSelector
+				value={formData.propertyType}
+				onChange={(value) => handleInputChange('propertyType', value)}
+				name="propertyType"
+			/>
+
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<Select
+					label="Type de vente"
+					value={formData.saleType}
+					onChange={(value) => handleInputChange('saleType', value)}
+					name="saleType"
+					options={[
+						{ value: 'ancien', label: 'Ancien' },
+						{ value: 'viager', label: 'Viager' },
+					]}
+					placeholder="Choisissez..."
+				/>
+
+				<Select
+					label="Type de transaction"
+					value={formData.transactionType}
+					onChange={(value) =>
+						handleInputChange('transactionType', value)
+					}
+					name="transactionType"
+					options={[
+						{ value: 'Vente', label: 'Vente' },
+						{ value: 'Location', label: 'Location' },
+					]}
+					placeholder="Choisissez..."
+					required
+				/>
 			</div>
 
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<div>
-					<label className="block text-sm font-medium text-gray-700 mb-2">
-						Type de bien *
-					</label>
-					<select
-						value={formData.propertyType}
-						onChange={(e) =>
-							handleInputChange(
-								'propertyType',
-								e.target
-									.value as PropertyFormData['propertyType'],
-							)
-						}
-						className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-					>
-						<option value="Appartement">Appartement</option>
-						<option value="Maison">Maison</option>
-						<option value="Terrain">Terrain</option>
-						<option value="Local commercial">
-							Local commercial
-						</option>
-						<option value="Bureaux">Bureaux</option>
-					</select>
-				</div>
+				<Select
+					label="Nature du bien"
+					value={formData.propertyNature}
+					onChange={(value) =>
+						handleInputChange('propertyNature', value)
+					}
+					name="propertyNature"
+					options={[
+						{ value: 'neuf', label: 'Neuf' },
+						{ value: 'ancien', label: 'Ancien' },
+						{ value: 'loft', label: 'Loft' },
+						{ value: 'duplex', label: 'Duplex' },
+						{ value: 'triplex', label: 'Triplex' },
+						{ value: 'penthouse', label: 'Penthouse' },
+					]}
+					placeholder="Choisissez..."
+				/>
 
-				<div>
-					<label className="block text-sm font-medium text-gray-700 mb-2">
-						Type de transaction *
-					</label>
-					<select
-						value={formData.transactionType}
-						onChange={(e) =>
-							handleInputChange(
-								'transactionType',
-								e.target
-									.value as PropertyFormData['transactionType'],
-							)
+				<Select
+					label="Caractéristiques"
+					value={formData.characteristics}
+					onChange={(value) =>
+						handleInputChange('characteristics', value)
+					}
+					name="characteristics"
+					options={[
+						{ value: 'standing', label: 'Standing' },
+						{ value: 'luxe', label: 'Luxe' },
+						{ value: 'familial', label: 'Familial' },
+						{ value: 'atypique', label: 'Atypique' },
+						{ value: 'investissement', label: 'Investissement' },
+					]}
+					placeholder="Choisissez..."
+				/>
+			</div>
+
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<Input
+					type="text"
+					value={formData.yearBuilt?.toString() || ''}
+					onChange={(e) =>
+						handleInputChange(
+							'yearBuilt',
+							parseInt(e.target.value) || undefined,
+						)
+					}
+					placeholder="AAAA"
+					label="Année de construction"
+					name="yearBuilt"
+				/>
+
+				{formData.propertyType === 'Terrain' && (
+					<NumberInput
+						label="Surface totale du terrain"
+						value={formData.landArea}
+						onChange={(value) =>
+							handleInputChange('landArea', value)
 						}
-						className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-					>
-						<option value="Vente">Vente</option>
-						<option value="Location">Location</option>
-					</select>
-				</div>
+						name="landArea"
+						unit="m²"
+						placeholder="500"
+						min={1}
+						max={1000000}
+					/>
+				)}
+			</div>
+
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<Select
+					label="Honoraires à la charge de"
+					value={formData.feesResponsibility}
+					onChange={(value) =>
+						handleInputChange('feesResponsibility', value)
+					}
+					name="feesResponsibility"
+					options={[
+						{ value: 'buyer', label: 'Acquéreur' },
+						{ value: 'seller', label: 'Vendeur' },
+					]}
+					placeholder="Choisissez..."
+				/>
+
+				<NumberInput
+					label="Charges annuelles de copropriété"
+					value={formData.annualCondoFees}
+					onChange={(value) =>
+						handleInputChange('annualCondoFees', value)
+					}
+					name="annualCondoFees"
+					unit="€"
+					placeholder="1200"
+					min={0}
+					max={100000}
+				/>
+			</div>
+
+			<div>
+				<Input
+					type="url"
+					value={formData.tariffLink || ''}
+					onChange={(e) =>
+						handleInputChange('tariffLink', e.target.value)
+					}
+					placeholder="https://example.com/tarifs"
+					label="Lien de redirection vers vos tarifs"
+					name="tariffLink"
+				/>
 			</div>
 		</div>
 	);
@@ -535,196 +630,184 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 			<h3 className="text-lg font-semibold mb-4">Détails du bien</h3>
 
 			<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-				<div>
-					<label className="block text-sm font-medium text-gray-700 mb-2">
-						Pièces
-					</label>
-					<Input
-						type="number"
-						value={formData.rooms || ''}
-						onChange={(e) =>
-							handleInputChange(
-								'rooms',
-								parseInt(e.target.value) || undefined,
-							)
-						}
-						placeholder="3"
-					/>
-				</div>
+				<NumberInput
+					label="Nombre de pièces"
+					value={formData.rooms}
+					onChange={(value) => handleInputChange('rooms', value)}
+					name="rooms"
+					unit="pièce(s)"
+					placeholder="3"
+					min={1}
+					max={50}
+				/>
 
-				<div>
-					<label className="block text-sm font-medium text-gray-700 mb-2">
-						Chambres
-					</label>
-					<Input
-						type="number"
-						value={formData.bedrooms || ''}
-						onChange={(e) =>
-							handleInputChange(
-								'bedrooms',
-								parseInt(e.target.value) || undefined,
-							)
-						}
-						placeholder="2"
-					/>
-				</div>
-
-				<div>
-					<label className="block text-sm font-medium text-gray-700 mb-2">
-						Salles de bain
-					</label>
-					<Input
-						type="number"
-						value={formData.bathrooms || ''}
-						onChange={(e) =>
-							handleInputChange(
-								'bathrooms',
-								parseInt(e.target.value) || undefined,
-							)
-						}
-						placeholder="1"
-					/>
-				</div>
-
-				<div>
-					<label className="block text-sm font-medium text-gray-700 mb-2">
-						Étage
-					</label>
-					<Input
-						type="number"
-						value={formData.floor || ''}
-						onChange={(e) =>
-							handleInputChange(
-								'floor',
-								parseInt(e.target.value) || undefined,
-							)
-						}
-						placeholder="2"
-					/>
-				</div>
-			</div>
-
-			<div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-				<div>
-					<label className="block text-sm font-medium text-gray-700 mb-2">
-						Classe énergétique
-					</label>
-					<select
-						value={formData.energyRating || ''}
-						onChange={(e) =>
-							handleInputChange(
-								'energyRating',
-								e.target.value || undefined,
-							)
-						}
-						className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-					>
-						<option value="">Non renseigné</option>
-						<option value="A">A</option>
-						<option value="B">B</option>
-						<option value="C">C</option>
-						<option value="D">D</option>
-						<option value="E">E</option>
-						<option value="F">F</option>
-						<option value="G">G</option>
-					</select>
-				</div>
-
-				<div>
-					<label className="block text-sm font-medium text-gray-700 mb-2">
-						Année de construction
-					</label>
-					<Input
-						type="number"
-						value={formData.yearBuilt || ''}
-						onChange={(e) =>
-							handleInputChange(
-								'yearBuilt',
-								parseInt(e.target.value) || undefined,
-							)
-						}
-						placeholder="2000"
-					/>
-				</div>
-
-				<div>
-					<label className="block text-sm font-medium text-gray-700 mb-2">
-						Orientation
-					</label>
-					<select
-						value={formData.orientation || ''}
-						onChange={(e) =>
-							handleInputChange(
-								'orientation',
-								e.target.value || undefined,
-							)
-						}
-						className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-					>
-						<option value="">Non renseigné</option>
-						<option value="Nord">Nord</option>
-						<option value="Sud">Sud</option>
-						<option value="Est">Est</option>
-						<option value="Ouest">Ouest</option>
-						<option value="Nord-Est">Nord-Est</option>
-						<option value="Nord-Ouest">Nord-Ouest</option>
-						<option value="Sud-Est">Sud-Est</option>
-						<option value="Sud-Ouest">Sud-Ouest</option>
-					</select>
-				</div>
-			</div>
-
-			<div>
-				<label className="block text-sm font-medium text-gray-700 mb-2">
-					Type de chauffage
-				</label>
-				<Input
-					type="text"
-					value={formData.heatingType || ''}
-					onChange={(e) =>
-						handleInputChange('heatingType', e.target.value)
+				<Select
+					label="Nombre de chambres"
+					value={formData.bedrooms?.toString()}
+					onChange={(value) =>
+						handleInputChange(
+							'bedrooms',
+							parseInt(value) || undefined,
+						)
 					}
-					placeholder="Gaz, électrique, etc."
+					name="bedrooms"
+					options={Array.from({ length: 10 }, (_, i) => ({
+						value: (i + 1).toString(),
+						label: (i + 1).toString(),
+					}))}
+					placeholder="Choisissez..."
+				/>
+
+				<NumberInput
+					label="Nombre de salles de bain"
+					value={formData.bathrooms}
+					onChange={(value) => handleInputChange('bathrooms', value)}
+					name="bathrooms"
+					placeholder="1"
+					min={0}
+					max={10}
+				/>
+
+				<NumberInput
+					label="Nombre de niveaux"
+					value={formData.levels}
+					onChange={(value) => handleInputChange('levels', value)}
+					name="levels"
+					placeholder="1"
+					min={1}
+					max={20}
 				/>
 			</div>
 
-			<div>
-				<h4 className="font-medium text-gray-700 mb-3">Équipements</h4>
-				<div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-					{[
-						{ key: 'hasParking', label: 'Parking' },
-						{ key: 'hasGarden', label: 'Jardin' },
-						{ key: 'hasElevator', label: 'Ascenseur' },
-						{ key: 'hasBalcony', label: 'Balcon' },
-						{ key: 'hasTerrace', label: 'Terrasse' },
-						{ key: 'hasGarage', label: 'Garage' },
-					].map(({ key, label }) => (
-						<label
-							key={key}
-							className="flex items-center space-x-2"
-						>
-							<input
-								type="checkbox"
-								checked={
-									formData[
-										key as keyof PropertyFormData
-									] as boolean
-								}
-								onChange={(e) =>
-									handleInputChange(
-										key as keyof PropertyFormData,
-										e.target.checked,
-									)
-								}
-								className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-							/>
-							<span className="text-sm text-gray-700">
-								{label}
-							</span>
-						</label>
-					))}
-				</div>
+			<div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+				<Select
+					label="Exposition"
+					value={formData.orientation}
+					onChange={(value) =>
+						handleInputChange('orientation', value)
+					}
+					name="orientation"
+					options={[
+						{ value: 'Nord', label: 'Nord' },
+						{ value: 'Sud', label: 'Sud' },
+						{ value: 'Est', label: 'Est' },
+						{ value: 'Ouest', label: 'Ouest' },
+						{ value: 'Nord-Est', label: 'Nord-Est' },
+						{ value: 'Nord-Ouest', label: 'Nord-Ouest' },
+						{ value: 'Sud-Est', label: 'Sud-Est' },
+						{ value: 'Sud-Ouest', label: 'Sud-Ouest' },
+					]}
+					placeholder="Choisissez..."
+				/>
+
+				<Select
+					label="Places de parking"
+					value={formData.parkingSpaces?.toString()}
+					onChange={(value) =>
+						handleInputChange(
+							'parkingSpaces',
+							parseInt(value) || undefined,
+						)
+					}
+					name="parkingSpaces"
+					options={Array.from({ length: 11 }, (_, i) => ({
+						value: i.toString(),
+						label: i === 0 ? 'Aucune' : i.toString(),
+					}))}
+					placeholder="Choisissez..."
+				/>
+
+				<Select
+					label="Extérieur"
+					value={formData.exterior?.[0] || ''}
+					onChange={(value) =>
+						handleInputChange('exterior', value ? [value] : [])
+					}
+					name="exterior"
+					options={[
+						{ value: 'garden', label: 'Jardin' },
+						{ value: 'balcony', label: 'Balcon' },
+						{ value: 'terrace', label: 'Terrasse' },
+						{ value: 'courtyard', label: 'Cour' },
+						{ value: 'none', label: 'Aucun' },
+					]}
+					placeholder="Choisissez..."
+				/>
 			</div>
+
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<Input
+					type="text"
+					value={formData.availableFrom || ''}
+					onChange={(e) => {
+						let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+
+						// Auto-format as user types
+						if (value.length >= 2) {
+							value =
+								value.substring(0, 2) +
+								'/' +
+								value.substring(2, 6);
+						}
+
+						handleInputChange('availableFrom', value);
+					}}
+					placeholder="MM / AAAA"
+					label="Disponible à partir de"
+					name="availableFrom"
+					maxLength={7} // MM/AAAA format
+				/>
+
+				<Select
+					label="État du bien"
+					value={formData.condition}
+					onChange={(value) => handleInputChange('condition', value)}
+					name="condition"
+					options={[
+						{ value: 'new', label: 'Neuf' },
+						{ value: 'good', label: 'Bon état' },
+						{ value: 'refresh', label: 'À rafraîchir' },
+						{ value: 'renovate', label: 'À rénover' },
+					]}
+					placeholder="Choisissez..."
+				/>
+			</div>
+
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<Select
+					label="Mode de chauffage"
+					value={formData.heatingType}
+					onChange={(value) =>
+						handleInputChange('heatingType', value)
+					}
+					name="heatingType"
+					options={[
+						{ value: 'Gaz', label: 'Gaz' },
+						{ value: 'Électrique', label: 'Électrique' },
+						{ value: 'Fioul', label: 'Fioul' },
+						{ value: 'Pompe à chaleur', label: 'Pompe à chaleur' },
+						{ value: 'Solaire', label: 'Solaire' },
+						{ value: 'Bois', label: 'Bois' },
+					]}
+					placeholder="Choisissez..."
+				/>
+			</div>
+
+			<EnergyRatingSelector
+				label="Classé énergie *"
+				value={formData.energyRating}
+				onChange={(value) => handleInputChange('energyRating', value)}
+				name="energyRating"
+			/>
+
+			<EnergyRatingSelector
+				label="GES *"
+				value={formData.gasEmissionClass}
+				onChange={(value) =>
+					handleInputChange('gasEmissionClass', value)
+				}
+				name="gasEmissionClass"
+			/>
 		</div>
 	);
 
@@ -812,7 +895,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 							<div
 								className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
 									i + 1 <= currentStep
-										? 'bg-blue-600 text-white'
+										? 'bg-brand-600 text-white'
 										: 'bg-gray-200 text-gray-600'
 								}`}
 							>
@@ -822,7 +905,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 								<div
 									className={`w-12 h-1 ${
 										i + 1 < currentStep
-											? 'bg-blue-600'
+											? 'bg-brand-600'
 											: 'bg-gray-200'
 									}`}
 								/>
@@ -875,7 +958,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 							<Button
 								type="submit"
 								disabled={isLoading || isUploading}
-								className="bg-green-600 hover:bg-green-700"
+								className="bg-brand-600 hover:bg-brand-700"
 							>
 								{isUploading ? (
 									<>

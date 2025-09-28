@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
+import { ProfileAvatar } from '../../ui/ProfileAvatar';
 
 export interface Activity {
 	id: string;
@@ -11,6 +12,7 @@ export interface Activity {
 		id: string;
 		name: string;
 		role: 'agent' | 'apporteur';
+		profileImage?: string | null;
 	};
 	createdAt: string;
 	metadata?: {
@@ -183,14 +185,37 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 										{formatActivityTime(activity.createdAt)}
 									</time>
 								</div>
-								<p className="text-sm text-gray-700 mb-2">
+								<p className="text-sm text-gray-700 mb-3">
 									{activity.content}
 								</p>
-								<div className="flex items-center space-x-2 text-xs text-gray-500">
-									<span>Par {activity.author.name}</span>
-									<span className="capitalize">
-										({activity.author.role})
-									</span>
+								<div className="flex items-center space-x-2">
+									<ProfileAvatar
+										user={{
+											_id: activity.author.id,
+											firstName:
+												activity.author.name.split(
+													' ',
+												)[0] || '',
+											lastName:
+												activity.author.name
+													.split(' ')
+													.slice(1)
+													.join(' ') || '',
+											profileImage:
+												activity.author.profileImage ||
+												undefined,
+										}}
+										size="xs"
+									/>
+									<div className="flex items-center space-x-1 text-xs text-gray-600">
+										<span>{activity.author.name}</span>
+										<span>•</span>
+										<span className="capitalize">
+											{activity.author.role === 'agent'
+												? 'Agent propriétaire'
+												: 'Agent apporteur'}
+										</span>
+									</div>
 								</div>
 							</div>
 						</div>

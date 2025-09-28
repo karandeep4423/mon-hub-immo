@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card } from '../../ui/Card';
 import { Button } from '../../ui/Button';
 import { StepIndicator } from '../../ui/StepIndicator';
+import { ProfileAvatar } from '../../ui/ProfileAvatar';
 import { ProgressTrackingProps, PROGRESS_STEPS_CONFIG } from './types';
 import { ProgressStatusModal } from './ProgressStatusModal';
 import { STEP_ORDER } from '../../../lib/constants/stepOrder';
@@ -117,6 +118,47 @@ export const ProgressTracker: React.FC<ProgressTrackingProps> = ({
 								{stepData?.notes && (
 									<div className="mt-2 p-2 bg-gray-50 rounded text-sm text-gray-700">
 										<strong>Note:</strong> {stepData.notes}
+									</div>
+								)}
+
+								{/* Show who completed the step */}
+								{isCompleted && stepData?.completedBy && (
+									<div className="mt-3 flex items-center space-x-2">
+										<ProfileAvatar
+											user={{
+												_id: stepData.completedBy._id,
+												firstName:
+													stepData.completedBy
+														.firstName,
+												lastName:
+													stepData.completedBy
+														.lastName,
+												profileImage:
+													stepData.completedBy
+														.profileImage ||
+													undefined,
+											}}
+											size="xs"
+										/>
+										<div className="text-xs text-gray-600">
+											<span>
+												{stepData.completedBy
+													.firstName &&
+												stepData.completedBy.lastName
+													? `${stepData.completedBy.firstName} ${stepData.completedBy.lastName}`
+													: 'Utilisateur'}
+											</span>
+											{stepData.completedAt && (
+												<span className="text-gray-400 ml-2">
+													•{' '}
+													{new Date(
+														stepData.completedAt,
+													).toLocaleDateString(
+														'fr-FR',
+													)}
+												</span>
+											)}
+										</div>
 									</div>
 								)}
 							</div>

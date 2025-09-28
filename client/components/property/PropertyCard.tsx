@@ -44,7 +44,8 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 					{/* Favorite Button */}
 					<div className="absolute top-2 right-2">
 						<FavoriteButton
-							propertyId={property._id}
+							itemId={property._id}
+							itemType="property"
 							size="md"
 							onToggle={
 								onFavoriteToggle
@@ -89,9 +90,38 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 						</span>
 						{property.rooms && (
 							<span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">
-								{property.rooms} pièces
+								{property.rooms} pièce
+								{property.rooms > 1 ? 's' : ''}
 							</span>
 						)}
+						{property.bedrooms && (
+							<span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-1 rounded">
+								{property.bedrooms} ch.
+							</span>
+						)}
+						{property.energyRating &&
+							property.energyRating !== 'Non soumis au DPE' && (
+								<span
+									className={`text-xs font-semibold px-2 py-1 rounded text-white ${
+										property.energyRating === 'A' ||
+										property.energyRating === 'B'
+											? 'bg-green-500'
+											: property.energyRating === 'C' ||
+												  property.energyRating === 'D'
+												? 'bg-yellow-500'
+												: 'bg-red-500'
+									}`}
+								>
+									DPE {property.energyRating}
+								</span>
+							)}
+						{property.parkingSpaces &&
+							property.parkingSpaces > 0 && (
+								<span className="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2 py-1 rounded">
+									{property.parkingSpaces} parking
+									{property.parkingSpaces > 1 ? 's' : ''}
+								</span>
+							)}
 					</div>
 
 					{/* Owner info */}

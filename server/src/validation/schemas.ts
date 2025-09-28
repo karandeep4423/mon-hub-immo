@@ -48,7 +48,12 @@ export const propertyBaseSchema = z.object({
 	bathrooms: z.number().int().min(0).max(10).optional(),
 	floor: z.number().int().min(-5).max(100).optional(),
 	totalFloors: z.number().int().min(1).max(200).optional(),
-	energyRating: z.enum(['A', 'B', 'C', 'D', 'E', 'F', 'G']).optional(),
+	energyRating: z
+		.enum(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'Non soumis au DPE'])
+		.optional(),
+	gasEmissionClass: z
+		.enum(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'Non soumis au DPE'])
+		.optional(),
 	yearBuilt: z
 		.number()
 		.int()
@@ -74,6 +79,26 @@ export const propertyBaseSchema = z.object({
 	hasBalcony: z.boolean().optional(),
 	hasTerrace: z.boolean().optional(),
 	hasGarage: z.boolean().optional(),
+
+	// New fields from screenshots
+	condition: z.enum(['new', 'good', 'refresh', 'renovate']).optional(),
+	propertyNature: z.string().max(100).optional(),
+	characteristics: z.string().max(200).optional(),
+	saleType: z.enum(['ancien', 'viager']).optional(),
+	feesResponsibility: z.enum(['buyer', 'seller']).optional(),
+	annualCondoFees: z.number().min(0).max(100000).optional(),
+	tariffLink: z.string().max(500).optional(),
+	landArea: z.number().min(1).max(1000000).optional(),
+	levels: z.number().int().min(1).max(20).optional(),
+	parkingSpaces: z.number().int().min(0).max(50).optional(),
+	exterior: z
+		.array(z.enum(['garden', 'balcony', 'terrace', 'courtyard', 'none']))
+		.optional(),
+	availableFromDate: z
+		.string()
+		.regex(/^\d{2}\/\d{4}$/)
+		.optional(),
+
 	isExclusive: z.boolean().optional(),
 	isFeatured: z.boolean().optional(),
 	status: z

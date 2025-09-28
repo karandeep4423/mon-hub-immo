@@ -11,39 +11,127 @@ interface AuthenticatedRequest extends Request {
 	};
 }
 
-// Simple validation function for combined upload
+// Simple validation function for combined upload with type conversion
 const validatePropertyData = (data: Record<string, unknown>) => {
 	const errors: string[] = [];
 
+	// Convert string numbers to actual numbers for form data
+	const convertedData = { ...data };
+
+	// Handle array fields that come as key[0], key[1] format from FormData
+	const arrayFields = ['exterior'];
+	arrayFields.forEach((field) => {
+		const arrayItems: string[] = [];
+		Object.keys(data).forEach((key) => {
+			const match = key.match(new RegExp(`^${field}\\[(\\d+)\\]$`));
+			if (match) {
+				const index = parseInt(match[1], 10);
+				arrayItems[index] = data[key] as string;
+			}
+		});
+		if (arrayItems.length > 0) {
+			convertedData[field] = arrayItems.filter(
+				(item) => item !== undefined,
+			);
+			// Remove the individual array items
+			Object.keys(convertedData).forEach((key) => {
+				if (key.startsWith(`${field}[`)) {
+					delete convertedData[key];
+				}
+			});
+		}
+	});
+
+	// Convert numeric fields from strings
+	if (typeof data.price === 'string') {
+		convertedData.price = parseFloat(data.price);
+	}
+	if (typeof data.surface === 'string') {
+		convertedData.surface = parseFloat(data.surface);
+	}
+	if (typeof data.rooms === 'string') {
+		convertedData.rooms = parseInt(data.rooms, 10) || undefined;
+	}
+	if (typeof data.bedrooms === 'string') {
+		convertedData.bedrooms = parseInt(data.bedrooms, 10) || undefined;
+	}
+	if (typeof data.bathrooms === 'string') {
+		convertedData.bathrooms = parseInt(data.bathrooms, 10) || undefined;
+	}
+	if (typeof data.levels === 'string') {
+		convertedData.levels = parseInt(data.levels, 10) || undefined;
+	}
+	if (typeof data.parkingSpaces === 'string') {
+		convertedData.parkingSpaces =
+			parseInt(data.parkingSpaces, 10) || undefined;
+	}
+	if (typeof data.annualCondoFees === 'string') {
+		convertedData.annualCondoFees =
+			parseFloat(data.annualCondoFees) || undefined;
+	}
+	if (typeof data.yearBuilt === 'string') {
+		convertedData.yearBuilt = parseInt(data.yearBuilt, 10) || undefined;
+	}
+	if (typeof data.landArea === 'string') {
+		convertedData.landArea = parseFloat(data.landArea) || undefined;
+	}
+
+	// Convert boolean fields from strings
+	const booleanFields = [
+		'hasParking',
+		'hasGarden',
+		'hasElevator',
+		'hasBalcony',
+		'hasTerrace',
+		'hasGarage',
+		'isExclusive',
+		'isFeatured',
+	];
+	booleanFields.forEach((field) => {
+		if (typeof data[field] === 'string') {
+			convertedData[field] = data[field] === 'true';
+		}
+	});
+
+	// Validation logic
 	if (
-		!data.title ||
-		(typeof data.title === 'string' && data.title.length < 10)
+		!convertedData.title ||
+		(typeof convertedData.title === 'string' &&
+			convertedData.title.length < 10)
 	) {
 		errors.push('Le titre doit contenir au moins 10 caractères');
 	}
 	if (
-		!data.description ||
-		(typeof data.description === 'string' && data.description.length < 50)
+		!convertedData.description ||
+		(typeof convertedData.description === 'string' &&
+			convertedData.description.length < 50)
 	) {
 		errors.push('La description doit contenir au moins 50 caractères');
 	}
-	if (!data.price || (typeof data.price === 'number' && data.price < 1000)) {
+	if (
+		!convertedData.price ||
+		(typeof convertedData.price === 'number' && convertedData.price < 1000)
+	) {
 		errors.push('Le prix doit être supérieur à 1000€');
 	}
 	if (
-		!data.surface ||
-		(typeof data.surface === 'number' && data.surface < 1)
+		!convertedData.surface ||
+		(typeof convertedData.surface === 'number' && convertedData.surface < 1)
 	) {
 		errors.push('La surface doit être supérieure à 1 m²');
 	}
-	if (!data.city || (typeof data.city === 'string' && data.city.length < 2)) {
+	if (
+		!convertedData.city ||
+		(typeof convertedData.city === 'string' &&
+			convertedData.city.length < 2)
+	) {
 		errors.push('La ville est requise');
 	}
 
 	return {
 		success: errors.length === 0,
 		errors: errors.length > 0 ? errors.join(', ') : undefined,
-		data,
+		data: convertedData,
 	};
 };
 
@@ -280,12 +368,43 @@ export const createProperty = async (
 		}
 
 		// Create property with uploaded images
-		const propertyData = {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const propertyData: any = {
 			...validationResult.data,
 			mainImage: mainImageData,
 			galleryImages: galleryImagesData,
 			owner: req.user.id,
 		};
+
+		// Map availableFrom to availableFromDate if present and format it properly
+		if (propertyData.availableFrom && !propertyData.availableFromDate) {
+			let dateValue = propertyData.availableFrom as string;
+
+			// Only process non-empty strings
+			if (dateValue && typeof dateValue === 'string') {
+				dateValue = dateValue.trim();
+
+				// If the date is in MMYYYY format (like "102025"), convert to MM/YYYY format
+				if (/^\d{6}$/.test(dateValue)) {
+					dateValue =
+						dateValue.substring(0, 2) +
+						'/' +
+						dateValue.substring(2);
+				}
+				// If it's in MMYY format (like "1025"), convert to MM/20YY format
+				else if (/^\d{4}$/.test(dateValue)) {
+					dateValue =
+						dateValue.substring(0, 2) +
+						'/20' +
+						dateValue.substring(2);
+				}
+				// If it's already in MM/YYYY format, keep it as is
+				// If it doesn't match any expected format, let validation handle the error
+
+				propertyData.availableFromDate = dateValue;
+			}
+			delete propertyData.availableFrom;
+		}
 
 		const property = new Property(propertyData);
 		await property.save();
@@ -301,9 +420,23 @@ export const createProperty = async (
 	} catch (error) {
 		console.error('Property creation error:', error);
 
+		// Include more error details in development
+		const errorDetails =
+			error instanceof Error
+				? {
+						message: error.message,
+						stack: error.stack,
+					}
+				: error;
+
+		console.error('Detailed error:', errorDetails);
+
 		res.status(500).json({
 			success: false,
 			message: 'Erreur lors de la création de la propriété',
+			...(process.env.NODE_ENV === 'development' && {
+				error: errorDetails,
+			}),
 		});
 	}
 };
