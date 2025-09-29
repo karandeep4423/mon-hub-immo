@@ -65,8 +65,13 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 			return;
 		}
 
-		const { firstName, lastName, email, password, phone, userType } =
-			req.body;
+		// Extract values with explicit checks to prevent undefined values in production
+		const firstName = req.body.firstName?.toString().trim();
+		const lastName = req.body.lastName?.toString().trim();
+		const email = req.body.email?.toString().trim().toLowerCase();
+		const password = req.body.password?.toString();
+		const phone = req.body.phone?.toString().trim();
+		const userType = req.body.userType?.toString().trim();
 
 		// Log the extracted values to see if they're still there
 		console.log('Extracted values from req.body:', {
@@ -77,6 +82,22 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 			phone: typeof phone + ' - ' + phone,
 			password: password ? 'present' : 'missing',
 		});
+
+		// Validate that required fields are not empty after extraction
+		if (!firstName || !lastName || !email || !password || !userType) {
+			console.log('Missing required fields after extraction:', {
+				firstName: !firstName,
+				lastName: !lastName,
+				email: !email,
+				password: !password,
+				userType: !userType,
+			});
+			res.status(400).json({
+				success: false,
+				message: 'Required fields are missing or invalid',
+			});
+			return;
+		}
 
 		// Check if user already exists
 		const existingUser = await User.findOne({ email });
@@ -129,17 +150,26 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 		const verificationCode = emailService.generateVerificationCode();
 		const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-		// Create new user
+		// Create new user with explicit field mapping
 		const user = new User({
-			firstName,
-			lastName,
-			email,
-			password,
-			phone,
+			firstName: firstName,
+			lastName: lastName,
+			email: email,
+			password: password,
+			phone: phone,
 			userType: userType,
 			isEmailVerified: false,
 			emailVerificationCode: verificationCode,
 			emailVerificationExpires: verificationExpires,
+		});
+
+		console.log('User object before save:', {
+			firstName: user.firstName,
+			lastName: user.lastName,
+			email: user.email,
+			userType: user.userType,
+			phone: user.phone,
+			hasPassword: !!user.password,
 		});
 
 		await user.save();
