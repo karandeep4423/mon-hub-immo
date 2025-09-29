@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import { validationResult } from 'express-validator';
 import { User } from '../models/User';
 import { generateToken } from '../utils/jwt';
@@ -50,17 +51,14 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 		}
 
 		// Validate request body using Zod
-		const validationResult = signupSchema.safeParse(req.body);
+		const parsed = signupSchema.safeParse(req.body);
 
-		if (!validationResult.success) {
-			console.log(
-				'Zod validation errors:',
-				validationResult.error.errors,
-			);
+		if (!parsed.success) {
+			console.log('Zod validation errors:', parsed.error.errors);
 			res.status(400).json({
 				success: false,
 				message: 'Validation failed',
-				errors: validationResult.error.errors.map((err) => ({
+				errors: parsed.error.errors.map((err) => ({
 					field: err.path.join('.'),
 					message: err.message,
 				})),
@@ -69,7 +67,34 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 		}
 
 		const { firstName, lastName, email, password, phone, userType } =
-			validationResult.data;
+			parsed.data;
+
+		// Defensive guard: ensure required fields are present post-parse
+		const requiredFields: Record<string, unknown> = {
+			firstName,
+			lastName,
+			email,
+			password,
+			userType,
+		};
+		const missing = Object.entries(requiredFields)
+			.filter(([, v]) => v === undefined || v === null || v === '')
+			.map(([k]) => k);
+		if (missing.length) {
+			console.warn('Signup required fields missing after validation:', {
+				missing,
+				bodyKeys: Object.keys(req.body || {}),
+			});
+			res.status(400).json({
+				success: false,
+				message: 'Validation failed',
+				errors: missing.map((field) => ({
+					field,
+					message: `${field} is required`,
+				})),
+			});
+			return;
+		}
 
 		// Check if user already exists
 		const existingUser = await User.findOne({ email });
@@ -123,7 +148,7 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 		const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
 		// Create new user with validated data
-		const user = new User({
+		const userPayload = {
 			firstName,
 			lastName,
 			email,
@@ -133,7 +158,13 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 			isEmailVerified: false,
 			emailVerificationCode: verificationCode,
 			emailVerificationExpires: verificationExpires,
-		});
+		};
+
+		console.log(
+			'Creating user with payload (keys):',
+			Object.keys(userPayload),
+		);
+		const user = new User(userPayload);
 
 		await user.save();
 
@@ -170,6 +201,20 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 			},
 		});
 	} catch (error) {
+		// Surface Mongoose validation errors as 400 to aid diagnosis
+		if (error instanceof mongoose.Error.ValidationError) {
+			console.error('Signup validation error (Mongoose):', error);
+			res.status(400).json({
+				success: false,
+				message: 'Validation failed',
+				errors: Object.values(error.errors).map((e) => ({
+					field: e.path,
+					message: e.message,
+				})),
+			});
+			return;
+		}
+
 		console.error('Signup error:', error);
 		res.status(500).json({
 			success: false,
