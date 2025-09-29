@@ -160,10 +160,19 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 			emailVerificationExpires: verificationExpires,
 		};
 
-		console.log(
-			'Creating user with payload (keys):',
-			Object.keys(userPayload),
-		);
+		console.log('Creating user payload snapshot:', {
+			keys: Object.keys(userPayload),
+			firstName: userPayload.firstName,
+			lastName: userPayload.lastName,
+			userType: userPayload.userType,
+			email: userPayload.email,
+			types: {
+				firstName: typeof userPayload.firstName,
+				lastName: typeof userPayload.lastName,
+				userType: typeof userPayload.userType,
+				email: typeof userPayload.email,
+			},
+		});
 		const user = new User(userPayload);
 
 		await user.save();
@@ -266,9 +275,16 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 				Date.now() + 24 * 60 * 60 * 1000,
 			);
 
-			user.emailVerificationCode = verificationCode;
-			user.emailVerificationExpires = verificationExpires;
-			await user.save();
+			await User.updateOne(
+				{ _id: user._id },
+				{
+					$set: {
+						emailVerificationCode: verificationCode,
+						emailVerificationExpires: verificationExpires,
+					},
+				},
+				{ runValidators: false },
+			);
 
 			try {
 				const emailTemplate = emailService.getVerificationCodeTemplate(
@@ -428,7 +444,13 @@ export const resendVerificationCode = async (
 
 		const { email } = req.body;
 
+		console.log('Forgot-password request for email:', email);
+
 		const user = await User.findOne({ email });
+		console.log('Forgot-password user lookup:', {
+			found: !!user,
+			userId: user?._id,
+		});
 		if (!user) {
 			res.status(404).json({
 				success: false,
@@ -450,9 +472,16 @@ export const resendVerificationCode = async (
 		const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
 		// Update user
-		user.emailVerificationCode = verificationCode;
-		user.emailVerificationExpires = verificationExpires;
-		await user.save();
+		await User.updateOne(
+			{ _id: user._id },
+			{
+				$set: {
+					emailVerificationCode: verificationCode,
+					emailVerificationExpires: verificationExpires,
+				},
+			},
+			{ runValidators: false },
+		);
 
 		// Send verification email
 		try {
@@ -522,10 +551,17 @@ export const forgotPassword = async (
 		const resetCode = emailService.generateVerificationCode();
 		const resetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiry
 
-		// Update user with reset code
-		user.passwordResetCode = resetCode;
-		user.passwordResetExpires = resetExpires;
-		await user.save();
+		// Update user with reset code (atomic without full validation)
+		await User.updateOne(
+			{ _id: user._id },
+			{
+				$set: {
+					passwordResetCode: resetCode,
+					passwordResetExpires: resetExpires,
+				},
+			},
+			{ runValidators: false },
+		);
 
 		// Send password reset email
 		try {
@@ -547,10 +583,12 @@ export const forgotPassword = async (
 			});
 		} catch (emailError) {
 			console.error('Email sending error:', emailError);
-			// Clear the reset code if email fails
-			user.passwordResetCode = undefined;
-			user.passwordResetExpires = undefined;
-			await user.save();
+			// Clear the reset code if email fails (atomic update)
+			await User.updateOne(
+				{ _id: user._id },
+				{ $unset: { passwordResetCode: '', passwordResetExpires: '' } },
+				{ runValidators: false },
+			);
 
 			res.status(500).json({
 				success: false,
@@ -559,6 +597,22 @@ export const forgotPassword = async (
 			});
 		}
 	} catch (error) {
+		if (error instanceof mongoose.Error.ValidationError) {
+			console.error(
+				'Forgot password validation error (Mongoose):',
+				error,
+			);
+			res.status(400).json({
+				success: false,
+				message: 'Validation failed',
+				errors: Object.values(error.errors).map((e) => ({
+					field: e.path,
+					message: e.message,
+				})),
+			});
+			return;
+		}
+
 		console.error('Forgot password error:', error);
 		res.status(500).json({
 			success: false,
