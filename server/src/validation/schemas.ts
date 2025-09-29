@@ -10,18 +10,28 @@ export const loginSchema = z.object({
 	password: z.string().min(1),
 });
 
-export const signupSchema = z.object({
-	firstName: z.string().min(2).max(50),
-	lastName: z.string().min(2).max(50),
-	email: z.string().email(),
-	password: z.string().min(8).max(128),
-	phone: z
-		.string()
-		.regex(/^(?:(?:\+33|0)[1-9])(?:[0-9]{8})$/)
-		.optional()
-		.or(z.literal('').transform(() => undefined)),
-	userType: z.enum(['agent', 'apporteur']).optional(),
-});
+export const signupSchema = z
+	.object({
+		firstName: z.string().min(2).max(50).trim(),
+		lastName: z.string().min(2).max(50).trim(),
+		email: z.string().email().toLowerCase().trim(),
+		password: z.string().min(8).max(128),
+		phone: z
+			.string()
+			.regex(/^(?:(?:\+33|0)[1-9])(?:[0-9]{8})$/)
+			.optional()
+			.or(z.literal('').transform(() => undefined)),
+		userType: z.enum(['agent', 'apporteur']),
+		confirmPassword: z.string().optional(),
+	})
+	.refine(
+		(data) =>
+			!data.confirmPassword || data.password === data.confirmPassword,
+		{
+			message: "Passwords don't match",
+			path: ['confirmPassword'],
+		},
+	);
 
 // Property
 export const propertyBaseSchema = z.object({

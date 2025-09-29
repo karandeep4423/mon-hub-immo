@@ -12,7 +12,6 @@ import {
 } from '../controllers/authController';
 import { authenticateToken } from '../middleware/auth';
 import {
-	signupValidation,
 	loginValidation,
 	verifyEmailValidation,
 	resendVerificationValidation,
@@ -36,7 +35,7 @@ router.use((req, res, next) => {
 });
 
 // Auth routes
-router.post('/signup', signupValidation, signup);
+router.post('/signup', signup);
 router.post('/login', loginValidation, login);
 router.post('/forgot-password', forgotPasswordValidation, forgotPassword);
 router.post('/reset-password', resetPasswordValidation, resetPassword);

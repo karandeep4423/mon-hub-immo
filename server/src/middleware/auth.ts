@@ -2,7 +2,7 @@ import { Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import { verifyToken } from '../utils/jwt';
 import { AuthRequest } from '../types/auth';
-import { User, IUser } from '../models/User';
+import { User } from '../models/User';
 
 export const authenticateToken = async (
 	req: AuthRequest,

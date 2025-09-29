@@ -50,67 +50,34 @@ const userSchema = new Schema<IUser>(
 	{
 		firstName: {
 			type: String,
-			required: [true, 'Prénom est requis'],
+			required: true,
 			trim: true,
-			minlength: [2, 'Le prénom doit contenir au moins 2 caractères'],
-			maxlength: [50, 'Le prénom doit contenir moins de 50 caractères'],
-			match: [/^[a-zA-ZÀ-ÿ\u0100-\u017F\s'-]+$/, 'Prénom invalide'],
 		},
 		lastName: {
 			type: String,
-			required: [true, 'Nom est requis'],
+			required: true,
 			trim: true,
-			minlength: [2, 'Le nom doit contenir au moins 2 caractères'],
-			maxlength: [50, 'Le nom doit contenir moins de 50 caractères'],
-			match: [/^[a-zA-ZÀ-ÿ\u0100-\u017F\s'-]+$/, 'Nom invalide'],
 		},
 		email: {
 			type: String,
-			required: [true, 'Email est requis'],
+			required: true,
 			unique: true,
 			lowercase: true,
 			trim: true,
-			maxlength: [254, 'Email trop long'],
-			match: [
-				/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/,
-				'Veuillez entrer un email valide',
-			],
 		},
 		password: {
 			type: String,
-			required: [true, 'Mot de passe est requis'],
-			minlength: [
-				8,
-				'Le mot de passe doit contenir au moins 8 caractères',
-			],
-			maxlength: [128, 'Le mot de passe est trop long'],
+			required: true,
 			select: false,
-			validate: {
-				validator: function (password: string) {
-					return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])?.*$/.test(
-						password,
-					);
-				},
-				message:
-					'Le mot de passe doit contenir au moins une minuscule, une majuscule et un chiffre',
-			},
 		},
 		phone: {
 			type: String,
 			trim: true,
-			sparse: true,
-			match: [
-				/^(?:(?:\+33|0)[1-9])(?:[0-9]{8})$/,
-				'Numéro de téléphone français invalide',
-			],
 		},
 		userType: {
 			type: String,
-			enum: {
-				values: ['agent', 'apporteur'],
-				message: 'Type d\'utilisateur doit être "agent" ou "apporteur"',
-			},
-			required: [true, "Type d'utilisateur est requis"],
+			required: true,
+			enum: ['agent', 'apporteur'],
 		},
 		isEmailVerified: {
 			type: Boolean,
