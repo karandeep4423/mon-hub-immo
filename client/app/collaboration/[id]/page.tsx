@@ -783,6 +783,355 @@ export default function CollaborationPage() {
 									</div>
 								</Card>
 
+								{/* Client Information - Only visible in collaboration */}
+								{typeof collaboration.propertyId === 'object' &&
+									(
+										collaboration.propertyId as PropertyDetails
+									)?.clientInfo &&
+									(collaboration.status === 'accepted' ||
+										collaboration.status === 'active' ||
+										collaboration.status ===
+											'completed') && (
+										<Card className="p-6 bg-blue-50 border-blue-200">
+											<h3 className="text-lg font-medium text-gray-900 mb-4">
+												🔒 Informations client
+												confidentielles
+											</h3>
+											<p className="text-sm text-blue-600 mb-4">
+												Ces informations sont
+												confidentielles et uniquement
+												visibles dans le cadre de cette
+												collaboration.
+											</p>
+
+											{/* Commercial Details */}
+											{(
+												collaboration.propertyId as PropertyDetails
+											)?.clientInfo
+												?.commercialDetails && (
+												<div className="mb-6 p-4 bg-white rounded-lg">
+													<h4 className="font-medium text-gray-900 mb-3 flex items-center">
+														<span className="mr-2">
+															💡
+														</span>
+														Détails commerciaux
+													</h4>
+													<div className="space-y-3 text-sm">
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo
+															?.commercialDetails
+															?.strengths && (
+															<div>
+																<span className="font-medium text-gray-700">
+																	Points
+																	forts:
+																</span>
+																<p className="text-gray-600 mt-1">
+																	{
+																		(
+																			collaboration.propertyId as PropertyDetails
+																		)
+																			?.clientInfo
+																			?.commercialDetails
+																			?.strengths
+																	}
+																</p>
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo
+															?.commercialDetails
+															?.weaknesses && (
+															<div>
+																<span className="font-medium text-gray-700">
+																	Points
+																	faibles:
+																</span>
+																<p className="text-gray-600 mt-1">
+																	{
+																		(
+																			collaboration.propertyId as PropertyDetails
+																		)
+																			?.clientInfo
+																			?.commercialDetails
+																			?.weaknesses
+																	}
+																</p>
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo
+															?.commercialDetails
+															?.occupancyStatus && (
+															<div>
+																<span className="font-medium text-gray-700">
+																	Occupation:
+																</span>
+																<span className="ml-2 text-gray-600">
+																	{(
+																		collaboration.propertyId as PropertyDetails
+																	)
+																		?.clientInfo
+																		?.commercialDetails
+																		?.occupancyStatus ===
+																	'occupied'
+																		? 'Occupé'
+																		: 'Vide'}
+																</span>
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo
+															?.commercialDetails
+															?.openToLowerOffers && (
+															<div className="text-green-600">
+																✓ Ouvert aux
+																offres
+																&quot;coup de
+																coeur&quot;
+															</div>
+														)}
+													</div>
+												</div>
+											)}
+
+											{/* Property History */}
+											{(
+												collaboration.propertyId as PropertyDetails
+											)?.clientInfo?.propertyHistory && (
+												<div className="mb-6 p-4 bg-white rounded-lg">
+													<h4 className="font-medium text-gray-900 mb-3 flex items-center">
+														<span className="mr-2">
+															📅
+														</span>
+														Historique du bien
+													</h4>
+													<div className="space-y-3 text-sm">
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo
+															?.propertyHistory
+															?.listingDate && (
+															<div>
+																<span className="font-medium text-gray-700">
+																	Mise en
+																	vente:
+																</span>
+																<span className="ml-2 text-gray-600">
+																	{
+																		(
+																			collaboration.propertyId as PropertyDetails
+																		)
+																			?.clientInfo
+																			?.propertyHistory
+																			?.listingDate
+																	}
+																</span>
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo
+															?.propertyHistory
+															?.lastVisitDate && (
+															<div>
+																<span className="font-medium text-gray-700">
+																	Dernière
+																	visite:
+																</span>
+																<span className="ml-2 text-gray-600">
+																	{
+																		(
+																			collaboration.propertyId as PropertyDetails
+																		)
+																			?.clientInfo
+																			?.propertyHistory
+																			?.lastVisitDate
+																	}
+																</span>
+															</div>
+														)}
+														{typeof (
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo
+															?.propertyHistory
+															?.totalVisits ===
+															'number' && (
+															<div>
+																<span className="font-medium text-gray-700">
+																	Nombre de
+																	visites:
+																</span>
+																<span className="ml-2 text-gray-600">
+																	{
+																		(
+																			collaboration.propertyId as PropertyDetails
+																		)
+																			?.clientInfo
+																			?.propertyHistory
+																			?.totalVisits
+																	}
+																</span>
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo
+															?.propertyHistory
+															?.visitorFeedback && (
+															<div>
+																<span className="font-medium text-gray-700">
+																	Retours
+																	visiteurs:
+																</span>
+																<p className="text-gray-600 mt-1">
+																	{
+																		(
+																			collaboration.propertyId as PropertyDetails
+																		)
+																			?.clientInfo
+																			?.propertyHistory
+																			?.visitorFeedback
+																	}
+																</p>
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo
+															?.propertyHistory
+															?.priceReductions && (
+															<div>
+																<span className="font-medium text-gray-700">
+																	Historique
+																	prix:
+																</span>
+																<p className="text-gray-600 mt-1">
+																	{
+																		(
+																			collaboration.propertyId as PropertyDetails
+																		)
+																			?.clientInfo
+																			?.propertyHistory
+																			?.priceReductions
+																	}
+																</p>
+															</div>
+														)}
+													</div>
+												</div>
+											)}
+
+											{/* Owner Information */}
+											{(
+												collaboration.propertyId as PropertyDetails
+											)?.clientInfo?.ownerInfo && (
+												<div className="p-4 bg-white rounded-lg">
+													<h4 className="font-medium text-gray-900 mb-3 flex items-center">
+														<span className="mr-2">
+															🤝
+														</span>
+														Informations
+														propriétaire
+													</h4>
+													<div className="space-y-3 text-sm">
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo?.ownerInfo
+															?.urgentToSell && (
+															<div className="text-orange-600">
+																⚡ Pressés de
+																vendre
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo?.ownerInfo
+															?.openToNegotiation && (
+															<div className="text-green-600">
+																💬 Ouverts à la
+																négociation
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo?.ownerInfo
+															?.mandateType && (
+															<div>
+																<span className="font-medium text-gray-700">
+																	Mandat:
+																</span>
+																<span className="ml-2 text-gray-600 capitalize">
+																	{
+																		(
+																			collaboration.propertyId as PropertyDetails
+																		)
+																			?.clientInfo
+																			?.ownerInfo
+																			?.mandateType
+																	}
+																</span>
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo?.ownerInfo
+															?.saleReasons && (
+															<div>
+																<span className="font-medium text-gray-700">
+																	Raisons de
+																	la vente:
+																</span>
+																<p className="text-gray-600 mt-1">
+																	{
+																		(
+																			collaboration.propertyId as PropertyDetails
+																		)
+																			?.clientInfo
+																			?.ownerInfo
+																			?.saleReasons
+																	}
+																</p>
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo?.ownerInfo
+															?.presentDuringVisits && (
+															<div className="text-blue-600">
+																👤 Présents
+																pendant visites
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo?.ownerInfo
+															?.flexibleSchedule && (
+															<div className="text-blue-600">
+																🕐 Horaires
+																flexibles
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo?.ownerInfo
+															?.acceptConditionalOffers && (
+															<div className="text-green-600">
+																✓ Acceptent
+																offres
+																conditionnelles
+															</div>
+														)}
+													</div>
+												</div>
+											)}
+										</Card>
+									)}
+
 								{/* Agents Information */}
 								<Card className="p-6">
 									<h3 className="text-lg font-medium text-gray-900 mb-4">

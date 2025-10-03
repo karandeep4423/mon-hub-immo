@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import searchAdApi from '@/lib/api/searchAdApi';
 import { useAuth } from '@/hooks/useAuth';
 import { SearchAd } from '@/types/searchAd';
+import { SearchAdClientInfoForm } from './SearchAdClientInfoForm';
 
 interface FormData {
 	title: string;
@@ -31,6 +32,7 @@ interface FormData {
 	niceToHaves: string[];
 	dealBreakers: string[];
 	status: 'active' | 'paused' | 'fulfilled' | 'sold' | 'rented' | 'archived';
+	clientInfo?: SearchAd['clientInfo'];
 }
 
 interface EditSearchAdFormProps {
@@ -69,6 +71,7 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 		niceToHaves: [],
 		dealBreakers: [],
 		status: 'active',
+		clientInfo: {},
 	});
 
 	useEffect(() => {
@@ -104,6 +107,7 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 					niceToHaves: ad.priorities?.niceToHaves || [],
 					dealBreakers: ad.priorities?.dealBreakers || [],
 					status: ad.status,
+					clientInfo: ad.clientInfo || {},
 				});
 			} catch (err) {
 				setError("Impossible de charger l'annonce.");
@@ -230,6 +234,7 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 					niceToHaves: formData.niceToHaves,
 					dealBreakers: formData.dealBreakers,
 				},
+				clientInfo: formData.clientInfo,
 			};
 
 			await searchAdApi.updateSearchAd(
@@ -912,6 +917,26 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 							</div>
 						</div>
 					</div>
+				</div>
+
+				{/* Client Information - Full width */}
+				<div className="bg-white p-6 rounded-lg shadow-sm border">
+					<div className="mb-4">
+						<h3 className="text-xl font-semibold text-gray-900 mb-2 flex items-center">
+							🔒 Informations sur le client
+						</h3>
+						<p className="text-sm text-gray-600">
+							Ces informations sont confidentielles et ne seront
+							visibles que par vous lors de la gestion de cette
+							recherche.
+						</p>
+					</div>
+					<SearchAdClientInfoForm
+						clientInfo={formData.clientInfo || {}}
+						onChange={(clientInfo) =>
+							setFormData((prev) => ({ ...prev, clientInfo }))
+						}
+					/>
 				</div>
 
 				{/* Status Field and Actions */}

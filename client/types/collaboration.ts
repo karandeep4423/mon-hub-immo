@@ -1,6 +1,8 @@
+import type { Property } from '@/lib/api/propertyApi';
+
 export interface Collaboration {
 	_id: string;
-	propertyId: string;
+	propertyId: string | Partial<Property>;
 	propertyOwnerId: {
 		_id: string;
 		firstName: string;

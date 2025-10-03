@@ -109,6 +109,42 @@ export const propertyBaseSchema = z.object({
 		.regex(/^\d{2}\/\d{4}$/)
 		.optional(),
 
+	// Client Information
+	clientInfo: z
+		.object({
+			commercialDetails: z
+				.object({
+					strengths: z.string().max(1000).optional(),
+					weaknesses: z.string().max(1000).optional(),
+					occupancyStatus: z.enum(['occupied', 'vacant']).optional(),
+					openToLowerOffers: z.boolean().optional(),
+				})
+				.optional(),
+			propertyHistory: z
+				.object({
+					listingDate: z.string().optional(),
+					lastVisitDate: z.string().optional(),
+					totalVisits: z.number().int().min(0).optional(),
+					visitorFeedback: z.string().max(2000).optional(),
+					priceReductions: z.string().max(1000).optional(),
+				})
+				.optional(),
+			ownerInfo: z
+				.object({
+					urgentToSell: z.boolean().optional(),
+					openToNegotiation: z.boolean().optional(),
+					mandateType: z
+						.enum(['exclusive', 'simple', 'shared'])
+						.optional(),
+					saleReasons: z.string().max(500).optional(),
+					presentDuringVisits: z.boolean().optional(),
+					flexibleSchedule: z.boolean().optional(),
+					acceptConditionalOffers: z.boolean().optional(),
+				})
+				.optional(),
+		})
+		.optional(),
+
 	isExclusive: z.boolean().optional(),
 	isFeatured: z.boolean().optional(),
 	status: z
@@ -151,3 +187,83 @@ export type UpdatePropertyInput = z.infer<typeof updatePropertySchema>;
 export type ProposeCollaborationInput = z.infer<
 	typeof proposeCollaborationSchema
 >;
+
+// Search Ads
+export const searchAdBaseSchema = z.object({
+	title: z.string().min(5).max(200),
+	description: z.string().min(10).max(2000).optional(),
+	propertyTypes: z
+		.array(z.enum(['house', 'apartment', 'land', 'building', 'commercial']))
+		.min(1),
+	propertyState: z.array(z.enum(['new', 'old'])).optional(),
+	projectType: z.enum(['primary', 'secondary', 'investment']).optional(),
+	location: z.object({
+		cities: z.array(z.string()).min(1),
+		maxDistance: z.number().min(0).max(500).optional(),
+		openToOtherAreas: z.boolean().optional(),
+	}),
+	minRooms: z.number().int().min(1).max(50).optional(),
+	minBedrooms: z.number().int().min(1).max(20).optional(),
+	minSurface: z.number().min(1).max(10000).optional(),
+	hasExterior: z.boolean().optional(),
+	hasParking: z.boolean().optional(),
+	acceptedFloors: z.string().max(50).optional(),
+	desiredState: z
+		.array(z.enum(['new', 'good', 'refresh', 'renovate']))
+		.optional(),
+	budget: z.object({
+		max: z.number().min(1000).max(100_000_000),
+		ideal: z.number().min(1000).max(100_000_000).optional(),
+		financingType: z.enum(['loan', 'cash', 'pending']).optional(),
+		isSaleInProgress: z.boolean().optional(),
+		hasBankApproval: z.boolean().optional(),
+	}),
+	priorities: z
+		.object({
+			mustHaves: z.array(z.string()).optional(),
+			niceToHaves: z.array(z.string()).optional(),
+			dealBreakers: z.array(z.string()).optional(),
+		})
+		.optional(),
+	status: z
+		.enum(['active', 'paused', 'fulfilled', 'sold', 'rented', 'archived'])
+		.optional(),
+	// Client Information
+	clientInfo: z
+		.object({
+			qualificationInfo: z
+				.object({
+					clientName: z.string().max(200).optional(),
+					clientStatus: z
+						.enum(['particulier', 'investisseur', 'entreprise'])
+						.optional(),
+					profession: z.string().max(200).optional(),
+					projectType: z.enum(['couple', 'seul']).optional(),
+					hasRealEstateAgent: z.boolean().optional(),
+					hasVisitedProperties: z.boolean().optional(),
+				})
+				.optional(),
+			timelineInfo: z
+				.object({
+					urgency: z
+						.enum(['immediat', '3_mois', '6_mois', 'pas_presse'])
+						.optional(),
+					visitAvailability: z.string().max(500).optional(),
+					idealMoveInDate: z.string().max(20).optional(),
+				})
+				.optional(),
+		})
+		.optional(),
+});
+
+export const createSearchAdSchema = searchAdBaseSchema.required({
+	title: true,
+	propertyTypes: true,
+	location: true,
+	budget: true,
+});
+
+export const updateSearchAdSchema = searchAdBaseSchema.partial();
+
+export type CreateSearchAdInput = z.infer<typeof createSearchAdSchema>;
+export type UpdateSearchAdInput = z.infer<typeof updateSearchAdSchema>;

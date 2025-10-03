@@ -108,7 +108,7 @@ export const proposeCollaboration = async (
 		}
 		// fetch actor for a better message
 		const actor = await User.findById(userId).select(
-			'firstName lastName email',
+			'firstName lastName email profileImage',
 		);
 		const actorName = actor
 			? actor.firstName
@@ -125,7 +125,12 @@ export const proposeCollaboration = async (
 				actorName,
 				commission: commissionPercentage,
 			}),
-			data: { propertyId, commissionPercentage, actorName },
+			data: {
+				propertyId,
+				commissionPercentage,
+				actorName,
+				actorAvatar: actor?.profileImage || undefined,
+			},
 		});
 
 		res.status(201).json({
@@ -157,7 +162,7 @@ export const getUserCollaborations = async (
 		const collaborations = await Collaboration.find({
 			$or: [{ propertyOwnerId: userId }, { collaboratorId: userId }],
 		})
-			.populate('propertyId', 'title address price mainImage')
+			.populate('propertyId', 'title address price mainImage clientInfo')
 			.populate('propertyOwnerId', 'firstName lastName profileImage')
 			.populate('collaboratorId', 'firstName lastName profileImage')
 			.populate(
@@ -224,7 +229,7 @@ export const respondToCollaboration = async (
 
 		// Notify collaborator about decision
 		const actor = await User.findById(userId).select(
-			'firstName lastName email',
+			'firstName lastName email profileImage',
 		);
 		const actorName = actor
 			? actor.firstName
@@ -247,7 +252,10 @@ export const respondToCollaboration = async (
 				response === 'accepted'
 					? collabTexts.proposalAcceptedBody({ actorName })
 					: collabTexts.proposalRejectedBody({ actorName }),
-			data: { actorName },
+			data: {
+				actorName,
+				actorAvatar: actor?.profileImage || undefined,
+			},
 		});
 
 		res.status(200).json({
@@ -458,6 +466,14 @@ export const cancelCollaboration = async (
 		const cancelRecipientId = isOwner
 			? collaboration.collaboratorId
 			: collaboration.propertyOwnerId;
+		const actor = await User.findById(userId).select(
+			'firstName lastName email profileImage',
+		);
+		const actorName = actor
+			? actor.firstName
+				? `${actor.firstName} ${actor.lastName || ''}`.trim()
+				: actor.firstName || actor.email
+			: 'Someone';
 		await notificationService.create({
 			recipientId: cancelRecipientId,
 			actorId: userId,
@@ -465,6 +481,10 @@ export const cancelCollaboration = async (
 			entity: { type: 'collaboration', id: collaboration._id },
 			title: collabTexts.cancelledTitle,
 			message: collabTexts.cancelledBody,
+			data: {
+				actorName,
+				actorAvatar: actor?.profileImage || undefined,
+			},
 		});
 	} catch (error) {
 		console.error('Error cancelling collaboration:', error);
@@ -566,6 +586,14 @@ export const updateProgressStatus = async (
 		const progressRecipientId = isOwner
 			? collaboration.collaboratorId
 			: collaboration.propertyOwnerId;
+		const actor = await User.findById(userId).select(
+			'firstName lastName email profileImage',
+		);
+		const actorName = actor
+			? actor.firstName
+				? `${actor.firstName} ${actor.lastName || ''}`.trim()
+				: actor.firstName || actor.email
+			: 'Someone';
 		await notificationService.create({
 			recipientId: progressRecipientId,
 			actorId: userId,
@@ -573,7 +601,12 @@ export const updateProgressStatus = async (
 			entity: { type: 'collaboration', id: collaboration._id },
 			title: collabTexts.progressUpdatedTitle,
 			message: collabTexts.progressUpdatedBody({ step: targetStep }),
-			data: { targetStep, notes: notes || '' },
+			data: {
+				targetStep,
+				notes: notes || '',
+				actorName,
+				actorAvatar: actor?.profileImage || undefined,
+			},
 		});
 	} catch (error) {
 		console.error('Error updating progress status:', error);
@@ -632,6 +665,14 @@ export const signCollaboration = async (
 		const signRecipientId = isOwner
 			? collaboration.collaboratorId
 			: collaboration.propertyOwnerId;
+		const actor = await User.findById(userId).select(
+			'firstName lastName email profileImage',
+		);
+		const actorName = actor
+			? actor.firstName
+				? `${actor.firstName} ${actor.lastName || ''}`.trim()
+				: actor.firstName || actor.email
+			: 'Someone';
 		await notificationService.create({
 			recipientId: signRecipientId,
 			actorId: userId,
@@ -639,6 +680,10 @@ export const signCollaboration = async (
 			entity: { type: 'collaboration', id: collaboration._id },
 			title: 'Contract signed',
 			message: 'The contract has been signed.',
+			data: {
+				actorName,
+				actorAvatar: actor?.profileImage || undefined,
+			},
 		});
 
 		// If both have signed and it became active, notify activation
@@ -650,6 +695,10 @@ export const signCollaboration = async (
 				entity: { type: 'collaboration', id: collaboration._id },
 				title: 'Collaboration activated',
 				message: 'Collaboration is now active.',
+				data: {
+					actorName,
+					actorAvatar: actor?.profileImage || undefined,
+				},
 			});
 		}
 	} catch (error) {
@@ -744,6 +793,14 @@ export const completeCollaboration = async (
 		const completeRecipientId = isOwner
 			? collaboration.collaboratorId
 			: collaboration.propertyOwnerId;
+		const actor = await User.findById(userId).select(
+			'firstName lastName email profileImage',
+		);
+		const actorName = actor
+			? actor.firstName
+				? `${actor.firstName} ${actor.lastName || ''}`.trim()
+				: actor.firstName || actor.email
+			: 'Someone';
 		await notificationService.create({
 			recipientId: completeRecipientId,
 			actorId: userId,
@@ -751,6 +808,10 @@ export const completeCollaboration = async (
 			entity: { type: 'collaboration', id: collaboration._id },
 			title: collabTexts.completedTitle,
 			message: collabTexts.completedBody,
+			data: {
+				actorName,
+				actorAvatar: actor?.profileImage || undefined,
+			},
 		});
 	} catch (error) {
 		console.error('Error completing collaboration:', error);

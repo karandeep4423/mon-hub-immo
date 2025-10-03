@@ -111,6 +111,31 @@ export interface Property {
 		profileImage?: string;
 		userType: 'agent' | 'apporteur';
 	};
+	// Client Information (visible only in collaboration)
+	clientInfo?: {
+		commercialDetails?: {
+			strengths?: string;
+			weaknesses?: string;
+			occupancyStatus?: 'occupied' | 'vacant';
+			openToLowerOffers?: boolean;
+		};
+		propertyHistory?: {
+			listingDate?: string;
+			lastVisitDate?: string;
+			totalVisits?: number;
+			visitorFeedback?: string;
+			priceReductions?: string;
+		};
+		ownerInfo?: {
+			urgentToSell?: boolean;
+			openToNegotiation?: boolean;
+			mandateType?: 'exclusive' | 'simple' | 'shared';
+			saleReasons?: string;
+			presentDuringVisits?: boolean;
+			flexibleSchedule?: boolean;
+			acceptConditionalOffers?: boolean;
+		};
+	};
 	// Virtual properties
 	isNewProperty?: boolean;
 	isNew?: boolean; // Alias for isNewProperty for backward compatibility
@@ -174,6 +199,8 @@ export interface PropertyFormData {
 	isExclusive?: boolean;
 	isFeatured?: boolean;
 	status: Property['status'];
+	// Client Information
+	clientInfo?: Property['clientInfo'];
 }
 
 export interface PropertyFilters {
@@ -295,6 +322,12 @@ export class PropertyService {
 						value.forEach((item, index) => {
 							formData.append(`${key}[${index}]`, String(item));
 						});
+					} else if (
+						typeof value === 'object' &&
+						key === 'clientInfo'
+					) {
+						// Stringify nested objects like clientInfo
+						formData.append(key, JSON.stringify(value));
 					} else {
 						formData.append(key, String(value));
 					}
@@ -353,6 +386,12 @@ export class PropertyService {
 						value.forEach((item, index) => {
 							formData.append(`${key}[${index}]`, String(item));
 						});
+					} else if (
+						typeof value === 'object' &&
+						key === 'clientInfo'
+					) {
+						// Stringify nested objects like clientInfo
+						formData.append(key, JSON.stringify(value));
 					} else {
 						formData.append(key, String(value));
 					}

@@ -47,47 +47,63 @@ export const notificationService = {
 		});
 
 		await doc.save();
+		console.log('✅ Notification created:', {
+			id: String(doc._id),
+			type: doc.type,
+			recipientId: String(doc.recipientId),
+		});
 
 		// Skip socket side-effects in tests to keep unit tests deterministic
 		if (process.env.NODE_ENV !== 'test') {
 			try {
 				// Emit socket events
 				const socketService = getSocketService();
-				socketService.emitToUser(
-					String(doc.recipientId),
-					'notification:new',
-					{
-						notification: {
-							id: String(doc._id),
-							type: doc.type,
-							title: doc.title,
-							message: doc.message,
-							entity: {
-								type: doc.entity.type,
-								id: String(doc.entity.id),
-							},
-							data: doc.data || {},
-							actorId: String(doc.actorId),
-							read: doc.read,
-							createdAt: doc.createdAt,
+				const recipientId = String(doc.recipientId);
+				const socketId = socketService.getReceiverSocketId(recipientId);
+
+				if (socketId) {
+					console.log('📤 Emitting notification via socket:', {
+						recipientId,
+						socketId,
+						type: doc.type,
+					});
+				} else {
+					console.log('⚠️ Recipient not connected via socket:', {
+						recipientId,
+						type: doc.type,
+					});
+				}
+
+				socketService.emitToUser(recipientId, 'notification:new', {
+					notification: {
+						id: String(doc._id),
+						type: doc.type,
+						title: doc.title,
+						message: doc.message,
+						entity: {
+							type: doc.entity.type,
+							id: String(doc.entity.id),
 						},
+						data: doc.data || {},
+						actorId: String(doc.actorId),
+						read: doc.read,
+						createdAt: doc.createdAt,
 					},
-				);
+				});
 
 				// Emit updated unread count
 				const unread = await Notification.countDocuments({
 					recipientId: doc.recipientId,
 					read: false,
 				});
-				socketService.emitToUser(
-					String(doc.recipientId),
-					'notifications:count',
-					{
-						unreadCount: unread,
-					},
+				socketService.emitToUser(recipientId, 'notifications:count', {
+					unreadCount: unread,
+				});
+			} catch (err) {
+				console.error(
+					'❌ Failed to emit notification via socket:',
+					err,
 				);
-			} catch {
-				// ignore socket errors
 			}
 		}
 

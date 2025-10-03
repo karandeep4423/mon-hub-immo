@@ -192,7 +192,6 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 						)}
 					</div>
 				</div>
-
 				{/* Location */}
 				<div className="bg-white p-6 rounded-lg shadow-sm border">
 					<h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -229,7 +228,6 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 						)}
 					</div>
 				</div>
-
 				{/* Budget */}
 				<div className="bg-white p-6 rounded-lg shadow-sm border">
 					<h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -289,7 +287,6 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 						</div>
 					</div>
 				</div>
-
 				{/* Property Characteristics */}
 				<div className="bg-white p-6 rounded-lg shadow-sm border">
 					<h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -372,7 +369,6 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 							)}
 					</div>
 				</div>
-
 				{/* Priorities */}
 				{searchAd.priorities && (
 					<div className="bg-white p-6 rounded-lg shadow-sm border lg:col-span-2">
@@ -454,7 +450,200 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 						</div>
 					</div>
 				)}
+				{/* Client Information - Visible to everyone */}
+				{searchAd.clientInfo && (
+					<div className="lg:col-span-2 xl:col-span-3 bg-blue-50 border-blue-200 p-6 rounded-lg shadow-sm border">
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">
+							ℹ️ Informations sur le client
+						</h3>
+						<p className="text-sm text-blue-600 mb-6">
+							Ces informations vous aident à mieux comprendre les
+							besoins et la situation du client.
+						</p>
 
+						<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+							{/* Qualification Info */}
+							{searchAd.clientInfo?.qualificationInfo && (
+								<div className="bg-white p-4 rounded-lg">
+									<h4 className="font-medium text-gray-900 mb-3 flex items-center">
+										<span className="mr-2">�</span>
+										Informations de qualification
+									</h4>
+									<div className="space-y-3 text-sm">
+										{searchAd.clientInfo.qualificationInfo
+											.clientName && (
+											<div>
+												<span className="font-medium text-gray-700">
+													Nom du client:
+												</span>
+												<p className="text-gray-600 mt-1">
+													{
+														searchAd.clientInfo
+															.qualificationInfo
+															.clientName
+													}
+												</p>
+											</div>
+										)}
+										{searchAd.clientInfo.qualificationInfo
+											.clientStatus && (
+											<div>
+												<span className="font-medium text-gray-700">
+													Statut:
+												</span>
+												<p className="text-gray-600 mt-1">
+													{searchAd.clientInfo
+														.qualificationInfo
+														.clientStatus ===
+													'particulier'
+														? 'Particulier'
+														: searchAd.clientInfo
+																	.qualificationInfo
+																	.clientStatus ===
+															  'investisseur'
+															? 'Investisseur'
+															: 'Entreprise'}
+												</p>
+											</div>
+										)}
+										{searchAd.clientInfo.qualificationInfo
+											.profession && (
+											<div>
+												<span className="font-medium text-gray-700">
+													Profession:
+												</span>
+												<p className="text-gray-600 mt-1">
+													{
+														searchAd.clientInfo
+															.qualificationInfo
+															.profession
+													}
+												</p>
+											</div>
+										)}
+										{searchAd.clientInfo.qualificationInfo
+											.projectType && (
+											<div>
+												<span className="font-medium text-gray-700">
+													Type de projet:
+												</span>
+												<p className="text-gray-600 mt-1">
+													{searchAd.clientInfo
+														.qualificationInfo
+														.projectType ===
+													'couple'
+														? 'En couple'
+														: 'Seul'}
+												</p>
+											</div>
+										)}
+										{searchAd.clientInfo.qualificationInfo
+											.hasRealEstateAgent !==
+											undefined && (
+											<div>
+												<span className="font-medium text-gray-700">
+													Agent immobilier:
+												</span>
+												<p className="text-gray-600 mt-1">
+													{searchAd.clientInfo
+														.qualificationInfo
+														.hasRealEstateAgent
+														? 'Oui'
+														: 'Non'}
+												</p>
+											</div>
+										)}
+										{searchAd.clientInfo.qualificationInfo
+											.hasVisitedProperties !==
+											undefined && (
+											<div>
+												<span className="font-medium text-gray-700">
+													A déjà visité:
+												</span>
+												<p className="text-gray-600 mt-1">
+													{searchAd.clientInfo
+														.qualificationInfo
+														.hasVisitedProperties
+														? 'Oui'
+														: 'Non'}
+												</p>
+											</div>
+										)}
+									</div>
+								</div>
+							)}
+
+							{/* Timeline Info */}
+							{searchAd.clientInfo?.timelineInfo && (
+								<div className="bg-white p-4 rounded-lg">
+									<h4 className="font-medium text-gray-900 mb-3 flex items-center">
+										<span className="mr-2">⏰</span>
+										Délai et disponibilité
+									</h4>
+									<div className="space-y-3 text-sm">
+										{searchAd.clientInfo.timelineInfo
+											.urgency && (
+											<div>
+												<span className="font-medium text-gray-700">
+													Urgence:
+												</span>
+												<p className="text-gray-600 mt-1">
+													{searchAd.clientInfo
+														.timelineInfo
+														.urgency === 'immediat'
+														? 'Immédiat'
+														: searchAd.clientInfo
+																	.timelineInfo
+																	.urgency ===
+															  '3_mois'
+															? 'Dans les 3 mois'
+															: searchAd
+																		.clientInfo
+																		.timelineInfo
+																		.urgency ===
+																  '6_mois'
+																? 'Dans les 6 mois'
+																: 'Pas pressé'}
+												</p>
+											</div>
+										)}
+										{searchAd.clientInfo.timelineInfo
+											.visitAvailability && (
+											<div>
+												<span className="font-medium text-gray-700">
+													Disponibilité pour visite:
+												</span>
+												<p className="text-gray-600 mt-1">
+													{
+														searchAd.clientInfo
+															.timelineInfo
+															.visitAvailability
+													}
+												</p>
+											</div>
+										)}
+										{searchAd.clientInfo.timelineInfo
+											.idealMoveInDate && (
+											<div>
+												<span className="font-medium text-gray-700">
+													Date idéale
+													d&apos;emménagement:
+												</span>
+												<p className="text-gray-600 mt-1">
+													{new Date(
+														searchAd.clientInfo.timelineInfo.idealMoveInDate,
+													).toLocaleDateString(
+														'fr-FR',
+													)}
+												</p>
+											</div>
+										)}
+									</div>
+								</div>
+							)}
+						</div>
+					</div>
+				)}{' '}
 				{/* Metadata */}
 				<div className="bg-white p-6 rounded-lg shadow-sm border">
 					<h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -492,7 +681,6 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 						</div>
 					</div>
 				</div>
-
 				{/* Contact Section - Compact size matching screenshot */}
 				<div className="bg-white p-6 rounded-lg shadow-sm border">
 					<h3 className="text-lg font-semibold text-gray-900 mb-4">

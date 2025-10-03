@@ -1,6 +1,6 @@
 import { api } from '@/lib/api';
 import { useSocket } from '@/context/SocketContext';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNotification } from '@/hooks/useNotification';
 import { useAuth } from '@/hooks/useAuth';
 import type { User } from '@/types/auth';
@@ -155,6 +155,9 @@ export const useNotifications = () => {
 	// Socket wiring
 	useEffect(() => {
 		if (!socket) return;
+
+		let hasConnectedOnce = false;
+
 		const onNew = (payload: { notification: NotificationItem }) => {
 			// dedupe by id to avoid duplicates on reconnects
 			if (seenIdsRef.current.has(payload.notification.id)) {
@@ -200,19 +203,61 @@ export const useNotifications = () => {
 			}));
 		};
 
+		const onReconnect = async () => {
+			// Only refetch on REconnection, not first connection
+			if (!hasConnectedOnce) {
+				hasConnectedOnce = true;
+				console.log('� Initial socket connection established');
+				return;
+			}
+
+			console.log('�🔄 Socket reconnected, refetching notifications...');
+			// Refetch notifications on reconnect to catch any missed during disconnect
+			try {
+				const now = Date.now();
+				const [listRes, countRes] = await Promise.all([
+					api.get('/notifications', {
+						params: { limit: 20, _ts: now },
+					}),
+					api.get('/notifications/count', {
+						params: { _ts: now },
+					}),
+				]);
+				const items: NotificationItem[] = listRes.data?.items ?? [];
+				const unreadCount = countRes.data?.unreadCount ?? 0;
+
+				// Update dedupe set with new items
+				seenIdsRef.current.clear();
+				for (const it of items) seenIdsRef.current.add(it.id);
+
+				setState((s) => ({
+					...s,
+					items,
+					unreadCount,
+				}));
+			} catch (err) {
+				console.error(
+					'Failed to refetch notifications on reconnect:',
+					err,
+				);
+			}
+		};
+
 		socket.on('notification:new', onNew);
 		socket.on('notifications:count', onCount);
 		socket.on('notification:read', onRead);
 		socket.on('notifications:readAll', onReadAll);
+		socket.on('connect', onReconnect);
 		return () => {
 			socket.off('notification:new', onNew);
 			socket.off('notifications:count', onCount);
 			socket.off('notification:read', onRead);
 			socket.off('notifications:readAll', onReadAll);
+			socket.off('connect', onReconnect);
 		};
 	}, [socket, showNotification]);
 
-	const loadMore = async () => {
+	const loadMore = useCallback(async () => {
 		if (loadingRef.current || !state.nextCursor) return;
 		loadingRef.current = true;
 		try {
@@ -237,29 +282,29 @@ export const useNotifications = () => {
 		} finally {
 			loadingRef.current = false;
 		}
-	};
+	}, [state.nextCursor]);
 
-	const markRead = async (id: string) => {
+	const markRead = useCallback(async (id: string) => {
 		await api.patch(`/notifications/${id}/read`);
 		setState((s) => ({
 			...s,
 			items: s.items.map((n) => (n.id === id ? { ...n, read: true } : n)),
 		}));
-	};
+	}, []);
 
-	const markAllRead = async () => {
+	const markAllRead = useCallback(async () => {
 		await api.patch('/notifications/read-all');
 		setState((s) => ({
 			...s,
 			items: s.items.map((n) => ({ ...n, read: true })),
 			unreadCount: 0,
 		}));
-	};
+	}, []);
 
-	const remove = async (id: string) => {
+	const remove = useCallback(async (id: string) => {
 		await api.delete(`/notifications/${id}`);
 		setState((s) => ({ ...s, items: s.items.filter((n) => n.id !== id) }));
-	};
+	}, []);
 
 	return { state, loadMore, markRead, markAllRead, remove };
 };

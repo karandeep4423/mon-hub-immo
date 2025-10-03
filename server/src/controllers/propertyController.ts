@@ -376,6 +376,18 @@ export const createProperty = async (
 			owner: req.user.id,
 		};
 
+		// Parse clientInfo if it's a JSON string
+		if (
+			propertyData.clientInfo &&
+			typeof propertyData.clientInfo === 'string'
+		) {
+			try {
+				propertyData.clientInfo = JSON.parse(propertyData.clientInfo);
+			} catch (e) {
+				console.error('Failed to parse clientInfo:', e);
+			}
+		}
+
 		// Map availableFrom to availableFromDate if present and format it properly
 		if (propertyData.availableFrom && !propertyData.availableFromDate) {
 			let dateValue = propertyData.availableFrom as string;
@@ -613,9 +625,49 @@ export const updateProperty = async (
 			galleryImages: galleryImagesData,
 		};
 
-		// Remove stringified image data from property update
+		// Parse clientInfo if it's a JSON string
+		if (
+			propertyData.clientInfo &&
+			typeof propertyData.clientInfo === 'string'
+		) {
+			try {
+				propertyData.clientInfo = JSON.parse(propertyData.clientInfo);
+			} catch (e) {
+				console.error('Failed to parse clientInfo:', e);
+			}
+		}
+
+		// Clean up clientInfo by removing Mongoose-generated fields
+		if (
+			propertyData.clientInfo &&
+			typeof propertyData.clientInfo === 'object'
+		) {
+			const cleanClientInfo = (obj: Record<string, unknown>) => {
+				if (obj && typeof obj === 'object') {
+					delete obj._id;
+					delete obj.id;
+					Object.keys(obj).forEach((key) => {
+						if (typeof obj[key] === 'object' && obj[key] !== null) {
+							cleanClientInfo(
+								obj[key] as Record<string, unknown>,
+							);
+						}
+					});
+				}
+			};
+			cleanClientInfo(propertyData.clientInfo);
+		}
+
+		// Remove fields that shouldn't be updated
 		delete propertyData.existingMainImage;
 		delete propertyData.existingGalleryImages;
+		delete propertyData.owner; // Don't update owner field
+		delete propertyData._id; // Don't update _id
+		delete propertyData.id; // Don't update id
+		delete propertyData.__v; // Don't update version key
+		delete propertyData.createdAt; // Don't update createdAt
+		delete propertyData.viewCount; // Don't update viewCount directly
+		delete propertyData.favoriteCount; // Don't update favoriteCount directly
 
 		Object.assign(existingProperty, propertyData);
 		await existingProperty.save();
