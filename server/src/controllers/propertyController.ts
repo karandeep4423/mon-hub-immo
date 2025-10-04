@@ -957,11 +957,17 @@ export const getPropertyStats = async (
 			{ $group: { _id: null, total: { $sum: '$viewCount' } } },
 		]);
 
+		const totalValueAgg = await Property.aggregate([
+			{ $match: { owner: new mongoose.Types.ObjectId(req.user.id) } },
+			{ $group: { _id: null, total: { $sum: '$price' } } },
+		]);
+
 		res.status(200).json({
 			success: true,
 			data: {
 				totalProperties,
 				totalViews: totalViews[0]?.total || 0,
+				totalValue: totalValueAgg[0]?.total || 0,
 				byStatus: stats,
 			},
 		});

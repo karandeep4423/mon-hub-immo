@@ -11,6 +11,8 @@ import { CollaborationList } from '../collaboration/CollaborationList';
 import { DASHBOARD_TEXT } from '@/lib/constants/text';
 import Link from 'next/link';
 import { MySearches } from '../search-ads/MySearches';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
+import { formatNumber } from '@/lib/utils/format';
 
 export const DashboardContent: React.FC = () => {
 	const router = useRouter();
@@ -19,6 +21,7 @@ export const DashboardContent: React.FC = () => {
 		'overview' | 'properties' | 'collaborations' | 'searches'
 	>('overview');
 	const hasRefreshed = useRef(false);
+	const { kpis, loading: statsLoading } = useDashboardStats(user?._id);
 
 	useEffect(() => {
 		if (!loading && !user) {
@@ -48,7 +51,6 @@ export const DashboardContent: React.FC = () => {
 	if (!user) {
 		return null;
 	}
-
 
 	// Check if user needs to complete profile
 	const showProfilePrompt =
@@ -267,10 +269,14 @@ export const DashboardContent: React.FC = () => {
 									</div>
 									<div className="ml-4">
 										<p className="text-sm font-medium text-gray-600">
-											Propriétés
+											Mes biens
 										</p>
 										<p className="text-2xl font-bold text-gray-900">
-											12
+											{statsLoading
+												? '—'
+												: formatNumber(
+														kpis.propertiesTotal,
+													)}
 										</p>
 									</div>
 								</div>
@@ -289,16 +295,20 @@ export const DashboardContent: React.FC = () => {
 												strokeLinecap="round"
 												strokeLinejoin="round"
 												strokeWidth="2"
-												d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+												d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"
 											/>
 										</svg>
 									</div>
 									<div className="ml-4">
 										<p className="text-sm font-medium text-gray-600">
-											Annonces actives
+											Collaborations totales
 										</p>
 										<p className="text-2xl font-bold text-gray-900">
-											8
+											{statsLoading
+												? '—'
+												: formatNumber(
+														kpis.collaborationsTotal,
+													)}
 										</p>
 									</div>
 								</div>
@@ -317,16 +327,20 @@ export const DashboardContent: React.FC = () => {
 												strokeLinecap="round"
 												strokeLinejoin="round"
 												strokeWidth="2"
-												d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+												d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857"
 											/>
 										</svg>
 									</div>
 									<div className="ml-4">
 										<p className="text-sm font-medium text-gray-600">
-											Valeur totale
+											Collaborations actives
 										</p>
 										<p className="text-2xl font-bold text-gray-900">
-											€2.4M
+											{statsLoading
+												? '—'
+												: formatNumber(
+														kpis.collaborationsActive,
+													)}
 										</p>
 									</div>
 								</div>
@@ -345,16 +359,18 @@ export const DashboardContent: React.FC = () => {
 												strokeLinecap="round"
 												strokeLinejoin="round"
 												strokeWidth="2"
-												d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+												d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
 											/>
 										</svg>
 									</div>
 									<div className="ml-4">
 										<p className="text-sm font-medium text-gray-600">
-											Demandes
+											Mes recherches
 										</p>
 										<p className="text-2xl font-bold text-gray-900">
-											24
+											{statsLoading
+												? '—'
+												: formatNumber(kpis.mySearches)}
 										</p>
 									</div>
 								</div>
@@ -478,7 +494,7 @@ export const DashboardContent: React.FC = () => {
 				{activeTab === 'properties' && <PropertyManager />}
 				{activeTab === 'collaborations' && user && (
 					<CollaborationList
-						currentUserId={user.id}
+						currentUserId={user._id}
 						onClose={() => {}}
 					/>
 				)}

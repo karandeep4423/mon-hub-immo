@@ -63,16 +63,19 @@ export const useNotifications = () => {
 	const lastOsNotifyAtRef = useRef<number>(0);
 	const bootstrappedRef = useRef(false);
 	const lastUserIdRef = useRef<string | null>(null);
-
-	// Initial fetch (guarded against StrictMode double-mount)
-	useEffect(() => {
+	// Stable user id key to avoid effect thrash on object identity changes
+	const userIdKey: string | null = (() => {
 		const u = user as User | undefined;
-		const userId: string | null = u?.id?.toString?.() ?? u?._id ?? null;
-		if (authLoading || !userId) return; // wait for authenticated user
+		// Prefer _id; fall back to id (stringifiable)
+		return u?._id ?? u?.id?.toString?.() ?? null;
+	})();
+
+	// Initial fetch with stable dependency (userIdKey) to avoid cancellations
+	useEffect(() => {
+		if (authLoading || !userIdKey) return; // wait for authenticated user
 
 		// Re-bootstrap when user changes. Do not mark bootstrapped until state is applied.
-		lastUserIdRef.current = userId;
-		let isMounted = true;
+		lastUserIdRef.current = userIdKey;
 		const bootstrap = async () => {
 			try {
 				if (loadingRef.current) return;
@@ -80,12 +83,15 @@ export const useNotifications = () => {
 				setState((s) => ({ ...s, loading: true }));
 
 				// Serve from cache if available for this user
-				const cached = userId ? bootstrapCacheMap.get(userId) : null;
+				const cached = userIdKey
+					? bootstrapCacheMap.get(userIdKey)
+					: null;
 				if (cached) {
 					const { items, nextCursor, unreadCount } = cached;
 					// seed dedupe set
 					for (const it of items) seenIdsRef.current.add(it.id);
-					if (!isMounted) return;
+					// Apply only if still same user
+					if (lastUserIdRef.current !== userIdKey) return;
 					setState((s) => ({
 						...s,
 						items,
@@ -98,7 +104,7 @@ export const useNotifications = () => {
 				}
 
 				// Share in-flight fetch across remounts
-				if (userId && !bootstrapInflightMap.get(userId)) {
+				if (userIdKey && !bootstrapInflightMap.get(userIdKey)) {
 					const inflight = (async () => {
 						const now = Date.now();
 						const [listRes, countRes] = await Promise.all([
@@ -116,15 +122,19 @@ export const useNotifications = () => {
 							nextCursor: listRes.data?.nextCursor ?? null,
 							unreadCount: countRes.data?.unreadCount ?? 0,
 						};
-						bootstrapCacheMap.set(userId, data);
+						bootstrapCacheMap.set(userIdKey, data);
 						// seed dedupe set
 						for (const it of items) seenIdsRef.current.add(it.id);
 					})();
-					bootstrapInflightMap.set(userId, inflight);
+					bootstrapInflightMap.set(userIdKey, inflight);
 				}
-				if (userId) await bootstrapInflightMap.get(userId);
-				const ready = userId ? bootstrapCacheMap.get(userId) : null;
-				if (!isMounted || !ready) return;
+				if (userIdKey) await bootstrapInflightMap.get(userIdKey);
+				const ready = userIdKey
+					? bootstrapCacheMap.get(userIdKey)
+					: null;
+				if (!ready) return;
+				// Apply only if still same user
+				if (lastUserIdRef.current !== userIdKey) return;
 				setState((s) => ({
 					...s,
 					items: ready.items,
@@ -141,9 +151,9 @@ export const useNotifications = () => {
 		};
 		bootstrap();
 		return () => {
-			isMounted = false;
+			// no-op; we gate updates by user id rather than isMounted to avoid race on refresh
 		};
-	}, [authLoading, user]);
+	}, [authLoading, userIdKey]);
 
 	// Request OS notification permission reactively
 	useEffect(() => {

@@ -12,6 +12,7 @@ import { HomeSearchAdCard } from '@/components/search-ads/HomeSearchAdCard';
 import { PropertyCard } from '@/components/property';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { useAuth } from '@/hooks/useAuth';
+import { Pagination } from '@/components/ui/Pagination';
 
 type ContentFilter = 'all' | 'properties' | 'searchAds' | 'favorites';
 
@@ -28,7 +29,11 @@ export default function Home() {
 	const [sectorFilter, setSectorFilter] = useState('');
 	const [profileFilter, setProfileFilter] = useState('');
 	const [priceFilter, setPriceFilter] = useState({ min: 0, max: 10000000 });
+	const [surfaceFilter, setSurfaceFilter] = useState({ min: 0, max: 100000 });
 	const [contentFilter, setContentFilter] = useState<ContentFilter>('all');
+	const [propPage, setPropPage] = useState(1);
+	const [adPage, setAdPage] = useState(1);
+	const PAGE_SIZE = 6;
 
 	const isAuthenticated = !!user;
 
@@ -40,6 +45,8 @@ export default function Home() {
 			Terrain: ['land'],
 			'Local commercial': ['commercial'],
 			Bureaux: ['building', 'commercial'],
+			Parking: ['parking', 'garage'],
+			Autre: ['other'],
 		};
 		return typeMapping[propertyType] || [];
 	};
@@ -142,6 +149,10 @@ export default function Home() {
 				if (priceFilter.min > 0) filters.minPrice = priceFilter.min;
 				if (priceFilter.max < 10000000)
 					filters.maxPrice = priceFilter.max;
+				if (surfaceFilter.min > 0)
+					filters.minSurface = surfaceFilter.min;
+				if (surfaceFilter.max < 100000)
+					filters.maxSurface = surfaceFilter.max;
 
 				const [propertiesData, searchAdsData] = await Promise.all([
 					PropertyService.getAllProperties(filters),
@@ -169,7 +180,28 @@ export default function Home() {
 		); // 500ms delay for search, immediate for others
 
 		return () => clearTimeout(debounceTimer);
-	}, [searchTerm, typeFilter, sectorFilter, priceFilter, profileFilter]);
+	}, [
+		searchTerm,
+		typeFilter,
+		sectorFilter,
+		priceFilter,
+		surfaceFilter,
+		profileFilter,
+	]);
+
+	// Reset pagination when filters/content change
+	useEffect(() => {
+		setPropPage(1);
+		setAdPage(1);
+	}, [
+		searchTerm,
+		typeFilter,
+		sectorFilter,
+		priceFilter,
+		surfaceFilter,
+		profileFilter,
+		contentFilter,
+	]);
 
 	// Count filtered search ads for display
 	const filteredSearchAdsCount = filterSearchAds(searchAds).length;
@@ -245,7 +277,7 @@ export default function Home() {
 								: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
 						}`}
 					>
-						Recherches clients ({filteredSearchAdsCount})
+						Recherche de biens ({filteredSearchAdsCount})
 					</button>
 					{isAuthenticated && (
 						<button
@@ -274,7 +306,7 @@ export default function Home() {
 							onChange={(e) => setTypeFilter(e.target.value)}
 							className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
 						>
-							<option value="">Tous les types</option>
+							<option value="">Type de bien</option>
 							<option value="Appartement">Appartement</option>
 							<option value="Maison">Maison</option>
 							<option value="Terrain">Terrain</option>
@@ -282,6 +314,8 @@ export default function Home() {
 								Local commercial
 							</option>
 							<option value="Bureaux">Bureaux</option>
+							<option value="Parking">Parking</option>
+							<option value="Autre">Autre</option>
 						</select>
 
 						<input
@@ -333,6 +367,39 @@ export default function Home() {
 									}))
 								}
 								className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand w-32"
+							/>
+						</div>
+
+						{/* Surface habitable */}
+						<div className="flex items-center space-x-2">
+							<input
+								type="number"
+								placeholder="Surface min (m²)"
+								value={surfaceFilter.min || ''}
+								onChange={(e) =>
+									setSurfaceFilter((prev) => ({
+										...prev,
+										min: parseInt(e.target.value) || 0,
+									}))
+								}
+								className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand w-40"
+							/>
+							<span className="text-gray-500">-</span>
+							<input
+								type="number"
+								placeholder="Surface max (m²)"
+								value={
+									surfaceFilter.max === 100000
+										? ''
+										: surfaceFilter.max
+								}
+								onChange={(e) =>
+									setSurfaceFilter((prev) => ({
+										...prev,
+										max: parseInt(e.target.value) || 100000,
+									}))
+								}
+								className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand w-40"
 							/>
 						</div>
 					</div>
@@ -409,14 +476,28 @@ export default function Home() {
 										</p>
 									</div>
 								) : (
-									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-										{propertiesToShow.map((property) => (
-											<PropertyCard
-												key={property._id}
-												property={property}
-											/>
-										))}
-									</div>
+									<>
+										<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+											{propertiesToShow
+												.slice(
+													(propPage - 1) * PAGE_SIZE,
+													propPage * PAGE_SIZE,
+												)
+												.map((property) => (
+													<PropertyCard
+														key={property._id}
+														property={property}
+													/>
+												))}
+										</div>
+										<Pagination
+											currentPage={propPage}
+											totalItems={propertiesToShow.length}
+											pageSize={PAGE_SIZE}
+											onPageChange={setPropPage}
+											className="mt-4"
+										/>
+									</>
 								);
 							})()}
 						</div>
@@ -467,16 +548,30 @@ export default function Home() {
 										</p>
 									</div>
 								) : (
-									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-										{filteredSearchAdsToShow.map(
-											(searchAd) => (
-												<HomeSearchAdCard
-													key={searchAd._id}
-													searchAd={searchAd}
-												/>
-											),
-										)}
-									</div>
+									<>
+										<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+											{filteredSearchAdsToShow
+												.slice(
+													(adPage - 1) * PAGE_SIZE,
+													adPage * PAGE_SIZE,
+												)
+												.map((searchAd) => (
+													<HomeSearchAdCard
+														key={searchAd._id}
+														searchAd={searchAd}
+													/>
+												))}
+										</div>
+										<Pagination
+											currentPage={adPage}
+											totalItems={
+												filteredSearchAdsToShow.length
+											}
+											pageSize={PAGE_SIZE}
+											onPageChange={setAdPage}
+											className="mt-4"
+										/>
+									</>
 								);
 							})()}
 						</div>

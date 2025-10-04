@@ -111,13 +111,29 @@ export const NotificationBell = () => {
 												  }
 												| undefined;
 											const actorName = meta?.actorName;
+											const actorAvatar =
+												meta?.actorAvatar;
+
+											// Debug logging
+											console.log(
+												'Notification avatar data:',
+												{
+													notificationId: n.id,
+													actorId: n.actorId,
+													actorName,
+													actorAvatar,
+													hasAvatar: !!actorAvatar,
+													fullData: meta,
+												},
+											);
+
 											return (
 												<ProfileAvatar
 													user={{
 														_id: n.actorId,
 														name: actorName,
 														profileImage:
-															meta?.actorAvatar,
+															actorAvatar,
 													}}
 													size="sm"
 												/>

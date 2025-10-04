@@ -32,8 +32,8 @@ export const LoginWithUserType: React.FC = () => {
 
 	const userTypes = [
 		{ id: 'agent', icon: '👤', title: AUTH_TEXT.agentTitle },
-		{ id: 'apporteur', icon: '💝', title: AUTH_TEXT.providerTitle },
-		// { id: 'partenaire', icon: '🏢', title: 'Accès Partenaire' },
+		{ id: 'apporteur', icon: '�', title: AUTH_TEXT.providerTitle },
+		{ id: 'partenaire', icon: '📋', title: 'Accès Partenaire' },
 	];
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,6 +96,70 @@ export const LoginWithUserType: React.FC = () => {
 
 	const selectedType = userTypes.find((type) => type.id === selectedUserType);
 
+	// Inline icons to match the screenshot style (outline, brand-colored via currentColor)
+	const RoleIcon = ({
+		typeId,
+		className,
+	}: {
+		typeId: 'agent' | 'apporteur' | 'partenaire';
+		className?: string;
+	}) => {
+		switch (typeId) {
+			case 'agent':
+				return (
+					<svg
+						className={className}
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="2"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						aria-hidden="true"
+					>
+						<path d="M16 7a4 4 0 11-8 0 4 4 0 018 0z" />
+						<path d="M12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+					</svg>
+				);
+			case 'apporteur':
+				return (
+					<svg
+						className={className}
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="2"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						aria-hidden="true"
+					>
+						<path d="M16 7a4 4 0 11-8 0 4 4 0 018 0z" />
+						<path d="M12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+					</svg>
+				);
+			case 'partenaire':
+				return (
+					<svg
+						className={className}
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="2"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						aria-hidden="true"
+					>
+						{/* Briefcase */}
+						<path d="M8 7V6a2 2 0 012-2h4a2 2 0 012 2v1" />
+						<path d="M4 7h16a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V9a2 2 0 012-2z" />
+						<path d="M12 12v2" />
+					</svg>
+				);
+			default:
+				return null;
+		}
+	};
+
 	return (
 		<div className="min-h-screen bg-white flex flex-col">
 			{/* Header */}
@@ -117,17 +181,45 @@ export const LoginWithUserType: React.FC = () => {
 			{/* Content Container */}
 			<div className="flex-1 px-4 sm:px-6 lg:px-8">
 				<div className="max-w-sm sm:max-w-md mx-auto">
-					{/* User Type Selection */}
+					{/* User Type segmented selector + Login Form */}
 					<div className="mb-6 sm:mb-8">
-						<div className="bg-gray-50 rounded-xl p-4 mb-6 transition-all duration-200">
-							<div className="flex items-center justify-center sm:justify-start space-x-3">
-								<div className="text-2xl sm:text-3xl">
-									{selectedType?.icon}
-								</div>
-								<span className="font-semibold text-gray-900 text-sm sm:text-base text-center sm:text-left">
-									{selectedType?.title}
-								</span>
-							</div>
+						<div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
+							{userTypes.map((type) => {
+								const selected = selectedUserType === type.id;
+								return (
+									<button
+										key={type.id}
+										type="button"
+										onClick={() =>
+											setSelectedUserType(type.id)
+										}
+										className={`flex flex-col items-center justify-center rounded-xl border p-3 sm:p-4 text-center transition-all duration-200 focus:outline-none focus:ring-2 ${
+											selected
+												? 'border-cyan-500 bg-cyan-50 text-cyan-700 ring-cyan-200'
+												: 'border-gray-200 hover:border-gray-300 bg-white text-gray-700'
+										}`}
+									>
+										<span className="mb-1">
+											<RoleIcon
+												typeId={
+													type.id as
+														| 'agent'
+														| 'apporteur'
+														| 'partenaire'
+												}
+												className="w-6 h-6 sm:w-7 sm:h-7"
+											/>
+										</span>
+										<span className="text-[11px] sm:text-sm font-semibold leading-snug">
+											{type.id === 'agent'
+												? 'Agent\u00A0Immobilier'
+												: type.id === 'apporteur'
+													? 'Apporteur\u00A0d’affaires'
+													: 'Accès\u00A0Partenaire'}
+										</span>
+									</button>
+								);
+							})}
 						</div>
 
 						{/* Login Form */}
@@ -165,6 +257,15 @@ export const LoginWithUserType: React.FC = () => {
 								{AUTH_TEXT.forgotPassword}
 							</Link>
 							<div className="pt-2">
+								{/** Primary action label follows screenshot: Connexion Agent / Connexion Apporteur / Accès Partenaire **/}
+								{(() => {
+									// eslint-disable-next-line @typescript-eslint/no-unused-vars
+									const btnLabel =
+										selectedUserType === 'partenaire'
+											? 'Accès Partenaire'
+											: `${AUTH_TEXT.loginButton} ${selectedType?.title.split(' ')[0]}`;
+									return null;
+								})()}
 								<Button
 									type="submit"
 									loading={loading}
@@ -172,39 +273,13 @@ export const LoginWithUserType: React.FC = () => {
 									size="lg"
 								>
 									<span className="text-sm sm:text-base">
-										{AUTH_TEXT.loginButton}{' '}
-										{selectedType?.title.split(' ')[0]}
+										{selectedUserType === 'partenaire'
+											? 'Accès Partenaire'
+											: `${AUTH_TEXT.loginButton} ${selectedType?.title.split(' ')[0]}`}
 									</span>
 								</Button>
 							</div>
 						</form>
-
-						{/* Alternative Access Types */}
-						<div className="mt-6 sm:mt-8 space-y-3">
-							<p className="text-xs sm:text-sm text-gray-500 text-center mb-4">
-								{AUTH_TEXT.orChooseAnother}
-							</p>
-							{userTypes
-								.filter((type) => type.id !== selectedUserType)
-								.map((type) => (
-									<button
-										key={type.id}
-										onClick={() =>
-											setSelectedUserType(type.id)
-										}
-										className="w-full bg-white border border-gray-300 rounded-xl p-3 sm:p-4 text-left hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 active:scale-[0.98]"
-									>
-										<div className="flex items-center justify-center sm:justify-start space-x-3">
-											<div className="text-lg sm:text-xl">
-												{type.icon}
-											</div>
-											<span className="font-medium text-gray-700 text-sm sm:text-base">
-												{type.title}
-											</span>
-										</div>
-									</button>
-								))}
-						</div>
 
 						{/* Sign Up Link */}
 						<div className="text-center mt-8 sm:mt-10 pb-6">

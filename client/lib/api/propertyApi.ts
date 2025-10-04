@@ -209,6 +209,8 @@ export interface PropertyFilters {
 	sector?: string;
 	minPrice?: number;
 	maxPrice?: number;
+	minSurface?: number;
+	maxSurface?: number;
 	transactionType?: string;
 	city?: string;
 }
@@ -234,15 +236,23 @@ export interface MyPropertiesResponse {
 	success: boolean;
 	data: {
 		properties: Property[];
-		stats: {
-			total: number;
-			active: number;
-			draft: number;
-			sold: number;
-			rented: number;
-		};
 	};
 	message?: string;
+}
+
+export interface MyPropertyStatsResponse {
+	success: boolean;
+	data: {
+		totalProperties: number;
+		totalViews: number;
+		totalValue: number;
+		byStatus: Array<{
+			_id: Property['status'];
+			count: number;
+			totalViews: number;
+			avgPrice: number;
+		}>;
+	};
 }
 
 /**
@@ -301,6 +311,24 @@ export class PropertyService {
 		} catch (error) {
 			console.error('Error fetching my properties:', error);
 			throw new Error('Erreur lors de la récupération de vos biens');
+		}
+	}
+
+	/**
+	 * Get aggregated stats for current user's properties
+	 */
+	static async getMyPropertyStats(): Promise<
+		MyPropertyStatsResponse['data']
+	> {
+		try {
+			const response =
+				await api.get<MyPropertyStatsResponse>('/property/my/stats');
+			return response.data.data;
+		} catch (error) {
+			console.error('Error fetching my property stats:', error);
+			throw new Error(
+				'Erreur lors de la récupération des statistiques de vos biens',
+			);
 		}
 	}
 
