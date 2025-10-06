@@ -26,6 +26,7 @@ export interface SearchAd {
 	// --- Localisation ---
 	location: {
 		cities: string[];
+		postalCodes?: string[];
 		maxDistance?: number;
 		openToOtherAreas?: boolean;
 	};

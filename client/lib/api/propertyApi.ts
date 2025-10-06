@@ -207,12 +207,13 @@ export interface PropertyFilters {
 	search?: string;
 	propertyType?: string;
 	sector?: string;
+	city?: string;
+	postalCode?: string;
 	minPrice?: number;
 	maxPrice?: number;
 	minSurface?: number;
 	maxSurface?: number;
 	transactionType?: string;
-	city?: string;
 }
 
 export interface PropertyResponse {

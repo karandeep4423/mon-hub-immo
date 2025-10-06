@@ -170,7 +170,15 @@ export const getProperties = async (
 		}
 
 		if (postalCode) {
-			filter.postalCode = postalCode;
+			// Support both single postal code and comma-separated list
+			const postalCodes = (postalCode as string)
+				.split(',')
+				.map((pc) => pc.trim());
+			if (postalCodes.length === 1) {
+				filter.postalCode = postalCodes[0];
+			} else {
+				filter.postalCode = { $in: postalCodes };
+			}
 		}
 
 		if (minPrice || maxPrice) {

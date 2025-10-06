@@ -13,6 +13,10 @@ import { PropertyCard } from '@/components/property';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { useAuth } from '@/hooks/useAuth';
 import { Pagination } from '@/components/ui/Pagination';
+import {
+	SingleUnifiedSearch,
+	LocationItem,
+} from '@/components/ui/SingleUnifiedSearch';
 
 type ContentFilter = 'all' | 'properties' | 'searchAds' | 'favorites';
 
@@ -26,7 +30,9 @@ export default function Home() {
 	const [error, setError] = useState<string | null>(null);
 	const [searchTerm, setSearchTerm] = useState('');
 	const [typeFilter, setTypeFilter] = useState('');
-	const [sectorFilter, setSectorFilter] = useState('');
+	const [selectedLocations, setSelectedLocations] = useState<LocationItem[]>(
+		[],
+	);
 	const [profileFilter, setProfileFilter] = useState('');
 	const [priceFilter, setPriceFilter] = useState({ min: 0, max: 10000000 });
 	const [surfaceFilter, setSurfaceFilter] = useState({ min: 0, max: 100000 });
@@ -87,13 +93,47 @@ export default function Home() {
 					return false;
 			}
 
-			// Filter by sector (search in cities)
-			if (sectorFilter) {
-				const sectorLower = sectorFilter.toLowerCase();
-				const matchesSector = searchAd.location.cities.some((city) =>
-					city.toLowerCase().includes(sectorLower),
+			// Filter by selected locations (cities or postal codes)
+			if (selectedLocations.length > 0) {
+				const hasSpecialFilter = selectedLocations.some(
+					(loc) => loc.type === 'special',
 				);
-				if (!matchesSector) return false;
+
+				// If "Toute la France" is selected, skip location filtering
+				if (
+					hasSpecialFilter &&
+					selectedLocations.some((loc) => loc.value === 'all_france')
+				) {
+					// Don't filter by location
+				} else if (hasSpecialFilter) {
+					// Handle "Autour de moi" - for now, skip (requires geolocation)
+					// You can implement geolocation logic here
+				} else {
+					// Filter by cities and postal codes
+					const cities = selectedLocations
+						.filter((loc) => loc.city)
+						.map((loc) => loc.city!.toLowerCase());
+					const postalCodes = selectedLocations
+						.filter((loc) => loc.postalCode)
+						.map((loc) => loc.postalCode!);
+
+					const matchesCity =
+						cities.length === 0 ||
+						searchAd.location.cities.some((city) =>
+							cities.some((filterCity) =>
+								city.toLowerCase().includes(filterCity),
+							),
+						);
+
+					const matchesPostalCode =
+						postalCodes.length === 0 ||
+						(searchAd.location.postalCodes &&
+							searchAd.location.postalCodes.some((pc) =>
+								postalCodes.includes(pc),
+							));
+
+					if (!matchesCity && !matchesPostalCode) return false;
+				}
 			}
 
 			// Filter by price range (budget max should be within range)
@@ -145,7 +185,20 @@ export default function Home() {
 				const filters: PropertyFilters = {};
 				if (searchTerm) filters.search = searchTerm;
 				if (typeFilter) filters.propertyType = typeFilter;
-				if (sectorFilter) filters.sector = sectorFilter;
+
+				// Add location filters (postal codes)
+				if (selectedLocations.length > 0) {
+					const postalCodes = selectedLocations
+						.filter(
+							(loc) => loc.postalCode && loc.type !== 'special',
+						)
+						.map((loc) => loc.postalCode!);
+
+					if (postalCodes.length > 0) {
+						filters.postalCode = postalCodes.join(',');
+					}
+				}
+
 				if (priceFilter.min > 0) filters.minPrice = priceFilter.min;
 				if (priceFilter.max < 10000000)
 					filters.maxPrice = priceFilter.max;
@@ -183,7 +236,7 @@ export default function Home() {
 	}, [
 		searchTerm,
 		typeFilter,
-		sectorFilter,
+		selectedLocations,
 		priceFilter,
 		surfaceFilter,
 		profileFilter,
@@ -196,7 +249,7 @@ export default function Home() {
 	}, [
 		searchTerm,
 		typeFilter,
-		sectorFilter,
+		selectedLocations,
 		priceFilter,
 		surfaceFilter,
 		profileFilter,
@@ -219,32 +272,14 @@ export default function Home() {
 
 			{/* Unified Search and Filters */}
 			<div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-				{/* Search Bar */}
-				<div className="flex flex-col lg:flex-row gap-4 mb-4">
-					<div className="flex-1 relative">
-						<input
-							type="text"
-							placeholder="Rechercher dans les biens et recherches..."
-							value={searchTerm}
-							onChange={(e) => setSearchTerm(e.target.value)}
-							className="w-full border rounded-lg p-3 pr-10 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
-						/>
-						<button className="absolute right-3 top-3 text-gray-500 hover:text-brand">
-							<svg
-								className="h-5 w-5"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth="2"
-									d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-								/>
-							</svg>
-						</button>
-					</div>
+				{/* Single Unified Search - handles both text and location */}
+				<div className="mb-4">
+					<SingleUnifiedSearch
+						searchTerm={searchTerm}
+						onSearchChange={setSearchTerm}
+						selectedLocations={selectedLocations}
+						onLocationsChange={setSelectedLocations}
+					/>
 				</div>
 
 				{/* Content Type Filter */}
@@ -300,11 +335,11 @@ export default function Home() {
 				{(contentFilter === 'all' ||
 					contentFilter === 'properties' ||
 					contentFilter === 'favorites') && (
-					<div className="flex flex-wrap gap-4">
+					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 						<select
 							value={typeFilter}
 							onChange={(e) => setTypeFilter(e.target.value)}
-							className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
 						>
 							<option value="">Type de bien</option>
 							<option value="Appartement">Appartement</option>
@@ -318,25 +353,17 @@ export default function Home() {
 							<option value="Autre">Autre</option>
 						</select>
 
-						<input
-							type="text"
-							placeholder="Secteur..."
-							value={sectorFilter}
-							onChange={(e) => setSectorFilter(e.target.value)}
-							className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-						/>
-
 						<select
 							value={profileFilter}
 							onChange={(e) => setProfileFilter(e.target.value)}
-							className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
 						>
 							<option value="">Tous les profils</option>
 							<option value="agent">Agent</option>
 							<option value="apporteur">Apporteur</option>
 						</select>
 
-						<div className="flex items-center space-x-2">
+						<div className="flex items-center gap-2">
 							<input
 								type="number"
 								placeholder="Prix min"
@@ -347,7 +374,7 @@ export default function Home() {
 										min: parseInt(e.target.value) || 0,
 									}))
 								}
-								className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand w-32"
+								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
 							/>
 							<span className="text-gray-500">-</span>
 							<input
@@ -366,12 +393,12 @@ export default function Home() {
 											10000000,
 									}))
 								}
-								className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand w-32"
+								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
 							/>
 						</div>
 
 						{/* Surface habitable */}
-						<div className="flex items-center space-x-2">
+						<div className="flex items-center gap-2">
 							<input
 								type="number"
 								placeholder="Surface min (m²)"
@@ -382,7 +409,7 @@ export default function Home() {
 										min: parseInt(e.target.value) || 0,
 									}))
 								}
-								className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand w-40"
+								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
 							/>
 							<span className="text-gray-500">-</span>
 							<input
@@ -399,7 +426,7 @@ export default function Home() {
 										max: parseInt(e.target.value) || 100000,
 									}))
 								}
-								className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand w-40"
+								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
 							/>
 						</div>
 					</div>

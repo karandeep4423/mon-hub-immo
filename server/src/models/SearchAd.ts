@@ -19,6 +19,7 @@ export interface ISearchAd extends Document {
 	// --- Localisation ---
 	location: {
 		cities: string[];
+		postalCodes?: string[]; // Codes postaux
 		maxDistance?: number; // Distance max travail/écoles
 		openToOtherAreas: boolean;
 	};
@@ -102,6 +103,7 @@ const SearchAdSchema = new Schema<ISearchAd>(
 
 		location: {
 			cities: [{ type: String, required: true }],
+			postalCodes: [{ type: String }],
 			maxDistance: { type: Number },
 			openToOtherAreas: { type: Boolean, default: false },
 		},
