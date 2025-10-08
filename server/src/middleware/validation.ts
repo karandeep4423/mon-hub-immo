@@ -631,16 +631,16 @@ export const addCollaborationNoteValidation = [
 export const updateProgressStatusValidation = [
 	body('targetStep')
 		.isIn([
-			'proposal',
-			'accepted',
-			'visit_planned',
-			'visit_completed',
-			'negotiation',
-			'offer_made',
-			'compromise_signed',
-			'final_act',
+			'accord_collaboration',
+			'premier_contact',
+			'visite_programmee',
+			'visite_realisee',
+			'retour_client',
 		])
 		.withMessage('Étape de progression invalide'),
+	body('validatedBy')
+		.isIn(['owner', 'collaborator'])
+		.withMessage('validatedBy doit être "owner" ou "collaborator"'),
 	body('notes')
 		.optional()
 		.trim()

@@ -68,7 +68,11 @@ export const collaborationApi = {
 	// Update progress status
 	updateProgressStatus: async (
 		collaborationId: string,
-		data: { targetStep: string; notes?: string },
+		data: {
+			targetStep: string;
+			notes?: string;
+			validatedBy: 'owner' | 'collaborator';
+		},
 	): Promise<{ collaboration: Collaboration }> => {
 		const response = await api.put(
 			`/collaboration/${collaborationId}/progress-status`,

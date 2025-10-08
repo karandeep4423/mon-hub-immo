@@ -166,7 +166,7 @@ export const getUserCollaborations = async (
 			.populate('propertyOwnerId', 'firstName lastName profileImage')
 			.populate('collaboratorId', 'firstName lastName profileImage')
 			.populate(
-				'progressSteps.completedBy',
+				'progressSteps.notes.createdBy',
 				'firstName lastName profileImage',
 			)
 			.sort({ createdAt: -1 });
@@ -501,7 +501,7 @@ export const updateProgressStatus = async (
 ): Promise<void> => {
 	try {
 		const { id } = req.params;
-		const { targetStep, notes } = req.body;
+		const { targetStep, notes, validatedBy } = req.body;
 		const userId = req.user?.id;
 
 		if (!userId) {
@@ -511,19 +511,28 @@ export const updateProgressStatus = async (
 
 		// Validate targetStep
 		const validSteps = [
-			'proposal',
-			'accepted',
-			'visit_planned',
-			'visit_completed',
-			'negotiation',
-			'offer_made',
-			'compromise_signed',
-			'final_act',
+			'accord_collaboration',
+			'premier_contact',
+			'visite_programmee',
+			'visite_realisee',
+			'retour_client',
 		];
 		if (!validSteps.includes(targetStep)) {
 			res.status(400).json({
 				success: false,
 				message: 'Invalid target step',
+			});
+			return;
+		}
+
+		// Validate validatedBy
+		if (
+			!validatedBy ||
+			(validatedBy !== 'owner' && validatedBy !== 'collaborator')
+		) {
+			res.status(400).json({
+				success: false,
+				message: 'validatedBy must be either "owner" or "collaborator"',
 			});
 			return;
 		}
@@ -534,10 +543,11 @@ export const updateProgressStatus = async (
 				'propertyOwnerId',
 				'firstName lastName email profileImage',
 			)
-			.populate(
-				'collaboratorId',
-				'firstName lastName email profileImage',
-			);
+			.populate('collaboratorId', 'firstName lastName email profileImage')
+			.populate({
+				path: 'progressSteps.notes.createdBy',
+				select: 'firstName lastName profileImage',
+			});
 
 		if (!collaboration) {
 			res.status(404).json({
@@ -560,11 +570,15 @@ export const updateProgressStatus = async (
 			return;
 		}
 
-		// Only allow progress updates when collaboration is active
-		if (collaboration.status !== 'active') {
+		// Only allow progress updates when collaboration is active or accepted
+		if (
+			collaboration.status !== 'active' &&
+			collaboration.status !== 'accepted'
+		) {
 			res.status(400).json({
 				success: false,
-				message: 'Can only update progress for active collaborations',
+				message:
+					'Can only update progress for active or accepted collaborations',
 			});
 			return;
 		}
@@ -572,8 +586,9 @@ export const updateProgressStatus = async (
 		// Update progress status using the model method
 		await collaboration.updateProgressStatus(
 			targetStep,
-			notes || '',
+			notes || undefined,
 			new Types.ObjectId(userId),
+			validatedBy,
 		);
 
 		res.status(200).json({
@@ -594,18 +609,30 @@ export const updateProgressStatus = async (
 				? `${actor.firstName} ${actor.lastName || ''}`.trim()
 				: actor.firstName || actor.email
 			: 'Someone';
+
+		const stepTitles: Record<string, string> = {
+			accord_collaboration: 'Accord de collaboration',
+			premier_contact: 'Premier contact client',
+			visite_programmee: 'Visite programmée',
+			visite_realisee: 'Visite réalisée',
+			retour_client: 'Retour client',
+		};
+
 		await notificationService.create({
 			recipientId: progressRecipientId,
 			actorId: userId,
 			type: 'collab:progress_updated',
 			entity: { type: 'collaboration', id: collaboration._id },
 			title: collabTexts.progressUpdatedTitle,
-			message: collabTexts.progressUpdatedBody({ step: targetStep }),
+			message: collabTexts.progressUpdatedBody({
+				step: stepTitles[targetStep] || targetStep,
+			}),
 			data: {
 				targetStep,
 				notes: notes || '',
 				actorName,
 				actorAvatar: actor?.profileImage || undefined,
+				validatedBy,
 			},
 		});
 	} catch (error) {
@@ -763,17 +790,19 @@ export const completeCollaboration = async (
 			return;
 		}
 
-		// Update final progress step BEFORE flipping to completed to pass guards
-		await collaboration.updateProgressStatus(
-			'final_act',
-			'Collaboration terminée avec succès',
-			new Types.ObjectId(userId),
-		);
-
 		// Update status to completed
 		collaboration.status = 'completed';
 		collaboration.currentStep = 'completed';
 		collaboration.completedAt = new Date();
+
+		// Mark all progress steps as completed
+		collaboration.progressSteps.forEach((step) => {
+			if (!step.completed) {
+				step.completed = true;
+				step.ownerValidated = true;
+				step.collaboratorValidated = true;
+			}
+		});
 
 		// Add activity log
 		collaboration.activities.push({

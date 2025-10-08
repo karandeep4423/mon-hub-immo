@@ -177,14 +177,6 @@ export default function CollaborationPage() {
 				const transformedSteps = foundCollaboration.progressSteps.map(
 					(step) => {
 						const config = PROGRESS_STEPS_CONFIG[step.id];
-						// Handle completedBy - it might be a populated user object or a string ID
-						let completedByUser = undefined;
-						if (
-							step.completedBy &&
-							typeof step.completedBy === 'object'
-						) {
-							completedByUser = step.completedBy;
-						}
 
 						return {
 							id: step.id,
@@ -194,9 +186,10 @@ export default function CollaborationPage() {
 							current:
 								foundCollaboration.currentProgressStep ===
 								step.id,
-							completedAt: step.completedAt,
-							notes: step.notes,
-							completedBy: completedByUser,
+							validatedAt: step.validatedAt,
+							ownerValidated: step.ownerValidated,
+							collaboratorValidated: step.collaboratorValidated,
+							notes: step.notes || [],
 						};
 					},
 				);
@@ -204,17 +197,16 @@ export default function CollaborationPage() {
 			} else {
 				// Create default progress steps based on current collaboration step (fallback)
 				const defaultSteps = Object.entries(PROGRESS_STEPS_CONFIG).map(
-					([stepId, config], index) => ({
+					([stepId, config]) => ({
 						id: stepId as ProgressStep,
 						title: config.title,
 						description: config.description,
-						completed:
-							foundCollaboration.currentStep === stepId ||
-							(foundCollaboration.currentStep === 'completed' &&
-								index <
-									Object.keys(PROGRESS_STEPS_CONFIG).length -
-										1),
-						current: foundCollaboration.currentStep === stepId,
+						completed: false,
+						current:
+							foundCollaboration.currentProgressStep === stepId,
+						ownerValidated: false,
+						collaboratorValidated: false,
+						notes: [],
 					}),
 				);
 				setProgressSteps(defaultSteps);
@@ -337,7 +329,11 @@ export default function CollaborationPage() {
 
 	// Status modification handler (from modal) - NEW API
 	const handleProgressStatusUpdate = useCallback(
-		async (update: { targetStep: string; notes?: string }) => {
+		async (update: {
+			targetStep: string;
+			notes?: string;
+			validatedBy: 'owner' | 'collaborator';
+		}) => {
 			// Block status mutation until collaboration is active
 			if (!collaboration || collaboration.status !== 'active') {
 				console.warn(
@@ -350,6 +346,7 @@ export default function CollaborationPage() {
 				await collaborationApi.updateProgressStatus(collaborationId, {
 					targetStep: update.targetStep,
 					notes: update.notes,
+					validatedBy: update.validatedBy,
 				});
 				await fetchCollaboration(); // Refresh data
 			} catch (error) {
@@ -553,9 +550,13 @@ export default function CollaborationPage() {
 
 								<ProgressTracker
 									collaborationId={collaboration._id}
-									currentStep="proposal"
+									currentStep={
+										collaboration.currentProgressStep
+									}
 									steps={progressSteps}
 									canUpdate={canUpdate && isActive}
+									isOwner={Boolean(isOwner)}
+									isCollaborator={Boolean(isCollaborator)}
 									onStepUpdate={handleProgressUpdate}
 									onStatusUpdate={handleProgressStatusUpdate}
 								/>
