@@ -18,6 +18,7 @@ import { OverallStatusManager } from '@/components/collaboration/overall-status'
 import { ProgressTracker } from '@/components/collaboration/progress-tracking';
 import { ActivityManager } from '@/components/collaboration/shared';
 import { ContractModal } from '@/components/collaboration/ContractModal';
+import { ContractViewModal } from '@/components/contract';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { toast } from 'react-toastify';
 
@@ -52,6 +53,7 @@ export default function CollaborationPage() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [showContractModal, setShowContractModal] = useState(false);
+	const [showContractViewModal, setShowContractViewModal] = useState(false);
 	const [confirmOpen, setConfirmOpen] = useState(false);
 	const [confirmLoading, setConfirmLoading] = useState(false);
 	const [pendingAction, setPendingAction] =
@@ -1259,9 +1261,33 @@ export default function CollaborationPage() {
 
 								{/* Contract Status */}
 								<Card className="p-6">
-									<h3 className="text-lg font-medium text-gray-900 mb-4">
-										📋 Statut du contrat
-									</h3>
+									<div className="flex items-center justify-between mb-4">
+										<h3 className="text-lg font-medium text-gray-900">
+											📋 Statut du contrat
+										</h3>
+										<Button
+											onClick={() =>
+												setShowContractViewModal(true)
+											}
+											variant="outline"
+											className="text-sm"
+										>
+											<svg
+												className="w-4 h-4 mr-2"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth={2}
+													d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+												/>
+											</svg>
+											Voir le contrat
+										</Button>
+									</div>
 									<div className="space-y-3">
 										<div className="flex items-center justify-between">
 											<span className="text-gray-600">
@@ -1465,6 +1491,19 @@ export default function CollaborationPage() {
 						</div>
 					</div>
 				</>
+			)}
+
+			{/* Contract View Modal */}
+			{collaboration && (
+				<ContractViewModal
+					isOpen={showContractViewModal}
+					onClose={() => setShowContractViewModal(false)}
+					contractText={
+						collaboration.contractText ||
+						'Contenu du contrat non disponible.'
+					}
+					collaboration={collaboration}
+				/>
 			)}
 		</div>
 	);

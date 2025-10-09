@@ -481,11 +481,10 @@ const propertyBaseRules = {
 		.withMessage('Garage doit être un booléen')
 		.toBoolean(),
 
-	isExclusive: body('isExclusive')
+	badges: body('badges')
 		.optional()
-		.isBoolean()
-		.withMessage('Exclusivité doit être un booléen')
-		.toBoolean(),
+		.isArray()
+		.withMessage('Les badges doivent être un tableau'),
 
 	isFeatured: body('isFeatured')
 		.optional()
@@ -527,7 +526,7 @@ export const createPropertyValidation = [
 	propertyBaseRules.hasBalcony,
 	propertyBaseRules.hasTerrace,
 	propertyBaseRules.hasGarage,
-	propertyBaseRules.isExclusive,
+	propertyBaseRules.badges,
 	propertyBaseRules.isFeatured,
 	propertyBaseRules.status,
 ];

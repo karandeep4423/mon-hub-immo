@@ -455,7 +455,7 @@ export default function Home() {
 					{(contentFilter === 'all' ||
 						contentFilter === 'properties' ||
 						contentFilter === 'favorites') && (
-						<div>
+						<div id="properties-section">
 							<h2 className="text-2xl font-bold text-gray-900 mb-6">
 								Les biens à vendre
 							</h2>
@@ -522,6 +522,7 @@ export default function Home() {
 											totalItems={propertiesToShow.length}
 											pageSize={PAGE_SIZE}
 											onPageChange={setPropPage}
+											scrollTargetId="properties-section"
 											className="mt-4"
 										/>
 									</>
@@ -534,7 +535,7 @@ export default function Home() {
 					{(contentFilter === 'all' ||
 						contentFilter === 'searchAds' ||
 						contentFilter === 'favorites') && (
-						<div>
+						<div id="search-ads-section">
 							<h2 className="text-2xl font-bold text-gray-900 mb-6">
 								Recherches clients
 							</h2>
@@ -596,6 +597,7 @@ export default function Home() {
 											}
 											pageSize={PAGE_SIZE}
 											onPageChange={setAdPage}
+											scrollTargetId="search-ads-section"
 											className="mt-4"
 										/>
 									</>

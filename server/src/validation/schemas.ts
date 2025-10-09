@@ -145,7 +145,7 @@ export const propertyBaseSchema = z.object({
 		})
 		.optional(),
 
-	isExclusive: z.boolean().optional(),
+	badges: z.array(z.string()).optional(),
 	isFeatured: z.boolean().optional(),
 	status: z
 		.enum(['active', 'sold', 'rented', 'draft', 'archived'])

@@ -1,5 +1,6 @@
 export { Button } from './Button';
 export { Input } from './Input';
+export { FileUpload } from './FileUpload';
 export { ImageLightbox } from './ImageLightbox';
 export { ProfileImageUploader } from './ProfileImageUploader';
 export { ProfileAvatar } from './ProfileAvatar';

@@ -137,9 +137,6 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 						</span>
 					</div>
 				</div>
-				<span className="text-xs bg-brand-100 text-brand-800 px-3 py-1 rounded-full whitespace-nowrap">
-					Recherche Client
-				</span>
 			</div>
 
 			<div className="grid grid-cols-2 gap-4 text-sm">

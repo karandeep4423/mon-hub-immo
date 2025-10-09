@@ -12,6 +12,7 @@ import {
 } from '@/lib/api/propertyApi';
 import { getImageUrl } from '@/lib/utils/imageUtils';
 import { toast } from 'react-toastify';
+import { getBadgeConfig } from '@/lib/constants/badges';
 
 const PropertyManager: React.FC = () => {
 	const { user } = useAuth();
@@ -391,20 +392,36 @@ const PropertyManager: React.FC = () => {
 								<div className="flex-1 p-4">
 									<div className="flex items-start justify-between">
 										<div className="flex-1">
-											<div className="flex items-center space-x-2 mb-2">
+											<div className="flex items-center flex-wrap gap-2 mb-2">
 												<h3 className="text-lg font-semibold text-gray-900 truncate">
 													{property.title}
 												</h3>
-												{property.isNewProperty && (
-													<span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-														Nouveau
-													</span>
-												)}
-												{property.isExclusive && (
-													<span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
-														Exclusivité
-													</span>
-												)}
+												{property.badges &&
+													property.badges.length >
+														0 &&
+													property.badges.map(
+														(badgeValue) => {
+															const config =
+																getBadgeConfig(
+																	badgeValue,
+																);
+															if (!config)
+																return null;
+
+															return (
+																<span
+																	key={
+																		badgeValue
+																	}
+																	className={`${config.bgColor.replace('bg-', 'bg-opacity-20 bg-')} ${config.color.replace('text-white', `text-${config.bgColor.split('-')[1]}-800`)} text-xs px-2 py-1 rounded-full`}
+																>
+																	{
+																		config.label
+																	}
+																</span>
+															);
+														},
+													)}
 											</div>
 											<p className="text-gray-600 text-sm mb-2 line-clamp-2">
 												{property.description}

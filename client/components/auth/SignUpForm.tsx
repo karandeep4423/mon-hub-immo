@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { FileUpload } from '../ui/FileUpload';
 import { authService } from '@/lib/api/authApi';
 import { signUpSchema, type SignUpFormData } from '@/lib/validation';
 import { AUTH_TEXT } from '@/lib/constants/text';
@@ -35,6 +36,7 @@ export const SignUpForm: React.FC = () => {
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [showPassword, setShowPassword] = useState(false);
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+	const [identityCardFile, setIdentityCardFile] = useState<File | null>(null);
 
 	const steps = [
 		{ id: 1, label: 'Informations' },
@@ -60,6 +62,11 @@ export const SignUpForm: React.FC = () => {
 				rsacNumber: '',
 				collaboratorCertificate: '',
 			}));
+			setIdentityCardFile(null);
+		} else if (name === 'agentType') {
+			// Clear identity card when agent type changes
+			setIdentityCardFile(null);
+			setFormData((prev) => ({ ...prev, [name]: value }));
 		} else {
 			setFormData((prev) => ({ ...prev, [name]: value }));
 		}
@@ -581,6 +588,14 @@ export const SignUpForm: React.FC = () => {
 													error={errors.sirenNumber}
 													placeholder="Numéro SIREN"
 												/>
+												<FileUpload
+													label="Carte d'identité"
+													onChange={
+														setIdentityCardFile
+													}
+													value={identityCardFile}
+													helperText="Photo ou PDF de votre carte d'identité (optionnel)"
+												/>
 												<p className="text-xs text-gray-600">
 													* Au moins une carte T ou un
 													numéro SIREN requis
@@ -609,6 +624,14 @@ export const SignUpForm: React.FC = () => {
 													error={errors.rsacNumber}
 													placeholder="Numéro RSAC"
 												/>
+												<FileUpload
+													label="Carte d'identité"
+													onChange={
+														setIdentityCardFile
+													}
+													value={identityCardFile}
+													helperText="Photo ou PDF de votre carte d'identité (optionnel)"
+												/>
 												<p className="text-xs text-gray-600">
 													* Au moins un numéro SIREN
 													ou RSAC requis
@@ -617,7 +640,7 @@ export const SignUpForm: React.FC = () => {
 										)}
 
 										{formData.agentType === 'employee' && (
-											<div className="p-4 bg-brand-50 rounded-lg border border-brand-200">
+											<div className="space-y-4 p-4 bg-brand-50 rounded-lg border border-brand-200">
 												<Input
 													label="Certificat d'autorisation"
 													type="text"
@@ -631,7 +654,15 @@ export const SignUpForm: React.FC = () => {
 													}
 													placeholder="Référence du certificat"
 												/>
-												<p className="text-xs text-gray-600 mt-1">
+												<FileUpload
+													label="Carte d'identité"
+													onChange={
+														setIdentityCardFile
+													}
+													value={identityCardFile}
+													helperText="Photo ou PDF de votre carte d'identité (optionnel)"
+												/>
+												<p className="text-xs text-gray-600">
 													* Certificat
 													d&apos;autorisation de votre
 													employeur requis

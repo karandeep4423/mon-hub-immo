@@ -93,7 +93,7 @@ export interface IProperty extends Document {
 	status: 'active' | 'sold' | 'rented' | 'draft' | 'archived';
 
 	// Tags and badges
-	isExclusive: boolean;
+	badges: string[];
 	isFeatured: boolean;
 
 	// Dates
@@ -434,9 +434,9 @@ const propertySchema = new Schema<IProperty>(
 		},
 
 		// Tags and badges
-		isExclusive: {
-			type: Boolean,
-			default: false,
+		badges: {
+			type: [String],
+			default: [],
 		},
 		isFeatured: {
 			type: Boolean,

@@ -11,6 +11,7 @@ import {
 } from '@/components/ui';
 import { PropertyImageManager } from './PropertyImageManager';
 import { ClientInfoForm } from './ClientInfoForm';
+import BadgeSelector from './BadgeSelector';
 import {
 	PropertyFormData,
 	PropertyService,
@@ -80,7 +81,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 		orientation: undefined,
 		mainImage: '',
 		images: [],
-		isExclusive: false,
+		badges: [],
 		status: 'draft',
 		clientInfo: undefined,
 		...initialData,
@@ -839,22 +840,11 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 				<p className="text-red-500 text-sm">{errors.mainImage}</p>
 			)}
 
-			<div className="space-y-3">
-				<label className="flex items-center space-x-2">
-					<input
-						type="checkbox"
-						checked={formData.isExclusive}
-						onChange={(e) =>
-							handleInputChange('isExclusive', e.target.checked)
-						}
-						className="rounded border-gray-300 text-brand-600 focus:ring-brand-600"
-						disabled={isUploading}
-					/>
-					<span className="text-sm text-gray-700">
-						Bien en exclusivité
-					</span>
-				</label>
-			</div>
+			<BadgeSelector
+				selectedBadges={formData.badges || []}
+				onChange={(badges) => handleInputChange('badges', badges)}
+				disabled={isUploading}
+			/>
 
 			<div>
 				<label className="block text-sm font-medium text-gray-700 mb-2">

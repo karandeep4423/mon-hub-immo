@@ -97,7 +97,7 @@ export interface Property {
 		key: string;
 	}>;
 	images?: string[];
-	isExclusive?: boolean;
+	badges?: string[];
 	isFeatured?: boolean;
 	status: 'draft' | 'active' | 'sold' | 'rented' | 'archived';
 	viewCount?: number;
@@ -196,7 +196,7 @@ export interface PropertyFormData {
 		key: string;
 	}>;
 	images?: string[];
-	isExclusive?: boolean;
+	badges?: string[];
 	isFeatured?: boolean;
 	status: Property['status'];
 	// Client Information

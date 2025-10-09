@@ -6,6 +6,7 @@ type Props = {
 	pageSize?: number;
 	onPageChange: (page: number) => void;
 	className?: string;
+	scrollTargetId?: string;
 };
 
 export const Pagination: React.FC<Props> = ({
@@ -14,13 +15,38 @@ export const Pagination: React.FC<Props> = ({
 	pageSize = 9,
 	onPageChange,
 	className,
+	scrollTargetId,
 }) => {
 	const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
 	if (totalPages <= 1) return null;
 
+	const scrollToTarget = () => {
+		if (scrollTargetId) {
+			// Use requestAnimationFrame for better timing with React's render cycle
+			requestAnimationFrame(() => {
+				setTimeout(() => {
+					const element = document.getElementById(scrollTargetId);
+					if (element) {
+						// Get element position relative to viewport
+						const elementPosition =
+							element.getBoundingClientRect().top;
+						const offsetPosition =
+							elementPosition + window.pageYOffset - 20;
+
+						window.scrollTo({
+							top: offsetPosition,
+							behavior: 'smooth',
+						});
+					}
+				}, 100);
+			});
+		}
+	};
+
 	const goTo = (p: number) => {
 		const page = Math.min(totalPages, Math.max(1, p));
 		onPageChange(page);
+		scrollToTarget();
 	};
 
 	// Simple windowed pages (1 ... n)

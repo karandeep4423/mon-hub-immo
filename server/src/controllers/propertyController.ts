@@ -84,7 +84,6 @@ const validatePropertyData = (data: Record<string, unknown>) => {
 		'hasBalcony',
 		'hasTerrace',
 		'hasGarage',
-		'isExclusive',
 		'isFeatured',
 	];
 	booleanFields.forEach((field) => {
