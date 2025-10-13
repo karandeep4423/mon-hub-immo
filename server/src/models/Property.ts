@@ -93,7 +93,7 @@ export interface IProperty extends Document {
 	status: 'active' | 'sold' | 'rented' | 'draft' | 'archived';
 
 	// Tags and badges
-	isExclusive: boolean;
+	badges: string[];
 	isFeatured: boolean;
 
 	// Dates
@@ -108,6 +108,35 @@ export interface IProperty extends Document {
 	yearBuilt?: number;
 	heatingType?: string;
 	orientation?: string;
+
+	// Client Information (visible only in collaboration)
+	clientInfo?: {
+		// Commercial details
+		commercialDetails?: {
+			strengths?: string; // Points forts à mettre en avant
+			weaknesses?: string; // Points faibles connus
+			occupancyStatus?: 'occupied' | 'vacant'; // Bien occupé ou vide
+			openToLowerOffers?: boolean; // Ouvert à une offre "coup de coeur"
+		};
+		// Property history
+		propertyHistory?: {
+			listingDate?: string; // Date de mise en vente (DD/MM/YYYY)
+			lastVisitDate?: string; // Date de la dernière visite (DD/MM/YYYY)
+			totalVisits?: number; // Nombre total de visites
+			visitorFeedback?: string; // Retour des précédents visiteurs
+			priceReductions?: string; // Historique des baisses de prix
+		};
+		// Owner information
+		ownerInfo?: {
+			urgentToSell?: boolean; // Pressés de vendre
+			openToNegotiation?: boolean; // Ouverts à la négociation
+			mandateType?: 'exclusive' | 'simple' | 'shared'; // Type de mandat
+			saleReasons?: string; // Raisons de la vente
+			presentDuringVisits?: boolean; // Présents pendant les visites
+			flexibleSchedule?: boolean; // Souples sur horaires de visite
+			acceptConditionalOffers?: boolean; // Acceptent propositions avec conditions
+		};
+	};
 
 	createdAt: Date;
 	updatedAt: Date;
@@ -405,9 +434,9 @@ const propertySchema = new Schema<IProperty>(
 		},
 
 		// Tags and badges
-		isExclusive: {
-			type: Boolean,
-			default: false,
+		badges: {
+			type: [String],
+			default: [],
 		},
 		isFeatured: {
 			type: Boolean,
@@ -463,6 +492,78 @@ const propertySchema = new Schema<IProperty>(
 					'Sud-Ouest',
 				],
 				message: 'Orientation invalide',
+			},
+		},
+
+		// Client Information (visible only in collaboration)
+		clientInfo: {
+			type: {
+				commercialDetails: {
+					type: {
+						strengths: {
+							type: String,
+							trim: true,
+							maxlength: [1000, 'Points forts trop longs'],
+						},
+						weaknesses: {
+							type: String,
+							trim: true,
+							maxlength: [1000, 'Points faibles trop longs'],
+						},
+						occupancyStatus: {
+							type: String,
+							enum: {
+								values: ['occupied', 'vacant'],
+								message: "Statut d'occupation invalide",
+							},
+						},
+						openToLowerOffers: { type: Boolean, default: false },
+					},
+				},
+				propertyHistory: {
+					type: {
+						listingDate: { type: String, trim: true },
+						lastVisitDate: { type: String, trim: true },
+						totalVisits: {
+							type: Number,
+							min: [0, 'Nombre de visites minimum: 0'],
+						},
+						visitorFeedback: {
+							type: String,
+							trim: true,
+							maxlength: [2000, 'Retour visiteurs trop long'],
+						},
+						priceReductions: {
+							type: String,
+							trim: true,
+							maxlength: [1000, 'Historique prix trop long'],
+						},
+					},
+				},
+				ownerInfo: {
+					type: {
+						urgentToSell: { type: Boolean, default: false },
+						openToNegotiation: { type: Boolean, default: false },
+						mandateType: {
+							type: String,
+							enum: {
+								values: ['exclusive', 'simple', 'shared'],
+								message: 'Type de mandat invalide',
+							},
+						},
+						saleReasons: {
+							type: String,
+							trim: true,
+							maxlength: [500, 'Raisons de vente trop longues'],
+						},
+						presentDuringVisits: { type: Boolean, default: false },
+						flexibleSchedule: { type: Boolean, default: false },
+						acceptConditionalOffers: {
+							type: Boolean,
+							default: false,
+						},
+					},
+				},
 			},
 		},
 	},

@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import searchAdApi from '@/lib/api/searchAdApi';
 import { useAuth } from '@/hooks/useAuth';
+import { SearchAdClientInfoForm } from './SearchAdClientInfoForm';
+import type { SearchAd } from '@/types/searchAd';
 
 interface FormData {
 	title: string;
@@ -30,6 +32,7 @@ interface FormData {
 	niceToHaves: string[];
 	dealBreakers: string[];
 	status: 'active' | 'paused' | 'fulfilled' | 'sold' | 'rented' | 'archived';
+	clientInfo?: SearchAd['clientInfo'];
 }
 
 export const CreateSearchAdForm = () => {
@@ -62,6 +65,7 @@ export const CreateSearchAdForm = () => {
 		niceToHaves: [],
 		dealBreakers: [],
 		status: 'active',
+		clientInfo: {},
 	});
 
 	const propertyTypes = [
@@ -200,6 +204,7 @@ export const CreateSearchAdForm = () => {
 					niceToHaves: formData.niceToHaves,
 					dealBreakers: formData.dealBreakers,
 				},
+				clientInfo: formData.clientInfo,
 			};
 
 			await searchAdApi.createSearchAd(
@@ -847,7 +852,25 @@ export const CreateSearchAdForm = () => {
 						</div>
 					</div>
 				</div>
-
+				{/* Client Information - Full width */}
+				<div className="bg-white p-6 rounded-lg shadow-sm border">
+					<div className="mb-4">
+						<h3 className="text-xl font-semibold text-gray-900 mb-2 flex items-center">
+							🔒 Informations sur le client
+						</h3>
+						<p className="text-sm text-gray-600">
+							Ces informations sont confidentielles et ne seront
+							visibles que par vous lors de la gestion de cette
+							recherche.
+						</p>
+					</div>
+					<SearchAdClientInfoForm
+						clientInfo={formData.clientInfo || {}}
+						onChange={(clientInfo) =>
+							setFormData((prev) => ({ ...prev, clientInfo }))
+						}
+					/>
+				</div>{' '}
 				{/* Status Field and Actions */}
 				<div className="bg-white p-6 rounded-lg shadow-sm border">
 					<div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-end">
@@ -904,7 +927,6 @@ export const CreateSearchAdForm = () => {
 						</div>
 					</div>
 				</div>
-
 				{error && (
 					<div className="rounded-md bg-red-50 p-4">
 						<div className="text-sm text-red-800">{error}</div>

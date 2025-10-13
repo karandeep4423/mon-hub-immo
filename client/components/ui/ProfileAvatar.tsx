@@ -190,6 +190,18 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
 		: null;
 	const hasProfileImage =
 		imageUrl && typeof imageUrl === 'string' && imageUrl.trim() !== '';
+
+	// Debug logging to track why images aren't showing
+	if (isObj && !hasProfileImage) {
+		console.log('ProfileAvatar: No image for user', {
+			userId: userObj._id,
+			profileImage: userObj.profileImage,
+			avatarUrl: userObj.avatarUrl,
+			name: userObj.name,
+			initials,
+		});
+	}
+
 	const backgroundColor = bgColor || getAvatarBgColor(userObj._id);
 
 	const containerClasses = [

@@ -2,14 +2,22 @@
 // Used for detailed step-by-step tracking between agents
 
 export type ProgressStep =
-	| 'proposal' // Initial proposal sent
-	| 'accepted' // Proposal accepted
-	| 'visit_planned' // Visit scheduled
-	| 'visit_completed' // Property visit done
-	| 'negotiation' // In negotiation phase
-	| 'offer_made' // Offer submitted
-	| 'compromise_signed' // Preliminary agreement signed
-	| 'final_act'; // Final sale completed
+	| 'accord_collaboration' // Collaboration agreement
+	| 'premier_contact' // First client contact
+	| 'visite_programmee' // Scheduled visit
+	| 'visite_realisee' // Completed visit
+	| 'retour_client'; // Client feedback
+
+export interface StepNote {
+	note: string;
+	createdBy: {
+		_id: string;
+		firstName?: string;
+		lastName?: string;
+		profileImage?: string | null;
+	};
+	createdAt: string;
+}
 
 export interface ProgressStepData {
 	id: ProgressStep;
@@ -17,14 +25,10 @@ export interface ProgressStepData {
 	description: string;
 	completed: boolean;
 	current: boolean;
-	completedAt?: string;
-	notes?: string;
-	completedBy?: {
-		_id: string;
-		firstName?: string;
-		lastName?: string;
-		profileImage?: string | null;
-	};
+	validatedAt?: string; // Date when first agent validated
+	ownerValidated: boolean;
+	collaboratorValidated: boolean;
+	notes: StepNote[]; // Multiple notes from different agents
 }
 
 export interface ProgressUpdate {
@@ -36,6 +40,7 @@ export interface ProgressUpdate {
 export interface ProgressStatusUpdate {
 	targetStep: ProgressStep;
 	notes?: string;
+	validatedBy: 'owner' | 'collaborator'; // Who is validating
 }
 
 export interface ProgressTrackingProps {
@@ -57,52 +62,34 @@ export const PROGRESS_STEPS_CONFIG: Record<
 		icon: string;
 	}
 > = {
-	proposal: {
-		title: 'Proposition',
-		description: 'Proposition envoyée',
+	accord_collaboration: {
+		title: 'Accord de collaboration',
+		description: 'Accord validé par les deux agents',
 		order: 1,
-		icon: '📋',
+		icon: '🤝',
 	},
-	accepted: {
-		title: 'Acceptée',
-		description: 'Proposition acceptée',
+	premier_contact: {
+		title: 'Premier contact client',
+		description: 'Contact initial avec le client',
 		order: 2,
-		icon: '✅',
+		icon: '📞',
 	},
-	visit_planned: {
-		title: 'Visite prévue',
-		description: 'Visite planifiée',
+	visite_programmee: {
+		title: 'Visite programmée',
+		description: 'Visite planifiée avec le client',
 		order: 3,
 		icon: '📅',
 	},
-	visit_completed: {
+	visite_realisee: {
 		title: 'Visite réalisée',
 		description: 'Visite effectuée',
 		order: 4,
 		icon: '🏠',
 	},
-	negotiation: {
-		title: 'Négociation',
-		description: 'En cours de négociation',
+	retour_client: {
+		title: 'Retour client',
+		description: 'Feedback du client reçu',
 		order: 5,
 		icon: '💬',
-	},
-	offer_made: {
-		title: 'Offre',
-		description: 'Offre déposée',
-		order: 6,
-		icon: '💰',
-	},
-	compromise_signed: {
-		title: 'Compromis signé',
-		description: 'Avant-contrat signé',
-		order: 7,
-		icon: '📝',
-	},
-	final_act: {
-		title: 'Acte définitif',
-		description: 'Vente finalisée',
-		order: 8,
-		icon: '🎉',
 	},
 } as const;

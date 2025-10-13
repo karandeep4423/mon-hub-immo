@@ -156,7 +156,7 @@ export const signContract = async (
 			? collaboration.collaboratorId._id
 			: collaboration.propertyOwnerId._id;
 		const signer = await User.findById(userId).select(
-			'firstName lastName email',
+			'firstName lastName email profileImage',
 		);
 		const signerName = signer
 			? signer.firstName
@@ -170,7 +170,10 @@ export const signContract = async (
 			entity: { type: 'collaboration', id: collaboration._id },
 			title: 'Contract signed',
 			message: `${signerName} signed the contract.`,
-			data: { actorName: signerName },
+			data: {
+				actorName: signerName,
+				actorAvatar: signer?.profileImage || undefined,
+			},
 		});
 
 		// If both have signed and it became active, notify activation
@@ -185,7 +188,10 @@ export const signContract = async (
 				entity: { type: 'collaboration', id: collaboration._id },
 				title: 'Collaboration activated',
 				message: `Collaboration is now active. Activated by ${signerName}.`,
-				data: { actorName: signerName },
+				data: {
+					actorName: signerName,
+					actorAvatar: signer?.profileImage || undefined,
+				},
 			});
 		}
 	} catch (error) {
@@ -337,6 +343,14 @@ export const updateContract = async (
 			const updateRecipientId = isOwner
 				? collaboration.collaboratorId._id
 				: collaboration.propertyOwnerId._id;
+			const actor = await User.findById(userId).select(
+				'firstName lastName email profileImage',
+			);
+			const actorName = actor
+				? actor.firstName
+					? `${actor.firstName} ${actor.lastName || ''}`.trim()
+					: actor.firstName || actor.email
+				: 'Someone';
 			await notificationService.create({
 				recipientId: updateRecipientId,
 				actorId: userId,
@@ -345,6 +359,10 @@ export const updateContract = async (
 				title: 'Contract updated',
 				message:
 					'Contract content changed. Signatures reset; both must sign again.',
+				data: {
+					actorName,
+					actorAvatar: actor?.profileImage || undefined,
+				},
 			});
 		}
 	} catch (error) {

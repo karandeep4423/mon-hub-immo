@@ -97,7 +97,7 @@ export interface Property {
 		key: string;
 	}>;
 	images?: string[];
-	isExclusive?: boolean;
+	badges?: string[];
 	isFeatured?: boolean;
 	status: 'draft' | 'active' | 'sold' | 'rented' | 'archived';
 	viewCount?: number;
@@ -110,6 +110,31 @@ export interface Property {
 		lastName: string;
 		profileImage?: string;
 		userType: 'agent' | 'apporteur';
+	};
+	// Client Information (visible only in collaboration)
+	clientInfo?: {
+		commercialDetails?: {
+			strengths?: string;
+			weaknesses?: string;
+			occupancyStatus?: 'occupied' | 'vacant';
+			openToLowerOffers?: boolean;
+		};
+		propertyHistory?: {
+			listingDate?: string;
+			lastVisitDate?: string;
+			totalVisits?: number;
+			visitorFeedback?: string;
+			priceReductions?: string;
+		};
+		ownerInfo?: {
+			urgentToSell?: boolean;
+			openToNegotiation?: boolean;
+			mandateType?: 'exclusive' | 'simple' | 'shared';
+			saleReasons?: string;
+			presentDuringVisits?: boolean;
+			flexibleSchedule?: boolean;
+			acceptConditionalOffers?: boolean;
+		};
 	};
 	// Virtual properties
 	isNewProperty?: boolean;
@@ -171,19 +196,24 @@ export interface PropertyFormData {
 		key: string;
 	}>;
 	images?: string[];
-	isExclusive?: boolean;
+	badges?: string[];
 	isFeatured?: boolean;
 	status: Property['status'];
+	// Client Information
+	clientInfo?: Property['clientInfo'];
 }
 
 export interface PropertyFilters {
 	search?: string;
 	propertyType?: string;
 	sector?: string;
+	city?: string;
+	postalCode?: string;
 	minPrice?: number;
 	maxPrice?: number;
+	minSurface?: number;
+	maxSurface?: number;
 	transactionType?: string;
-	city?: string;
 }
 
 export interface PropertyResponse {
@@ -207,15 +237,23 @@ export interface MyPropertiesResponse {
 	success: boolean;
 	data: {
 		properties: Property[];
-		stats: {
-			total: number;
-			active: number;
-			draft: number;
-			sold: number;
-			rented: number;
-		};
 	};
 	message?: string;
+}
+
+export interface MyPropertyStatsResponse {
+	success: boolean;
+	data: {
+		totalProperties: number;
+		totalViews: number;
+		totalValue: number;
+		byStatus: Array<{
+			_id: Property['status'];
+			count: number;
+			totalViews: number;
+			avgPrice: number;
+		}>;
+	};
 }
 
 /**
@@ -278,6 +316,24 @@ export class PropertyService {
 	}
 
 	/**
+	 * Get aggregated stats for current user's properties
+	 */
+	static async getMyPropertyStats(): Promise<
+		MyPropertyStatsResponse['data']
+	> {
+		try {
+			const response =
+				await api.get<MyPropertyStatsResponse>('/property/my/stats');
+			return response.data.data;
+		} catch (error) {
+			console.error('Error fetching my property stats:', error);
+			throw new Error(
+				'Erreur lors de la récupération des statistiques de vos biens',
+			);
+		}
+	}
+
+	/**
 	 * Create a new property with images in single request
 	 */
 	static async createProperty(
@@ -295,6 +351,12 @@ export class PropertyService {
 						value.forEach((item, index) => {
 							formData.append(`${key}[${index}]`, String(item));
 						});
+					} else if (
+						typeof value === 'object' &&
+						key === 'clientInfo'
+					) {
+						// Stringify nested objects like clientInfo
+						formData.append(key, JSON.stringify(value));
 					} else {
 						formData.append(key, String(value));
 					}
@@ -353,6 +415,12 @@ export class PropertyService {
 						value.forEach((item, index) => {
 							formData.append(`${key}[${index}]`, String(item));
 						});
+					} else if (
+						typeof value === 'object' &&
+						key === 'clientInfo'
+					) {
+						// Stringify nested objects like clientInfo
+						formData.append(key, JSON.stringify(value));
 					} else {
 						formData.append(key, String(value));
 					}

@@ -10,6 +10,8 @@ import {
 	Select,
 } from '@/components/ui';
 import { PropertyImageManager } from './PropertyImageManager';
+import { ClientInfoForm } from './ClientInfoForm';
+import BadgeSelector from './BadgeSelector';
 import {
 	PropertyFormData,
 	PropertyService,
@@ -79,8 +81,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 		orientation: undefined,
 		mainImage: '',
 		images: [],
-		isExclusive: false,
+		badges: [],
 		status: 'draft',
+		clientInfo: undefined,
 		...initialData,
 	});
 
@@ -95,7 +98,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 	>([]);
 	const [isUploading, setIsUploading] = useState(false);
 	const [justNavigated, setJustNavigated] = useState(false);
-	const totalSteps = 4;
+	const totalSteps = 5;
 
 	// Populate existing images when editing
 	useEffect(() => {
@@ -201,7 +204,13 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 
 	const handleInputChange = (
 		field: keyof PropertyFormData,
-		value: string | number | boolean | string[] | undefined,
+		value:
+			| string
+			| number
+			| boolean
+			| string[]
+			| Property['clientInfo']
+			| undefined,
 	) => {
 		setFormData((prev) => ({ ...prev, [field]: value }));
 		// Clear error when user starts typing
@@ -831,22 +840,11 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 				<p className="text-red-500 text-sm">{errors.mainImage}</p>
 			)}
 
-			<div className="space-y-3">
-				<label className="flex items-center space-x-2">
-					<input
-						type="checkbox"
-						checked={formData.isExclusive}
-						onChange={(e) =>
-							handleInputChange('isExclusive', e.target.checked)
-						}
-						className="rounded border-gray-300 text-brand-600 focus:ring-brand-600"
-						disabled={isUploading}
-					/>
-					<span className="text-sm text-gray-700">
-						Bien en exclusivité
-					</span>
-				</label>
-			</div>
+			<BadgeSelector
+				selectedBadges={formData.badges || []}
+				onChange={(badges) => handleInputChange('badges', badges)}
+				disabled={isUploading}
+			/>
 
 			<div>
 				<label className="block text-sm font-medium text-gray-700 mb-2">
@@ -934,6 +932,23 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 				{currentStep === 2 && renderStep2()}
 				{currentStep === 3 && renderStep3()}
 				{currentStep === 4 && renderStep4()}
+				{currentStep === 5 && (
+					<div className="space-y-6">
+						<h3 className="text-lg font-semibold mb-4">
+							Informations client
+						</h3>
+						<p className="text-sm text-gray-600 mb-4">
+							Ces informations seront visibles uniquement pour les
+							agents avec lesquels vous collaborez.
+						</p>
+						<ClientInfoForm
+							clientInfo={formData.clientInfo || {}}
+							onChange={(clientInfo) =>
+								handleInputChange('clientInfo', clientInfo)
+							}
+						/>
+					</div>
+				)}
 
 				<div className="flex justify-between pt-6 mt-8 border-t">
 					<Button

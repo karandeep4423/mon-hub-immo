@@ -1,6 +1,6 @@
 import { api } from '@/lib/api';
 import { useSocket } from '@/context/SocketContext';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNotification } from '@/hooks/useNotification';
 import { useAuth } from '@/hooks/useAuth';
 import type { User } from '@/types/auth';
@@ -63,16 +63,19 @@ export const useNotifications = () => {
 	const lastOsNotifyAtRef = useRef<number>(0);
 	const bootstrappedRef = useRef(false);
 	const lastUserIdRef = useRef<string | null>(null);
-
-	// Initial fetch (guarded against StrictMode double-mount)
-	useEffect(() => {
+	// Stable user id key to avoid effect thrash on object identity changes
+	const userIdKey: string | null = (() => {
 		const u = user as User | undefined;
-		const userId: string | null = u?.id?.toString?.() ?? u?._id ?? null;
-		if (authLoading || !userId) return; // wait for authenticated user
+		// Prefer _id; fall back to id (stringifiable)
+		return u?._id ?? u?.id?.toString?.() ?? null;
+	})();
+
+	// Initial fetch with stable dependency (userIdKey) to avoid cancellations
+	useEffect(() => {
+		if (authLoading || !userIdKey) return; // wait for authenticated user
 
 		// Re-bootstrap when user changes. Do not mark bootstrapped until state is applied.
-		lastUserIdRef.current = userId;
-		let isMounted = true;
+		lastUserIdRef.current = userIdKey;
 		const bootstrap = async () => {
 			try {
 				if (loadingRef.current) return;
@@ -80,12 +83,15 @@ export const useNotifications = () => {
 				setState((s) => ({ ...s, loading: true }));
 
 				// Serve from cache if available for this user
-				const cached = userId ? bootstrapCacheMap.get(userId) : null;
+				const cached = userIdKey
+					? bootstrapCacheMap.get(userIdKey)
+					: null;
 				if (cached) {
 					const { items, nextCursor, unreadCount } = cached;
 					// seed dedupe set
 					for (const it of items) seenIdsRef.current.add(it.id);
-					if (!isMounted) return;
+					// Apply only if still same user
+					if (lastUserIdRef.current !== userIdKey) return;
 					setState((s) => ({
 						...s,
 						items,
@@ -98,7 +104,7 @@ export const useNotifications = () => {
 				}
 
 				// Share in-flight fetch across remounts
-				if (userId && !bootstrapInflightMap.get(userId)) {
+				if (userIdKey && !bootstrapInflightMap.get(userIdKey)) {
 					const inflight = (async () => {
 						const now = Date.now();
 						const [listRes, countRes] = await Promise.all([
@@ -116,15 +122,19 @@ export const useNotifications = () => {
 							nextCursor: listRes.data?.nextCursor ?? null,
 							unreadCount: countRes.data?.unreadCount ?? 0,
 						};
-						bootstrapCacheMap.set(userId, data);
+						bootstrapCacheMap.set(userIdKey, data);
 						// seed dedupe set
 						for (const it of items) seenIdsRef.current.add(it.id);
 					})();
-					bootstrapInflightMap.set(userId, inflight);
+					bootstrapInflightMap.set(userIdKey, inflight);
 				}
-				if (userId) await bootstrapInflightMap.get(userId);
-				const ready = userId ? bootstrapCacheMap.get(userId) : null;
-				if (!isMounted || !ready) return;
+				if (userIdKey) await bootstrapInflightMap.get(userIdKey);
+				const ready = userIdKey
+					? bootstrapCacheMap.get(userIdKey)
+					: null;
+				if (!ready) return;
+				// Apply only if still same user
+				if (lastUserIdRef.current !== userIdKey) return;
 				setState((s) => ({
 					...s,
 					items: ready.items,
@@ -141,9 +151,9 @@ export const useNotifications = () => {
 		};
 		bootstrap();
 		return () => {
-			isMounted = false;
+			// no-op; we gate updates by user id rather than isMounted to avoid race on refresh
 		};
-	}, [authLoading, user]);
+	}, [authLoading, userIdKey]);
 
 	// Request OS notification permission reactively
 	useEffect(() => {
@@ -155,6 +165,9 @@ export const useNotifications = () => {
 	// Socket wiring
 	useEffect(() => {
 		if (!socket) return;
+
+		let hasConnectedOnce = false;
+
 		const onNew = (payload: { notification: NotificationItem }) => {
 			// dedupe by id to avoid duplicates on reconnects
 			if (seenIdsRef.current.has(payload.notification.id)) {
@@ -200,19 +213,61 @@ export const useNotifications = () => {
 			}));
 		};
 
+		const onReconnect = async () => {
+			// Only refetch on REconnection, not first connection
+			if (!hasConnectedOnce) {
+				hasConnectedOnce = true;
+				console.log('� Initial socket connection established');
+				return;
+			}
+
+			console.log('�🔄 Socket reconnected, refetching notifications...');
+			// Refetch notifications on reconnect to catch any missed during disconnect
+			try {
+				const now = Date.now();
+				const [listRes, countRes] = await Promise.all([
+					api.get('/notifications', {
+						params: { limit: 20, _ts: now },
+					}),
+					api.get('/notifications/count', {
+						params: { _ts: now },
+					}),
+				]);
+				const items: NotificationItem[] = listRes.data?.items ?? [];
+				const unreadCount = countRes.data?.unreadCount ?? 0;
+
+				// Update dedupe set with new items
+				seenIdsRef.current.clear();
+				for (const it of items) seenIdsRef.current.add(it.id);
+
+				setState((s) => ({
+					...s,
+					items,
+					unreadCount,
+				}));
+			} catch (err) {
+				console.error(
+					'Failed to refetch notifications on reconnect:',
+					err,
+				);
+			}
+		};
+
 		socket.on('notification:new', onNew);
 		socket.on('notifications:count', onCount);
 		socket.on('notification:read', onRead);
 		socket.on('notifications:readAll', onReadAll);
+		socket.on('connect', onReconnect);
 		return () => {
 			socket.off('notification:new', onNew);
 			socket.off('notifications:count', onCount);
 			socket.off('notification:read', onRead);
 			socket.off('notifications:readAll', onReadAll);
+			socket.off('connect', onReconnect);
 		};
 	}, [socket, showNotification]);
 
-	const loadMore = async () => {
+	const loadMore = useCallback(async () => {
 		if (loadingRef.current || !state.nextCursor) return;
 		loadingRef.current = true;
 		try {
@@ -237,29 +292,29 @@ export const useNotifications = () => {
 		} finally {
 			loadingRef.current = false;
 		}
-	};
+	}, [state.nextCursor]);
 
-	const markRead = async (id: string) => {
+	const markRead = useCallback(async (id: string) => {
 		await api.patch(`/notifications/${id}/read`);
 		setState((s) => ({
 			...s,
 			items: s.items.map((n) => (n.id === id ? { ...n, read: true } : n)),
 		}));
-	};
+	}, []);
 
-	const markAllRead = async () => {
+	const markAllRead = useCallback(async () => {
 		await api.patch('/notifications/read-all');
 		setState((s) => ({
 			...s,
 			items: s.items.map((n) => ({ ...n, read: true })),
 			unreadCount: 0,
 		}));
-	};
+	}, []);
 
-	const remove = async (id: string) => {
+	const remove = useCallback(async (id: string) => {
 		await api.delete(`/notifications/${id}`);
 		setState((s) => ({ ...s, items: s.items.filter((n) => n.id !== id) }));
-	};
+	}, []);
 
 	return { state, loadMore, markRead, markAllRead, remove };
 };

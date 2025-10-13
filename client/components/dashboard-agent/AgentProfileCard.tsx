@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '../ui/Button';
 import { ProfileUpdateModal } from './ProfileUpdateModal';
@@ -13,7 +13,29 @@ interface AgentProfileCardProps {
 
 export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 	const [showUpdateModal, setShowUpdateModal] = useState(false);
+	const [isInfoOpen, setIsInfoOpen] = useState<boolean>(true);
 	const router = useRouter();
+
+	// Restore persisted collapse state
+	useEffect(() => {
+		try {
+			const v = localStorage.getItem('dashboard.profInfo.open');
+			if (v !== null) setIsInfoOpen(v === '1');
+		} catch {}
+	}, []);
+
+	const toggleInfo = () => {
+		setIsInfoOpen((prev) => {
+			const next = !prev;
+			try {
+				localStorage.setItem(
+					'dashboard.profInfo.open',
+					next ? '1' : '0',
+				);
+			} catch {}
+			return next;
+		});
+	};
 
 	return (
 		<>
@@ -113,71 +135,104 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 					</div>
 				</div>
 
-				{/* Professional Information - Only if profile is completed */}
+				{/* Professional Information - Collapsible when profile is completed */}
 				{user.profileCompleted && user.professionalInfo && (
 					<>
 						<hr className="my-6" />
-						<h4 className="text-md font-semibold text-gray-900 mb-4">
-							Informations professionnelles
-						</h4>
+						<button
+							onClick={toggleInfo}
+							className="w-full flex items-center justify-between text-left"
+							aria-expanded={isInfoOpen}
+						>
+							<h4 className="text-md font-semibold text-gray-900">
+								Informations professionnelles
+							</h4>
+							<svg
+								className={`w-5 h-5 text-gray-500 transition-transform ${
+									isInfoOpen ? 'rotate-180' : ''
+								}`}
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									strokeWidth="2"
+									d="M19 9l-7 7-7-7"
+								/>
+							</svg>
+						</button>
 
-						<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-							<div className="text-center p-4 bg-gray-50 rounded-lg">
-								<p className="text-2xl font-bold text-cyan-600">
-									{user.professionalInfo
-										?.interventionRadius || 20}
-									km
-								</p>
-								<p className="text-sm text-gray-600">
-									Rayon d&apos;intervention
-								</p>
-							</div>
-							<div className="text-center p-4 bg-gray-50 rounded-lg">
-								<p className="text-2xl font-bold text-cyan-600">
-									{user.professionalInfo?.yearsExperience ||
-										0}
-								</p>
-								<p className="text-sm text-gray-600">
-									Années d&apos;expérience
-								</p>
-							</div>
-							<div className="text-center p-4 bg-gray-50 rounded-lg">
-								<p className="text-2xl font-bold text-cyan-600">
-									{user.professionalInfo?.network || 'N/A'}
-								</p>
-								<p className="text-sm text-gray-600">Réseau</p>
-							</div>
-						</div>
-
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-							<div>
-								<p className="text-sm font-medium text-gray-600">
-									Secteur d&apos;activité
-								</p>
-								<p className="text-base text-gray-900">
-									{user.professionalInfo?.city} (
-									{user.professionalInfo?.postalCode})
-								</p>
-							</div>
-							<div>
-								<p className="text-sm font-medium text-gray-600">
-									SIRET
-								</p>
-								<p className="text-base text-gray-900">
-									{user.professionalInfo?.siretNumber ||
-										'Non renseigné'}
-								</p>
-							</div>
-							{user.professionalInfo?.personalPitch && (
-								<div className="md:col-span-2">
-									<p className="text-sm font-medium text-gray-600">
-										Bio personnelle
+						<div
+							className={`overflow-hidden transition-all duration-300 ${
+								isInfoOpen ? 'max-h-[1000px] mt-4' : 'max-h-0'
+							}`}
+						>
+							<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+								<div className="text-center p-4 bg-gray-50 rounded-lg">
+									<p className="text-2xl font-bold text-cyan-600">
+										{user.professionalInfo
+											?.interventionRadius || 20}
+										km
 									</p>
-									<p className="text-base text-gray-900 mt-1">
-										{user.professionalInfo.personalPitch}
+									<p className="text-sm text-gray-600">
+										Rayon d&apos;intervention
 									</p>
 								</div>
-							)}
+								<div className="text-center p-4 bg-gray-50 rounded-lg">
+									<p className="text-2xl font-bold text-cyan-600">
+										{user.professionalInfo
+											?.yearsExperience || 0}
+									</p>
+									<p className="text-sm text-gray-600">
+										Années d&apos;expérience
+									</p>
+								</div>
+								<div className="text-center p-4 bg-gray-50 rounded-lg">
+									<p className="text-2xl font-bold text-cyan-600">
+										{user.professionalInfo?.network ||
+											'N/A'}
+									</p>
+									<p className="text-sm text-gray-600">
+										Réseau
+									</p>
+								</div>
+							</div>
+
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+								<div>
+									<p className="text-sm font-medium text-gray-600">
+										Secteur d&apos;activité
+									</p>
+									<p className="text-base text-gray-900">
+										{user.professionalInfo?.city} (
+										{user.professionalInfo?.postalCode})
+									</p>
+								</div>
+								<div>
+									<p className="text-sm font-medium text-gray-600">
+										SIRET
+									</p>
+									<p className="text-base text-gray-900">
+										{user.professionalInfo?.siretNumber ||
+											'Non renseigné'}
+									</p>
+								</div>
+								{user.professionalInfo?.personalPitch && (
+									<div className="md:col-span-2">
+										<p className="text-sm font-medium text-gray-600">
+											Bio personnelle
+										</p>
+										<p className="text-base text-gray-900 mt-1">
+											{
+												user.professionalInfo
+													.personalPitch
+											}
+										</p>
+									</div>
+								)}
+							</div>
 						</div>
 					</>
 				)}

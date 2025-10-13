@@ -1,13 +1,16 @@
+'use client';
+
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '../ui/Button';
 import PropertyManager from '../property/PropertyManager';
-import Link from 'next/link';
 import { CollaborationList } from '../collaboration/CollaborationList';
 import { DASHBOARD_TEXT } from '@/lib/constants/text';
 import { MySearches } from '../search-ads/MySearches';
 import { ProfileUpdateModal } from '../dashboard-agent';
 import { User } from '@/types/auth';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
+import { formatNumber } from '@/lib/utils/format';
 
 const Home = () => {
 	const { user } = useAuth();
@@ -15,6 +18,8 @@ const Home = () => {
 		'overview' | 'properties' | 'collaborations' | 'searches'
 	>('overview');
 	const [showUpdateModal, setShowUpdateModal] = useState(false);
+
+	const { kpis, loading: statsLoading } = useDashboardStats(user?._id);
 
 	const renderOverview = () => (
 		<div className="space-y-6">
@@ -40,35 +45,8 @@ const Home = () => {
 				)}
 			</div>
 
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-				<div className="bg-white rounded-lg shadow p-6">
-					<div className="flex items-center">
-						<div className="p-3 rounded-full bg-green-100 text-green-600">
-							<svg
-								className="w-6 h-6"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth="2"
-									d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-								/>
-							</svg>
-						</div>
-						<div className="ml-4">
-							<h3 className="text-lg font-semibold text-gray-900">
-								Annonces actives
-							</h3>
-							<p className="text-2xl font-bold text-green-600">
-								0
-							</p>
-						</div>
-					</div>
-				</div>
-
+			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+				{/* Mes biens */}
 				<div className="bg-white rounded-lg shadow p-6">
 					<div className="flex items-center">
 						<div className="p-3 rounded-full bg-blue-100 text-blue-600">
@@ -82,27 +60,86 @@ const Home = () => {
 									strokeLinecap="round"
 									strokeLinejoin="round"
 									strokeWidth="2"
-									d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-								/>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth="2"
-									d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+									d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
 								/>
 							</svg>
 						</div>
 						<div className="ml-4">
-							<h3 className="text-lg font-semibold text-gray-900">
-								Vues totales
+							<h3 className="text-sm font-medium text-gray-600">
+								Mes biens
 							</h3>
-							<p className="text-2xl font-bold text-blue-600">
-								0
+							<p className="text-2xl font-bold text-gray-900">
+								{statsLoading
+									? '—'
+									: formatNumber(kpis.propertiesTotal)}
 							</p>
 						</div>
 					</div>
 				</div>
 
+				{/* Collaborations totales */}
+				<div className="bg-white rounded-lg shadow p-6">
+					<div className="flex items-center">
+						<div className="p-3 rounded-full bg-green-100 text-green-600">
+							<svg
+								className="w-6 h-6"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									strokeWidth="2"
+									d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"
+								/>
+							</svg>
+						</div>
+						<div className="ml-4">
+							<h3 className="text-sm font-medium text-gray-600">
+								Collaborations totales
+							</h3>
+							<p className="text-2xl font-bold text-gray-900">
+								{statsLoading
+									? '—'
+									: formatNumber(kpis.collaborationsTotal)}
+							</p>
+						</div>
+					</div>
+				</div>
+
+				{/* Collaborations actives */}
+				<div className="bg-white rounded-lg shadow p-6">
+					<div className="flex items-center">
+						<div className="p-3 rounded-full bg-yellow-100 text-yellow-600">
+							<svg
+								className="w-6 h-6"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									strokeWidth="2"
+									d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857"
+								/>
+							</svg>
+						</div>
+						<div className="ml-4">
+							<h3 className="text-sm font-medium text-gray-600">
+								Collaborations actives
+							</h3>
+							<p className="text-2xl font-bold text-gray-900">
+								{statsLoading
+									? '—'
+									: formatNumber(kpis.collaborationsActive)}
+							</p>
+						</div>
+					</div>
+				</div>
+
+				{/* Mes recherches */}
 				<div className="bg-white rounded-lg shadow p-6">
 					<div className="flex items-center">
 						<div className="p-3 rounded-full bg-purple-100 text-purple-600">
@@ -116,16 +153,19 @@ const Home = () => {
 									strokeLinecap="round"
 									strokeLinejoin="round"
 									strokeWidth="2"
-									d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+									d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
 								/>
 							</svg>
 						</div>
 						<div className="ml-4">
-							<Link href="/chat" className="hover:underline">
-								<h3 className="text-lg font-semibold text-gray-900">
-									Messages
-								</h3>
-							</Link>
+							<h3 className="text-sm font-medium text-gray-600">
+								Mes recherches
+							</h3>
+							<p className="text-2xl font-bold text-gray-900">
+								{statsLoading
+									? '—'
+									: formatNumber(kpis.mySearches)}
+							</p>
 						</div>
 					</div>
 				</div>
@@ -287,7 +327,7 @@ const Home = () => {
 								</h2>
 							</div>
 							<CollaborationList
-								currentUserId={user.id}
+								currentUserId={user._id}
 								onClose={() => {}}
 							/>
 						</div>

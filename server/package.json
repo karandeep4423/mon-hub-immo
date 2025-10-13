@@ -9,7 +9,8 @@
 		"test": "jest --runInBand",
 		"build": "tsc",
 		"lint": "eslint .",
-		"prepare": "echo \"skipping husky (no .git)\""
+		"prepare": "echo \"skipping husky (no .git)\"",
+		"migrate:progress-steps": "ts-node src/scripts/migrateProgressSteps.ts"
 	},
 	"lint-staged": {
 		"**/*.{js,jsx,ts,tsx}": "eslint --fix",
@@ -37,8 +38,8 @@
 		"express-validator": "^7.2.1",
 		"helmet": "^8.1.0",
 		"jsonwebtoken": "^9.0.2",
-		"mongodb": "^6.10.0",
-		"mongoose": "^8.16.4",
+		"mongodb": "^6.20.0",
+		"mongoose": "^8.18.3",
 		"multer": "^2.0.2",
 		"multer-s3": "^3.0.1",
 		"nodemailer": "^7.0.5",

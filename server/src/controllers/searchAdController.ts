@@ -37,7 +37,29 @@ export const getAllSearchAds = async (
 	res: Response,
 ): Promise<void> => {
 	try {
-		const searchAds = await SearchAd.find({ status: 'active' })
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const filter: any = { status: 'active' };
+
+		// Add location filtering support (cities or postal codes)
+		const { city, postalCode } = req.query;
+
+		if (city) {
+			// Support comma-separated cities
+			const cities = (city as string).split(',').map((c) => c.trim());
+			filter['location.cities'] = {
+				$in: cities.map((c) => new RegExp(c, 'i')),
+			};
+		}
+
+		if (postalCode) {
+			// Support comma-separated postal codes
+			const postalCodes = (postalCode as string)
+				.split(',')
+				.map((pc) => pc.trim());
+			filter['location.postalCodes'] = { $in: postalCodes };
+		}
+
+		const searchAds = await SearchAd.find(filter)
 			.populate('authorId', 'firstName lastName profileImage userType')
 			.sort({ createdAt: -1 });
 		res.status(200).json({ success: true, data: searchAds });

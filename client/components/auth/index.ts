@@ -7,3 +7,4 @@ export { ProfileCompletion } from './ProfileCompletion';
 export { WelcomeContent } from './WelcomeContent';
 export { AuthLayout } from './AuthLayout';
 export { ProtectedRoute } from './ProtectedRoute';
+export { StepIndicator } from './StepIndicator';
