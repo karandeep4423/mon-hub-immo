@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button, ConfirmDialog } from '@/components/ui';
 import PropertyForm from './PropertyForm';
 import { useAuth } from '@/hooks/useAuth';
@@ -24,6 +24,13 @@ const PropertyManager: React.FC = () => {
 		null,
 	);
 	const [formLoading, setFormLoading] = useState(false);
+
+	// Filter states
+	const [searchTerm, setSearchTerm] = useState('');
+	const [statusFilter, setStatusFilter] = useState<string>('all');
+	const [propertyTypeFilter, setPropertyTypeFilter] = useState<string>('all');
+	const [transactionTypeFilter, setTransactionTypeFilter] =
+		useState<string>('all');
 
 	// Confirm dialog state
 	const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -161,6 +168,65 @@ const PropertyManager: React.FC = () => {
 		setShowConfirmDialog(false);
 		setPropertyToDelete(null);
 	};
+
+	// Filter and search properties
+	const filteredProperties = useMemo(() => {
+		return properties.filter((property) => {
+			// Status filter
+			if (statusFilter !== 'all' && property.status !== statusFilter) {
+				return false;
+			}
+
+			// Property type filter
+			if (
+				propertyTypeFilter !== 'all' &&
+				property.propertyType !== propertyTypeFilter
+			) {
+				return false;
+			}
+
+			// Transaction type filter
+			if (
+				transactionTypeFilter !== 'all' &&
+				property.transactionType !== transactionTypeFilter
+			) {
+				return false;
+			}
+
+			// Search filter (title, city, or description)
+			if (searchTerm) {
+				const searchLower = searchTerm.toLowerCase();
+				return (
+					property.title.toLowerCase().includes(searchLower) ||
+					property.city.toLowerCase().includes(searchLower) ||
+					property.description.toLowerCase().includes(searchLower)
+				);
+			}
+
+			return true;
+		});
+	}, [
+		properties,
+		statusFilter,
+		propertyTypeFilter,
+		transactionTypeFilter,
+		searchTerm,
+	]);
+
+	// Reset all filters
+	const resetFilters = () => {
+		setSearchTerm('');
+		setStatusFilter('all');
+		setPropertyTypeFilter('all');
+		setTransactionTypeFilter('all');
+	};
+
+	// Check if any filters are active
+	const hasActiveFilters =
+		searchTerm !== '' ||
+		statusFilter !== 'all' ||
+		propertyTypeFilter !== 'all' ||
+		transactionTypeFilter !== 'all';
 
 	const handleStatusChange = async (
 		propertyId: string,
@@ -312,6 +378,135 @@ const PropertyManager: React.FC = () => {
 				</div>
 			)}
 
+			{/* Filter Section */}
+			{!loading && properties.length > 0 && (
+				<div className="bg-white rounded-xl shadow-sm border p-6">
+					<div className="flex flex-col lg:flex-row lg:items-center gap-4">
+						{/* Search Input */}
+						<div className="flex-1">
+							<div className="relative">
+								<input
+									type="text"
+									placeholder="Rechercher par titre, ville ou description..."
+									value={searchTerm}
+									onChange={(e) =>
+										setSearchTerm(e.target.value)
+									}
+									className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+								/>
+								<svg
+									className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth="2"
+										d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+									/>
+								</svg>
+							</div>
+						</div>
+
+						{/* Status Filter */}
+						<div className="w-full lg:w-48">
+							<select
+								value={statusFilter}
+								onChange={(e) =>
+									setStatusFilter(e.target.value)
+								}
+								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+							>
+								<option value="all">Tous les statuts</option>
+								<option value="draft">Brouillon</option>
+								<option value="active">Actif</option>
+								<option value="sold">Vendu</option>
+								<option value="rented">Loué</option>
+								<option value="archived">Archivé</option>
+							</select>
+						</div>
+
+						{/* Property Type Filter */}
+						<div className="w-full lg:w-48">
+							<select
+								value={propertyTypeFilter}
+								onChange={(e) =>
+									setPropertyTypeFilter(e.target.value)
+								}
+								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+							>
+								<option value="all">Tous les types</option>
+								<option value="Appartement">Appartement</option>
+								<option value="Maison">Maison</option>
+								<option value="Terrain">Terrain</option>
+								<option value="Local commercial">
+									Local commercial
+								</option>
+								<option value="Bureaux">Bureaux</option>
+							</select>
+						</div>
+
+						{/* Transaction Type Filter */}
+						<div className="w-full lg:w-40">
+							<select
+								value={transactionTypeFilter}
+								onChange={(e) =>
+									setTransactionTypeFilter(e.target.value)
+								}
+								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+							>
+								<option value="all">Tous</option>
+								<option value="Vente">Vente</option>
+								<option value="Location">Location</option>
+							</select>
+						</div>
+
+						{/* Reset Filters Button */}
+						{hasActiveFilters && (
+							<Button
+								variant="outline"
+								onClick={resetFilters}
+								className="lg:w-auto w-full"
+							>
+								<svg
+									className="w-4 h-4 mr-2"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth="2"
+										d="M6 18L18 6M6 6l12 12"
+									/>
+								</svg>
+								Réinitialiser
+							</Button>
+						)}
+					</div>
+
+					{/* Filter Results Count */}
+					{hasActiveFilters && (
+						<div className="mt-4 pt-4 border-t">
+							<p className="text-sm text-gray-600">
+								<span className="font-semibold text-gray-900">
+									{filteredProperties.length}
+								</span>{' '}
+								résultat
+								{filteredProperties.length !== 1 ? 's' : ''} sur{' '}
+								<span className="font-semibold text-gray-900">
+									{properties.length}
+								</span>{' '}
+								bien{properties.length !== 1 ? 's' : ''}
+							</p>
+						</div>
+					)}
+				</div>
+			)}
+
 			{loading ? (
 				<div className="text-center py-12">
 					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -371,9 +566,36 @@ const PropertyManager: React.FC = () => {
 						</div>
 					</div>
 				</div>
+			) : filteredProperties.length === 0 && hasActiveFilters ? (
+				<div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+					<div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+						<svg
+							className="w-8 h-8 text-gray-400"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								strokeWidth="2"
+								d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+							/>
+						</svg>
+					</div>
+					<h3 className="text-lg font-semibold text-gray-900 mb-2">
+						Aucun bien trouvé
+					</h3>
+					<p className="text-gray-600 mb-4">
+						Aucun bien ne correspond à vos critères de recherche.
+					</p>
+					<Button variant="outline" onClick={resetFilters}>
+						Réinitialiser les filtres
+					</Button>
+				</div>
 			) : (
 				<div className="space-y-4">
-					{properties.map((property) => (
+					{filteredProperties.map((property) => (
 						<div
 							key={property._id}
 							className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"

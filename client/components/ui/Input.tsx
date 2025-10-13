@@ -32,11 +32,11 @@ export const Input: React.FC<InputProps> = ({
           block w-full px-4 py-3 sm:py-2 text-base sm:text-sm
           border-2 rounded-xl shadow-sm 
           transition-all duration-200
-          focus:outline-none focus:ring-2 focus:ring-brand-600 focus:border-brand-600
+          outline-none
           ${
 				error
-					? 'border-red-300 text-red-900 placeholder-red-400 focus:ring-red-500 focus:border-red-500'
-					: 'border-gray-200 hover:border-gray-300 focus:border-brand-600'
+					? 'border-red-300 text-red-900 placeholder-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
+					: 'border-gray-200 hover:border-gray-300 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20'
 			}
           ${className}
         `}

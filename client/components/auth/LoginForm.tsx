@@ -32,7 +32,7 @@ export const LoginWithUserType: React.FC = () => {
 
 	const userTypes = [
 		{ id: 'agent', icon: '👤', title: AUTH_TEXT.agentTitle },
-		{ id: 'apporteur', icon: '�', title: AUTH_TEXT.providerTitle },
+		{ id: 'apporteur', icon: '🤝', title: AUTH_TEXT.providerTitle },
 		{ id: 'partenaire', icon: '📋', title: 'Accès Partenaire' },
 	];
 
@@ -161,142 +161,336 @@ export const LoginWithUserType: React.FC = () => {
 	};
 
 	return (
-		<div className="min-h-screen bg-white flex flex-col">
-			{/* Header */}
-			<div className="text-center pt-8 sm:pt-12 pb-6 sm:pb-8 px-4 sm:px-6">
-				<h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 sm:mb-6">
-					{AUTH_TEXT.brandName.split('hub')[0]}
-					<span className="text-cyan-500">
-						hub{AUTH_TEXT.brandName.split('hub')[1]}
-					</span>
-				</h1>
-				<p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8 max-w-md mx-auto">
-					{AUTH_TEXT.collaborativeNetwork}
-				</p>
-				<h2 className="text-base sm:text-lg font-medium text-gray-800 mb-4 sm:mb-6">
-					{AUTH_TEXT.chooseAccess}
-				</h2>
-			</div>
+		<div className="min-h-screen bg-white flex">
+			{/* Left Side - Branding and Image Section (Hidden on Mobile) */}
+			<div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-cyan-600 via-blue-600 to-indigo-700 relative overflow-hidden">
+				{/* Decorative Background Pattern */}
+				<div className="absolute inset-0 opacity-10">
+					<div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+					<div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full translate-x-1/2 translate-y-1/2"></div>
+				</div>
 
-			{/* Content Container */}
-			<div className="flex-1 px-4 sm:px-6 lg:px-8">
-				<div className="max-w-sm sm:max-w-md mx-auto">
-					{/* User Type segmented selector + Login Form */}
-					<div className="mb-6 sm:mb-8">
-						<div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
-							{userTypes.map((type) => {
-								const selected = selectedUserType === type.id;
-								return (
-									<button
-										key={type.id}
-										type="button"
-										onClick={() =>
-											setSelectedUserType(type.id)
-										}
-										className={`flex flex-col items-center justify-center rounded-xl border p-3 sm:p-4 text-center transition-all duration-200 focus:outline-none focus:ring-2 ${
-											selected
-												? 'border-cyan-500 bg-cyan-50 text-cyan-700 ring-cyan-200'
-												: 'border-gray-200 hover:border-gray-300 bg-white text-gray-700'
-										}`}
-									>
-										<span className="mb-1">
-											<RoleIcon
-												typeId={
-													type.id as
-														| 'agent'
-														| 'apporteur'
-														| 'partenaire'
-												}
-												className="w-6 h-6 sm:w-7 sm:h-7"
-											/>
-										</span>
-										<span className="text-[11px] sm:text-sm font-semibold leading-snug">
-											{type.id === 'agent'
-												? 'Agent\u00A0Immobilier'
-												: type.id === 'apporteur'
-													? 'Apporteur\u00A0d’affaires'
-													: 'Accès\u00A0Partenaire'}
-										</span>
-									</button>
-								);
-							})}
+				{/* Content */}
+				<div className="relative z-10 flex flex-col justify-between p-12 text-white w-full">
+					{/* Logo and Brand */}
+					<div>
+						<div className="flex items-center space-x-3 mb-8">
+							<div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+								<svg
+									className="w-7 h-7 text-white"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth="2"
+										d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+									/>
+								</svg>
+							</div>
+							<h1 className="text-2xl font-bold">
+								mon
+								<span className="text-cyan-200">hubimmo</span>
+							</h1>
 						</div>
 
-						{/* Login Form */}
-						<form
-							onSubmit={handleSubmit}
-							className="space-y-4 sm:space-y-5"
-						>
-							<Input
-								label=""
-								type="email"
-								name="email"
-								value={formData.email}
-								onChange={handleChange}
-								error={errors.email}
-								placeholder={AUTH_TEXT.emailPlaceholder}
-								required
-								className="text-base sm:text-sm"
-							/>
+						<h2 className="text-4xl font-bold mb-4 leading-tight">
+							Bienvenue !<br />
+							Connectez-vous à<br />
+							votre espace pro
+						</h2>
+						<p className="text-lg text-blue-100 mb-12">
+							Accédez à votre tableau de bord et gérez vos
+							collaborations en toute simplicité
+						</p>
 
-							<Input
-								label=""
-								type="password"
-								name="password"
-								value={formData.password}
-								onChange={handleChange}
-								error={errors.password}
-								placeholder={AUTH_TEXT.passwordPlaceholder}
-								required
-								className="text-base sm:text-sm"
-							/>
-							<Link
-								className="text-sm left hover:text-blue-600 hover:font-semibold"
-								href="/auth/forgot-password"
-							>
-								{AUTH_TEXT.forgotPassword}
-							</Link>
-							<div className="pt-2">
-								{/** Primary action label follows screenshot: Connexion Agent / Connexion Apporteur / Accès Partenaire **/}
-								{(() => {
-									// eslint-disable-next-line @typescript-eslint/no-unused-vars
-									const btnLabel =
-										selectedUserType === 'partenaire'
-											? 'Accès Partenaire'
-											: `${AUTH_TEXT.loginButton} ${selectedType?.title.split(' ')[0]}`;
-									return null;
-								})()}
-								<Button
-									type="submit"
-									loading={loading}
-									className="w-full bg-cyan-500 hover:bg-cyan-600 text-white transition-colors duration-200"
-									size="lg"
-								>
-									<span className="text-sm sm:text-base">
-										{selectedUserType === 'partenaire'
-											? 'Accès Partenaire'
-											: `${AUTH_TEXT.loginButton} ${selectedType?.title.split(' ')[0]}`}
-									</span>
-								</Button>
+						{/* Benefits List */}
+						<div className="space-y-4">
+							<div className="flex items-start space-x-3">
+								<div className="w-6 h-6 bg-cyan-400/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+									<svg
+										className="w-4 h-4"
+										fill="currentColor"
+										viewBox="0 0 20 20"
+									>
+										<path
+											fillRule="evenodd"
+											d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+											clipRule="evenodd"
+										/>
+									</svg>
+								</div>
+								<div>
+									<p className="font-semibold">
+										Gestion centralisée
+									</p>
+									<p className="text-sm text-blue-100">
+										Tous vos biens et collaborations en un
+										seul endroit
+									</p>
+								</div>
 							</div>
-						</form>
+							<div className="flex items-start space-x-3">
+								<div className="w-6 h-6 bg-cyan-400/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+									<svg
+										className="w-4 h-4"
+										fill="currentColor"
+										viewBox="0 0 20 20"
+									>
+										<path
+											fillRule="evenodd"
+											d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+											clipRule="evenodd"
+										/>
+									</svg>
+								</div>
+								<div>
+									<p className="font-semibold">
+										Communication instantanée
+									</p>
+									<p className="text-sm text-blue-100">
+										Chat en temps réel avec vos partenaires
+									</p>
+								</div>
+							</div>
+							<div className="flex items-start space-x-3">
+								<div className="w-6 h-6 bg-cyan-400/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+									<svg
+										className="w-4 h-4"
+										fill="currentColor"
+										viewBox="0 0 20 20"
+									>
+										<path
+											fillRule="evenodd"
+											d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+											clipRule="evenodd"
+										/>
+									</svg>
+								</div>
+								<div>
+									<p className="font-semibold">
+										Sécurité garantie
+									</p>
+									<p className="text-sm text-blue-100">
+										Vos données sont protégées et cryptées
+									</p>
+								</div>
+							</div>
+						</div>
+					</div>
 
-						{/* Sign Up Link */}
-						<div className="text-center mt-8 sm:mt-10 pb-6">
-							<button
-								type="button"
-								onClick={() => router.push('/auth/signup')}
-								className="text-cyan-600 hover:text-cyan-500 font-medium text-sm sm:text-base transition-colors duration-200 underline-offset-4 hover:underline"
-							>
-								{AUTH_TEXT.noAccount} {AUTH_TEXT.signUpHere}
-							</button>
+					{/* Quote/Testimonial */}
+					<div className="pt-8 border-t border-white/20">
+						<p className="text-lg italic mb-3">
+							&quot;La plateforme la plus efficace pour développer
+							mon réseau professionnel&quot;
+						</p>
+						<div className="flex items-center space-x-3">
+							<div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+								<span className="text-sm font-bold">MC</span>
+							</div>
+							<div>
+								<p className="font-semibold text-sm">
+									Marie Curie
+								</p>
+								<p className="text-xs text-blue-100">
+									Agent immobilier, Paris
+								</p>
+							</div>
 						</div>
 					</div>
 				</div>
 			</div>
 
-			{/* Bottom Safe Area for Mobile */}
-			<div className="pb-safe-area-inset-bottom sm:pb-0"></div>
+			{/* Right Side - Form Section */}
+			<div className="flex-1 flex flex-col lg:w-1/2">
+				{/* Mobile Header */}
+				<div className="lg:hidden bg-gradient-to-r from-cyan-600 to-blue-600 text-white p-6">
+					<div className="flex items-center space-x-3">
+						<div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+							<svg
+								className="w-6 h-6 text-white"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									strokeWidth="2"
+									d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+								/>
+							</svg>
+						</div>
+						<h1 className="text-xl font-bold">
+							mon<span className="text-cyan-200">hubimmo</span>
+						</h1>
+					</div>
+				</div>
+
+				{/* Form Container */}
+				<div className="flex-1 flex items-center justify-center px-6 py-8 lg:py-12">
+					<div className="w-full max-w-md">
+						{/* Desktop Header */}
+						<div className="hidden lg:block mb-8">
+							<h2 className="text-3xl font-bold text-gray-900 mb-2">
+								Content de vous revoir !
+							</h2>
+							<p className="text-gray-600">
+								Connectez-vous pour accéder à votre espace
+								professionnel
+							</p>
+						</div>
+
+						{/* User Type Selector + Login Form */}
+						<div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+							{/* Mobile Title */}
+							<div className="lg:hidden text-center mb-6">
+								<h2 className="text-2xl font-bold text-gray-900 mb-2">
+									Connexion
+								</h2>
+								<p className="text-sm text-gray-600">
+									Choisissez votre type de compte
+								</p>
+							</div>
+
+							{/* Account Type Selector */}
+							<div className="mb-6">
+								<label className="block text-sm font-medium text-gray-700 mb-3">
+									Type de compte
+								</label>
+								<div className="grid grid-cols-3 gap-3">
+									{userTypes.map((type) => {
+										const selected =
+											selectedUserType === type.id;
+										return (
+											<button
+												key={type.id}
+												type="button"
+												onClick={() =>
+													setSelectedUserType(type.id)
+												}
+												className={`group flex flex-col items-center justify-center rounded-xl border-2 p-4 text-center transition-all duration-200 hover:shadow-md ${
+													selected
+														? 'border-brand bg-gradient-to-br from-brand-50 to-cyan-50 shadow-lg'
+														: 'border-gray-200 hover:border-brand-300 bg-white'
+												}`}
+											>
+												<div
+													className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 transition-colors ${
+														selected
+															? 'bg-brand text-white'
+															: 'bg-gray-100 text-gray-400 group-hover:bg-brand-100 group-hover:text-brand'
+													}`}
+												>
+													<RoleIcon
+														typeId={
+															type.id as
+																| 'agent'
+																| 'apporteur'
+																| 'partenaire'
+														}
+														className="w-5 h-5"
+													/>
+												</div>
+												<span className="text-xs font-semibold leading-snug text-gray-900">
+													{type.id === 'agent'
+														? 'Agent Immobilier'
+														: type.id ===
+															  'apporteur'
+															? "Apporteur d'affaires"
+															: 'Accès Partenaire'}
+												</span>
+											</button>
+										);
+									})}
+								</div>
+							</div>
+
+							{/* Login Form */}
+							<form onSubmit={handleSubmit} className="space-y-5">
+								<div>
+									<Input
+										label=""
+										type="email"
+										name="email"
+										value={formData.email}
+										onChange={handleChange}
+										error={errors.email}
+										placeholder={AUTH_TEXT.emailPlaceholder}
+										required
+									/>
+								</div>
+
+								<div>
+									<Input
+										label=""
+										type="password"
+										name="password"
+										value={formData.password}
+										onChange={handleChange}
+										error={errors.password}
+										placeholder={
+											AUTH_TEXT.passwordPlaceholder
+										}
+										required
+									/>
+								</div>
+
+								<div className="flex items-center justify-end">
+									<Link
+										className="text-sm text-brand-600 hover:text-brand-700 font-medium transition-colors"
+										href="/auth/forgot-password"
+									>
+										{AUTH_TEXT.forgotPassword}
+									</Link>
+								</div>
+
+								<Button
+									type="submit"
+									loading={loading}
+									className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg"
+									size="lg"
+								>
+									{selectedUserType === 'partenaire'
+										? 'Accès Partenaire'
+										: `${AUTH_TEXT.loginButton} ${selectedType?.title.split(' ')[0]}`}
+								</Button>
+							</form>
+
+							{/* Divider */}
+							<div className="relative my-6">
+								<div className="absolute inset-0 flex items-center">
+									<div className="w-full border-t border-gray-200"></div>
+								</div>
+								<div className="relative flex justify-center text-sm">
+									<span className="px-4 bg-white text-gray-500">
+										ou
+									</span>
+								</div>
+							</div>
+
+							{/* Sign Up Link */}
+							<div className="text-center">
+								<p className="text-sm text-gray-600">
+									{AUTH_TEXT.noAccount}{' '}
+									<button
+										type="button"
+										onClick={() =>
+											router.push('/auth/signup')
+										}
+										className="text-brand-600 hover:text-brand-700 font-semibold transition-colors"
+									>
+										{AUTH_TEXT.signUpHere}
+									</button>
+								</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	);
 };
