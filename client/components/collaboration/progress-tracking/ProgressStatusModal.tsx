@@ -15,6 +15,8 @@ interface ProgressStatusModalProps {
 	onClose: () => void;
 	currentStep: ProgressStep;
 	steps: ProgressStepData[];
+	isOwner: boolean;
+	isCollaborator: boolean;
 	onUpdateStatus: (update: ProgressStatusUpdate) => Promise<void>;
 }
 
@@ -23,6 +25,8 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 	onClose,
 	currentStep,
 	steps,
+	isOwner,
+	isCollaborator,
 	onUpdateStatus,
 }) => {
 	// Find the next uncompleted step as default selection
@@ -41,11 +45,19 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 		const stepData = steps?.find((s) => s.id === selectedStep);
 		if (!selectedStep || stepData?.completed) return;
 
+		// Determine who is validating
+		const validatedBy: 'owner' | 'collaborator' = isOwner
+			? 'owner'
+			: isCollaborator
+				? 'collaborator'
+				: 'owner'; // Fallback to owner if neither (shouldn't happen)
+
 		setIsUpdating(true);
 		try {
 			await onUpdateStatus({
 				targetStep: selectedStep,
 				notes: notes.trim() || undefined,
+				validatedBy,
 			});
 			onClose();
 			setNotes('');

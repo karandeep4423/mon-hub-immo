@@ -15,12 +15,21 @@ interface ProgressTrackingDisplayProps {
 	currentProgressStep: ProgressStep;
 	progressSteps: ProgressStepData[];
 	canUpdate: boolean;
+	isOwner: boolean;
+	isCollaborator: boolean;
 	onStatusUpdate: (update: ProgressStatusUpdate) => Promise<void>;
 }
 
 export const ProgressTrackingDisplay: React.FC<
 	ProgressTrackingDisplayProps
-> = ({ currentProgressStep, progressSteps, canUpdate, onStatusUpdate }) => {
+> = ({
+	currentProgressStep,
+	progressSteps,
+	canUpdate,
+	isOwner,
+	isCollaborator,
+	onStatusUpdate,
+}) => {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
 	const currentStepIndex = STEP_ORDER.indexOf(currentProgressStep);
@@ -172,6 +181,8 @@ export const ProgressTrackingDisplay: React.FC<
 				onClose={() => setIsModalOpen(false)}
 				currentStep={currentProgressStep}
 				steps={progressSteps}
+				isOwner={isOwner}
+				isCollaborator={isCollaborator}
 				onUpdateStatus={onStatusUpdate}
 			/>
 		</div>

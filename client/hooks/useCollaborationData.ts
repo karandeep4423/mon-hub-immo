@@ -58,8 +58,11 @@ export const useCollaborationData = (
 							current:
 								foundCollaboration.currentProgressStep ===
 								step.id,
-							completedAt: step.completedAt,
-							notes: step.notes,
+							validatedAt: step.validatedAt,
+							ownerValidated: step.ownerValidated || false,
+							collaboratorValidated:
+								step.collaboratorValidated || false,
+							notes: step.notes || [],
 						};
 					},
 				);
@@ -78,6 +81,9 @@ export const useCollaborationData = (
 									Object.keys(PROGRESS_STEPS_CONFIG).length -
 										1),
 						current: foundCollaboration.currentStep === stepId,
+						ownerValidated: false,
+						collaboratorValidated: false,
+						notes: [],
 					}),
 				);
 				setProgressSteps(defaultSteps);
