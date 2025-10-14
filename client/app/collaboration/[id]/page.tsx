@@ -559,6 +559,18 @@ export default function CollaborationPage() {
 									canUpdate={canUpdate && isActive}
 									isOwner={Boolean(isOwner)}
 									isCollaborator={Boolean(isCollaborator)}
+									ownerUser={
+										typeof collaboration.propertyOwnerId ===
+										'object'
+											? collaboration.propertyOwnerId
+											: undefined
+									}
+									collaboratorUser={
+										typeof collaboration.collaboratorId ===
+										'object'
+											? collaboration.collaboratorId
+											: undefined
+									}
 									onStepUpdate={handleProgressUpdate}
 									onStatusUpdate={handleProgressStatusUpdate}
 								/>

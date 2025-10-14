@@ -90,7 +90,7 @@ export interface ProposeCollaborationRequest {
 	propertyId: string;
 	collaboratorId?: string; // Optional - backend will use authenticated user if not provided
 	commissionPercentage: number;
-	message: string;
+	message?: string;
 }
 
 export interface RespondToCollaborationRequest {

@@ -67,11 +67,12 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 		gasEmissionClass: undefined,
 		condition: undefined,
 		propertyNature: undefined,
-		characteristics: undefined,
 		saleType: undefined,
-		feesResponsibility: undefined,
 		annualCondoFees: undefined,
 		tariffLink: undefined,
+		agencyFeesPercentage: undefined,
+		agencyFeesAmount: undefined,
+		priceIncludingFees: undefined,
 		landArea: undefined,
 		levels: undefined,
 		parkingSpaces: undefined,
@@ -340,11 +341,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 					value={formData.title}
 					onChange={(e) => handleInputChange('title', e.target.value)}
 					placeholder="Ex: Bel appartement 3 pièces avec balcon"
-					className={errors.title ? 'border-red-500' : ''}
+					error={errors.title}
 				/>
-				{errors.title && (
-					<p className="text-red-500 text-sm mt-1">{errors.title}</p>
-				)}
 			</div>
 
 			<div>
@@ -358,7 +356,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 					}
 					placeholder="Décrivez votre bien en détail..."
 					rows={4}
-					className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+					className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
 						errors.description
 							? 'border-red-500'
 							: 'border-gray-300'
@@ -411,10 +409,55 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 					value={formData.saleType}
 					onChange={(value) => handleInputChange('saleType', value)}
 					name="saleType"
-					options={[
-						{ value: 'ancien', label: 'Ancien' },
-						{ value: 'viager', label: 'Viager' },
-					]}
+					options={
+						formData.propertyType === 'Terrain'
+							? [
+									{
+										value: 'constructible',
+										label: 'Constructible',
+									},
+									{
+										value: 'terrain_loisirs',
+										label: 'Terrain de loisirs',
+									},
+									{ value: 'jardin', label: 'Jardin' },
+									{
+										value: 'champs_agricole',
+										label: 'Champs agricole',
+									},
+									{ value: 'autre', label: 'Autre' },
+								]
+							: [
+									{
+										value: 'vente_classique',
+										label: 'Vente classique',
+									},
+									{
+										value: 'vente_viager',
+										label: 'Vente en viager',
+									},
+									{
+										value: 'vente_lot',
+										label: 'Vente en lot / Ensemble immobilier',
+									},
+									{
+										value: 'vente_vefa',
+										label: 'Vente en VEFA',
+									},
+									{
+										value: 'vente_location',
+										label: 'Vente en cours de location (Investissement locatif)',
+									},
+									{
+										value: 'vente_usufruit',
+										label: 'Vente en usufruit / Nu-propriété',
+									},
+									{
+										value: 'vente_indivisions',
+										label: 'Vente en indivisions',
+									},
+								]
+					}
 					placeholder="Choisissez..."
 				/>
 
@@ -435,56 +478,149 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 			</div>
 
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<Select
-					label="Nature du bien"
-					value={formData.propertyNature}
-					onChange={(value) =>
-						handleInputChange('propertyNature', value)
-					}
-					name="propertyNature"
-					options={[
-						{ value: 'neuf', label: 'Neuf' },
-						{ value: 'ancien', label: 'Ancien' },
-						{ value: 'loft', label: 'Loft' },
-						{ value: 'duplex', label: 'Duplex' },
-						{ value: 'triplex', label: 'Triplex' },
-						{ value: 'penthouse', label: 'Penthouse' },
-					]}
-					placeholder="Choisissez..."
-				/>
-
-				<Select
-					label="Caractéristiques"
-					value={formData.characteristics}
-					onChange={(value) =>
-						handleInputChange('characteristics', value)
-					}
-					name="characteristics"
-					options={[
-						{ value: 'standing', label: 'Standing' },
-						{ value: 'luxe', label: 'Luxe' },
-						{ value: 'familial', label: 'Familial' },
-						{ value: 'atypique', label: 'Atypique' },
-						{ value: 'investissement', label: 'Investissement' },
-					]}
-					placeholder="Choisissez..."
-				/>
+				{formData.propertyType !== 'Terrain' && (
+					<Select
+						label="Nature du bien"
+						value={formData.propertyNature}
+						onChange={(value) =>
+							handleInputChange('propertyNature', value)
+						}
+						name="propertyNature"
+						options={
+							formData.propertyType === 'Maison'
+								? [
+										{
+											value: 'maison_individuelle',
+											label: 'Maison individuelle',
+										},
+										{
+											value: 'maison_ville',
+											label: 'Maison de ville',
+										},
+										{
+											value: 'maison_plain_pied',
+											label: 'Maison de plain-pied',
+										},
+										{
+											value: 'maison_mitoyenne',
+											label: 'Maison mitoyenne',
+										},
+										{ value: 'ferme', label: 'Ferme' },
+										{ value: 'villa', label: 'Villa' },
+										{ value: 'autre', label: 'Autre' },
+									]
+								: formData.propertyType === 'Appartement'
+									? [
+											{
+												value: 'appartement_mansarde',
+												label: 'Appartement mansardé',
+											},
+											{
+												value: 'duplex',
+												label: 'Duplex',
+											},
+											{ value: 'loft', label: 'Loft' },
+											{
+												value: 'rdc_sureleve',
+												label: 'Rez-de-chaussée surélevé',
+											},
+											{
+												value: 'penthouse',
+												label: 'Penthouse',
+											},
+											{
+												value: 'souplex',
+												label: 'Souplex',
+											},
+											{ value: 'autre', label: 'Autre' },
+										]
+									: formData.propertyType ===
+										  'Local commercial'
+										? [
+												{
+													value: 'place_parking',
+													label: 'Place de parking',
+												},
+												{
+													value: 'garage',
+													label: 'Garage',
+												},
+												{
+													value: 'autres',
+													label: 'Autres',
+												},
+											]
+										: formData.propertyType === 'Bureaux'
+											? [
+													{
+														value: 'locaux_commercial',
+														label: 'Locaux à usage commercial',
+													},
+													{
+														value: 'locaux_professionnel',
+														label: 'Locaux à usage professionnel',
+													},
+													{
+														value: 'locaux_artisanaux',
+														label: 'Locaux artisanaux / Industriels',
+													},
+													{
+														value: 'immeuble_commercial',
+														label: 'Immeuble ou ensemble commerciaux',
+													},
+													{
+														value: 'locaux_atypique',
+														label: 'Locaux atypique',
+													},
+												]
+											: [
+													{
+														value: 'neuf',
+														label: 'Neuf',
+													},
+													{
+														value: 'ancien',
+														label: 'Ancien',
+													},
+													{
+														value: 'loft',
+														label: 'Loft',
+													},
+													{
+														value: 'duplex',
+														label: 'Duplex',
+													},
+													{
+														value: 'triplex',
+														label: 'Triplex',
+													},
+													{
+														value: 'penthouse',
+														label: 'Penthouse',
+													},
+												]
+						}
+						placeholder="Choisissez..."
+					/>
+				)}
 			</div>
 
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<Input
-					type="text"
-					value={formData.yearBuilt?.toString() || ''}
-					onChange={(e) =>
-						handleInputChange(
-							'yearBuilt',
-							parseInt(e.target.value) || undefined,
-						)
-					}
-					placeholder="AAAA"
-					label="Année de construction"
-					name="yearBuilt"
-				/>
+				{formData.propertyType !== 'Terrain' && (
+					<Input
+						type="text"
+						value={formData.yearBuilt?.toString() || ''}
+						onChange={(e) =>
+							handleInputChange(
+								'yearBuilt',
+								parseInt(e.target.value) || undefined,
+							)
+						}
+						placeholder="AAAA"
+						label="Année de construction"
+						name="yearBuilt"
+					/>
+				)}
 
 				{formData.propertyType === 'Terrain' && (
 					<NumberInput
@@ -502,46 +638,123 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 				)}
 			</div>
 
-			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<Select
-					label="Honoraires à la charge de"
-					value={formData.feesResponsibility}
-					onChange={(value) =>
-						handleInputChange('feesResponsibility', value)
-					}
-					name="feesResponsibility"
-					options={[
-						{ value: 'buyer', label: 'Acquéreur' },
-						{ value: 'seller', label: 'Vendeur' },
-					]}
-					placeholder="Choisissez..."
-				/>
+			{formData.propertyType === 'Appartement' && (
+				<div>
+					<NumberInput
+						label="Charges annuelles de copropriété"
+						value={formData.annualCondoFees}
+						onChange={(value) =>
+							handleInputChange('annualCondoFees', value)
+						}
+						name="annualCondoFees"
+						unit="€"
+						placeholder="1200"
+						min={0}
+						max={100000}
+					/>
+				</div>
+			)}
 
-				<NumberInput
-					label="Charges annuelles de copropriété"
-					value={formData.annualCondoFees}
-					onChange={(value) =>
-						handleInputChange('annualCondoFees', value)
-					}
-					name="annualCondoFees"
-					unit="€"
-					placeholder="1200"
-					min={0}
-					max={100000}
-				/>
-			</div>
+			{formData.propertyType === 'Terrain' && (
+				<div>
+					<Input
+						type="url"
+						value={formData.tariffLink || ''}
+						onChange={(e) =>
+							handleInputChange('tariffLink', e.target.value)
+						}
+						placeholder="https://example.com/tarifs"
+						label="Lien de redirection vers vos tarifs"
+						name="tariffLink"
+					/>
+				</div>
+			)}
 
-			<div>
-				<Input
-					type="url"
-					value={formData.tariffLink || ''}
-					onChange={(e) =>
-						handleInputChange('tariffLink', e.target.value)
-					}
-					placeholder="https://example.com/tarifs"
-					label="Lien de redirection vers vos tarifs"
-					name="tariffLink"
-				/>
+			{/* Agency Fees Section */}
+			<div className="border-t pt-6 mt-6">
+				<h4 className="text-md font-semibold mb-4 text-gray-800">
+					💰 Frais d&apos;agence (optionnel)
+				</h4>
+				<p className="text-sm text-gray-600 mb-4">
+					Le prix saisi ci-dessus correspond au{' '}
+					<strong>prix net vendeur</strong>. Les informations
+					ci-dessous servent au calcul interne et à la transparence
+					entre agents.
+				</p>
+
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<NumberInput
+						label="% frais d'agence"
+						value={formData.agencyFeesPercentage}
+						onChange={(value) => {
+							handleInputChange('agencyFeesPercentage', value);
+							// Auto-calculate agency fees amount and price including fees
+							if (value && formData.price) {
+								const feesAmount =
+									(formData.price * value) / 100;
+								const priceWithFees =
+									formData.price + feesAmount;
+								handleInputChange(
+									'agencyFeesAmount',
+									feesAmount,
+								);
+								handleInputChange(
+									'priceIncludingFees',
+									priceWithFees,
+								);
+							}
+						}}
+						name="agencyFeesPercentage"
+						unit="%"
+						placeholder="8"
+						min={0}
+						max={100}
+					/>
+
+					<div>
+						<label className="block text-sm font-medium text-gray-700 mb-2">
+							Frais d&apos;agence (montant)
+						</label>
+						<div className="relative">
+							<input
+								type="text"
+								value={
+									formData.agencyFeesAmount
+										? `${Math.round(formData.agencyFeesAmount).toLocaleString()} €`
+										: ''
+								}
+								disabled
+								className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
+								placeholder="Calculé automatiquement"
+							/>
+						</div>
+						<p className="text-xs text-gray-500 mt-1">
+							Calculé automatiquement
+						</p>
+					</div>
+				</div>
+
+				<div className="mt-4">
+					<label className="block text-sm font-medium text-gray-700 mb-2">
+						Prix FAI (Frais d&apos;Acquéreur Inclus)
+					</label>
+					<div className="relative">
+						<input
+							type="text"
+							value={
+								formData.priceIncludingFees
+									? `${Math.round(formData.priceIncludingFees).toLocaleString()} €`
+									: ''
+							}
+							disabled
+							className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
+							placeholder="Prix net vendeur + Frais d'agence"
+						/>
+					</div>
+					<p className="text-xs text-gray-500 mt-1">
+						Prix net vendeur + Frais d&apos;agence
+					</p>
+				</div>
 			</div>
 		</div>
 	);
@@ -561,13 +774,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 						handleInputChange('address', e.target.value)
 					}
 					placeholder="123 Rue de la Paix"
-					className={errors.address ? 'border-red-500' : ''}
+					error={errors.address}
 				/>
-				{errors.address && (
-					<p className="text-red-500 text-sm mt-1">
-						{errors.address}
-					</p>
-				)}
 			</div>
 
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -582,13 +790,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 							handleInputChange('city', e.target.value)
 						}
 						placeholder="Paris"
-						className={errors.city ? 'border-red-500' : ''}
+						error={errors.city}
 					/>
-					{errors.city && (
-						<p className="text-red-500 text-sm mt-1">
-							{errors.city}
-						</p>
-					)}
 				</div>
 
 				<div>
@@ -602,13 +805,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 							handleInputChange('postalCode', e.target.value)
 						}
 						placeholder="75001"
-						className={errors.postalCode ? 'border-red-500' : ''}
+						error={errors.postalCode}
 					/>
-					{errors.postalCode && (
-						<p className="text-red-500 text-sm mt-1">
-							{errors.postalCode}
-						</p>
-					)}
 				</div>
 
 				<div>
@@ -622,13 +820,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 							handleInputChange('sector', e.target.value)
 						}
 						placeholder="Centre-ville"
-						className={errors.sector ? 'border-red-500' : ''}
+						error={errors.sector}
 					/>
-					{errors.sector && (
-						<p className="text-red-500 text-sm mt-1">
-							{errors.sector}
-						</p>
-					)}
 				</div>
 			</div>
 		</div>
@@ -638,110 +831,128 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 		<div className="space-y-6">
 			<h3 className="text-lg font-semibold mb-4">Détails du bien</h3>
 
-			<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-				<NumberInput
-					label="Nombre de pièces"
-					value={formData.rooms}
-					onChange={(value) => handleInputChange('rooms', value)}
-					name="rooms"
-					unit="pièce(s)"
-					placeholder="3"
-					min={1}
-					max={50}
-				/>
+			{/* Hide room details for Terrain and Parking */}
+			{!['Terrain', 'Local commercial'].includes(
+				formData.propertyType,
+			) && (
+				<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+					<NumberInput
+						label="Nombre de pièces"
+						value={formData.rooms}
+						onChange={(value) => handleInputChange('rooms', value)}
+						name="rooms"
+						unit="pièce(s)"
+						placeholder="3"
+						min={1}
+						max={50}
+					/>
 
-				<Select
-					label="Nombre de chambres"
-					value={formData.bedrooms?.toString()}
-					onChange={(value) =>
-						handleInputChange(
-							'bedrooms',
-							parseInt(value) || undefined,
-						)
-					}
-					name="bedrooms"
-					options={Array.from({ length: 10 }, (_, i) => ({
-						value: (i + 1).toString(),
-						label: (i + 1).toString(),
-					}))}
-					placeholder="Choisissez..."
-				/>
+					<Select
+						label="Nombre de chambres"
+						value={formData.bedrooms?.toString()}
+						onChange={(value) =>
+							handleInputChange(
+								'bedrooms',
+								parseInt(value) || undefined,
+							)
+						}
+						name="bedrooms"
+						options={Array.from({ length: 10 }, (_, i) => ({
+							value: (i + 1).toString(),
+							label: (i + 1).toString(),
+						}))}
+						placeholder="Choisissez..."
+					/>
 
-				<NumberInput
-					label="Nombre de salles de bain"
-					value={formData.bathrooms}
-					onChange={(value) => handleInputChange('bathrooms', value)}
-					name="bathrooms"
-					placeholder="1"
-					min={0}
-					max={10}
-				/>
+					<NumberInput
+						label="Nombre de salles de bain"
+						value={formData.bathrooms}
+						onChange={(value) =>
+							handleInputChange('bathrooms', value)
+						}
+						name="bathrooms"
+						placeholder="1"
+						min={0}
+						max={10}
+					/>
 
-				<NumberInput
-					label="Nombre de niveaux"
-					value={formData.levels}
-					onChange={(value) => handleInputChange('levels', value)}
-					name="levels"
-					placeholder="1"
-					min={1}
-					max={20}
-				/>
-			</div>
+					<NumberInput
+						label="Nombre de niveaux"
+						value={formData.levels}
+						onChange={(value) => handleInputChange('levels', value)}
+						name="levels"
+						placeholder="1"
+						min={1}
+						max={20}
+					/>
+				</div>
+			)}
 
 			<div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-				<Select
-					label="Exposition"
-					value={formData.orientation}
-					onChange={(value) =>
-						handleInputChange('orientation', value)
-					}
-					name="orientation"
-					options={[
-						{ value: 'Nord', label: 'Nord' },
-						{ value: 'Sud', label: 'Sud' },
-						{ value: 'Est', label: 'Est' },
-						{ value: 'Ouest', label: 'Ouest' },
-						{ value: 'Nord-Est', label: 'Nord-Est' },
-						{ value: 'Nord-Ouest', label: 'Nord-Ouest' },
-						{ value: 'Sud-Est', label: 'Sud-Est' },
-						{ value: 'Sud-Ouest', label: 'Sud-Ouest' },
-					]}
-					placeholder="Choisissez..."
-				/>
+				{/* Hide Exposition for Terrain and Parking */}
+				{!['Terrain', 'Local commercial'].includes(
+					formData.propertyType,
+				) && (
+					<Select
+						label="Exposition"
+						value={formData.orientation}
+						onChange={(value) =>
+							handleInputChange('orientation', value)
+						}
+						name="orientation"
+						options={[
+							{ value: 'Nord', label: 'Nord' },
+							{ value: 'Sud', label: 'Sud' },
+							{ value: 'Est', label: 'Est' },
+							{ value: 'Ouest', label: 'Ouest' },
+							{ value: 'Nord-Est', label: 'Nord-Est' },
+							{ value: 'Nord-Ouest', label: 'Nord-Ouest' },
+							{ value: 'Sud-Est', label: 'Sud-Est' },
+							{ value: 'Sud-Ouest', label: 'Sud-Ouest' },
+						]}
+						placeholder="Choisissez..."
+					/>
+				)}
 
-				<Select
-					label="Places de parking"
-					value={formData.parkingSpaces?.toString()}
-					onChange={(value) =>
-						handleInputChange(
-							'parkingSpaces',
-							parseInt(value) || undefined,
-						)
-					}
-					name="parkingSpaces"
-					options={Array.from({ length: 11 }, (_, i) => ({
-						value: i.toString(),
-						label: i === 0 ? 'Aucune' : i.toString(),
-					}))}
-					placeholder="Choisissez..."
-				/>
+				{/* Show Places de parking only for non-Terrain */}
+				{formData.propertyType !== 'Terrain' && (
+					<Select
+						label="Places de parking"
+						value={formData.parkingSpaces?.toString()}
+						onChange={(value) =>
+							handleInputChange(
+								'parkingSpaces',
+								parseInt(value) || undefined,
+							)
+						}
+						name="parkingSpaces"
+						options={Array.from({ length: 11 }, (_, i) => ({
+							value: i.toString(),
+							label: i === 0 ? 'Aucune' : i.toString(),
+						}))}
+						placeholder="Choisissez..."
+					/>
+				)}
 
-				<Select
-					label="Extérieur"
-					value={formData.exterior?.[0] || ''}
-					onChange={(value) =>
-						handleInputChange('exterior', value ? [value] : [])
-					}
-					name="exterior"
-					options={[
-						{ value: 'garden', label: 'Jardin' },
-						{ value: 'balcony', label: 'Balcon' },
-						{ value: 'terrace', label: 'Terrasse' },
-						{ value: 'courtyard', label: 'Cour' },
-						{ value: 'none', label: 'Aucun' },
-					]}
-					placeholder="Choisissez..."
-				/>
+				{/* Hide Extérieur for Parking */}
+				{formData.propertyType !== 'Local commercial' && (
+					<Select
+						label="Extérieur"
+						value={formData.exterior?.[0] || ''}
+						onChange={(value) =>
+							handleInputChange('exterior', value ? [value] : [])
+						}
+						name="exterior"
+						options={[
+							{ value: 'garden', label: 'Jardin' },
+							{ value: 'balcony', label: 'Balcon' },
+							{ value: 'terrace', label: 'Terrasse' },
+							{ value: 'courtyard', label: 'Cour' },
+							{ value: 'none', label: 'Aucun' },
+						]}
+						placeholder="Choisissez..."
+					/>
+				)}
 			</div>
 
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -782,41 +993,53 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 				/>
 			</div>
 
-			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<Select
-					label="Mode de chauffage"
-					value={formData.heatingType}
-					onChange={(value) =>
-						handleInputChange('heatingType', value)
-					}
-					name="heatingType"
-					options={[
-						{ value: 'Gaz', label: 'Gaz' },
-						{ value: 'Électrique', label: 'Électrique' },
-						{ value: 'Fioul', label: 'Fioul' },
-						{ value: 'Pompe à chaleur', label: 'Pompe à chaleur' },
-						{ value: 'Solaire', label: 'Solaire' },
-						{ value: 'Bois', label: 'Bois' },
-					]}
-					placeholder="Choisissez..."
-				/>
-			</div>
+			{/* Hide heating and energy for Terrain and Parking */}
+			{!['Terrain', 'Local commercial'].includes(
+				formData.propertyType,
+			) && (
+				<>
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<Select
+							label="Mode de chauffage"
+							value={formData.heatingType}
+							onChange={(value) =>
+								handleInputChange('heatingType', value)
+							}
+							name="heatingType"
+							options={[
+								{ value: 'Gaz', label: 'Gaz' },
+								{ value: 'Électrique', label: 'Électrique' },
+								{ value: 'Fioul', label: 'Fioul' },
+								{
+									value: 'Pompe à chaleur',
+									label: 'Pompe à chaleur',
+								},
+								{ value: 'Solaire', label: 'Solaire' },
+								{ value: 'Bois', label: 'Bois' },
+							]}
+							placeholder="Choisissez..."
+						/>
+					</div>
 
-			<EnergyRatingSelector
-				label="Classé énergie *"
-				value={formData.energyRating}
-				onChange={(value) => handleInputChange('energyRating', value)}
-				name="energyRating"
-			/>
+					<EnergyRatingSelector
+						label="Classé énergie *"
+						value={formData.energyRating}
+						onChange={(value) =>
+							handleInputChange('energyRating', value)
+						}
+						name="energyRating"
+					/>
 
-			<EnergyRatingSelector
-				label="GES *"
-				value={formData.gasEmissionClass}
-				onChange={(value) =>
-					handleInputChange('gasEmissionClass', value)
-				}
-				name="gasEmissionClass"
-			/>
+					<EnergyRatingSelector
+						label="GES *"
+						value={formData.gasEmissionClass}
+						onChange={(value) =>
+							handleInputChange('gasEmissionClass', value)
+						}
+						name="gasEmissionClass"
+					/>
+				</>
+			)}
 		</div>
 	);
 
@@ -858,7 +1081,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 							e.target.value as PropertyFormData['status'],
 						)
 					}
-					className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+					className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
 					disabled={isUploading}
 				>
 					<option value="draft">Brouillon</option>

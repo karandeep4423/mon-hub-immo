@@ -93,9 +93,7 @@ export const propertyBaseSchema = z.object({
 	// New fields from screenshots
 	condition: z.enum(['new', 'good', 'refresh', 'renovate']).optional(),
 	propertyNature: z.string().max(100).optional(),
-	characteristics: z.string().max(200).optional(),
-	saleType: z.enum(['ancien', 'viager']).optional(),
-	feesResponsibility: z.enum(['buyer', 'seller']).optional(),
+	saleType: z.string().max(100).optional(),
 	annualCondoFees: z.number().min(0).max(100000).optional(),
 	tariffLink: z.string().max(500).optional(),
 	landArea: z.number().min(1).max(1000000).optional(),

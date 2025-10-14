@@ -219,8 +219,30 @@ export const DashboardContent: React.FC = () => {
 								Mes Recherches
 							</button>
 						</nav>
-						{/* Quick Create Property Button */}
-						<div className="w-full sm:w-auto sm:shrink-0">
+						{/* Quick Action Buttons */}
+						<div className="w-full sm:w-auto sm:shrink-0 flex gap-3">
+							<Button
+								onClick={() =>
+									router.push('/search-ads/create')
+								}
+								className="w-full sm:w-auto bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg"
+								size="sm"
+							>
+								<svg
+									className="w-4 h-4 mr-2"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth="2"
+										d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z M12 8v4m0 0v4m0-4h4m-4 0H8"
+									/>
+								</svg>
+								Créer une recherche
+							</Button>
 							<Button
 								onClick={() => setActiveTab('properties')}
 								className="w-full sm:w-auto bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg"

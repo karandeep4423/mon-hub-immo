@@ -21,7 +21,7 @@ export interface ICollaboration extends Document {
 
 	// Proposal details
 	proposedCommission: number; // Percentage (e.g., 40 for 40%)
-	proposalMessage: string;
+	proposalMessage?: string;
 
 	// Contract signing
 	ownerSigned: boolean;
@@ -152,7 +152,7 @@ const collaborationSchema = new Schema<ICollaboration>(
 		},
 		proposalMessage: {
 			type: String,
-			required: [true, 'Proposal message is required'],
+			required: false,
 			maxlength: [500, 'Proposal message too long (max 500 characters)'],
 		},
 		ownerSigned: {
