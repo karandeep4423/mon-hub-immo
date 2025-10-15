@@ -13,15 +13,48 @@ import Link from 'next/link';
 import { MySearches } from '../search-ads/MySearches';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { formatNumber } from '@/lib/utils/format';
+import { AgentAppointments } from '../appointments/AgentAppointments';
+import { appointmentApi } from '@/lib/api/appointmentApi';
 
 export const DashboardContent: React.FC = () => {
 	const router = useRouter();
 	const { user, loading, refreshUser } = useAuth();
 	const [activeTab, setActiveTab] = useState<
-		'overview' | 'properties' | 'collaborations' | 'searches'
+		| 'overview'
+		| 'properties'
+		| 'collaborations'
+		| 'searches'
+		| 'appointments'
 	>('overview');
 	const hasRefreshed = useRef(false);
 	const { kpis, loading: statsLoading } = useDashboardStats(user?._id);
+	const [appointmentStats, setAppointmentStats] = useState({
+		pending: 0,
+		confirmed: 0,
+		total: 0,
+	});
+
+	useEffect(() => {
+		if (user) {
+			fetchAppointmentStats();
+		}
+	}, [user]);
+
+	const fetchAppointmentStats = async () => {
+		try {
+			const appointments = await appointmentApi.getMyAppointments();
+			setAppointmentStats({
+				pending: appointments.filter((apt) => apt.status === 'pending')
+					.length,
+				confirmed: appointments.filter(
+					(apt) => apt.status === 'confirmed',
+				).length,
+				total: appointments.length,
+			});
+		} catch (error) {
+			console.error('Error fetching appointment stats:', error);
+		}
+	};
 
 	useEffect(() => {
 		if (!loading && !user) {
@@ -218,6 +251,29 @@ export const DashboardContent: React.FC = () => {
 								</svg>
 								Mes Recherches
 							</button>
+							<button
+								onClick={() => setActiveTab('appointments')}
+								className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
+									activeTab === 'appointments'
+										? 'border-cyan-500 text-cyan-600'
+										: 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+								}`}
+							>
+								<svg
+									className="w-4 h-4 mr-1"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth="2"
+										d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+									/>
+								</svg>
+								Rendez-vous
+							</button>
 						</nav>
 						{/* Quick Action Buttons */}
 						<div className="w-full sm:w-auto sm:shrink-0 flex gap-3">
@@ -399,6 +455,93 @@ export const DashboardContent: React.FC = () => {
 							</div>
 						</div>
 
+						{/* Appointment Stats Row */}
+						<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+							<div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+								<div className="flex items-center">
+									<div className="p-3 bg-cyan-100 rounded-lg">
+										<svg
+											className="w-6 h-6 text-cyan-600"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth="2"
+												d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+											/>
+										</svg>
+									</div>
+									<div className="ml-4">
+										<p className="text-sm font-medium text-gray-600">
+											Rendez-vous en attente
+										</p>
+										<p className="text-2xl font-bold text-gray-900">
+											{appointmentStats.pending}
+										</p>
+									</div>
+								</div>
+							</div>
+
+							<div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+								<div className="flex items-center">
+									<div className="p-3 bg-emerald-100 rounded-lg">
+										<svg
+											className="w-6 h-6 text-emerald-600"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth="2"
+												d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+											/>
+										</svg>
+									</div>
+									<div className="ml-4">
+										<p className="text-sm font-medium text-gray-600">
+											Rendez-vous confirmés
+										</p>
+										<p className="text-2xl font-bold text-gray-900">
+											{appointmentStats.confirmed}
+										</p>
+									</div>
+								</div>
+							</div>
+
+							<div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+								<div className="flex items-center">
+									<div className="p-3 bg-indigo-100 rounded-lg">
+										<svg
+											className="w-6 h-6 text-indigo-600"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth="2"
+												d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+											/>
+										</svg>
+									</div>
+									<div className="ml-4">
+										<p className="text-sm font-medium text-gray-600">
+											Total des rendez-vous
+										</p>
+										<p className="text-2xl font-bold text-gray-900">
+											{appointmentStats.total}
+										</p>
+									</div>
+								</div>
+							</div>
+						</div>
+
 						{/* Agent Profile Card - Show for all agents */}
 						{user.userType === 'agent' && (
 							<AgentProfileCard user={user} />
@@ -521,6 +664,7 @@ export const DashboardContent: React.FC = () => {
 					/>
 				)}
 				{activeTab === 'searches' && <MySearches />}
+				{activeTab === 'appointments' && <AgentAppointments />}
 			</main>
 		</div>
 	);

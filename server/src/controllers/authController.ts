@@ -873,3 +873,29 @@ export const completeProfile = async (
 		});
 	}
 };
+
+// Get all agents for public listing
+export const getAllAgents = async (
+	req: Request,
+	res: Response,
+): Promise<void> => {
+	try {
+		const agents = await User.find({
+			userType: 'agent',
+			profileCompleted: true,
+			isEmailVerified: true,
+		})
+			.select(
+				'firstName lastName email phone profileImage professionalInfo createdAt',
+			)
+			.sort({ createdAt: -1 });
+
+		res.status(200).json({
+			success: true,
+			data: agents,
+		});
+	} catch (error) {
+		console.error('Error fetching agents:', error);
+		res.status(500).json({ success: false, message: 'Server error' });
+	}
+};

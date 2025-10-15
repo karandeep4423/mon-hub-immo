@@ -13,6 +13,7 @@ import searchAdRoutes from './routes/searchAds';
 import uploadRoutes from './routes/uploadRoutes';
 import notificationRoutes from './routes/notifications';
 import favoritesRoutes from './routes/favorites';
+import appointmentRoutes from './routes/appointments';
 import { createSocketServer, createSocketService } from './chat';
 
 dotenv.config();
@@ -83,6 +84,7 @@ app.use('/api/search-ads', searchAdRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/favorites', favoritesRoutes);
+app.use('/api/appointments', appointmentRoutes);
 
 // Handle 404 routes
 app.use('*', (req, res) => {

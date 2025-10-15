@@ -9,6 +9,7 @@ import {
 	forgotPassword,
 	resetPassword,
 	completeProfile,
+	getAllAgents,
 } from '../controllers/authController';
 import { authenticateToken } from '../middleware/auth';
 import {
@@ -62,5 +63,8 @@ router.post(
 	completeProfileValidation,
 	completeProfile,
 );
+
+// Public route to get all agents
+router.get('/agents', getAllAgents);
 
 export default router;

@@ -162,7 +162,10 @@ export const getUserCollaborations = async (
 		const collaborations = await Collaboration.find({
 			$or: [{ propertyOwnerId: userId }, { collaboratorId: userId }],
 		})
-			.populate('propertyId', 'title address price mainImage clientInfo')
+			.populate(
+				'propertyId',
+				'title address price mainImage clientInfo agencyFeesPercentage agencyFeesAmount priceIncludingFees',
+			)
 			.populate('propertyOwnerId', 'firstName lastName profileImage')
 			.populate('collaboratorId', 'firstName lastName profileImage')
 			.populate(
