@@ -7,6 +7,7 @@ import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { Button } from '../ui/Button';
 import { useNotification } from '@/hooks/useNotification';
 import { useAuth } from '@/hooks/useAuth';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 const DAYS_OF_WEEK = [
 	{ value: 1, label: 'Lundi' },
@@ -17,6 +18,37 @@ const DAYS_OF_WEEK = [
 	{ value: 6, label: 'Samedi' },
 	{ value: 0, label: 'Dimanche' },
 ];
+
+// Helper function to check if time slots overlap
+const hasOverlappingSlots = (
+	slots: { startTime: string; endTime: string }[],
+): boolean => {
+	if (slots.length <= 1) return false;
+
+	// Convert time to minutes for easier comparison
+	const toMinutes = (time: string): number => {
+		const [hours, mins] = time.split(':').map(Number);
+		return hours * 60 + mins;
+	};
+
+	// Sort slots by start time
+	const sortedSlots = [...slots].sort(
+		(a, b) => toMinutes(a.startTime) - toMinutes(b.startTime),
+	);
+
+	// Check for overlaps
+	for (let i = 0; i < sortedSlots.length - 1; i++) {
+		const currentEnd = toMinutes(sortedSlots[i].endTime);
+		const nextStart = toMinutes(sortedSlots[i + 1].startTime);
+
+		// If current slot ends after or at the same time as next slot starts, they overlap
+		if (currentEnd > nextStart) {
+			return true;
+		}
+	}
+
+	return false;
+};
 
 interface AvailabilityManagerProps {
 	onBack?: () => void;
@@ -32,8 +64,55 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 	const [saving, setSaving] = useState(false);
 	const [activeTab, setActiveTab] = useState<'weekly' | 'blocked'>('weekly');
 	const [newBlockedDate, setNewBlockedDate] = useState('');
+	const [newBlockedDateEnd, setNewBlockedDateEnd] = useState('');
+	const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+	const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(
+		null,
+	);
+	const [dateToUnblock, setDateToUnblock] = useState<string | null>(null);
 	const { showNotification } = useNotification();
 	const { user } = useAuth();
+
+	// Auto-save with debouncing (2 seconds after last change)
+	const scheduleAutoSave = React.useCallback(() => {
+		setHasUnsavedChanges(true);
+
+		// Clear existing timer
+		if (autoSaveTimer) {
+			clearTimeout(autoSaveTimer);
+		}
+
+		// Schedule new save
+		const timer = setTimeout(async () => {
+			if (!availability) return;
+
+			try {
+				setSaving(true);
+				await appointmentApi.updateAgentAvailability(availability);
+				setHasUnsavedChanges(false);
+				showNotification(
+					'Modifications enregistrées automatiquement',
+					'success',
+				);
+			} catch (error) {
+				console.error('Error auto-saving availability:', error);
+				showNotification('Erreur lors de la sauvegarde', 'error');
+			} finally {
+				setSaving(false);
+			}
+		}, 2000); // 2 seconds delay
+
+		setAutoSaveTimer(timer);
+	}, [availability, autoSaveTimer, showNotification]);
+
+	// Cleanup timer on unmount
+	useEffect(() => {
+		return () => {
+			if (autoSaveTimer) {
+				clearTimeout(autoSaveTimer);
+			}
+		};
+	}, [autoSaveTimer]);
 
 	const fetchAvailability = React.useCallback(async () => {
 		if (!user?._id) return;
@@ -75,23 +154,15 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 		fetchAvailability();
 	}, [fetchAvailability]);
 
-	const handleSave = async () => {
-		if (!availability) return;
+	// Auto-save when availability changes (triggered by user actions)
+	const [shouldAutoSave, setShouldAutoSave] = React.useState(false);
 
-		try {
-			setSaving(true);
-			await appointmentApi.updateAgentAvailability(availability);
-			showNotification(
-				'Disponibilités mises à jour avec succès',
-				'success',
-			);
-		} catch (error) {
-			console.error('Error saving availability:', error);
-			showNotification('Erreur lors de la sauvegarde', 'error');
-		} finally {
-			setSaving(false);
+	useEffect(() => {
+		if (shouldAutoSave && availability) {
+			scheduleAutoSave();
+			setShouldAutoSave(false);
 		}
-	};
+	}, [availability, shouldAutoSave, scheduleAutoSave]);
 
 	const toggleDayAvailability = (dayOfWeek: number) => {
 		if (!availability) return;
@@ -110,6 +181,7 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 					: day,
 			),
 		});
+		setShouldAutoSave(true);
 	};
 
 	const updateDaySlot = (
@@ -120,7 +192,7 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 	) => {
 		if (!availability) return;
 
-		setAvailability({
+		const updatedAvailability = {
 			...availability,
 			weeklySchedule: availability.weeklySchedule.map((day) =>
 				day.dayOfWeek === dayOfWeek
@@ -134,13 +206,48 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 						}
 					: day,
 			),
-		});
+		};
+
+		// Validate that start time is before end time
+		const targetDay = updatedAvailability.weeklySchedule.find(
+			(d) => d.dayOfWeek === dayOfWeek,
+		);
+		if (targetDay) {
+			const updatedSlot = targetDay.slots[slotIndex];
+			const toMinutes = (time: string): number => {
+				const [hours, mins] = time.split(':').map(Number);
+				return hours * 60 + mins;
+			};
+
+			if (
+				toMinutes(updatedSlot.startTime) >=
+				toMinutes(updatedSlot.endTime)
+			) {
+				showNotification(
+					"L'heure de début doit être avant l'heure de fin",
+					'error',
+				);
+				return;
+			}
+
+			// Validate for overlaps
+			if (hasOverlappingSlots(targetDay.slots)) {
+				showNotification(
+					'Les créneaux horaires ne peuvent pas se chevaucher',
+					'error',
+				);
+				return;
+			}
+		}
+
+		setAvailability(updatedAvailability);
+		scheduleAutoSave();
 	};
 
 	const addSlotToDay = (dayOfWeek: number) => {
 		if (!availability) return;
 
-		setAvailability({
+		const updatedAvailability = {
 			...availability,
 			weeklySchedule: availability.weeklySchedule.map((day) =>
 				day.dayOfWeek === dayOfWeek
@@ -148,12 +255,27 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 							...day,
 							slots: [
 								...day.slots,
-								{ startTime: '09:00', endTime: '12:00' },
+								{ startTime: '14:00', endTime: '17:00' },
 							],
 						}
 					: day,
 			),
-		});
+		};
+
+		// Validate for overlaps
+		const targetDay = updatedAvailability.weeklySchedule.find(
+			(d) => d.dayOfWeek === dayOfWeek,
+		);
+		if (targetDay && hasOverlappingSlots(targetDay.slots)) {
+			showNotification(
+				'Ce créneau chevauche un créneau existant. Veuillez ajuster les horaires.',
+				'error',
+			);
+			return;
+		}
+
+		setAvailability(updatedAvailability);
+		scheduleAutoSave();
 	};
 
 	const removeSlotFromDay = (dayOfWeek: number, slotIndex: number) => {
@@ -172,45 +294,119 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 					: day,
 			),
 		});
+		scheduleAutoSave();
 	};
 
-	const addBlockedDate = () => {
+	const addBlockedDate = async () => {
 		if (!availability || !newBlockedDate) return;
 
-		// Check if date already exists
-		const exists = availability.dateOverrides.some(
-			(override) => override.date === newBlockedDate,
-		);
+		try {
+			setSaving(true);
 
-		if (exists) {
-			showNotification('Cette date est déjà bloquée', 'error');
-			return;
+			// Generate date range if end date is provided
+			const dates: string[] = [];
+			const startDate = new Date(newBlockedDate);
+			const endDate = newBlockedDateEnd
+				? new Date(newBlockedDateEnd)
+				: startDate;
+
+			// Validate date range
+			if (endDate < startDate) {
+				showNotification(
+					'La date de fin doit être après la date de début',
+					'error',
+				);
+				setSaving(false);
+				return;
+			}
+
+			// Generate all dates in range
+			const currentDate = new Date(startDate);
+			while (currentDate <= endDate) {
+				dates.push(currentDate.toISOString().split('T')[0]);
+				currentDate.setDate(currentDate.getDate() + 1);
+			}
+
+			// Check for existing dates
+			const existingDates = dates.filter((date) =>
+				availability.dateOverrides.some(
+					(override) => override.date === date,
+				),
+			);
+
+			if (existingDates.length > 0) {
+				showNotification(
+					`${existingDates.length} date(s) déjà bloquée(s)`,
+					'error',
+				);
+				setSaving(false);
+				return;
+			}
+
+			// Add all dates to overrides
+			const newOverrides = dates.map((date) => ({
+				date,
+				isAvailable: false,
+				slots: [],
+			}));
+
+			const updatedAvailability = {
+				...availability,
+				dateOverrides: [
+					...availability.dateOverrides,
+					...newOverrides,
+				].sort((a, b) => a.date.localeCompare(b.date)),
+			};
+
+			// Save to backend immediately
+			await appointmentApi.updateAgentAvailability(updatedAvailability);
+
+			setAvailability(updatedAvailability);
+			setNewBlockedDate('');
+			setNewBlockedDateEnd('');
+
+			showNotification(
+				`${dates.length} date(s) bloquée(s) avec succès`,
+				'success',
+			);
+		} catch (error) {
+			console.error('Error blocking date:', error);
+			showNotification('Erreur lors du blocage de la date', 'error');
+		} finally {
+			setSaving(false);
 		}
-
-		setAvailability({
-			...availability,
-			dateOverrides: [
-				...availability.dateOverrides,
-				{
-					date: newBlockedDate,
-					isAvailable: false,
-					slots: [],
-				},
-			].sort((a, b) => a.date.localeCompare(b.date)),
-		});
-
-		setNewBlockedDate('');
 	};
 
-	const removeBlockedDate = (date: string) => {
+	const removeBlockedDate = async (date: string) => {
 		if (!availability) return;
 
-		setAvailability({
-			...availability,
-			dateOverrides: availability.dateOverrides.filter(
-				(override) => override.date !== date,
-			),
-		});
+		try {
+			setSaving(true);
+
+			const updatedAvailability = {
+				...availability,
+				dateOverrides: availability.dateOverrides.filter(
+					(override) => override.date !== date,
+				),
+			};
+
+			// Save to backend immediately
+			await appointmentApi.updateAgentAvailability(updatedAvailability);
+
+			setAvailability(updatedAvailability);
+			showNotification('Date débloquée avec succès', 'success');
+		} catch (error) {
+			console.error('Error removing blocked date:', error);
+			showNotification('Erreur lors du déblocage de la date', 'error');
+		} finally {
+			setSaving(false);
+			setDateToUnblock(null);
+		}
+	};
+
+	const handleConfirmUnblock = async () => {
+		if (!dateToUnblock) return;
+		await removeBlockedDate(dateToUnblock);
 	};
 
 	const updateSettings = (field: keyof AgentAvailability, value: number) => {
@@ -220,6 +416,7 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 			...availability,
 			[field]: value,
 		});
+		scheduleAutoSave();
 	};
 
 	if (loading) {
@@ -276,20 +473,34 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 						</p>
 					</div>
 				</div>
-				<Button
-					onClick={handleSave}
-					disabled={saving}
-					className="bg-cyan-600 hover:bg-cyan-700 text-white"
-				>
+				{/* Auto-save indicator */}
+				<div className="flex items-center gap-2">
 					{saving ? (
-						<>
+						<div className="flex items-center gap-2 text-cyan-600 text-sm">
 							<LoadingSpinner size="sm" />
-							<span className="ml-2">Enregistrement...</span>
-						</>
-					) : (
-						<>
+							<span>Enregistrement...</span>
+						</div>
+					) : hasUnsavedChanges ? (
+						<div className="flex items-center gap-2 text-amber-600 text-sm">
 							<svg
-								className="w-4 h-4 mr-2"
+								className="w-4 h-4 animate-pulse"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									strokeWidth={2}
+									d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+								/>
+							</svg>
+							<span>Modification en attente...</span>
+						</div>
+					) : (
+						<div className="flex items-center gap-2 text-green-600 text-sm">
+							<svg
+								className="w-4 h-4"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -301,10 +512,10 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 									d="M5 13l4 4L19 7"
 								/>
 							</svg>
-							Enregistrer
-						</>
+							<span>Tout est enregistré</span>
+						</div>
 					)}
-				</Button>
+				</div>
 			</div>
 
 			{/* General Settings */}
@@ -515,48 +726,88 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 										</div>
 
 										{daySchedule?.isAvailable && (
-											<div className="space-y-2 ml-14">
+											<div className="space-y-3 ml-14">
 												{daySchedule.slots.map(
 													(slot, slotIndex) => (
 														<div
 															key={slotIndex}
-															className="flex items-center gap-3"
+															className="flex items-center gap-3 bg-gradient-to-r from-cyan-50/50 to-blue-50/50 p-3 rounded-lg border border-cyan-100"
 														>
-															<input
-																type="time"
-																value={
-																	slot.startTime
-																}
-																onChange={(e) =>
-																	updateDaySlot(
-																		day.value,
-																		slotIndex,
-																		'startTime',
-																		e.target
-																			.value,
-																	)
-																}
-																className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-															/>
-															<span className="text-gray-500">
-																à
-															</span>
-															<input
-																type="time"
-																value={
-																	slot.endTime
-																}
-																onChange={(e) =>
-																	updateDaySlot(
-																		day.value,
-																		slotIndex,
-																		'endTime',
-																		e.target
-																			.value,
-																	)
-																}
-																className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-															/>
+															<div className="flex items-center gap-2 flex-1">
+																<div className="flex-1">
+																	<label className="block text-xs font-medium text-gray-600 mb-1">
+																		Début
+																	</label>
+																	<input
+																		type="time"
+																		value={
+																			slot.startTime
+																		}
+																		onChange={(
+																			e,
+																		) =>
+																			updateDaySlot(
+																				day.value,
+																				slotIndex,
+																				'startTime',
+																				e
+																					.target
+																					.value,
+																			)
+																		}
+																		className="w-full px-3 py-2.5 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all text-base font-medium text-gray-700"
+																		style={{
+																			colorScheme:
+																				'light',
+																		}}
+																	/>
+																</div>
+																<div className="flex items-center justify-center pt-6">
+																	<svg
+																		className="w-5 h-5 text-cyan-600"
+																		fill="none"
+																		stroke="currentColor"
+																		viewBox="0 0 24 24"
+																	>
+																		<path
+																			strokeLinecap="round"
+																			strokeLinejoin="round"
+																			strokeWidth={
+																				2
+																			}
+																			d="M14 5l7 7m0 0l-7 7m7-7H3"
+																		/>
+																	</svg>
+																</div>
+																<div className="flex-1">
+																	<label className="block text-xs font-medium text-gray-600 mb-1">
+																		Fin
+																	</label>
+																	<input
+																		type="time"
+																		value={
+																			slot.endTime
+																		}
+																		onChange={(
+																			e,
+																		) =>
+																			updateDaySlot(
+																				day.value,
+																				slotIndex,
+																				'endTime',
+																				e
+																					.target
+																					.value,
+																			)
+																		}
+																		className="w-full px-3 py-2.5 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all text-base font-medium text-gray-700"
+																		style={{
+																			colorScheme:
+																				'light',
+																		}}
+																	/>
+																</div>
+															</div>
 
 															{daySchedule.slots
 																.length > 1 && (
@@ -567,7 +818,7 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 																			slotIndex,
 																		)
 																	}
-																	className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+																	className="p-2.5 text-red-600 hover:bg-red-100 rounded-lg transition-colors flex-shrink-0"
 																	title="Supprimer ce créneau"
 																>
 																	<svg
@@ -598,24 +849,11 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 						</div>
 					) : (
 						<div className="space-y-6">
-							{/* Add blocked date */}
-							<div className="flex gap-3">
-								<input
-									type="date"
-									value={newBlockedDate}
-									onChange={(e) =>
-										setNewBlockedDate(e.target.value)
-									}
-									min={new Date().toISOString().split('T')[0]}
-									className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-								/>
-								<Button
-									onClick={addBlockedDate}
-									disabled={!newBlockedDate}
-									className="bg-cyan-600 hover:bg-cyan-700 text-white"
-								>
+							{/* Add blocked date or date range */}
+							<div className="bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-200 rounded-lg p-4">
+								<h4 className="font-semibold text-gray-900 mb-3 flex items-center">
 									<svg
-										className="w-4 h-4 mr-2"
+										className="w-5 h-5 mr-2 text-cyan-600"
 										fill="none"
 										stroke="currentColor"
 										viewBox="0 0 24 24"
@@ -627,8 +865,104 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 											d="M12 6v6m0 0v6m0-6h6m-6 0H6"
 										/>
 									</svg>
-									Bloquer cette date
-								</Button>
+									Bloquer une date ou une période
+								</h4>
+								<div className="space-y-3">
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+										<div>
+											<label className="block text-xs font-medium text-gray-700 mb-1">
+												Date de début *
+											</label>
+											<input
+												type="date"
+												value={newBlockedDate}
+												onChange={(e) => {
+													setNewBlockedDate(
+														e.target.value,
+													);
+													// Reset end date if it's before start date
+													if (
+														newBlockedDateEnd &&
+														e.target.value >
+															newBlockedDateEnd
+													) {
+														setNewBlockedDateEnd(
+															'',
+														);
+													}
+												}}
+												min={
+													new Date()
+														.toISOString()
+														.split('T')[0]
+												}
+												className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+											/>
+										</div>
+										<div>
+											<label className="block text-xs font-medium text-gray-700 mb-1">
+												Date de fin (optionnel)
+											</label>
+											<input
+												type="date"
+												value={newBlockedDateEnd}
+												onChange={(e) =>
+													setNewBlockedDateEnd(
+														e.target.value,
+													)
+												}
+												min={
+													newBlockedDate ||
+													new Date()
+														.toISOString()
+														.split('T')[0]
+												}
+												disabled={!newBlockedDate}
+												className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+											/>
+										</div>
+									</div>
+									<p className="text-xs text-gray-600">
+										💡 Laissez la date de fin vide pour
+										bloquer une seule journée, ou
+										remplissez-la pour bloquer une période
+										complète.
+									</p>
+									<Button
+										onClick={addBlockedDate}
+										disabled={!newBlockedDate || saving}
+										className="w-full bg-cyan-600 hover:bg-cyan-700 text-white"
+									>
+										{saving ? (
+											<>
+												<LoadingSpinner size="sm" />
+												<span className="ml-2">
+													Enregistrement...
+												</span>
+											</>
+										) : (
+											<>
+												<svg
+													className="w-4 h-4 mr-2"
+													fill="none"
+													stroke="currentColor"
+													viewBox="0 0 24 24"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth={2}
+														d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+													/>
+												</svg>
+												Bloquer{' '}
+												{newBlockedDateEnd
+													? 'cette période'
+													: 'cette date'}
+											</>
+										)}
+									</Button>
+								</div>
 							</div>
 
 							{/* List of blocked dates */}
@@ -692,13 +1026,16 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 												</div>
 												<button
 													onClick={() =>
-														removeBlockedDate(
+														setDateToUnblock(
 															override.date,
 														)
 													}
-													className="text-red-600 hover:bg-red-100 px-3 py-1 rounded-lg transition-colors text-sm font-medium"
+													disabled={saving}
+													className="text-red-600 hover:bg-red-100 px-3 py-1 rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
 												>
-													Débloquer
+													{saving
+														? '...'
+														: 'Débloquer'}
 												</button>
 											</div>
 										),
@@ -727,28 +1064,51 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 						/>
 					</svg>
 					<div className="text-sm text-blue-800">
-						<p className="font-medium mb-1">Comment ça marche ?</p>
+						<p className="font-medium mb-1">
+							💡 Enregistrement automatique activé
+						</p>
 						<ul className="space-y-1 list-disc list-inside">
 							<li>
-								Configurez vos horaires hebdomadaires pour
-								chaque jour
+								Toutes vos modifications sont sauvegardées
+								automatiquement après 2 secondes
 							</li>
 							<li>
 								Ajoutez plusieurs créneaux par jour si besoin
 								(matin/après-midi)
 							</li>
 							<li>
-								Bloquez des dates spécifiques pour vos congés
+								Bloquez des dates spécifiques - une seule date
+								ou une période complète
 							</li>
 							<li>
-								Les créneaux disponibles seront calculés
-								automatiquement en fonction de la durée et du
-								temps de pause
+								Les créneaux disponibles sont calculés selon la
+								durée et le temps de pause
 							</li>
 						</ul>
 					</div>
 				</div>
 			</div>
+
+			{/* Confirmation Dialog for Unblocking */}
+			<ConfirmDialog
+				isOpen={!!dateToUnblock}
+				title="Débloquer cette date"
+				description={
+					dateToUnblock
+						? `Êtes-vous sûr de vouloir débloquer la date du ${new Date(
+								dateToUnblock,
+							).toLocaleDateString('fr-FR', {
+								weekday: 'long',
+								day: 'numeric',
+								month: 'long',
+								year: 'numeric',
+							})} ? Cette date redeviendra disponible pour les rendez-vous.`
+						: ''
+				}
+				onConfirm={handleConfirmUnblock}
+				onCancel={() => setDateToUnblock(null)}
+				variant="warning"
+			/>
 		</div>
 	);
 };

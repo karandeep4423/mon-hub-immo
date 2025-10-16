@@ -636,7 +636,7 @@ export const getAvailableSlots = async (
 		}).select('scheduledTime duration');
 
 		// Generate available slots
-		const availableSlots: string[] = [];
+		const availableSlotsSet = new Set<string>();
 		const bookedSlots = new Set(
 			existingAppointments.map((a) => a.scheduledTime),
 		);
@@ -656,13 +656,15 @@ export const getAvailableSlots = async (
 				const timeSlot = `${hours}:${mins}`;
 
 				if (!bookedSlots.has(timeSlot)) {
-					availableSlots.push(timeSlot);
+					availableSlotsSet.add(timeSlot);
 				}
 
 				currentTime +=
 					availability.defaultDuration + availability.bufferTime;
 			}
 		}
+
+		const availableSlots = Array.from(availableSlotsSet).sort();
 
 		res.status(200).json({
 			success: true,
