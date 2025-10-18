@@ -13,6 +13,7 @@ import { api } from '@/lib/api';
 import type { Property } from '@/lib/api/propertyApi';
 import { getImageUrl } from '@/lib/utils/imageUtils';
 import { toast } from 'react-toastify';
+import { getBadgeConfig } from '@/lib/constants/badges';
 
 export default function PropertyDetailsPage() {
 	const params = useParams();
@@ -190,17 +191,23 @@ export default function PropertyDetailsPage() {
 								/>
 
 								{/* Badges */}
-								<div className="absolute top-4 left-4 flex flex-col space-y-2">
-									{property.isNew && (
-										<span className="bg-green-500 text-white text-sm px-3 py-1 rounded-full">
-											Nouveau
-										</span>
-									)}
-									{property.isExclusive && (
-										<span className="bg-yellow-500 text-white text-sm px-3 py-1 rounded-full">
-											Exclusivité
-										</span>
-									)}
+								<div className="absolute top-4 left-4 flex flex-wrap gap-2 max-w-[70%]">
+									{property.badges &&
+										property.badges.length > 0 &&
+										property.badges.map((badgeValue) => {
+											const config =
+												getBadgeConfig(badgeValue);
+											if (!config) return null;
+
+											return (
+												<span
+													key={badgeValue}
+													className={`${config.bgColor} ${config.color} text-sm px-3 py-1 rounded-full`}
+												>
+													{config.label}
+												</span>
+											);
+										})}
 								</div>
 
 								{/* Navigation arrows */}

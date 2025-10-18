@@ -84,7 +84,6 @@ const validatePropertyData = (data: Record<string, unknown>) => {
 		'hasBalcony',
 		'hasTerrace',
 		'hasGarage',
-		'isExclusive',
 		'isFeatured',
 	];
 	booleanFields.forEach((field) => {
@@ -170,7 +169,15 @@ export const getProperties = async (
 		}
 
 		if (postalCode) {
-			filter.postalCode = postalCode;
+			// Support both single postal code and comma-separated list
+			const postalCodes = (postalCode as string)
+				.split(',')
+				.map((pc) => pc.trim());
+			if (postalCodes.length === 1) {
+				filter.postalCode = postalCodes[0];
+			} else {
+				filter.postalCode = { $in: postalCodes };
+			}
 		}
 
 		if (minPrice || maxPrice) {
@@ -375,6 +382,18 @@ export const createProperty = async (
 			galleryImages: galleryImagesData,
 			owner: req.user.id,
 		};
+
+		// Parse clientInfo if it's a JSON string
+		if (
+			propertyData.clientInfo &&
+			typeof propertyData.clientInfo === 'string'
+		) {
+			try {
+				propertyData.clientInfo = JSON.parse(propertyData.clientInfo);
+			} catch (e) {
+				console.error('Failed to parse clientInfo:', e);
+			}
+		}
 
 		// Map availableFrom to availableFromDate if present and format it properly
 		if (propertyData.availableFrom && !propertyData.availableFromDate) {
@@ -613,9 +632,49 @@ export const updateProperty = async (
 			galleryImages: galleryImagesData,
 		};
 
-		// Remove stringified image data from property update
+		// Parse clientInfo if it's a JSON string
+		if (
+			propertyData.clientInfo &&
+			typeof propertyData.clientInfo === 'string'
+		) {
+			try {
+				propertyData.clientInfo = JSON.parse(propertyData.clientInfo);
+			} catch (e) {
+				console.error('Failed to parse clientInfo:', e);
+			}
+		}
+
+		// Clean up clientInfo by removing Mongoose-generated fields
+		if (
+			propertyData.clientInfo &&
+			typeof propertyData.clientInfo === 'object'
+		) {
+			const cleanClientInfo = (obj: Record<string, unknown>) => {
+				if (obj && typeof obj === 'object') {
+					delete obj._id;
+					delete obj.id;
+					Object.keys(obj).forEach((key) => {
+						if (typeof obj[key] === 'object' && obj[key] !== null) {
+							cleanClientInfo(
+								obj[key] as Record<string, unknown>,
+							);
+						}
+					});
+				}
+			};
+			cleanClientInfo(propertyData.clientInfo);
+		}
+
+		// Remove fields that shouldn't be updated
 		delete propertyData.existingMainImage;
 		delete propertyData.existingGalleryImages;
+		delete propertyData.owner; // Don't update owner field
+		delete propertyData._id; // Don't update _id
+		delete propertyData.id; // Don't update id
+		delete propertyData.__v; // Don't update version key
+		delete propertyData.createdAt; // Don't update createdAt
+		delete propertyData.viewCount; // Don't update viewCount directly
+		delete propertyData.favoriteCount; // Don't update favoriteCount directly
 
 		Object.assign(existingProperty, propertyData);
 		await existingProperty.save();
@@ -905,11 +964,17 @@ export const getPropertyStats = async (
 			{ $group: { _id: null, total: { $sum: '$viewCount' } } },
 		]);
 
+		const totalValueAgg = await Property.aggregate([
+			{ $match: { owner: new mongoose.Types.ObjectId(req.user.id) } },
+			{ $group: { _id: null, total: { $sum: '$price' } } },
+		]);
+
 		res.status(200).json({
 			success: true,
 			data: {
 				totalProperties,
 				totalViews: totalViews[0]?.total || 0,
+				totalValue: totalValueAgg[0]?.total || 0,
 				byStatus: stats,
 			},
 		});

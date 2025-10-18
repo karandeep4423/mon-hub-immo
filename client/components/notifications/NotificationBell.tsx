@@ -21,9 +21,18 @@ export const NotificationBell = () => {
 		return () => document.removeEventListener('click', handler);
 	}, []);
 
+	const markAllAsReadRef = useRef(false);
+
 	useEffect(() => {
-		if (open && state.unreadCount > 0) {
-			markAllRead();
+		if (open && state.unreadCount > 0 && !markAllAsReadRef.current) {
+			markAllAsReadRef.current = true;
+			markAllRead().catch(() => {
+				// Reset flag on error so it can retry
+				markAllAsReadRef.current = false;
+			});
+		}
+		if (!open) {
+			markAllAsReadRef.current = false;
 		}
 	}, [open, state.unreadCount, markAllRead]);
 
@@ -102,13 +111,29 @@ export const NotificationBell = () => {
 												  }
 												| undefined;
 											const actorName = meta?.actorName;
+											const actorAvatar =
+												meta?.actorAvatar;
+
+											// Debug logging
+											console.log(
+												'Notification avatar data:',
+												{
+													notificationId: n.id,
+													actorId: n.actorId,
+													actorName,
+													actorAvatar,
+													hasAvatar: !!actorAvatar,
+													fullData: meta,
+												},
+											);
+
 											return (
 												<ProfileAvatar
 													user={{
 														_id: n.actorId,
 														name: actorName,
 														profileImage:
-															meta?.actorAvatar,
+															actorAvatar,
 													}}
 													size="sm"
 												/>

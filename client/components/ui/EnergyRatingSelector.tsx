@@ -30,25 +30,53 @@ export const EnergyRatingSelector = ({
 				{label}
 			</label>
 			<div className="flex flex-wrap gap-2">
-				{options.map((option) => (
-					<button
-						key={option.value}
-						type="button"
-						onClick={() => onChange(option.value)}
-						className={`px-3 py-2 rounded-md text-white font-medium transition-all duration-200 ${
-							option.color
-						} ${
-							value === option.value
-								? 'ring-2 ring-offset-2 ring-brand-600 transform scale-105'
-								: 'hover:opacity-80'
-						}`}
-					>
-						{option.value === 'Non soumis au DPE'
-							? 'Non soumis'
-							: option.value}
-					</button>
-				))}
+				{options.map((option) => {
+					const isSelected = value === option.value;
+					return (
+						<button
+							key={option.value}
+							type="button"
+							onClick={() => onChange(option.value)}
+							className={`relative px-3 py-2 rounded-md font-medium transition-all duration-200 ${
+								option.color
+							} ${
+								isSelected
+									? 'ring-4 ring-brand-600 ring-opacity-50 shadow-lg text-white border-2 border-white'
+									: 'text-white opacity-70 hover:opacity-100 hover:shadow-md'
+							}`}
+						>
+							{option.value === 'Non soumis au DPE'
+								? 'Non soumis'
+								: option.value}
+							{isSelected && (
+								<span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white shadow-sm">
+									<svg
+										className="h-3 w-3 text-brand-600"
+										fill="currentColor"
+										viewBox="0 0 20 20"
+									>
+										<path
+											fillRule="evenodd"
+											d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+											clipRule="evenodd"
+										/>
+									</svg>
+								</span>
+							)}
+						</button>
+					);
+				})}
 			</div>
+			{value && (
+				<p className="mt-2 text-sm text-gray-600">
+					Sélectionné:{' '}
+					<span className="font-semibold text-gray-900">
+						{value === 'Non soumis au DPE'
+							? 'Non soumis au DPE'
+							: value}
+					</span>
+				</p>
+			)}
 			<input type="hidden" name={name} value={value || ''} />
 		</div>
 	);

@@ -19,6 +19,7 @@ export interface ISearchAd extends Document {
 	// --- Localisation ---
 	location: {
 		cities: string[];
+		postalCodes?: string[]; // Codes postaux
 		maxDistance?: number; // Distance max travail/écoles
 		openToOtherAreas: boolean;
 	};
@@ -52,6 +53,25 @@ export interface ISearchAd extends Document {
 	title: string;
 	description: string;
 
+	// Client Information
+	clientInfo?: {
+		// Qualification information
+		qualificationInfo?: {
+			clientName?: string; // Nom / Prénom
+			clientStatus?: 'particulier' | 'investisseur' | 'entreprise'; // Statut
+			profession?: string; // Profession / Situation professionnelle
+			projectType?: 'couple' | 'seul'; // Projet en couple ou seul
+			hasRealEstateAgent?: boolean; // Avez-vous déjà un agent immobilier ?
+			hasVisitedProperties?: boolean; // Avez-vous déjà visité des biens ?
+		};
+		// Timeline information
+		timelineInfo?: {
+			urgency?: 'immediat' | '3_mois' | '6_mois' | 'pas_presse'; // Urgence du projet
+			visitAvailability?: string; // Disponibilités pour les visites
+			idealMoveInDate?: string; // Date idéale d'emménagement (MM/YYYY)
+		};
+	};
+
 	createdAt: Date;
 	updatedAt: Date;
 }
@@ -83,6 +103,7 @@ const SearchAdSchema = new Schema<ISearchAd>(
 
 		location: {
 			cities: [{ type: String, required: true }],
+			postalCodes: [{ type: String }],
 			maxDistance: { type: Number },
 			openToOtherAreas: { type: Boolean, default: false },
 		},
@@ -111,6 +132,71 @@ const SearchAdSchema = new Schema<ISearchAd>(
 
 		title: { type: String, required: true, trim: true },
 		description: { type: String, trim: true },
+
+		clientInfo: {
+			type: {
+				qualificationInfo: {
+					type: {
+						clientName: {
+							type: String,
+							trim: true,
+							maxlength: 200,
+						},
+						clientStatus: {
+							type: String,
+							enum: {
+								values: [
+									'particulier',
+									'investisseur',
+									'entreprise',
+								],
+								message: 'Statut client invalide',
+							},
+						},
+						profession: {
+							type: String,
+							trim: true,
+							maxlength: 200,
+						},
+						projectType: {
+							type: String,
+							enum: {
+								values: ['couple', 'seul'],
+								message: 'Type de projet invalide',
+							},
+						},
+						hasRealEstateAgent: { type: Boolean, default: false },
+						hasVisitedProperties: { type: Boolean, default: false },
+					},
+				},
+				timelineInfo: {
+					type: {
+						urgency: {
+							type: String,
+							enum: {
+								values: [
+									'immediat',
+									'3_mois',
+									'6_mois',
+									'pas_presse',
+								],
+								message: 'Urgence invalide',
+							},
+						},
+						visitAvailability: {
+							type: String,
+							trim: true,
+							maxlength: 500,
+						},
+						idealMoveInDate: {
+							type: String,
+							trim: true,
+							maxlength: 20,
+						},
+					},
+				},
+			},
+		},
 	},
 	{ timestamps: true },
 );

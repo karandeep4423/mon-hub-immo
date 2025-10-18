@@ -41,28 +41,27 @@ export interface ICollaboration extends Document {
 
 	// Workflow 2: Progress step tracking
 	currentProgressStep:
-		| 'proposal'
-		| 'accepted'
-		| 'visit_planned'
-		| 'visit_completed'
-		| 'negotiation'
-		| 'offer_made'
-		| 'compromise_signed'
-		| 'final_act';
+		| 'accord_collaboration'
+		| 'premier_contact'
+		| 'visite_programmee'
+		| 'visite_realisee'
+		| 'retour_client';
 	progressSteps: Array<{
 		id:
-			| 'proposal'
-			| 'accepted'
-			| 'visit_planned'
-			| 'visit_completed'
-			| 'negotiation'
-			| 'offer_made'
-			| 'compromise_signed'
-			| 'final_act';
+			| 'accord_collaboration'
+			| 'premier_contact'
+			| 'visite_programmee'
+			| 'visite_realisee'
+			| 'retour_client';
 		completed: boolean;
-		completedAt?: Date;
-		notes?: string;
-		completedBy?: Types.ObjectId;
+		validatedAt?: Date; // Date when first agent validated
+		ownerValidated: boolean;
+		collaboratorValidated: boolean;
+		notes: Array<{
+			note: string;
+			createdBy: Types.ObjectId;
+			createdAt: Date;
+		}>;
 	}>;
 
 	// Activity notes
@@ -94,16 +93,14 @@ export interface ICollaboration extends Document {
 	signContract(userId: Types.ObjectId): Promise<ICollaboration>;
 	updateProgressStatus(
 		targetStep:
-			| 'proposal'
-			| 'accepted'
-			| 'visit_planned'
-			| 'visit_completed'
-			| 'negotiation'
-			| 'offer_made'
-			| 'compromise_signed'
-			| 'final_act',
-		notes: string,
+			| 'accord_collaboration'
+			| 'premier_contact'
+			| 'visite_programmee'
+			| 'visite_realisee'
+			| 'retour_client',
+		notes: string | undefined,
 		userId: Types.ObjectId,
+		validatedBy: 'owner' | 'collaborator',
 	): Promise<ICollaboration>;
 }
 
@@ -201,32 +198,26 @@ const collaborationSchema = new Schema<ICollaboration>(
 			type: String,
 			enum: {
 				values: [
-					'proposal',
-					'accepted',
-					'visit_planned',
-					'visit_completed',
-					'negotiation',
-					'offer_made',
-					'compromise_signed',
-					'final_act',
+					'accord_collaboration',
+					'premier_contact',
+					'visite_programmee',
+					'visite_realisee',
+					'retour_client',
 				],
 				message: 'Invalid progress step',
 			},
-			default: 'proposal',
+			default: 'accord_collaboration',
 		},
 		progressSteps: [
 			{
 				id: {
 					type: String,
 					enum: [
-						'proposal',
-						'accepted',
-						'visit_planned',
-						'visit_completed',
-						'negotiation',
-						'offer_made',
-						'compromise_signed',
-						'final_act',
+						'accord_collaboration',
+						'premier_contact',
+						'visite_programmee',
+						'visite_realisee',
+						'retour_client',
 					],
 					required: true,
 				},
@@ -234,17 +225,34 @@ const collaborationSchema = new Schema<ICollaboration>(
 					type: Boolean,
 					default: false,
 				},
-				completedAt: {
+				validatedAt: {
 					type: Date,
 				},
-				notes: {
-					type: String,
-					maxlength: [500, 'Progress step note too long'],
+				ownerValidated: {
+					type: Boolean,
+					default: false,
 				},
-				completedBy: {
-					type: Schema.Types.ObjectId,
-					ref: 'User',
+				collaboratorValidated: {
+					type: Boolean,
+					default: false,
 				},
+				notes: [
+					{
+						note: {
+							type: String,
+							maxlength: [500, 'Note too long'],
+						},
+						createdBy: {
+							type: Schema.Types.ObjectId,
+							ref: 'User',
+							required: true,
+						},
+						createdAt: {
+							type: Date,
+							default: Date.now,
+						},
+					},
+				],
 			},
 		],
 		activities: [
@@ -310,30 +318,26 @@ collaborationSchema.pre('save', function (next) {
 	// Initialize progress steps if not exists
 	if (!this.progressSteps || this.progressSteps.length === 0) {
 		const steps: Array<
-			| 'proposal'
-			| 'accepted'
-			| 'visit_planned'
-			| 'visit_completed'
-			| 'negotiation'
-			| 'offer_made'
-			| 'compromise_signed'
-			| 'final_act'
+			| 'accord_collaboration'
+			| 'premier_contact'
+			| 'visite_programmee'
+			| 'visite_realisee'
+			| 'retour_client'
 		> = [
-			'proposal',
-			'accepted',
-			'visit_planned',
-			'visit_completed',
-			'negotiation',
-			'offer_made',
-			'compromise_signed',
-			'final_act',
+			'accord_collaboration',
+			'premier_contact',
+			'visite_programmee',
+			'visite_realisee',
+			'retour_client',
 		];
 		this.progressSteps = steps.map((stepId) => ({
 			id: stepId,
-			completed: stepId === 'proposal', // First step is completed by default
-			completedAt: stepId === 'proposal' ? new Date() : undefined,
+			completed: false,
+			ownerValidated: false,
+			collaboratorValidated: false,
+			notes: [],
 		}));
-		this.currentProgressStep = 'proposal';
+		this.currentProgressStep = 'accord_collaboration';
 	}
 
 	// Update currentStep based on status and signing status
@@ -412,21 +416,19 @@ collaborationSchema.methods.signContract = function (userId: Types.ObjectId) {
 
 collaborationSchema.methods.updateProgressStatus = function (
 	targetStep:
-		| 'proposal'
-		| 'accepted'
-		| 'visit_planned'
-		| 'visit_completed'
-		| 'negotiation'
-		| 'offer_made'
-		| 'compromise_signed'
-		| 'final_act',
-	notes: string,
+		| 'accord_collaboration'
+		| 'premier_contact'
+		| 'visite_programmee'
+		| 'visite_realisee'
+		| 'retour_client',
+	notes: string | undefined,
 	userId: Types.ObjectId,
+	validatedBy: 'owner' | 'collaborator',
 ) {
-	// Only allow progress updates while collaboration is active
-	if (this.status !== 'active') {
+	// Only allow progress updates while collaboration is active or accepted
+	if (this.status !== 'active' && this.status !== 'accepted') {
 		throw new Error(
-			'Progress can only be updated for active collaborations',
+			'Progress can only be updated for accepted or active collaborations',
 		);
 	}
 
@@ -443,24 +445,26 @@ collaborationSchema.methods.updateProgressStatus = function (
 		);
 	}
 
+	// Verify validatedBy matches the user
+	if (
+		(validatedBy === 'owner' && !isOwner) ||
+		(validatedBy === 'collaborator' && !isCollaborator)
+	) {
+		throw new Error('Validated by does not match user role');
+	}
+
 	const stepOrder: Array<
-		| 'proposal'
-		| 'accepted'
-		| 'visit_planned'
-		| 'visit_completed'
-		| 'negotiation'
-		| 'offer_made'
-		| 'compromise_signed'
-		| 'final_act'
+		| 'accord_collaboration'
+		| 'premier_contact'
+		| 'visite_programmee'
+		| 'visite_realisee'
+		| 'retour_client'
 	> = [
-		'proposal',
-		'accepted',
-		'visit_planned',
-		'visit_completed',
-		'negotiation',
-		'offer_made',
-		'compromise_signed',
-		'final_act',
+		'accord_collaboration',
+		'premier_contact',
+		'visite_programmee',
+		'visite_realisee',
+		'retour_client',
 	];
 
 	const targetStepIndex = stepOrder.indexOf(targetStep);
@@ -468,54 +472,81 @@ collaborationSchema.methods.updateProgressStatus = function (
 		throw new Error('Invalid progress step');
 	}
 
-	// Update all steps up to and including the target step
+	// Find the target step
+	const existingStep = this.progressSteps.find(
+		(s: {
+			id: string;
+			completed: boolean;
+			validatedAt?: Date;
+			ownerValidated: boolean;
+			collaboratorValidated: boolean;
+			notes: Array<{
+				note: string;
+				createdBy: Types.ObjectId;
+				createdAt: Date;
+			}>;
+		}) => s.id === targetStep,
+	);
+
+	if (!existingStep) {
+		throw new Error('Progress step not found');
+	}
+
 	const currentTime = new Date();
-	for (let i = 0; i <= targetStepIndex; i++) {
-		const stepId = stepOrder[i];
-		const existingStep = this.progressSteps.find(
-			(s: {
-				id: string;
-				completed: boolean;
-				completedAt?: Date;
-				notes?: string;
-				completedBy?: Types.ObjectId;
-			}) => s.id === stepId,
+
+	// Update validation status
+	if (validatedBy === 'owner') {
+		existingStep.ownerValidated = true;
+	} else {
+		existingStep.collaboratorValidated = true;
+	}
+
+	// Set validatedAt when first validation happens
+	if (!existingStep.validatedAt) {
+		existingStep.validatedAt = currentTime;
+	}
+
+	// Add note if provided
+	if (notes && notes.trim()) {
+		existingStep.notes.push({
+			note: notes.trim(),
+			createdBy: userId,
+			createdAt: currentTime,
+		});
+	}
+
+	// Mark step as completed when BOTH agents have validated
+	if (existingStep.ownerValidated && existingStep.collaboratorValidated) {
+		existingStep.completed = true;
+	}
+
+	// Update current progress step to the furthest completed step
+	for (let i = stepOrder.length - 1; i >= 0; i--) {
+		const step = this.progressSteps.find(
+			(s: { id: string; completed: boolean }) => s.id === stepOrder[i],
 		);
-
-		if (existingStep) {
-			if (!existingStep.completed) {
-				existingStep.completed = true;
-				existingStep.completedAt = currentTime;
-				existingStep.completedBy = userId;
-
-				// Add notes only to the target step
-				if (i === targetStepIndex && notes) {
-					existingStep.notes = notes;
-				}
-			}
+		if (step && step.completed) {
+			this.currentProgressStep = stepOrder[i];
+			break;
 		}
 	}
 
-	// Update current progress step
-	this.currentProgressStep = targetStep;
-
-	// Add activity for this update (without saving)
+	// Add activity for this update
 	const stepTitles = {
-		proposal: 'Proposition',
-		accepted: 'Acceptée',
-		visit_planned: 'Visite prévue',
-		visit_completed: 'Visite réalisée',
-		negotiation: 'Négociation',
-		offer_made: 'Offre déposée',
-		compromise_signed: 'Compromis signé',
-		final_act: 'Acte définitif',
+		accord_collaboration: 'Accord de collaboration',
+		premier_contact: 'Premier contact client',
+		visite_programmee: 'Visite programmée',
+		visite_realisee: 'Visite réalisée',
+		retour_client: 'Retour client',
 	};
 
+	const validatorLabel =
+		validatedBy === 'owner' ? 'Propriétaire' : 'Collaborateur';
 	const message = notes
-		? `Statut mis à jour: ${stepTitles[targetStep]} - ${notes}`
-		: `Statut mis à jour: ${stepTitles[targetStep]}`;
+		? `${validatorLabel} a validé: ${stepTitles[targetStep]} - ${notes}`
+		: `${validatorLabel} a validé: ${stepTitles[targetStep]}`;
 
-	// Add activity directly without calling addActivity method to avoid double save
+	// Add activity directly
 	this.activities.push({
 		type: 'progress_step_update',
 		message,

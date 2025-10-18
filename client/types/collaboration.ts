@@ -1,6 +1,8 @@
+import type { Property } from '@/lib/api/propertyApi';
+
 export interface Collaboration {
 	_id: string;
-	propertyId: string;
+	propertyId: string | Partial<Property>;
 	propertyOwnerId: {
 		_id: string;
 		firstName: string;
@@ -33,14 +35,11 @@ export interface Collaboration {
 
 	// Progress tracking
 	currentProgressStep:
-		| 'proposal'
-		| 'accepted'
-		| 'visit_planned'
-		| 'visit_completed'
-		| 'negotiation'
-		| 'offer_made'
-		| 'compromise_signed'
-		| 'final_act';
+		| 'accord_collaboration'
+		| 'premier_contact'
+		| 'visite_programmee'
+		| 'visite_realisee'
+		| 'retour_client';
 	progressSteps: ProgressStepData[];
 
 	activities: CollaborationActivity[];
@@ -48,27 +47,29 @@ export interface Collaboration {
 	updatedAt: string;
 }
 
+export interface StepNote {
+	note: string;
+	createdBy: {
+		_id: string;
+		firstName?: string;
+		lastName?: string;
+		profileImage?: string | null;
+	};
+	createdAt: string;
+}
+
 export interface ProgressStepData {
 	id:
-		| 'proposal'
-		| 'accepted'
-		| 'visit_planned'
-		| 'visit_completed'
-		| 'negotiation'
-		| 'offer_made'
-		| 'compromise_signed'
-		| 'final_act';
+		| 'accord_collaboration'
+		| 'premier_contact'
+		| 'visite_programmee'
+		| 'visite_realisee'
+		| 'retour_client';
 	completed: boolean;
-	completedAt?: string;
-	notes?: string;
-	completedBy?:
-		| string
-		| {
-				_id: string;
-				firstName?: string;
-				lastName?: string;
-				profileImage?: string | null;
-		  };
+	validatedAt?: string;
+	ownerValidated: boolean;
+	collaboratorValidated: boolean;
+	notes: StepNote[];
 }
 
 export interface CollaborationActivity {

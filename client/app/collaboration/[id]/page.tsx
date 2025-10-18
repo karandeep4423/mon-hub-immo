@@ -18,6 +18,7 @@ import { OverallStatusManager } from '@/components/collaboration/overall-status'
 import { ProgressTracker } from '@/components/collaboration/progress-tracking';
 import { ActivityManager } from '@/components/collaboration/shared';
 import { ContractModal } from '@/components/collaboration/ContractModal';
+import { ContractViewModal } from '@/components/contract';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { toast } from 'react-toastify';
 
@@ -52,6 +53,7 @@ export default function CollaborationPage() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [showContractModal, setShowContractModal] = useState(false);
+	const [showContractViewModal, setShowContractViewModal] = useState(false);
 	const [confirmOpen, setConfirmOpen] = useState(false);
 	const [confirmLoading, setConfirmLoading] = useState(false);
 	const [pendingAction, setPendingAction] =
@@ -177,14 +179,6 @@ export default function CollaborationPage() {
 				const transformedSteps = foundCollaboration.progressSteps.map(
 					(step) => {
 						const config = PROGRESS_STEPS_CONFIG[step.id];
-						// Handle completedBy - it might be a populated user object or a string ID
-						let completedByUser = undefined;
-						if (
-							step.completedBy &&
-							typeof step.completedBy === 'object'
-						) {
-							completedByUser = step.completedBy;
-						}
 
 						return {
 							id: step.id,
@@ -194,9 +188,10 @@ export default function CollaborationPage() {
 							current:
 								foundCollaboration.currentProgressStep ===
 								step.id,
-							completedAt: step.completedAt,
-							notes: step.notes,
-							completedBy: completedByUser,
+							validatedAt: step.validatedAt,
+							ownerValidated: step.ownerValidated,
+							collaboratorValidated: step.collaboratorValidated,
+							notes: step.notes || [],
 						};
 					},
 				);
@@ -204,17 +199,16 @@ export default function CollaborationPage() {
 			} else {
 				// Create default progress steps based on current collaboration step (fallback)
 				const defaultSteps = Object.entries(PROGRESS_STEPS_CONFIG).map(
-					([stepId, config], index) => ({
+					([stepId, config]) => ({
 						id: stepId as ProgressStep,
 						title: config.title,
 						description: config.description,
-						completed:
-							foundCollaboration.currentStep === stepId ||
-							(foundCollaboration.currentStep === 'completed' &&
-								index <
-									Object.keys(PROGRESS_STEPS_CONFIG).length -
-										1),
-						current: foundCollaboration.currentStep === stepId,
+						completed: false,
+						current:
+							foundCollaboration.currentProgressStep === stepId,
+						ownerValidated: false,
+						collaboratorValidated: false,
+						notes: [],
 					}),
 				);
 				setProgressSteps(defaultSteps);
@@ -337,7 +331,11 @@ export default function CollaborationPage() {
 
 	// Status modification handler (from modal) - NEW API
 	const handleProgressStatusUpdate = useCallback(
-		async (update: { targetStep: string; notes?: string }) => {
+		async (update: {
+			targetStep: string;
+			notes?: string;
+			validatedBy: 'owner' | 'collaborator';
+		}) => {
 			// Block status mutation until collaboration is active
 			if (!collaboration || collaboration.status !== 'active') {
 				console.warn(
@@ -350,6 +348,7 @@ export default function CollaborationPage() {
 				await collaborationApi.updateProgressStatus(collaborationId, {
 					targetStep: update.targetStep,
 					notes: update.notes,
+					validatedBy: update.validatedBy,
 				});
 				await fetchCollaboration(); // Refresh data
 			} catch (error) {
@@ -553,9 +552,13 @@ export default function CollaborationPage() {
 
 								<ProgressTracker
 									collaborationId={collaboration._id}
-									currentStep="proposal"
+									currentStep={
+										collaboration.currentProgressStep
+									}
 									steps={progressSteps}
 									canUpdate={canUpdate && isActive}
+									isOwner={Boolean(isOwner)}
+									isCollaborator={Boolean(isCollaborator)}
 									onStepUpdate={handleProgressUpdate}
 									onStatusUpdate={handleProgressStatusUpdate}
 								/>
@@ -783,6 +786,355 @@ export default function CollaborationPage() {
 									</div>
 								</Card>
 
+								{/* Client Information - Only visible in collaboration */}
+								{typeof collaboration.propertyId === 'object' &&
+									(
+										collaboration.propertyId as PropertyDetails
+									)?.clientInfo &&
+									(collaboration.status === 'accepted' ||
+										collaboration.status === 'active' ||
+										collaboration.status ===
+											'completed') && (
+										<Card className="p-6 bg-blue-50 border-blue-200">
+											<h3 className="text-lg font-medium text-gray-900 mb-4">
+												🔒 Informations client
+												confidentielles
+											</h3>
+											<p className="text-sm text-blue-600 mb-4">
+												Ces informations sont
+												confidentielles et uniquement
+												visibles dans le cadre de cette
+												collaboration.
+											</p>
+
+											{/* Commercial Details */}
+											{(
+												collaboration.propertyId as PropertyDetails
+											)?.clientInfo
+												?.commercialDetails && (
+												<div className="mb-6 p-4 bg-white rounded-lg">
+													<h4 className="font-medium text-gray-900 mb-3 flex items-center">
+														<span className="mr-2">
+															💡
+														</span>
+														Détails commerciaux
+													</h4>
+													<div className="space-y-3 text-sm">
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo
+															?.commercialDetails
+															?.strengths && (
+															<div>
+																<span className="font-medium text-gray-700">
+																	Points
+																	forts:
+																</span>
+																<p className="text-gray-600 mt-1">
+																	{
+																		(
+																			collaboration.propertyId as PropertyDetails
+																		)
+																			?.clientInfo
+																			?.commercialDetails
+																			?.strengths
+																	}
+																</p>
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo
+															?.commercialDetails
+															?.weaknesses && (
+															<div>
+																<span className="font-medium text-gray-700">
+																	Points
+																	faibles:
+																</span>
+																<p className="text-gray-600 mt-1">
+																	{
+																		(
+																			collaboration.propertyId as PropertyDetails
+																		)
+																			?.clientInfo
+																			?.commercialDetails
+																			?.weaknesses
+																	}
+																</p>
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo
+															?.commercialDetails
+															?.occupancyStatus && (
+															<div>
+																<span className="font-medium text-gray-700">
+																	Occupation:
+																</span>
+																<span className="ml-2 text-gray-600">
+																	{(
+																		collaboration.propertyId as PropertyDetails
+																	)
+																		?.clientInfo
+																		?.commercialDetails
+																		?.occupancyStatus ===
+																	'occupied'
+																		? 'Occupé'
+																		: 'Vide'}
+																</span>
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo
+															?.commercialDetails
+															?.openToLowerOffers && (
+															<div className="text-green-600">
+																✓ Ouvert aux
+																offres
+																&quot;coup de
+																coeur&quot;
+															</div>
+														)}
+													</div>
+												</div>
+											)}
+
+											{/* Property History */}
+											{(
+												collaboration.propertyId as PropertyDetails
+											)?.clientInfo?.propertyHistory && (
+												<div className="mb-6 p-4 bg-white rounded-lg">
+													<h4 className="font-medium text-gray-900 mb-3 flex items-center">
+														<span className="mr-2">
+															📅
+														</span>
+														Historique du bien
+													</h4>
+													<div className="space-y-3 text-sm">
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo
+															?.propertyHistory
+															?.listingDate && (
+															<div>
+																<span className="font-medium text-gray-700">
+																	Mise en
+																	vente:
+																</span>
+																<span className="ml-2 text-gray-600">
+																	{
+																		(
+																			collaboration.propertyId as PropertyDetails
+																		)
+																			?.clientInfo
+																			?.propertyHistory
+																			?.listingDate
+																	}
+																</span>
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo
+															?.propertyHistory
+															?.lastVisitDate && (
+															<div>
+																<span className="font-medium text-gray-700">
+																	Dernière
+																	visite:
+																</span>
+																<span className="ml-2 text-gray-600">
+																	{
+																		(
+																			collaboration.propertyId as PropertyDetails
+																		)
+																			?.clientInfo
+																			?.propertyHistory
+																			?.lastVisitDate
+																	}
+																</span>
+															</div>
+														)}
+														{typeof (
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo
+															?.propertyHistory
+															?.totalVisits ===
+															'number' && (
+															<div>
+																<span className="font-medium text-gray-700">
+																	Nombre de
+																	visites:
+																</span>
+																<span className="ml-2 text-gray-600">
+																	{
+																		(
+																			collaboration.propertyId as PropertyDetails
+																		)
+																			?.clientInfo
+																			?.propertyHistory
+																			?.totalVisits
+																	}
+																</span>
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo
+															?.propertyHistory
+															?.visitorFeedback && (
+															<div>
+																<span className="font-medium text-gray-700">
+																	Retours
+																	visiteurs:
+																</span>
+																<p className="text-gray-600 mt-1">
+																	{
+																		(
+																			collaboration.propertyId as PropertyDetails
+																		)
+																			?.clientInfo
+																			?.propertyHistory
+																			?.visitorFeedback
+																	}
+																</p>
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo
+															?.propertyHistory
+															?.priceReductions && (
+															<div>
+																<span className="font-medium text-gray-700">
+																	Historique
+																	prix:
+																</span>
+																<p className="text-gray-600 mt-1">
+																	{
+																		(
+																			collaboration.propertyId as PropertyDetails
+																		)
+																			?.clientInfo
+																			?.propertyHistory
+																			?.priceReductions
+																	}
+																</p>
+															</div>
+														)}
+													</div>
+												</div>
+											)}
+
+											{/* Owner Information */}
+											{(
+												collaboration.propertyId as PropertyDetails
+											)?.clientInfo?.ownerInfo && (
+												<div className="p-4 bg-white rounded-lg">
+													<h4 className="font-medium text-gray-900 mb-3 flex items-center">
+														<span className="mr-2">
+															🤝
+														</span>
+														Informations
+														propriétaire
+													</h4>
+													<div className="space-y-3 text-sm">
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo?.ownerInfo
+															?.urgentToSell && (
+															<div className="text-orange-600">
+																⚡ Pressés de
+																vendre
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo?.ownerInfo
+															?.openToNegotiation && (
+															<div className="text-green-600">
+																💬 Ouverts à la
+																négociation
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo?.ownerInfo
+															?.mandateType && (
+															<div>
+																<span className="font-medium text-gray-700">
+																	Mandat:
+																</span>
+																<span className="ml-2 text-gray-600 capitalize">
+																	{
+																		(
+																			collaboration.propertyId as PropertyDetails
+																		)
+																			?.clientInfo
+																			?.ownerInfo
+																			?.mandateType
+																	}
+																</span>
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo?.ownerInfo
+															?.saleReasons && (
+															<div>
+																<span className="font-medium text-gray-700">
+																	Raisons de
+																	la vente:
+																</span>
+																<p className="text-gray-600 mt-1">
+																	{
+																		(
+																			collaboration.propertyId as PropertyDetails
+																		)
+																			?.clientInfo
+																			?.ownerInfo
+																			?.saleReasons
+																	}
+																</p>
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo?.ownerInfo
+															?.presentDuringVisits && (
+															<div className="text-blue-600">
+																👤 Présents
+																pendant visites
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo?.ownerInfo
+															?.flexibleSchedule && (
+															<div className="text-blue-600">
+																🕐 Horaires
+																flexibles
+															</div>
+														)}
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.clientInfo?.ownerInfo
+															?.acceptConditionalOffers && (
+															<div className="text-green-600">
+																✓ Acceptent
+																offres
+																conditionnelles
+															</div>
+														)}
+													</div>
+												</div>
+											)}
+										</Card>
+									)}
+
 								{/* Agents Information */}
 								<Card className="p-6">
 									<h3 className="text-lg font-medium text-gray-900 mb-4">
@@ -909,9 +1261,33 @@ export default function CollaborationPage() {
 
 								{/* Contract Status */}
 								<Card className="p-6">
-									<h3 className="text-lg font-medium text-gray-900 mb-4">
-										📋 Statut du contrat
-									</h3>
+									<div className="flex items-center justify-between mb-4">
+										<h3 className="text-lg font-medium text-gray-900">
+											📋 Statut du contrat
+										</h3>
+										<Button
+											onClick={() =>
+												setShowContractViewModal(true)
+											}
+											variant="outline"
+											className="text-sm"
+										>
+											<svg
+												className="w-4 h-4 mr-2"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth={2}
+													d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+												/>
+											</svg>
+											Voir le contrat
+										</Button>
+									</div>
 									<div className="space-y-3">
 										<div className="flex items-center justify-between">
 											<span className="text-gray-600">
@@ -1115,6 +1491,19 @@ export default function CollaborationPage() {
 						</div>
 					</div>
 				</>
+			)}
+
+			{/* Contract View Modal */}
+			{collaboration && (
+				<ContractViewModal
+					isOpen={showContractViewModal}
+					onClose={() => setShowContractViewModal(false)}
+					contractText={
+						collaboration.contractText ||
+						'Contenu du contrat non disponible.'
+					}
+					collaboration={collaboration}
+				/>
 			)}
 		</div>
 	);

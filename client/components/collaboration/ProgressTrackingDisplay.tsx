@@ -15,12 +15,21 @@ interface ProgressTrackingDisplayProps {
 	currentProgressStep: ProgressStep;
 	progressSteps: ProgressStepData[];
 	canUpdate: boolean;
+	isOwner: boolean;
+	isCollaborator: boolean;
 	onStatusUpdate: (update: ProgressStatusUpdate) => Promise<void>;
 }
 
 export const ProgressTrackingDisplay: React.FC<
 	ProgressTrackingDisplayProps
-> = ({ currentProgressStep, progressSteps, canUpdate, onStatusUpdate }) => {
+> = ({
+	currentProgressStep,
+	progressSteps,
+	canUpdate,
+	isOwner,
+	isCollaborator,
+	onStatusUpdate,
+}) => {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
 	const currentStepIndex = STEP_ORDER.indexOf(currentProgressStep);
@@ -36,6 +45,9 @@ export const ProgressTrackingDisplay: React.FC<
 				description: config.description,
 				completed: false,
 				current: stepId === currentProgressStep,
+				ownerValidated: false,
+				collaboratorValidated: false,
+				notes: [],
 			}
 		);
 	};
@@ -125,10 +137,10 @@ export const ProgressTrackingDisplay: React.FC<
 												</span>
 											)}
 											{status === 'completed' &&
-												stepData.completedAt && (
+												stepData.validatedAt && (
 													<span className="text-xs text-gray-500">
 														{new Date(
-															stepData.completedAt,
+															stepData.validatedAt,
 														).toLocaleDateString(
 															'fr-FR',
 														)}
@@ -140,10 +152,19 @@ export const ProgressTrackingDisplay: React.FC<
 										</p>
 
 										{/* Show notes if they exist */}
-										{stepData.notes && (
+										{stepData.notes.length > 0 && (
 											<div className="mt-2 p-2 bg-gray-50 rounded text-sm text-gray-700">
-												<strong>Note:</strong>{' '}
-												{stepData.notes}
+												<strong>Notes:</strong>
+												{stepData.notes.map(
+													(note, idx) => (
+														<div
+															key={idx}
+															className="mt-1"
+														>
+															{note.note}
+														</div>
+													),
+												)}
 											</div>
 										)}
 									</div>
@@ -160,6 +181,8 @@ export const ProgressTrackingDisplay: React.FC<
 				onClose={() => setIsModalOpen(false)}
 				currentStep={currentProgressStep}
 				steps={progressSteps}
+				isOwner={isOwner}
+				isCollaborator={isCollaborator}
 				onUpdateStatus={onStatusUpdate}
 			/>
 		</div>

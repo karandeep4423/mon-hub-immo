@@ -1,5 +1,6 @@
 export { Button } from './Button';
 export { Input } from './Input';
+export { FileUpload } from './FileUpload';
 export { ImageLightbox } from './ImageLightbox';
 export { ProfileImageUploader } from './ProfileImageUploader';
 export { ProfileAvatar } from './ProfileAvatar';
@@ -25,3 +26,7 @@ export { EnergyRatingSelector } from './EnergyRatingSelector';
 export { PropertyTypeSelector } from './PropertyTypeSelector';
 export { NumberInput } from './NumberInput';
 export { Select } from './Select';
+export { LocationSearchInput } from './LocationSearchInput';
+export type { LocationItem } from './LocationSearchInput';
+export { UnifiedSearchBar } from './UnifiedSearchBar';
+export { SingleUnifiedSearch } from './SingleUnifiedSearch';

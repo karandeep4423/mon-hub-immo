@@ -13,6 +13,7 @@ interface SelectProps {
 	options: SelectOption[];
 	placeholder?: string;
 	required?: boolean;
+	disabled?: boolean;
 }
 
 export const Select = ({
@@ -23,6 +24,7 @@ export const Select = ({
 	options,
 	placeholder = 'Choisissez...',
 	required = false,
+	disabled = false,
 }: SelectProps) => {
 	return (
 		<div>
@@ -37,7 +39,8 @@ export const Select = ({
 				name={name}
 				value={value || ''}
 				onChange={(e) => onChange(e.target.value)}
-				className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-600 focus:border-brand-600 bg-white"
+				disabled={disabled}
+				className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-600 focus:border-brand-600 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
 			>
 				<option value="">{placeholder}</option>
 				{options.map((option) => (

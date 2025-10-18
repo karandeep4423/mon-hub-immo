@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Property } from '@/lib/api/propertyApi';
 import { getImageUrl } from '@/lib/utils/imageUtils';
 import { ProfileAvatar, FavoriteButton } from '../ui';
+import { getBadgeConfig } from '@/lib/constants/badges';
 
 interface PropertyCardProps {
 	property: Property;
@@ -29,17 +30,22 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 							);
 						}}
 					/>
-					<div className="absolute top-2 left-2 flex flex-col space-y-1">
-						{property.isNewProperty && (
-							<span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-								Nouveau
-							</span>
-						)}
-						{property.isExclusive && (
-							<span className="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">
-								Exclusivité
-							</span>
-						)}
+					<div className="absolute top-2 left-2 flex flex-wrap gap-1 max-w-[70%]">
+						{property.badges &&
+							property.badges.length > 0 &&
+							property.badges.map((badgeValue) => {
+								const config = getBadgeConfig(badgeValue);
+								if (!config) return null;
+
+								return (
+									<span
+										key={badgeValue}
+										className={`${config.bgColor} ${config.color} text-xs px-2 py-1 rounded-full`}
+									>
+										{config.label}
+									</span>
+								);
+							})}
 					</div>
 					{/* Favorite Button */}
 					<div className="absolute top-2 right-2">
