@@ -10,6 +10,10 @@ const PaymentForm = () => {
   const stripe = useStripe();
   const elements = useElements();
   const [email, setEmail] = useState('');
+  const [cardNumber, setCardNumber] = useState('');
+  const [expiry, setExpiry] = useState('');
+  const [cvc, setCvc] = useState('');
+  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -24,11 +28,10 @@ const PaymentForm = () => {
     const cardElement = elements.getElement(CardElement);
     if (!cardElement) return;
 
-    // Créer PaymentMethod
     const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({
       type: 'card',
       card: cardElement,
-      billing_details: { email },
+      billing_details: { email, name },
     });
 
     if (pmError) {
@@ -37,7 +40,6 @@ const PaymentForm = () => {
       return;
     }
 
-    // Appel backend pour créer l’abonnement
     const response = await fetch('/api/create-subscription', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -55,7 +57,6 @@ const PaymentForm = () => {
       return;
     }
 
-    // Confirmer le paiement
     const confirm = await stripe.confirmCardPayment(data.clientSecret!);
     if (confirm.error) {
       setError(confirm.error.message || 'Erreur confirmation');
@@ -68,58 +69,84 @@ const PaymentForm = () => {
 
   if (success) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-white px-4">
-        <h2 className="text-2xl font-bold text-green-600">✅ Abonnement réussi !</h2>
-        <p className="text-gray-700 mt-2 text-center">Merci de votre confiance ❤️</p>
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-green-600">✅ Abonnement réussi !</h2>
+          <p className="text-gray-700 mt-2">Merci de votre confiance ❤️</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white px-4">
-      <div className="w-full max-w-sm bg-white rounded-xl shadow-md p-6">
-        <h1 className="text-2xl font-bold text-gray-900 text-center mb-2">Passer au forfait <span className="text-cyan-500">Premium</span></h1>
-        <p className="text-gray-600 text-center mb-4 text-sm">Publiez des annonces et partagez des mandats avec HubImmo Premium</p>
-
-        <div className="text-center mb-6">
-          <span className="text-3xl font-bold">19.99 €</span> <span className="text-gray-600 text-sm">/ mois</span>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+      <div className="flex w-full max-w-4xl bg-white rounded-lg shadow-lg overflow-hidden">
+        {/* Left Side - Description and Pricing */}
+        <div className="w-1/2 bg-cyan-600 text-white p-8">
+          <h1 className="text-3xl font-bold mb-4">Forfait Premium MonHubImmo</h1>
+          <p className="mb-6">Accédez à des outils avancés pour booster votre activité immobilière.</p>
+          <div className="mb-6">
+            <span className="text-4xl font-bold">19.99 €</span> <span className="text-sm">/ mois</span>
+          </div>
+          <ul className="space-y-2 text-sm">
+            <li>✅ Publiez des annonces illimitées</li>
+            <li>✅ Partagez vos mandats en un clic</li>
+            <li>✅ Recevez des leads qualifiés</li>
+            <li>✅ Gérez vos prospects efficacement</li>
+          </ul>
         </div>
 
-        <ul className="text-gray-700 mb-6 space-y-1 text-sm">
-          <li>✅ Publier des annonces</li>
-          <li>✅ Partager vos mandats</li>
-          <li>✅ Recevoir des leads</li>
-          <li>✅ Partager et recevoir des listes de prospects</li>
-        </ul>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Votre email"
-            required
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-cyan-500"
-          />
-
-          <div className="border border-gray-300 rounded-lg p-3 bg-white">
-            <CardElement options={{ hidePostalCode: true }} />
-          </div>
-
-          {error && <p className="text-red-600 text-sm">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={!stripe || loading}
-            className="w-full py-3 bg-cyan-600 text-white font-semibold rounded-lg hover:bg-cyan-700 transition"
-          >
-            {loading ? 'Traitement...' : 'Payer 19,99 €'}
-          </button>
-        </form>
-
-        <p className="text-center text-xs text-gray-400 mt-4">
-          Sécurisé par <span className="font-bold">Stripe</span>
-        </p>
+        {/* Right Side - Form */}
+        <div className="w-1/2 p-8">
+          <h2 className="text-2xl font-bold mb-4">Informations de paiement</h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full mt-1 border border-gray-300 rounded-lg p-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Nom complet</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="w-full mt-1 border border-gray-300 rounded-lg p-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Numéro de carte</label>
+              <div className="border border-gray-300 rounded-lg p-3 bg-white">
+                <CardElement options={{ hidePostalCode: true }} />
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Pays</label>
+              <select
+                className="w-full mt-1 border border-gray-300 rounded-lg p-2"
+                defaultValue="France"
+              >
+                <option>France</option>
+              </select>
+            </div>
+            <button
+              type="submit"
+              disabled={!stripe || loading}
+              className="w-full py-2 bg-cyan-600 text-white font-semibold rounded-lg hover:bg-cyan-700"
+            >
+              {loading ? 'Traitement...' : 'Souscrire pour 19,99 €'}
+            </button>
+            {error && <p className="text-red-600 text-sm">{error}</p>}
+          </form>
+          <p className="text-center text-xs text-gray-400 mt-4">Sécurisé par Stripe</p>
+        </div>
       </div>
     </div>
   );
