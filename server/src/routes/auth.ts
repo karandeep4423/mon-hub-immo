@@ -10,6 +10,7 @@ import {
 	resetPassword,
 	completeProfile,
 	getAllAgents,
+	updateSearchPreferences,
 } from '../controllers/authController';
 import { authenticateToken } from '../middleware/auth';
 import {
@@ -66,5 +67,8 @@ router.post(
 
 // Public route to get all agents
 router.get('/agents', getAllAgents);
+
+// Update search preferences (protected)
+router.patch('/search-preferences', authenticateToken, updateSearchPreferences);
 
 export default router;

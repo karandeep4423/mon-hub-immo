@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { CityAutocomplete } from '../ui/CityAutocomplete';
 import { ProfileImageUploader } from '../ui/ProfileImageUploader';
 import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/lib/api/authApi';
@@ -266,6 +267,27 @@ export const ProfileCompletion: React.FC = () => {
 						</h3>
 
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<CityAutocomplete
+								label="Ville principale"
+								value={formData.city}
+								onCitySelect={(cityName, postalCode) => {
+									handleChange({
+										target: {
+											name: 'city',
+											value: cityName,
+										},
+									} as React.ChangeEvent<HTMLInputElement>);
+									handleChange({
+										target: {
+											name: 'postalCode',
+											value: postalCode,
+										},
+									} as React.ChangeEvent<HTMLInputElement>);
+								}}
+								placeholder="Rechercher une ville..."
+								error={errors.city}
+							/>
+
 							<Input
 								label="Code postal"
 								name="postalCode"
@@ -273,15 +295,7 @@ export const ProfileCompletion: React.FC = () => {
 								onChange={handleChange}
 								error={errors.postalCode}
 								placeholder="22100"
-							/>
-
-							<Input
-								label="Ville principale"
-								name="city"
-								value={formData.city}
-								onChange={handleChange}
-								error={errors.city}
-								placeholder="Caen"
+								disabled
 							/>
 
 							<div>

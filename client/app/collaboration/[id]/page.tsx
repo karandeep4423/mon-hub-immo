@@ -606,7 +606,10 @@ export default function CollaborationPage() {
 													activity.type === 'note'
 														? 'Note ajoutée'
 														: activity.message,
-												content: activity.message,
+												content:
+													activity.type === 'note'
+														? activity.message
+														: '', // Don't duplicate message for status updates
 												author: {
 													id:
 														activity.createdBy ||

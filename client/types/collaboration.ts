@@ -39,7 +39,12 @@ export interface Collaboration {
 		| 'premier_contact'
 		| 'visite_programmee'
 		| 'visite_realisee'
-		| 'retour_client';
+		| 'retour_client'
+		| 'offre_en_cours'
+		| 'negociation_en_cours'
+		| 'compromis_signe'
+		| 'signature_notaire'
+		| 'affaire_conclue';
 	progressSteps: ProgressStepData[];
 
 	activities: CollaborationActivity[];
@@ -64,7 +69,12 @@ export interface ProgressStepData {
 		| 'premier_contact'
 		| 'visite_programmee'
 		| 'visite_realisee'
-		| 'retour_client';
+		| 'retour_client'
+		| 'offre_en_cours'
+		| 'negociation_en_cours'
+		| 'compromis_signe'
+		| 'signature_notaire'
+		| 'affaire_conclue';
 	completed: boolean;
 	validatedAt?: string;
 	ownerValidated: boolean;

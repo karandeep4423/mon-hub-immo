@@ -899,3 +899,49 @@ export const getAllAgents = async (
 		res.status(500).json({ success: false, message: 'Server error' });
 	}
 };
+
+// Update search preferences
+export const updateSearchPreferences = async (
+	req: AuthRequest,
+	res: Response,
+): Promise<void> => {
+	try {
+		const { preferredRadius, lastSearchLocations } = req.body;
+
+		const user = await User.findById(req.userId);
+		if (!user) {
+			res.status(404).json({
+				success: false,
+				message: 'User not found',
+			});
+			return;
+		}
+
+		// Update search preferences
+		if (!user.searchPreferences) {
+			user.searchPreferences = {};
+		}
+
+		if (preferredRadius !== undefined) {
+			user.searchPreferences.preferredRadius = preferredRadius;
+		}
+
+		if (lastSearchLocations !== undefined) {
+			user.searchPreferences.lastSearchLocations = lastSearchLocations;
+		}
+
+		await user.save();
+
+		res.json({
+			success: true,
+			message: 'Search preferences updated successfully',
+			searchPreferences: user.searchPreferences,
+		});
+	} catch (error) {
+		console.error('Update search preferences error:', error);
+		res.status(500).json({
+			success: false,
+			message: 'Internal server error',
+		});
+	}
+};

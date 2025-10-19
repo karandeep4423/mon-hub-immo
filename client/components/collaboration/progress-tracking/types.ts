@@ -6,7 +6,12 @@ export type ProgressStep =
 	| 'premier_contact' // First client contact
 	| 'visite_programmee' // Scheduled visit
 	| 'visite_realisee' // Completed visit
-	| 'retour_client'; // Client feedback
+	| 'retour_client' // Client feedback
+	| 'offre_en_cours' // Offer in progress
+	| 'negociation_en_cours' // Negotiation in progress
+	| 'compromis_signe' // Sales agreement signed
+	| 'signature_notaire' // Notary signature
+	| 'affaire_conclue'; // Deal closed
 
 export interface StepNote {
 	note: string;
@@ -91,5 +96,35 @@ export const PROGRESS_STEPS_CONFIG: Record<
 		description: 'Feedback du client reçu',
 		order: 5,
 		icon: '💬',
+	},
+	offre_en_cours: {
+		title: 'Offre en cours',
+		description: 'Une offre a été déposée',
+		order: 6,
+		icon: '📝',
+	},
+	negociation_en_cours: {
+		title: 'Négociation en cours',
+		description: 'Négociation active avec le client',
+		order: 7,
+		icon: '🤝',
+	},
+	compromis_signe: {
+		title: 'Compromis signé',
+		description: 'Compromis de vente validé',
+		order: 8,
+		icon: '✅',
+	},
+	signature_notaire: {
+		title: 'Signature notaire',
+		description: 'Acte authentique signé',
+		order: 9,
+		icon: '📜',
+	},
+	affaire_conclue: {
+		title: 'Affaire conclue',
+		description: 'Collaboration réussie et clôturée avec BRAVO',
+		order: 10,
+		icon: '🎉',
 	},
 } as const;

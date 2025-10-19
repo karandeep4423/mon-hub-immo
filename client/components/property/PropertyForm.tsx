@@ -8,6 +8,8 @@ import {
 	PropertyTypeSelector,
 	NumberInput,
 	Select,
+	CityAutocomplete,
+	AddressAutocomplete,
 } from '@/components/ui';
 import { PropertyImageManager } from './PropertyImageManager';
 import { ClientInfoForm } from './ClientInfoForm';
@@ -763,34 +765,34 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 		<div className="space-y-6">
 			<h3 className="text-lg font-semibold mb-4">Localisation</h3>
 
-			<div>
-				<label className="block text-sm font-medium text-gray-700 mb-2">
-					Adresse *
-				</label>
-				<Input
-					type="text"
-					value={formData.address}
-					onChange={(e) =>
-						handleInputChange('address', e.target.value)
+			<AddressAutocomplete
+				label="Adresse"
+				value={formData.address || ''}
+				onAddressSelect={(address, city, postalCode, coordinates) => {
+					handleInputChange('address', address);
+					handleInputChange('city', city);
+					handleInputChange('postalCode', postalCode);
+					if (coordinates) {
+						console.log('Address coordinates:', coordinates);
 					}
-					placeholder="123 Rue de la Paix"
-					error={errors.address}
-				/>
-			</div>
+				}}
+				placeholder="Rechercher une adresse..."
+				error={errors.address}
+				required
+			/>
 
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 				<div>
-					<label className="block text-sm font-medium text-gray-700 mb-2">
-						Ville *
-					</label>
-					<Input
-						type="text"
+					<CityAutocomplete
 						value={formData.city}
-						onChange={(e) =>
-							handleInputChange('city', e.target.value)
-						}
-						placeholder="Paris"
+						onCitySelect={(city, postalCode) => {
+							handleInputChange('city', city);
+							handleInputChange('postalCode', postalCode);
+						}}
+						placeholder="Ex: Paris, Lyon, Marseille..."
 						error={errors.city}
+						label="Ville"
+						required
 					/>
 				</div>
 
@@ -806,6 +808,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 						}
 						placeholder="75001"
 						error={errors.postalCode}
+						disabled
 					/>
 				</div>
 

@@ -519,6 +519,11 @@ export const updateProgressStatus = async (
 			'visite_programmee',
 			'visite_realisee',
 			'retour_client',
+			'offre_en_cours',
+			'negociation_en_cours',
+			'compromis_signe',
+			'signature_notaire',
+			'affaire_conclue',
 		];
 		if (!validSteps.includes(targetStep)) {
 			res.status(400).json({
@@ -619,6 +624,11 @@ export const updateProgressStatus = async (
 			visite_programmee: 'Visite programmée',
 			visite_realisee: 'Visite réalisée',
 			retour_client: 'Retour client',
+			offre_en_cours: 'Offre en cours',
+			negociation_en_cours: 'Négociation en cours',
+			compromis_signe: 'Compromis signé',
+			signature_notaire: 'Signature notaire',
+			affaire_conclue: 'Affaire conclue',
 		};
 
 		await notificationService.create({

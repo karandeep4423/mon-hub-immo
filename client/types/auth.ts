@@ -11,8 +11,8 @@ export interface AuthResponse {
 
 // Update User interface
 export interface User {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    id: any;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	id: any;
 	_id: string;
 	firstName: string;
 	lastName: string;
@@ -40,6 +40,18 @@ export interface User {
 		alertFrequency?: 'quotidien' | 'hebdomadaire';
 	};
 
+	searchPreferences?: {
+		preferredRadius?: number;
+		lastSearchLocations?: Array<{
+			city: string;
+			postcode: string;
+			coordinates?: {
+				lat: number;
+				lon: number;
+			};
+		}>;
+	};
+
 	createdAt?: string;
 	updatedAt?: string;
 }
@@ -59,21 +71,20 @@ export interface ValidationError {
 }
 
 export type SignUpData = {
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string;
-    userType: '' | 'agent' | 'apporteur';
-    password: string;
-    confirmPassword: string;
-    // Agent-specific fields
-    agentType?: string;
-    tCard?: string;
-    sirenNumber?: string;
-    rsacNumber?: string;
-    collaboratorCertificate?: string;
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone: string;
+	userType: '' | 'agent' | 'apporteur';
+	password: string;
+	confirmPassword: string;
+	// Agent-specific fields
+	agentType?: string;
+	tCard?: string;
+	sirenNumber?: string;
+	rsacNumber?: string;
+	collaboratorCertificate?: string;
 };
-
 
 export interface LoginData {
 	email: string;

@@ -125,12 +125,6 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 					fill
 					className="object-cover"
 				/>
-				<div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/40"></div>
-
-				{/* Status badge overlay */}
-				<div className="absolute top-3 right-3">
-					{getStatusBadge(searchAd.status)}
-				</div>
 			</div>
 
 			{/* Content Section */}

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { CityAutocomplete } from '../ui/CityAutocomplete';
 
 interface AgentFiltersProps {
 	filters: {
@@ -82,18 +83,15 @@ export const AgentFilters: React.FC<AgentFiltersProps> = ({
 				</div>
 
 				{/* Filter by city */}
-				<div>
-					<label className="block text-sm font-medium text-gray-700 mb-1">
-						Ville
-					</label>
-					<input
-						type="text"
-						value={filters.city}
-						onChange={(e) => handleChange('city', e.target.value)}
-						placeholder="Ex: Paris, Lyon..."
-						className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-					/>
-				</div>
+				<CityAutocomplete
+					label="Ville"
+					value={filters.city}
+					onCitySelect={(cityName, postalCode) => {
+						handleChange('city', cityName);
+						handleChange('postalCode', postalCode);
+					}}
+					placeholder="Ex: Paris, Lyon..."
+				/>
 
 				{/* Filter by postal code */}
 				<div>
@@ -108,6 +106,7 @@ export const AgentFilters: React.FC<AgentFiltersProps> = ({
 						}
 						placeholder="Ex: 75001"
 						maxLength={5}
+						disabled
 						className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
 					/>
 				</div>

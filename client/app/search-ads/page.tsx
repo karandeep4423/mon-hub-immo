@@ -5,11 +5,36 @@ import searchAdApi from '@/lib/api/searchAdApi';
 import { SearchAd } from '@/types/searchAd';
 import { SearchAdCard } from '@/components/search-ads/SearchAdCard';
 import Link from 'next/link';
+import { LocationSearchWithRadius } from '@/components/ui';
+import type { LocationItem } from '@/components/ui/LocationSearchWithRadius';
+import { useAuth } from '@/hooks/useAuth';
+import { authService } from '@/lib/api/authApi';
 
 export default function SearchAdsPage() {
+	const { user } = useAuth();
 	const [searchAds, setSearchAds] = useState<SearchAd[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [selectedLocations, setSelectedLocations] = useState<LocationItem[]>(
+		[],
+	);
+	const [radiusKm, setRadiusKm] = useState(
+		user?.searchPreferences?.preferredRadius || 10,
+	);
+
+	// Save radius preference when it changes
+	const handleRadiusChange = async (newRadius: number) => {
+		setRadiusKm(newRadius);
+		if (user) {
+			try {
+				await authService.updateSearchPreferences({
+					preferredRadius: newRadius,
+				});
+			} catch (error) {
+				console.error('Error saving radius preference:', error);
+			}
+		}
+	};
 
 	useEffect(() => {
 		const fetchSearchAds = async () => {
@@ -27,6 +52,33 @@ export default function SearchAdsPage() {
 
 		fetchSearchAds();
 	}, []);
+
+	// Filter search ads by selected locations
+	const filteredSearchAds =
+		selectedLocations.length > 0
+			? searchAds.filter((searchAd) => {
+					const cities = selectedLocations.map((loc) =>
+						loc.name.toLowerCase(),
+					);
+					const postalCodes = selectedLocations.map(
+						(loc) => loc.postcode,
+					);
+
+					const matchesCity = searchAd.location.cities.some((city) =>
+						cities.some((filterCity) =>
+							city.toLowerCase().includes(filterCity),
+						),
+					);
+
+					const matchesPostalCode =
+						searchAd.location.postalCodes &&
+						searchAd.location.postalCodes.some((pc) =>
+							postalCodes.includes(pc),
+						);
+
+					return matchesCity || matchesPostalCode;
+				})
+			: searchAds;
 
 	if (loading) {
 		return (
@@ -52,10 +104,10 @@ export default function SearchAdsPage() {
 						Toutes les recherches
 					</h1>
 					<p className="text-gray-600 mt-2">
-						{searchAds.length} recherche
-						{searchAds.length > 1 ? 's' : ''} client
-						{searchAds.length > 1 ? 's' : ''} active
-						{searchAds.length > 1 ? 's' : ''}
+						{filteredSearchAds.length} recherche
+						{filteredSearchAds.length > 1 ? 's' : ''} client
+						{filteredSearchAds.length > 1 ? 's' : ''} active
+						{filteredSearchAds.length > 1 ? 's' : ''}
 					</p>
 				</div>
 				<Link
@@ -66,9 +118,20 @@ export default function SearchAdsPage() {
 				</Link>
 			</div>
 
-			{searchAds.length > 0 ? (
+			{/* Location Search with Radius */}
+			<div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+				<LocationSearchWithRadius
+					selectedLocations={selectedLocations}
+					onLocationsChange={setSelectedLocations}
+					radiusKm={radiusKm}
+					onRadiusChange={handleRadiusChange}
+					placeholder="Filtrer par ville ou code postal"
+				/>
+			</div>
+
+			{filteredSearchAds.length > 0 ? (
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-					{searchAds.map((searchAd) => (
+					{filteredSearchAds.map((searchAd) => (
 						<SearchAdCard
 							key={searchAd._id}
 							searchAd={searchAd}
@@ -79,7 +142,9 @@ export default function SearchAdsPage() {
 			) : (
 				<div className="text-center py-10 bg-gray-50 rounded-lg">
 					<p className="text-gray-600">
-						Aucune recherche active pour le moment.
+						{selectedLocations.length > 0
+							? 'Aucune recherche trouvée dans cette zone.'
+							: 'Aucune recherche active pour le moment.'}
 					</p>
 					<Link
 						href="/search-ads/create"
