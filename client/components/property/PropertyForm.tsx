@@ -783,16 +783,17 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 				<div>
-					<CityAutocomplete
+					<label className="block text-sm font-medium text-gray-700 mb-2">
+						Ville *
+					</label>
+					<Input
+						type="text"
 						value={formData.city}
-						onCitySelect={(city, postalCode) => {
-							handleInputChange('city', city);
-							handleInputChange('postalCode', postalCode);
-						}}
+						onChange={(e) =>
+							handleInputChange('city', e.target.value)
+						}
 						placeholder="Ex: Paris, Lyon, Marseille..."
 						error={errors.city}
-						label="Ville"
-						required
 					/>
 				</div>
 
