@@ -127,6 +127,13 @@ export default function PropertyDetailsPage() {
 		setShowLightbox(true);
 	};
 
+	// Determine if the current user is the owner of the property
+	const isOwner = !!(
+		user &&
+		property &&
+		(user._id === property.owner._id || user.id === property.owner._id)
+	);
+
 	if (loading) {
 		return (
 			<div className="min-h-screen flex items-center justify-center">
@@ -1144,20 +1151,23 @@ export default function PropertyDetailsPage() {
 										</Button>
 										{user && user.userType === 'agent' && (
 											<>
-												{hasBlockingCollab ? (
+												{isOwner ? (
 													<div className="w-full p-3 rounded-md border bg-gray-50 text-gray-700 text-sm flex items-center justify-center">
 														<span className="mr-2">
 															🚫
 														</span>
-														{blockingStatus ===
-															'pending' &&
-															'Propriété déjà en collaboration (en attente).'}
-														{blockingStatus ===
-															'accepted' &&
-															'Propriété déjà en collaboration (acceptée).'}
-														{blockingStatus ===
-															'active' &&
-															'Propriété déjà en collaboration (active).'}
+														Vous êtes le
+														propriétaire de cette
+														page, vous ne pouvez pas
+														proposer une
+														collaboration.
+													</div>
+												) : hasBlockingCollab ? (
+													<div className="w-full p-3 rounded-md border bg-gray-50 text-gray-700 text-sm flex items-center justify-center">
+														<span className="mr-2">
+															🚫
+														</span>
+														{`Propriété déjà en collaboration (${blockingStatus === 'pending' ? 'en attente' : blockingStatus === 'accepted' ? 'acceptée' : 'active'})`}
 													</div>
 												) : (
 													<Button
@@ -1242,17 +1252,21 @@ export default function PropertyDetailsPage() {
 				<ProposeCollaborationModal
 					isOpen={showCollaborationModal}
 					onClose={() => setShowCollaborationModal(false)}
-					propertyId={property._id}
-					property={{
-						_id: property._id,
-						title: property.title,
-						price: property.price,
-						city: property.city,
-						postalCode: property.postalCode || '',
-						propertyType: property.propertyType,
-						surface: property.surface,
-						rooms: property.rooms || 0,
-						mainImage: property.mainImage,
+					post={{
+						type: 'property',
+						id: property._id,
+						ownerUserType: property.owner.userType,
+						data: {
+							_id: property._id,
+							title: property.title,
+							price: property.price,
+							city: property.city,
+							postalCode: property.postalCode || '',
+							propertyType: property.propertyType,
+							surface: property.surface,
+							rooms: property.rooms || 0,
+							mainImage: property.mainImage,
+						},
 					}}
 					onSuccess={() => {
 						// Close modal and refresh collaboration info to reflect new blocking state

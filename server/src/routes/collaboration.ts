@@ -11,6 +11,7 @@ import {
 	proposeCollaborationSchema,
 	collaborationIdParam,
 	propertyIdParam,
+	searchAdIdParam,
 } from '../validation/schemas';
 import {
 	proposeCollaboration,
@@ -18,6 +19,7 @@ import {
 	respondToCollaboration,
 	addCollaborationNote,
 	getCollaborationsByProperty,
+	getCollaborationsBySearchAd,
 	cancelCollaboration,
 	updateProgressStatus,
 	signCollaboration,
@@ -31,6 +33,7 @@ const collaborationParamValidation = [
 	validate(collaborationIdParam, 'params'),
 ] as const;
 const propertyParamValidation = [validate(propertyIdParam, 'params')] as const;
+const searchAdParamValidation = [validate(searchAdIdParam, 'params')] as const;
 
 router.use(authenticateToken);
 
@@ -58,6 +61,12 @@ router.get(
 	'/property/:propertyId',
 	...propertyParamValidation,
 	getCollaborationsByProperty,
+);
+
+router.get(
+	'/search-ad/:searchAdId',
+	...searchAdParamValidation,
+	getCollaborationsBySearchAd,
 );
 
 router.delete(

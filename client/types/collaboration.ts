@@ -1,9 +1,11 @@
 import type { Property } from '@/lib/api/propertyApi';
+import type { SearchAd } from './searchAd';
 
 export interface Collaboration {
 	_id: string;
-	propertyId: string | Partial<Property>;
-	propertyOwnerId: {
+	postId: string | Partial<Property> | Partial<SearchAd>;
+	postType: 'Property' | 'SearchAd';
+	postOwnerId: {
 		_id: string;
 		firstName: string;
 		lastName: string;
@@ -24,6 +26,8 @@ export interface Collaboration {
 		| 'rejected';
 	proposedCommission: number;
 	proposalMessage: string;
+	compensationType?: 'percentage' | 'fixed_amount' | 'gift_vouchers';
+	compensationAmount?: number;
 	ownerSigned: boolean;
 	ownerSignedAt?: string;
 	collaboratorSigned: boolean;
@@ -97,10 +101,13 @@ export interface CollaborationActivity {
 }
 
 export interface ProposeCollaborationRequest {
-	propertyId: string;
+	propertyId?: string;
+	searchAdId?: string;
 	collaboratorId?: string; // Optional - backend will use authenticated user if not provided
-	commissionPercentage: number;
+	commissionPercentage?: number;
 	message?: string;
+	compensationType?: 'percentage' | 'fixed_amount' | 'gift_vouchers';
+	compensationAmount?: number;
 }
 
 export interface RespondToCollaborationRequest {

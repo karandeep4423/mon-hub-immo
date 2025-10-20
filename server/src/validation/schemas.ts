@@ -170,15 +170,44 @@ export const updatePropertyStatusSchema = z.object({
 });
 
 // Collaboration
-export const proposeCollaborationSchema = z.object({
-	propertyId: mongoId,
-	collaboratorId: mongoId.optional(),
-	commissionPercentage: z.number().min(0).max(100),
-	message: z.string().max(500).optional(),
-});
+export const proposeCollaborationSchema = z
+	.object({
+		propertyId: mongoId.optional(),
+		searchAdId: mongoId.optional(),
+		collaboratorId: mongoId.optional(),
+		commissionPercentage: z.number().min(0).max(100).optional(),
+		message: z.string().max(500).optional(),
+		compensationType: z
+			.enum(['percentage', 'fixed_amount', 'gift_vouchers'])
+			.optional(),
+		compensationAmount: z.number().min(0).optional(),
+	})
+	.refine((data) => data.propertyId || data.searchAdId, {
+		message: 'Either propertyId or searchAdId must be provided',
+		path: ['propertyId'],
+	})
+	.refine(
+		(data) => {
+			// If compensationType is percentage or not specified, require commissionPercentage
+			if (
+				!data.compensationType ||
+				data.compensationType === 'percentage'
+			) {
+				return data.commissionPercentage !== undefined;
+			}
+			// If compensationType is fixed_amount or gift_vouchers, require compensationAmount
+			return data.compensationAmount !== undefined;
+		},
+		{
+			message:
+				'commissionPercentage required for percentage type, compensationAmount required for other types',
+			path: ['commissionPercentage'],
+		},
+	);
 
 export const collaborationIdParam = z.object({ id: mongoId });
 export const propertyIdParam = z.object({ propertyId: mongoId });
+export const searchAdIdParam = z.object({ searchAdId: mongoId });
 
 export type CreatePropertyInput = z.infer<typeof createPropertySchema>;
 export type UpdatePropertyInput = z.infer<typeof updatePropertySchema>;

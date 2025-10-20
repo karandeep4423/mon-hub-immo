@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '../ui/Card';
@@ -40,20 +41,25 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 	// Fetch property data
 	useEffect(() => {
 		const fetchProperty = async () => {
+			// Only fetch if it's a Property collaboration
+			if (collaboration.postType !== 'Property') {
+				setLoadingProperty(false);
+				return;
+			}
+
 			try {
 				// Extract property ID - handle both string and object cases
 				let propertyId: string;
 
-				if (typeof collaboration.propertyId === 'string') {
-					propertyId = collaboration.propertyId;
+				if (typeof collaboration.postId === 'string') {
+					propertyId = collaboration.postId;
 				} else if (
-					collaboration.propertyId &&
-					typeof collaboration.propertyId === 'object'
+					collaboration.postId &&
+					typeof collaboration.postId === 'object'
 				) {
 					// If it's an object, try to get the _id property
 					propertyId =
-						(collaboration.propertyId as { _id?: string })._id ||
-						'';
+						(collaboration.postId as { _id?: string })._id || '';
 				} else {
 					propertyId = '';
 				}
@@ -74,15 +80,15 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 			}
 		};
 
-		if (collaboration.propertyId) {
+		if (collaboration.postId) {
 			fetchProperty();
 		}
-	}, [collaboration.propertyId]);
+	}, [collaboration.postId, collaboration.postType]);
 
-	const isOwner = collaboration.propertyOwnerId._id === currentUserId;
+	const isOwner = collaboration.postOwnerId._id === currentUserId;
 
 	// Both participants
-	const ownerUser = collaboration.propertyOwnerId;
+	const ownerUser = collaboration.postOwnerId;
 	const collaboratorUser = collaboration.collaboratorId;
 	const shortCollabId = collaboration._id.slice(-6);
 

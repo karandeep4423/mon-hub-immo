@@ -5,8 +5,9 @@ import { ProgressStep } from '../progress-tracking/types';
 
 export interface BaseCollaboration {
 	_id: string;
-	propertyId: string;
-	propertyOwnerId: {
+	postId: string;
+	postType: 'Property' | 'SearchAd';
+	postOwnerId: {
 		_id: string;
 		firstName: string;
 		lastName: string;

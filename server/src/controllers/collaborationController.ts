@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import { Collaboration } from '../models/Collaboration';
 import { Property } from '../models/Property';
+import { SearchAd } from '../models/SearchAd';
 import { Types } from 'mongoose';
-import type { IUser } from '../models/User';
 import { User } from '../models/User';
 import { notificationService } from '../services/notificationService';
 import { collabTexts } from '../utils/notificationTexts';
@@ -19,7 +19,14 @@ export const proposeCollaboration = async (
 	res: Response,
 ): Promise<void> => {
 	try {
-		const { propertyId, commissionPercentage, message } = req.body;
+		const {
+			propertyId,
+			searchAdId,
+			commissionPercentage,
+			message,
+			compensationType,
+			compensationAmount,
+		} = req.body;
 		const userId = req.user?.id;
 
 		if (!userId) {
@@ -27,28 +34,67 @@ export const proposeCollaboration = async (
 			return;
 		}
 
-		// Check if property exists
-		const property = await Property.findById(propertyId);
-		if (!property) {
-			res.status(404).json({
+		// Determine post type and ID
+		const postType = propertyId ? 'Property' : 'SearchAd';
+		const postId = propertyId || searchAdId;
+
+		if (!postId) {
+			res.status(400).json({
 				success: false,
-				message: 'Property not found',
+				message: 'Either propertyId or searchAdId must be provided',
 			});
 			return;
 		}
 
-		// Check that the user is not proposing collaboration on their own property
-		if (property.owner.toString() === userId) {
-			res.status(400).json({
-				success: false,
-				message: 'Cannot collaborate on your own property',
-			});
-			return;
+		let postOwnerId: Types.ObjectId;
+
+		// Fetch the post (property or searchAd)
+		if (postType === 'Property') {
+			const property = await Property.findById(postId);
+			if (!property) {
+				res.status(404).json({
+					success: false,
+					message: 'Property not found',
+				});
+				return;
+			}
+
+			// Check that the user is not proposing collaboration on their own property
+			if (property.owner.toString() === userId) {
+				res.status(400).json({
+					success: false,
+					message: 'Cannot collaborate on your own property',
+				});
+				return;
+			}
+
+			postOwnerId = property.owner as Types.ObjectId;
+		} else {
+			// searchAd
+			const searchAd = await SearchAd.findById(postId);
+			if (!searchAd) {
+				res.status(404).json({
+					success: false,
+					message: 'Search ad not found',
+				});
+				return;
+			}
+
+			// Check that the user is not proposing collaboration on their own search ad
+			if (searchAd.authorId.toString() === userId) {
+				res.status(400).json({
+					success: false,
+					message: 'Cannot collaborate on your own search ad',
+				});
+				return;
+			}
+
+			postOwnerId = searchAd.authorId as Types.ObjectId;
 		}
 
 		// Check for existing collaboration
 		const existingCollaboration = await Collaboration.findOne({
-			propertyId,
+			postId,
 			collaboratorId: userId, // Current user is the collaborator
 			status: { $in: ['pending', 'accepted', 'active'] },
 		});
@@ -61,9 +107,9 @@ export const proposeCollaboration = async (
 			return;
 		}
 
-		// Block if the property already has an active/pending/accepted collaboration with someone else
+		// Block if the post already has an active/pending/accepted collaboration with someone else
 		const collabWithAnother = await Collaboration.findOne({
-			propertyId,
+			postId,
 			collaboratorId: { $ne: userId },
 			status: { $in: ['pending', 'accepted', 'active'] },
 		});
@@ -71,23 +117,69 @@ export const proposeCollaboration = async (
 		if (collabWithAnother) {
 			res.status(409).json({
 				success: false,
-				message: 'Property already under collaboration',
+				message: `${postType === 'Property' ? 'Property' : 'Search ad'} already under collaboration`,
 			});
 			return;
 		}
 
+		// Check if post owner is apporteur and apply special validation
+		const postOwner = await User.findById(postOwnerId).select('userType');
+		const isApporteurPost = postOwner?.userType === 'apporteur';
+
+		// Validate compensation for apporteur posts
+		if (isApporteurPost) {
+			if (compensationType === 'percentage' || !compensationType) {
+				if (commissionPercentage && commissionPercentage >= 50) {
+					res.status(400).json({
+						success: false,
+						message:
+							'Commission percentage must be less than 50% for apporteur posts',
+					});
+					return;
+				}
+			} else if (
+				compensationType === 'fixed_amount' ||
+				compensationType === 'gift_vouchers'
+			) {
+				if (!compensationAmount || compensationAmount <= 0) {
+					res.status(400).json({
+						success: false,
+						message: 'Compensation amount must be greater than 0',
+					});
+					return;
+				}
+			}
+		}
+
+		// Determine activity message based on compensation type
+		let activityMessage = '';
+		if (isApporteurPost && compensationType !== 'percentage') {
+			if (compensationType === 'fixed_amount') {
+				activityMessage = `Collaboration proposée avec ${compensationAmount}€ de compensation`;
+			} else if (compensationType === 'gift_vouchers') {
+				activityMessage = `Collaboration proposée avec ${compensationAmount} chèques cadeaux`;
+			}
+		} else {
+			activityMessage = `Collaboration proposée avec ${commissionPercentage || 0}% de commission`;
+		}
+
 		const collaboration = new Collaboration({
-			propertyId,
-			propertyOwnerId: property.owner, // Property owner receives the collaboration request
+			postId,
+			postType,
+			postOwnerId, // Post owner receives the collaboration request
 			collaboratorId: userId, // Current authenticated user becomes the collaborator
-			proposedCommission: commissionPercentage,
+			proposedCommission: commissionPercentage || 0,
 			proposalMessage: message,
+			...(isApporteurPost && {
+				compensationType,
+				compensationAmount,
+			}),
 			status: 'pending',
 			currentStep: 'proposal',
 			activities: [
 				{
 					type: 'proposal',
-					message: `Collaboration proposée avec ${commissionPercentage}% de commission`,
+					message: activityMessage,
 					createdBy: new Types.ObjectId(userId),
 					createdAt: new Date(),
 				},
@@ -98,15 +190,7 @@ export const proposeCollaboration = async (
 
 		await collaboration.save();
 
-		// Notify property owner about new proposal
-		const owner = property.owner as Types.ObjectId | IUser;
-		let ownerId: Types.ObjectId;
-		if (owner instanceof Types.ObjectId) {
-			ownerId = owner;
-		} else {
-			ownerId = owner._id as unknown as Types.ObjectId;
-		}
-		// fetch actor for a better message
+		// Notify post owner about new proposal
 		const actor = await User.findById(userId).select(
 			'firstName lastName email profileImage',
 		);
@@ -116,7 +200,7 @@ export const proposeCollaboration = async (
 				: actor.firstName || actor.email
 			: 'Someone';
 		await notificationService.create({
-			recipientId: ownerId,
+			recipientId: postOwnerId,
 			actorId: userId,
 			type: 'collab:proposal_received',
 			entity: { type: 'collaboration', id: collaboration._id },
@@ -126,7 +210,8 @@ export const proposeCollaboration = async (
 				commission: commissionPercentage,
 			}),
 			data: {
-				propertyId,
+				postId: postId.toString(),
+				postType,
 				commissionPercentage,
 				actorName,
 				actorAvatar: actor?.profileImage || undefined,
@@ -160,13 +245,10 @@ export const getUserCollaborations = async (
 		}
 
 		const collaborations = await Collaboration.find({
-			$or: [{ propertyOwnerId: userId }, { collaboratorId: userId }],
+			$or: [{ postOwnerId: userId }, { collaboratorId: userId }],
 		})
-			.populate(
-				'propertyId',
-				'title address price surface mainImage clientInfo agencyFeesPercentage agencyFeesAmount priceIncludingFees',
-			)
-			.populate('propertyOwnerId', 'firstName lastName profileImage')
+			.populate('postId')
+			.populate('postOwnerId', 'firstName lastName profileImage')
 			.populate('collaboratorId', 'firstName lastName profileImage')
 			.populate(
 				'progressSteps.notes.createdBy',
@@ -210,10 +292,10 @@ export const respondToCollaboration = async (
 			return;
 		}
 
-		if (collaboration.propertyOwnerId.toString() !== userId) {
+		if (collaboration.postOwnerId.toString() !== userId) {
 			res.status(403).json({
 				success: false,
-				message: 'Only property owner can respond',
+				message: 'Only post owner can respond',
 			});
 			return;
 		}
@@ -298,7 +380,7 @@ export const addCollaborationNote = async (
 			return;
 		}
 
-		const isOwner = collaboration.propertyOwnerId.toString() === userId;
+		const isOwner = collaboration.postOwnerId.toString() === userId;
 		const isCollaborator =
 			collaboration.collaboratorId.toString() === userId;
 
@@ -334,7 +416,7 @@ export const addCollaborationNote = async (
 		// Notify the other party about the note
 		const noteRecipientId = isOwner
 			? collaboration.collaboratorId
-			: collaboration.propertyOwnerId;
+			: collaboration.postOwnerId;
 		// Enrich with actor details for better UX in notifications
 		const actor = await User.findById(userId).select(
 			'firstName lastName email profileImage',
@@ -381,8 +463,11 @@ export const getCollaborationsByProperty = async (
 			return;
 		}
 
-		const collaborations = await Collaboration.find({ propertyId })
-			.populate('propertyOwnerId', 'firstName lastName profileImage')
+		const collaborations = await Collaboration.find({
+			postId: propertyId,
+			postType: 'property',
+		})
+			.populate('postOwnerId', 'firstName lastName profileImage')
 			.populate('collaboratorId', 'firstName lastName profileImage')
 			.sort({ createdAt: -1 });
 
@@ -414,10 +499,7 @@ export const cancelCollaboration = async (
 
 		// Find the collaboration
 		const collaboration = await Collaboration.findById(id)
-			.populate(
-				'propertyOwnerId',
-				'firstName lastName email profileImage',
-			)
+			.populate('postOwnerId', 'firstName lastName email profileImage')
 			.populate(
 				'collaboratorId',
 				'firstName lastName email profileImage',
@@ -432,7 +514,7 @@ export const cancelCollaboration = async (
 		}
 
 		// Check if user is involved in this collaboration
-		const isOwner = collaboration.propertyOwnerId._id.toString() === userId;
+		const isOwner = collaboration.postOwnerId._id.toString() === userId;
 		const isCollaborator =
 			collaboration.collaboratorId._id.toString() === userId;
 
@@ -468,7 +550,7 @@ export const cancelCollaboration = async (
 		// Notify the other party about cancellation
 		const cancelRecipientId = isOwner
 			? collaboration.collaboratorId
-			: collaboration.propertyOwnerId;
+			: collaboration.postOwnerId;
 		const actor = await User.findById(userId).select(
 			'firstName lastName email profileImage',
 		);
@@ -547,10 +629,7 @@ export const updateProgressStatus = async (
 
 		// Find the collaboration
 		const collaboration = await Collaboration.findById(id)
-			.populate(
-				'propertyOwnerId',
-				'firstName lastName email profileImage',
-			)
+			.populate('postOwnerId', 'firstName lastName email profileImage')
 			.populate('collaboratorId', 'firstName lastName email profileImage')
 			.populate({
 				path: 'progressSteps.notes.createdBy',
@@ -566,7 +645,7 @@ export const updateProgressStatus = async (
 		}
 
 		// Check authorization
-		const isOwner = collaboration.propertyOwnerId._id.toString() === userId;
+		const isOwner = collaboration.postOwnerId._id.toString() === userId;
 		const isCollaborator =
 			collaboration.collaboratorId._id.toString() === userId;
 
@@ -608,7 +687,7 @@ export const updateProgressStatus = async (
 		// Notify the other party about progress update
 		const progressRecipientId = isOwner
 			? collaboration.collaboratorId
-			: collaboration.propertyOwnerId;
+			: collaboration.postOwnerId;
 		const actor = await User.findById(userId).select(
 			'firstName lastName email profileImage',
 		);
@@ -672,10 +751,7 @@ export const signCollaboration = async (
 
 		// Find the collaboration
 		const collaboration = await Collaboration.findById(id)
-			.populate(
-				'propertyOwnerId',
-				'firstName lastName email profileImage',
-			)
+			.populate('postOwnerId', 'firstName lastName email profileImage')
 			.populate(
 				'collaboratorId',
 				'firstName lastName email profileImage',
@@ -699,12 +775,12 @@ export const signCollaboration = async (
 		});
 
 		// Notify the other party about signing
-		const isOwner = collaboration.propertyOwnerId._id
-			? collaboration.propertyOwnerId._id.toString() === userId
-			: collaboration.propertyOwnerId.toString() === userId;
+		const isOwner = collaboration.postOwnerId._id
+			? collaboration.postOwnerId._id.toString() === userId
+			: collaboration.postOwnerId.toString() === userId;
 		const signRecipientId = isOwner
 			? collaboration.collaboratorId
-			: collaboration.propertyOwnerId;
+			: collaboration.postOwnerId;
 		const actor = await User.findById(userId).select(
 			'firstName lastName email profileImage',
 		);
@@ -764,10 +840,7 @@ export const completeCollaboration = async (
 		}
 
 		const collaboration = await Collaboration.findById(id)
-			.populate(
-				'propertyOwnerId',
-				'firstName lastName email profileImage',
-			)
+			.populate('postOwnerId', 'firstName lastName email profileImage')
 			.populate(
 				'collaboratorId',
 				'firstName lastName email profileImage',
@@ -782,7 +855,7 @@ export const completeCollaboration = async (
 		}
 
 		// Check authorization
-		const isOwner = collaboration.propertyOwnerId._id.toString() === userId;
+		const isOwner = collaboration.postOwnerId._id.toString() === userId;
 		const isCollaborator =
 			collaboration.collaboratorId._id.toString() === userId;
 
@@ -834,7 +907,7 @@ export const completeCollaboration = async (
 		// Notify the other party about completion
 		const completeRecipientId = isOwner
 			? collaboration.collaboratorId
-			: collaboration.propertyOwnerId;
+			: collaboration.postOwnerId;
 		const actor = await User.findById(userId).select(
 			'firstName lastName email profileImage',
 		);
@@ -857,6 +930,40 @@ export const completeCollaboration = async (
 		});
 	} catch (error) {
 		console.error('Error completing collaboration:', error);
+		res.status(500).json({
+			success: false,
+			message: 'Internal server error',
+		});
+	}
+};
+
+export const getCollaborationsBySearchAd = async (
+	req: AuthenticatedRequest,
+	res: Response,
+): Promise<void> => {
+	try {
+		const { searchAdId } = req.params;
+		const userId = req.user?.id;
+
+		if (!userId) {
+			res.status(401).json({ success: false, message: 'Unauthorized' });
+			return;
+		}
+
+		const collaborations = await Collaboration.find({
+			postId: searchAdId,
+			postType: 'searchAd',
+		})
+			.populate('postOwnerId', 'firstName lastName profileImage')
+			.populate('collaboratorId', 'firstName lastName profileImage')
+			.sort({ createdAt: -1 });
+
+		res.status(200).json({
+			success: true,
+			collaborations,
+		});
+	} catch (error) {
+		console.error('Error getting search ad collaborations:', error);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',

@@ -97,8 +97,7 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 
 			// Role filter
 			if (roleFilter !== 'all') {
-				const isOwner =
-					collaboration.propertyOwnerId._id === currentUserId;
+				const isOwner = collaboration.postOwnerId._id === currentUserId;
 				if (roleFilter === 'owner' && !isOwner) return false;
 				if (roleFilter === 'collaborator' && isOwner) return false;
 			}
@@ -106,9 +105,9 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 			// Search filter
 			if (searchTerm) {
 				const partner =
-					collaboration.propertyOwnerId._id === currentUserId
+					collaboration.postOwnerId._id === currentUserId
 						? collaboration.collaboratorId
-						: collaboration.propertyOwnerId;
+						: collaboration.postOwnerId;
 				const partnerName =
 					`${partner.firstName} ${partner.lastName}`.toLowerCase();
 				const collaborationId = collaboration._id.toLowerCase();
@@ -140,7 +139,7 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 			(c) => c.status === 'completed',
 		).length;
 		const asOwner = collaborations.filter(
-			(c) => c.propertyOwnerId._id === currentUserId,
+			(c) => c.postOwnerId._id === currentUserId,
 		).length;
 		const asCollaborator = total - asOwner;
 

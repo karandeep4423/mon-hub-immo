@@ -6,36 +6,67 @@ import { Input } from '../ui/Input';
 import { collaborationApi } from '../../lib/api/collaborationApi';
 import { toast } from 'react-toastify';
 import type { Property } from '@/lib/api/propertyApi';
+import type { SearchAd } from '@/types/searchAd';
+
+type PostData =
+	| {
+			type: 'property';
+			id: string;
+			ownerUserType: 'agent' | 'apporteur';
+			data: Pick<
+				Property,
+				| '_id'
+				| 'title'
+				| 'price'
+				| 'city'
+				| 'postalCode'
+				| 'propertyType'
+				| 'surface'
+				| 'rooms'
+				| 'mainImage'
+			>;
+	  }
+	| {
+			type: 'searchAd';
+			id: string;
+			ownerUserType: 'agent' | 'apporteur';
+			data: Pick<
+				SearchAd,
+				| '_id'
+				| 'title'
+				| 'description'
+				| 'location'
+				| 'budget'
+				| 'propertyTypes'
+				| 'authorType'
+			>;
+	  };
 
 interface ProposeCollaborationModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	propertyId: string;
-	property: Pick<
-		Property,
-		| '_id'
-		| 'title'
-		| 'price'
-		| 'city'
-		| 'postalCode'
-		| 'propertyType'
-		| 'surface'
-		| 'rooms'
-		| 'mainImage'
-	>;
+	post: PostData;
 	onSuccess?: () => void;
 }
 
 export const ProposeCollaborationModal: React.FC<
 	ProposeCollaborationModalProps
-> = ({ isOpen, onClose, propertyId, property, onSuccess }) => {
+> = ({ isOpen, onClose, post, onSuccess }) => {
 	const [isLoading, setIsLoading] = useState(false);
 	const [formData, setFormData] = useState({
 		commissionPercentage: '',
+		compensationType: 'percentage' as
+			| 'percentage'
+			| 'fixed_amount'
+			| 'gift_vouchers',
+		compensationAmount: '',
 		message: '',
 		agreeToTerms: false,
 	});
 	const [error, setError] = useState<string | null>(null);
+
+	// Check if post owner is apporteur
+	const isApporteurPost = post.ownerUserType === 'apporteur';
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -43,17 +74,73 @@ export const ProposeCollaborationModal: React.FC<
 		setError(null);
 
 		try {
-			// Current user becomes the collaborator automatically
-			await collaborationApi.propose({
-				propertyId,
-				commissionPercentage: parseFloat(formData.commissionPercentage),
+			// Validate for apporteur posts
+			if (isApporteurPost) {
+				if (formData.compensationType === 'percentage') {
+					const percentage = parseFloat(
+						formData.commissionPercentage,
+					);
+					if (percentage >= 50) {
+						throw new Error(
+							"Le pourcentage de commission doit être inférieur à 50% pour les posts d'apporteur",
+						);
+					}
+				} else if (!formData.compensationAmount) {
+					throw new Error(
+						'Veuillez saisir un montant de compensation',
+					);
+				}
+			}
+
+			// Build request payload
+			const payload: {
+				propertyId?: string;
+				searchAdId?: string;
+				commissionPercentage?: number;
+				message: string;
+				compensationType?:
+					| 'percentage'
+					| 'fixed_amount'
+					| 'gift_vouchers';
+				compensationAmount?: number;
+			} = {
+				...(post.type === 'property'
+					? { propertyId: post.id }
+					: { searchAdId: post.id }),
 				message: formData.message,
-			});
+			};
+
+			// Add commission percentage for percentage type or non-apporteur posts
+			if (
+				!isApporteurPost ||
+				formData.compensationType === 'percentage'
+			) {
+				payload.commissionPercentage = parseFloat(
+					formData.commissionPercentage,
+				);
+			} else {
+				// For non-percentage compensation on apporteur posts, set a nominal value
+				payload.commissionPercentage = 0;
+			}
+
+			// Add compensation fields for apporteur posts
+			if (isApporteurPost) {
+				payload.compensationType = formData.compensationType;
+				if (formData.compensationType !== 'percentage') {
+					payload.compensationAmount = parseFloat(
+						formData.compensationAmount,
+					);
+				}
+			}
+
+			await collaborationApi.propose(payload);
 			toast.success('Collaboration proposée avec succès');
 			onSuccess?.();
 			onClose();
 			setFormData({
 				commissionPercentage: '',
+				compensationType: 'percentage',
+				compensationAmount: '',
 				message: '',
 				agreeToTerms: false,
 			});
@@ -73,6 +160,79 @@ export const ProposeCollaborationModal: React.FC<
 		setFormData((prev) => ({ ...prev, [field]: value }));
 	};
 
+	const renderPostDetails = () => {
+		if (post.type === 'property') {
+			const property = post.data;
+			return (
+				<div className="flex space-x-4">
+					{property.mainImage && (
+						<div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
+							<img
+								src={
+									typeof property.mainImage === 'string'
+										? property.mainImage
+										: property.mainImage.url
+								}
+								alt={property.title}
+								width={80}
+								height={80}
+								className="w-full h-full object-cover"
+							/>
+						</div>
+					)}
+					<div className="flex-1">
+						<h4 className="font-medium text-gray-900 mb-1">
+							{property.title}
+						</h4>
+						<p className="text-sm text-gray-600 mb-1">
+							{property.city}
+							{property.postalCode
+								? `, ${property.postalCode}`
+								: ''}
+						</p>
+						<div className="flex items-center space-x-4 text-sm text-gray-500">
+							<span>{property.propertyType}</span>
+							<span>{property.surface}m²</span>
+							<span>{property.rooms} pièces</span>
+						</div>
+						<p className="text-lg font-bold text-brand-600 mt-2">
+							{property.price.toLocaleString()}€
+						</p>
+					</div>
+				</div>
+			);
+		} else {
+			const searchAd = post.data;
+			return (
+				<div className="space-y-2">
+					<h4 className="font-medium text-gray-900">
+						{searchAd.title}
+					</h4>
+					<p className="text-sm text-gray-600 line-clamp-2">
+						{searchAd.description}
+					</p>
+					<div className="flex flex-wrap gap-2 text-sm text-gray-500">
+						<span>📍 {searchAd.location.cities.join(', ')}</span>
+						<span>
+							💰 Budget max:{' '}
+							{searchAd.budget.max.toLocaleString()}€
+						</span>
+					</div>
+					<div className="flex items-center gap-2 text-xs">
+						{searchAd.propertyTypes.map((type) => (
+							<span
+								key={type}
+								className="px-2 py-1 bg-gray-100 rounded-full"
+							>
+								{type}
+							</span>
+						))}
+					</div>
+				</div>
+			);
+		}
+	};
+
 	return (
 		<Modal
 			isOpen={isOpen}
@@ -80,52 +240,25 @@ export const ProposeCollaborationModal: React.FC<
 			title="Proposer une collaboration"
 		>
 			<div className="p-6 space-y-6">
-				{/* Property Details Section */}
+				{/* Post Details Section */}
 				<div className="bg-gray-50 rounded-lg p-4">
 					<h3 className="text-lg font-medium text-gray-900 mb-3">
-						Propriété à collaborer
+						{post.type === 'property'
+							? 'Propriété à collaborer'
+							: 'Annonce de recherche à collaborer'}
 					</h3>
-					<div className="flex space-x-4">
-						{property.mainImage && (
-							<div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
-								<img
-									src={
-										typeof property.mainImage === 'string'
-											? property.mainImage
-											: property.mainImage.url
-									}
-									alt={property.title}
-									width={80}
-									height={80}
-									className="w-full h-full object-cover"
-								/>
-							</div>
-						)}
-						<div className="flex-1">
-							<h4 className="font-medium text-gray-900 mb-1">
-								{property.title}
-							</h4>
-							<p className="text-sm text-gray-600 mb-1">
-								{property.city}
-								{property.postalCode
-									? `, ${property.postalCode}`
-									: ''}
-							</p>
-							<div className="flex items-center space-x-4 text-sm text-gray-500">
-								<span>{property.propertyType}</span>
-								<span>{property.surface}m²</span>
-								<span>{property.rooms} pièces</span>
-							</div>
-							<p className="text-lg font-bold text-brand-600 mt-2">
-								{property.price.toLocaleString()}€
-							</p>
-						</div>
-					</div>
+					{renderPostDetails()}
 				</div>
 
 				<div className="text-sm text-gray-600">
-					Proposez votre collaboration sur cette propriété. Définissez
-					le pourcentage de commission que vous souhaitez recevoir.
+					Proposez votre collaboration sur{' '}
+					{post.type === 'property'
+						? 'cette propriété'
+						: 'cette annonce de recherche'}
+					.{' '}
+					{isApporteurPost
+						? "Choisissez votre mode de compensation pour l'apporteur d'affaire."
+						: 'Définissez le pourcentage de commission que vous souhaitez recevoir.'}
 				</div>
 
 				<form onSubmit={handleSubmit} className="space-y-4">
@@ -135,33 +268,161 @@ export const ProposeCollaborationModal: React.FC<
 						</div>
 					)}
 
-					<div>
-						<label
-							htmlFor="commissionPercentage"
-							className="block text-sm font-medium text-gray-700 mb-2"
-						>
-							Pourcentage de commission (%)
-						</label>
-						<Input
-							id="commissionPercentage"
-							type="number"
-							min="1"
-							max="50"
-							step="0.1"
-							value={formData.commissionPercentage}
-							onChange={(e) =>
-								handleInputChange(
-									'commissionPercentage',
-									e.target.value,
-								)
-							}
-							placeholder="25"
-							required
-						/>
-						<div className="text-xs text-gray-500 mt-1">
-							Entre 1% et 50% de la commission totale
+					{/* Compensation Type Selection for Apporteur Posts */}
+					{isApporteurPost && (
+						<div className="space-y-3">
+							<label className="block text-sm font-medium text-gray-700">
+								Type de compensation pour l&apos;apporteur
+								d&apos;affaire
+							</label>
+							<div className="space-y-2">
+								<label className="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+									<input
+										type="radio"
+										name="compensationType"
+										value="percentage"
+										checked={
+											formData.compensationType ===
+											'percentage'
+										}
+										onChange={(e) =>
+											handleInputChange(
+												'compensationType',
+												e.target.value,
+											)
+										}
+										className="text-cyan-600 focus:ring-cyan-500"
+									/>
+									<span className="flex-1 text-sm text-gray-700">
+										Pourcentage de commission (&lt; 50%)
+									</span>
+								</label>
+								<label className="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+									<input
+										type="radio"
+										name="compensationType"
+										value="fixed_amount"
+										checked={
+											formData.compensationType ===
+											'fixed_amount'
+										}
+										onChange={(e) =>
+											handleInputChange(
+												'compensationType',
+												e.target.value,
+											)
+										}
+										className="text-cyan-600 focus:ring-cyan-500"
+									/>
+									<span className="flex-1 text-sm text-gray-700">
+										Montant fixe en euros (€)
+									</span>
+								</label>
+								<label className="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+									<input
+										type="radio"
+										name="compensationType"
+										value="gift_vouchers"
+										checked={
+											formData.compensationType ===
+											'gift_vouchers'
+										}
+										onChange={(e) =>
+											handleInputChange(
+												'compensationType',
+												e.target.value,
+											)
+										}
+										className="text-cyan-600 focus:ring-cyan-500"
+									/>
+									<span className="flex-1 text-sm text-gray-700">
+										Chèques cadeaux
+									</span>
+								</label>
+							</div>
 						</div>
-					</div>
+					)}
+
+					{/* Percentage Commission Field */}
+					{(!isApporteurPost ||
+						formData.compensationType === 'percentage') && (
+						<div>
+							<label
+								htmlFor="commissionPercentage"
+								className="block text-sm font-medium text-gray-700 mb-2"
+							>
+								Pourcentage de commission (%)
+							</label>
+							<Input
+								id="commissionPercentage"
+								type="number"
+								min="1"
+								max={isApporteurPost ? '49' : '50'}
+								step="0.1"
+								value={formData.commissionPercentage}
+								onChange={(e) =>
+									handleInputChange(
+										'commissionPercentage',
+										e.target.value,
+									)
+								}
+								placeholder="25"
+								required
+							/>
+							<div className="text-xs text-gray-500 mt-1">
+								{isApporteurPost
+									? "Maximum 49% pour les posts d'apporteur"
+									: 'Entre 1% et 50% de la commission totale'}
+							</div>
+						</div>
+					)}
+
+					{/* Compensation Amount Field for Apporteur Posts */}
+					{isApporteurPost &&
+						formData.compensationType !== 'percentage' && (
+							<div>
+								<label
+									htmlFor="compensationAmount"
+									className="block text-sm font-medium text-gray-700 mb-2"
+								>
+									{formData.compensationType ===
+									'fixed_amount'
+										? 'Montant en euros (€)'
+										: 'Nombre de chèques cadeaux'}
+								</label>
+								<Input
+									id="compensationAmount"
+									type="number"
+									min="1"
+									step={
+										formData.compensationType ===
+										'fixed_amount'
+											? '0.01'
+											: '1'
+									}
+									value={formData.compensationAmount}
+									onChange={(e) =>
+										handleInputChange(
+											'compensationAmount',
+											e.target.value,
+										)
+									}
+									placeholder={
+										formData.compensationType ===
+										'fixed_amount'
+											? '500'
+											: '2'
+									}
+									required
+								/>
+								<div className="text-xs text-gray-500 mt-1">
+									{formData.compensationType ===
+									'fixed_amount'
+										? 'Montant fixe en euros'
+										: 'Nombre de chèques cadeaux à offrir'}
+								</div>
+							</div>
+						)}
 
 					<div>
 						<label
@@ -221,8 +482,11 @@ export const ProposeCollaborationModal: React.FC<
 							type="submit"
 							disabled={
 								isLoading ||
-								!formData.commissionPercentage ||
-								!formData.agreeToTerms
+								!formData.agreeToTerms ||
+								(isApporteurPost &&
+								formData.compensationType !== 'percentage'
+									? !formData.compensationAmount
+									: !formData.commissionPercentage)
 							}
 						>
 							{isLoading

@@ -76,8 +76,8 @@ export const useDashboardStats = (currentUserId?: string) => {
 		const pendingRequests = state.collaborations.filter(
 			(c) =>
 				c.status === 'pending' &&
-				typeof c.propertyOwnerId !== 'string' &&
-				c.propertyOwnerId?._id === currentUserId,
+				typeof c.postOwnerId !== 'string' &&
+				c.postOwnerId?._id === currentUserId,
 		).length;
 		const activeCollabs = state.collaborations.filter(
 			(c) => c.status === 'active',
