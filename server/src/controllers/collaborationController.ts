@@ -164,7 +164,7 @@ export const getUserCollaborations = async (
 		})
 			.populate(
 				'propertyId',
-				'title address price mainImage clientInfo agencyFeesPercentage agencyFeesAmount priceIncludingFees',
+				'title address price surface mainImage clientInfo agencyFeesPercentage agencyFeesAmount priceIncludingFees',
 			)
 			.populate('propertyOwnerId', 'firstName lastName profileImage')
 			.populate('collaboratorId', 'firstName lastName profileImage')

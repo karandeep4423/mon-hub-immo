@@ -689,20 +689,26 @@ export default function CollaborationPage() {
 									<div className="space-y-3">
 										<div>
 											<span className="text-sm text-gray-600">
-												Référence:
+												Détails du bien:
 											</span>
-											<p className="font-medium">
-												{typeof collaboration.propertyId ===
-												'object'
-													? (
-															collaboration.propertyId as PropertyDetails
-														)?._id ||
-														(
-															collaboration.propertyId as PropertyDetails
-														)?.id ||
-														'N/A'
-													: collaboration.propertyId}
-											</p>
+											<a
+												href={`/property/${
+													typeof collaboration.propertyId ===
+													'object'
+														? (
+																collaboration.propertyId as PropertyDetails
+															)?._id ||
+															(
+																collaboration.propertyId as PropertyDetails
+															)?.id
+														: collaboration.propertyId
+												}`}
+												target="_blank"
+												rel="noopener noreferrer"
+												className="font-medium text-blue-600 hover:text-blue-800 hover:underline block"
+											>
+												Voir l&apos;annonce
+											</a>
 										</div>
 										{typeof collaboration.propertyId ===
 											'object' &&
@@ -740,24 +746,24 @@ export default function CollaborationPage() {
 													</p>
 												</div>
 											)}
-										{typeof collaboration.propertyId ===
-											'object' &&
-											(
-												collaboration.propertyId as PropertyDetails
-											)?.displaySurface && (
-												<div>
-													<span className="text-sm text-gray-600">
-														Surface:
-													</span>
-													<p className="font-medium">
-														{
+										<div>
+											<span className="text-sm text-gray-600">
+												Surface:
+											</span>
+											<p className="font-medium">
+												{typeof collaboration.propertyId ===
+													'object' &&
+												(
+													collaboration.propertyId as PropertyDetails
+												)?.surface
+													? `${
 															(
 																collaboration.propertyId as PropertyDetails
-															).displaySurface
-														}
-													</p>
-												</div>
-											)}
+															).surface
+														} m²`
+													: 'Non spécifié'}
+											</p>
+										</div>
 										<div>
 											<span className="text-sm text-gray-600">
 												Localisation:
