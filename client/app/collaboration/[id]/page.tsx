@@ -559,6 +559,18 @@ export default function CollaborationPage() {
 									canUpdate={canUpdate && isActive}
 									isOwner={Boolean(isOwner)}
 									isCollaborator={Boolean(isCollaborator)}
+									ownerUser={
+										typeof collaboration.propertyOwnerId ===
+										'object'
+											? collaboration.propertyOwnerId
+											: undefined
+									}
+									collaboratorUser={
+										typeof collaboration.collaboratorId ===
+										'object'
+											? collaboration.collaboratorId
+											: undefined
+									}
 									onStepUpdate={handleProgressUpdate}
 									onStatusUpdate={handleProgressStatusUpdate}
 								/>
@@ -594,7 +606,10 @@ export default function CollaborationPage() {
 													activity.type === 'note'
 														? 'Note ajoutée'
 														: activity.message,
-												content: activity.message,
+												content:
+													activity.type === 'note'
+														? activity.message
+														: '', // Don't duplicate message for status updates
 												author: {
 													id:
 														activity.createdBy ||
@@ -674,20 +689,26 @@ export default function CollaborationPage() {
 									<div className="space-y-3">
 										<div>
 											<span className="text-sm text-gray-600">
-												Référence:
+												Détails du bien:
 											</span>
-											<p className="font-medium">
-												{typeof collaboration.propertyId ===
-												'object'
-													? (
-															collaboration.propertyId as PropertyDetails
-														)?._id ||
-														(
-															collaboration.propertyId as PropertyDetails
-														)?.id ||
-														'N/A'
-													: collaboration.propertyId}
-											</p>
+											<a
+												href={`/property/${
+													typeof collaboration.propertyId ===
+													'object'
+														? (
+																collaboration.propertyId as PropertyDetails
+															)?._id ||
+															(
+																collaboration.propertyId as PropertyDetails
+															)?.id
+														: collaboration.propertyId
+												}`}
+												target="_blank"
+												rel="noopener noreferrer"
+												className="font-medium text-blue-600 hover:text-blue-800 hover:underline block"
+											>
+												Voir l&apos;annonce
+											</a>
 										</div>
 										{typeof collaboration.propertyId ===
 											'object' &&
@@ -725,24 +746,24 @@ export default function CollaborationPage() {
 													</p>
 												</div>
 											)}
-										{typeof collaboration.propertyId ===
-											'object' &&
-											(
-												collaboration.propertyId as PropertyDetails
-											)?.displaySurface && (
-												<div>
-													<span className="text-sm text-gray-600">
-														Surface:
-													</span>
-													<p className="font-medium">
-														{
+										<div>
+											<span className="text-sm text-gray-600">
+												Surface:
+											</span>
+											<p className="font-medium">
+												{typeof collaboration.propertyId ===
+													'object' &&
+												(
+													collaboration.propertyId as PropertyDetails
+												)?.surface
+													? `${
 															(
 																collaboration.propertyId as PropertyDetails
-															).displaySurface
-														}
-													</p>
-												</div>
-											)}
+															).surface
+														} m²`
+													: 'Non spécifié'}
+											</p>
+										</div>
 										<div>
 											<span className="text-sm text-gray-600">
 												Localisation:
@@ -785,7 +806,6 @@ export default function CollaborationPage() {
 										</div>
 									</div>
 								</Card>
-
 								{/* Client Information - Only visible in collaboration */}
 								{typeof collaboration.propertyId === 'object' &&
 									(
@@ -1134,7 +1154,6 @@ export default function CollaborationPage() {
 											)}
 										</Card>
 									)}
-
 								{/* Agents Information */}
 								<Card className="p-6">
 									<h3 className="text-lg font-medium text-gray-900 mb-4">
@@ -1214,7 +1233,67 @@ export default function CollaborationPage() {
 										</div>
 									</div>
 								</Card>
+								{/* Prix et frais - Show if agency fees exist */}
+								{typeof collaboration.propertyId === 'object' &&
+									(
+										collaboration.propertyId as PropertyDetails
+									)?.agencyFeesPercentage && (
+										<Card className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200">
+											<h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+												<span>�</span> Prix et frais
+											</h3>
 
+											<div className="space-y-3 bg-white/70 rounded-lg p-4">
+												<div className="flex justify-between items-center py-2">
+													<span className="text-gray-700 font-medium">
+														Prix net vendeur
+													</span>
+													<span className="text-xl font-bold text-gray-900">
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.price?.toLocaleString()}{' '}
+														€
+													</span>
+												</div>
+												<div className="flex justify-between items-center py-2 bg-gray-50 px-3 rounded">
+													<span className="text-gray-700">
+														% frais d&apos;agence
+													</span>
+													<span className="text-lg font-semibold text-cyan-600">
+														{
+															(
+																collaboration.propertyId as PropertyDetails
+															)
+																?.agencyFeesPercentage
+														}{' '}
+														%
+													</span>
+												</div>
+												<div className="flex justify-between items-center py-2 pl-6">
+													<span className="text-gray-600">
+														→ Frais d&apos;agence
+													</span>
+													<span className="text-lg font-medium text-gray-800">
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.agencyFeesAmount?.toLocaleString()}{' '}
+														€
+													</span>
+												</div>
+												<div className="flex justify-between items-center py-2 pl-6 border-t pt-3">
+													<span className="text-gray-600">
+														→ Prix FAI
+													</span>
+													<span className="text-lg font-semibold text-blue-600">
+														{(
+															collaboration.propertyId as PropertyDetails
+														)?.priceIncludingFees?.toLocaleString()}{' '}
+														€
+													</span>
+												</div>
+											</div>
+										</Card>
+									)}
 								{/* Commission Details */}
 								<Card className="p-6">
 									<h3 className="text-lg font-medium text-gray-900 mb-4">
@@ -1224,41 +1303,80 @@ export default function CollaborationPage() {
 									<div className="space-y-3">
 										<div className="flex justify-between items-center">
 											<span className="text-gray-600">
-												Agent propriétaire:
+												Part collaborateur
 											</span>
-											<span className="font-medium text-blue-600">
-												{100 -
-													collaboration.proposedCommission}
-												%
-											</span>
-										</div>
-										<div className="flex justify-between items-center">
-											<span className="text-gray-600">
-												Agent apporteur:
-											</span>
-											<span className="font-medium text-green-600">
+											<span className="font-medium text-green-600 text-lg">
 												{
 													collaboration.proposedCommission
-												}
+												}{' '}
 												%
 											</span>
 										</div>
-										<hr className="my-3" />
-										<div className="flex justify-between items-center">
-											<span className="text-gray-600 font-medium">
-												Votre part:
-											</span>
-											<span className="font-bold text-lg text-blue-600">
-												{isOwner
-													? 100 -
-														collaboration.proposedCommission
-													: collaboration.proposedCommission}
-												%
-											</span>
-										</div>
-									</div>
-								</Card>
 
+										{typeof collaboration.propertyId ===
+											'object' &&
+											(
+												collaboration.propertyId as PropertyDetails
+											)?.agencyFeesAmount && (
+												<>
+													<div className="flex justify-between items-center py-2 pl-6 bg-green-50 px-3 rounded">
+														<span className="text-gray-600">
+															→ Commission
+															collaborateur
+														</span>
+														<span className="text-lg font-semibold text-green-600">
+															{(
+																((
+																	collaboration.propertyId as PropertyDetails
+																)
+																	?.agencyFeesAmount ||
+																	0) *
+																(collaboration.proposedCommission /
+																	100)
+															).toLocaleString()}{' '}
+															€
+														</span>
+													</div>
+													<div className="flex justify-between items-center py-2 pl-6 bg-blue-50 px-3 rounded">
+														<span className="text-gray-600">
+															→ Commission
+															mandataire
+														</span>
+														<span className="text-lg font-semibold text-blue-600">
+															{(
+																((
+																	collaboration.propertyId as PropertyDetails
+																)
+																	?.agencyFeesAmount ||
+																	0) *
+																((100 -
+																	collaboration.proposedCommission) /
+																	100)
+															).toLocaleString()}{' '}
+															€
+														</span>
+													</div>
+												</>
+											)}
+
+										{/* Show message if no agency fees configured */}
+										{typeof collaboration.propertyId ===
+											'object' &&
+											!(
+												collaboration.propertyId as PropertyDetails
+											)?.agencyFeesAmount && (
+												<div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+													<p className="text-sm text-amber-800">
+														ℹ️ Les montants en euros
+														seront affichés une fois
+														que les frais
+														d&apos;agence seront
+														configurés sur le bien.
+													</p>
+												</div>
+											)}
+									</div>
+								</Card>{' '}
 								{/* Contract Status */}
 								<Card className="p-6">
 									<div className="flex items-center justify-between mb-4">
@@ -1331,7 +1449,6 @@ export default function CollaborationPage() {
 										)}
 									</div>
 								</Card>
-
 								{/* Collaboration Timeline */}
 								<Card className="p-6">
 									<h3 className="text-lg font-medium text-gray-900 mb-4">

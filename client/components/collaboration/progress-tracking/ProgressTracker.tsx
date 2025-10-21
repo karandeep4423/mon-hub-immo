@@ -12,6 +12,20 @@ import { STEP_ORDER } from '../../../lib/constants/stepOrder';
 interface ExtendedProgressTrackingProps extends ProgressTrackingProps {
 	isOwner?: boolean;
 	isCollaborator?: boolean;
+	ownerUser?: {
+		_id: string;
+		firstName: string;
+		lastName: string;
+		profileImage?: string | null;
+		userType?: string;
+	};
+	collaboratorUser?: {
+		_id: string;
+		firstName: string;
+		lastName: string;
+		profileImage?: string | null;
+		userType?: string;
+	};
 }
 
 export const ProgressTracker: React.FC<ExtendedProgressTrackingProps> = ({
@@ -20,6 +34,8 @@ export const ProgressTracker: React.FC<ExtendedProgressTrackingProps> = ({
 	onStatusUpdate,
 	isOwner,
 	isCollaborator,
+	ownerUser,
+	collaboratorUser,
 }) => {
 	const [showValidationModal, setShowValidationModal] = useState(false);
 	const [selectedStep, setSelectedStep] = useState<ProgressStep | null>(null);
@@ -99,12 +115,12 @@ export const ProgressTracker: React.FC<ExtendedProgressTrackingProps> = ({
 								)}
 							</div>
 
-							{/* Checkboxes */}
-							<div className="space-y-3">
+							{/* Checkboxes with Avatars and Names */}
+							<div className="space-y-4">
 								{/* Owner Checkbox */}
-								<div className="flex items-center">
-									<label className="flex items-center cursor-pointer group">
-										<div className="relative">
+								{ownerUser && (
+									<div className="flex items-start space-x-3">
+										<div className="flex-shrink-0 mt-1">
 											<input
 												type="checkbox"
 												checked={
@@ -121,53 +137,63 @@ export const ProgressTracker: React.FC<ExtendedProgressTrackingProps> = ({
 													)
 												}
 												disabled={
-													stepData?.ownerValidated ||
-													!canUpdate ||
-													!isOwner
+													!canUpdate || !isOwner
 												}
-												className="sr-only peer"
+												className="h-5 w-5 appearance-none rounded border-2 border-gray-300 bg-white checked:bg-cyan-600 checked:border-cyan-600 disabled:checked:bg-cyan-600 disabled:checked:border-cyan-600 bg-center bg-no-repeat focus:ring-2 focus:ring-cyan-500 focus:ring-offset-0 disabled:cursor-not-allowed cursor-pointer disabled:opacity-100 checked:bg-[url('data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M3.5%208.5l3%203%206-6%22%20stroke%3D%22white%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')]"
 											/>
-											<div className="h-5 w-5 border-2 border-gray-300 rounded flex items-center justify-center peer-checked:bg-[#00b4d8] peer-checked:border-[#00b4d8] peer-disabled:opacity-50 peer-disabled:cursor-not-allowed transition-colors">
-												{stepData?.ownerValidated && (
-													<svg
-														className="w-3 h-3 text-white"
-														viewBox="0 0 12 10"
-														fill="none"
+										</div>
+										<div className="flex items-center space-x-3 flex-1">
+											<ProfileAvatar
+												user={{
+													_id: ownerUser._id,
+													firstName:
+														ownerUser.firstName,
+													lastName:
+														ownerUser.lastName,
+													...(ownerUser.profileImage
+														? {
+																profileImage:
+																	ownerUser.profileImage,
+															}
+														: {}),
+												}}
+												size="sm"
+											/>
+											<div className="flex-1">
+												<div className="flex items-center space-x-2">
+													<span
+														className={`text-sm font-medium ${stepData?.ownerValidated ? 'text-gray-900' : 'text-gray-700'}`}
 													>
-														<path
-															d="M1 5L4.5 8.5L11 1.5"
-															stroke="currentColor"
-															strokeWidth="2"
-															strokeLinecap="round"
-															strokeLinejoin="round"
-														/>
-													</svg>
-												)}
+														{ownerUser.firstName}{' '}
+														{ownerUser.lastName}
+													</span>
+													<span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full">
+														Mandataire
+													</span>
+													{isOwner && (
+														<span className="text-xs text-cyan-600 font-medium">
+															(Vous)
+														</span>
+													)}
+												</div>
+												<p
+													className={`text-sm mt-0.5 ${stepData?.ownerValidated ? 'text-gray-700' : 'text-gray-600'}`}
+												>
+													{stepData?.ownerValidated
+														? `${ownerUser.firstName} ${ownerUser.lastName} a validé ${config.title.toLowerCase()}`
+														: isOwner
+															? `Je valide ${config.title.toLowerCase()}`
+															: `${ownerUser.firstName} ${ownerUser.lastName} valide ${config.title.toLowerCase()}`}
+												</p>
 											</div>
 										</div>
-										<span
-											className={`ml-3 text-sm ${stepData?.ownerValidated ? 'text-gray-900 font-medium' : 'text-gray-700'}`}
-										>
-											{getOwnerLabel(stepId)}
-										</span>
-									</label>
-									{stepData?.ownerValidated &&
-										stepData?.collaboratorValidated && (
-											<>
-												<span className="ml-2 text-blue-600">
-													|
-												</span>
-												<span className="ml-2 text-sm text-gray-700">
-													Autre agent validé
-												</span>
-											</>
-										)}
-								</div>
+									</div>
+								)}
 
 								{/* Collaborator Checkbox */}
-								<div className="flex items-center">
-									<label className="flex items-center cursor-pointer group">
-										<div className="relative">
+								{collaboratorUser && (
+									<div className="flex items-start space-x-3">
+										<div className="flex-shrink-0 mt-1">
 											<input
 												type="checkbox"
 												checked={
@@ -184,48 +210,63 @@ export const ProgressTracker: React.FC<ExtendedProgressTrackingProps> = ({
 													)
 												}
 												disabled={
-													stepData?.collaboratorValidated ||
 													!canUpdate ||
 													!isCollaborator
 												}
-												className="sr-only peer"
+												className="h-5 w-5 rounded border-2 border-gray-300 accent-cyan-600 checked:bg-cyan-600 checked:border-cyan-600 disabled:checked:bg-cyan-600 disabled:checked:border-cyan-600 focus:ring-2 focus:ring-cyan-500 focus:ring-offset-0 disabled:cursor-not-allowed cursor-pointer"
 											/>
-											<div className="h-5 w-5 border-2 border-gray-300 rounded flex items-center justify-center peer-checked:bg-[#00b4d8] peer-checked:border-[#00b4d8] peer-disabled:opacity-50 peer-disabled:cursor-not-allowed transition-colors">
-												{stepData?.collaboratorValidated && (
-													<svg
-														className="w-3 h-3 text-white"
-														viewBox="0 0 12 10"
-														fill="none"
+										</div>
+										<div className="flex items-center space-x-3 flex-1">
+											<ProfileAvatar
+												user={{
+													_id: collaboratorUser._id,
+													firstName:
+														collaboratorUser.firstName,
+													lastName:
+														collaboratorUser.lastName,
+													...(collaboratorUser.profileImage
+														? {
+																profileImage:
+																	collaboratorUser.profileImage,
+															}
+														: {}),
+												}}
+												size="sm"
+											/>
+											<div className="flex-1">
+												<div className="flex items-center space-x-2">
+													<span
+														className={`text-sm font-medium ${stepData?.collaboratorValidated ? 'text-gray-900' : 'text-gray-700'}`}
 													>
-														<path
-															d="M1 5L4.5 8.5L11 1.5"
-															stroke="currentColor"
-															strokeWidth="2"
-															strokeLinecap="round"
-															strokeLinejoin="round"
-														/>
-													</svg>
-												)}
+														{
+															collaboratorUser.firstName
+														}{' '}
+														{
+															collaboratorUser.lastName
+														}
+													</span>
+													<span className="text-xs px-2 py-0.5 bg-green-100 text-green-800 rounded-full">
+														Collaborateur
+													</span>
+													{isCollaborator && (
+														<span className="text-xs text-cyan-600 font-medium">
+															(Vous)
+														</span>
+													)}
+												</div>
+												<p
+													className={`text-sm mt-0.5 ${stepData?.collaboratorValidated ? 'text-gray-700' : 'text-gray-600'}`}
+												>
+													{stepData?.collaboratorValidated
+														? `${collaboratorUser.firstName} ${collaboratorUser.lastName} a validé ${config.title.toLowerCase()}`
+														: isCollaborator
+															? `Je valide ${config.title.toLowerCase()}`
+															: `${collaboratorUser.firstName} ${collaboratorUser.lastName} valide ${config.title.toLowerCase()}`}
+												</p>
 											</div>
 										</div>
-										<span
-											className={`ml-3 text-sm ${stepData?.collaboratorValidated ? 'text-gray-900 font-medium' : 'text-gray-700'}`}
-										>
-											{getCollaboratorLabel(stepId)}
-										</span>
-									</label>
-									{stepData?.collaboratorValidated &&
-										!stepData?.ownerValidated && (
-											<>
-												<span className="ml-2 text-blue-600">
-													|
-												</span>
-												<span className="ml-2 text-sm text-gray-700">
-													Autre agent confirmé
-												</span>
-											</>
-										)}
-								</div>
+									</div>
+								)}
 							</div>
 
 							{/* Show notes if they exist */}
@@ -313,27 +354,4 @@ export const ProgressTracker: React.FC<ExtendedProgressTrackingProps> = ({
 			)}
 		</Card>
 	);
-};
-
-// Helper functions to get the correct labels for each step
-const getOwnerLabel = (stepId: ProgressStep): string => {
-	const labels: Record<ProgressStep, string> = {
-		accord_collaboration: "J'ai validé l'accord",
-		premier_contact: "J'ai contacté le client",
-		visite_programmee: "J'ai programmé la visite",
-		visite_realisee: "J'ai réalisé la visite",
-		retour_client: "J'ai reçu le retour du client",
-	};
-	return labels[stepId] || "J'ai validé l'accord";
-};
-
-const getCollaboratorLabel = (stepId: ProgressStep): string => {
-	const labels: Record<ProgressStep, string> = {
-		accord_collaboration: 'Autre agent validé',
-		premier_contact: 'Autre agent confirmé',
-		visite_programmee: 'Autre agent confirmé',
-		visite_realisee: 'Autre agent confirmé',
-		retour_client: 'Autre agent confirmé',
-	};
-	return labels[stepId] || 'Autre agent validé';
 };

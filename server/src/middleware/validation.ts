@@ -635,6 +635,11 @@ export const updateProgressStatusValidation = [
 			'visite_programmee',
 			'visite_realisee',
 			'retour_client',
+			'offre_en_cours',
+			'negociation_en_cours',
+			'compromis_signe',
+			'signature_notaire',
+			'affaire_conclue',
 		])
 		.withMessage('Étape de progression invalide'),
 	body('validatedBy')

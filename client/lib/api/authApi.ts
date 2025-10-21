@@ -64,6 +64,34 @@ export const authService = {
 		return response.data;
 	},
 
+	async updateSearchPreferences(data: {
+		preferredRadius?: number;
+		lastSearchLocations?: Array<{
+			city: string;
+			postcode: string;
+			coordinates?: {
+				lat: number;
+				lon: number;
+			};
+		}>;
+	}): Promise<{
+		success: boolean;
+		searchPreferences: {
+			preferredRadius?: number;
+			lastSearchLocations?: Array<{
+				city: string;
+				postcode: string;
+				coordinates?: {
+					lat: number;
+					lon: number;
+				};
+			}>;
+		};
+	}> {
+		const response = await api.patch('/auth/search-preferences', data);
+		return response.data;
+	},
+
 	logout() {
 		localStorage.removeItem('token');
 		window.location.href = '/';

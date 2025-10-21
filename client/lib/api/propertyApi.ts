@@ -54,13 +54,14 @@ export interface Property {
 	// Property condition and characteristics
 	condition?: 'new' | 'good' | 'refresh' | 'renovate';
 	propertyNature?: string;
-	characteristics?: string;
-	saleType?: 'ancien' | 'viager';
+	saleType?: string; // Dynamic based on property type
 
 	// Financial info
-	feesResponsibility?: 'buyer' | 'seller';
 	annualCondoFees?: number;
 	tariffLink?: string;
+	agencyFeesPercentage?: number; // % frais d'agence
+	agencyFeesAmount?: number; // Montant des frais d'agence calculé
+	priceIncludingFees?: number; // Prix FAI (Frais d'Acquéreur Inclus)
 
 	// Additional property details
 	landArea?: number; // Surface totale du terrain in m²
@@ -171,11 +172,12 @@ export interface PropertyFormData {
 	gasEmissionClass?: Property['gasEmissionClass'];
 	condition?: Property['condition'];
 	propertyNature?: Property['propertyNature'];
-	characteristics?: Property['characteristics'];
 	saleType?: Property['saleType'];
-	feesResponsibility?: Property['feesResponsibility'];
 	annualCondoFees?: Property['annualCondoFees'];
 	tariffLink?: Property['tariffLink'];
+	agencyFeesPercentage?: Property['agencyFeesPercentage'];
+	agencyFeesAmount?: Property['agencyFeesAmount'];
+	priceIncludingFees?: Property['priceIncludingFees'];
 	landArea?: Property['landArea'];
 	levels?: Property['levels'];
 	parkingSpaces?: Property['parkingSpaces'];

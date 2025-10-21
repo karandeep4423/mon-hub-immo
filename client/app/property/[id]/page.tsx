@@ -563,9 +563,46 @@ export default function PropertyDetailsPage() {
 											</svg>
 										</div>
 										<span className="text-gray-700 font-medium">
-											{property.saleType === 'ancien'
-												? 'Ancien'
-												: 'Viager'}
+											{property.saleType ===
+											'vente_classique'
+												? 'Vente classique'
+												: property.saleType ===
+													  'vente_viager'
+													? 'Vente en viager'
+													: property.saleType ===
+														  'vente_lot'
+														? 'Vente en lot / Ensemble immobilier'
+														: property.saleType ===
+															  'vente_vefa'
+															? 'Vente en VEFA'
+															: property.saleType ===
+																  'vente_location'
+																? 'Vente en cours de location'
+																: property.saleType ===
+																	  'vente_usufruit'
+																	? 'Vente en usufruit / Nu-propriété'
+																	: property.saleType ===
+																		  'vente_indivisions'
+																		? 'Vente en indivisions'
+																		: property.saleType ===
+																			  'constructible'
+																			? 'Constructible'
+																			: property.saleType ===
+																				  'terrain_loisirs'
+																				? 'Terrain de loisirs'
+																				: property.saleType ===
+																					  'jardin'
+																					? 'Jardin'
+																					: property.saleType ===
+																						  'champs_agricole'
+																						? 'Champs agricole'
+																						: property.saleType ===
+																							  'ancien'
+																							? 'Ancien'
+																							: property.saleType ===
+																								  'viager'
+																								? 'Viager'
+																								: property.saleType}
 										</span>
 									</div>
 								)}
@@ -638,33 +675,6 @@ export default function PropertyDetailsPage() {
 										<span className="text-gray-700 font-medium">
 											{property.annualCondoFees}€/an
 											charges
-										</span>
-									</div>
-								)}
-
-								{property.feesResponsibility && (
-									<div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-										<div className="bg-purple-100 p-2 rounded-full">
-											<svg
-												className="w-5 h-5 text-purple-600"
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24"
-											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth="2"
-													d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-												/>
-											</svg>
-										</div>
-										<span className="text-gray-700 font-medium">
-											Frais:{' '}
-											{property.feesResponsibility ===
-											'buyer'
-												? 'Acquéreur'
-												: 'Vendeur'}
 										</span>
 									</div>
 								)}

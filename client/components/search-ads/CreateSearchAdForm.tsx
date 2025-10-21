@@ -5,6 +5,7 @@ import { useState } from 'react';
 import searchAdApi from '@/lib/api/searchAdApi';
 import { useAuth } from '@/hooks/useAuth';
 import { SearchAdClientInfoForm } from './SearchAdClientInfoForm';
+import { MultiCityAutocomplete } from '@/components/ui';
 import type { SearchAd } from '@/types/searchAd';
 
 interface FormData {
@@ -403,23 +404,18 @@ export const CreateSearchAdForm = () => {
 						</h3>
 
 						<div className="space-y-4">
-							<div>
-								<label
-									htmlFor="cities"
-									className="block text-sm font-medium text-gray-700"
-								>
-									Ville(s), quartier(s) ciblé(s) *
-								</label>
-								<input
-									id="cities"
-									name="cities"
-									type="text"
-									value={formData.cities}
-									onChange={handleInputChange}
-									className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-									placeholder="Paris 15e, Boulogne-Billancourt, Issy-les-Moulineaux"
-								/>
-							</div>
+							<MultiCityAutocomplete
+								value={formData.cities}
+								onChange={(value) =>
+									setFormData((prev) => ({
+										...prev,
+										cities: value,
+									}))
+								}
+								label="Ville(s), quartier(s) ciblé(s)"
+								placeholder="Tapez pour rechercher des villes..."
+								required
+							/>
 
 							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 								<div>

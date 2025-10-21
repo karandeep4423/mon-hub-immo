@@ -33,6 +33,19 @@ export interface IUser extends Document {
 		alertFrequency?: 'quotidien' | 'hebdomadaire';
 	};
 
+	// Search preferences
+	searchPreferences?: {
+		preferredRadius?: number; // Preferred search radius in km
+		lastSearchLocations?: Array<{
+			city: string;
+			postcode: string;
+			coordinates?: {
+				lat: number;
+				lon: number;
+			};
+		}>;
+	};
+
 	// Email verification
 	emailVerificationCode?: string;
 	emailVerificationExpires?: Date;
@@ -204,6 +217,38 @@ const userSchema = new Schema<IUser>(
 				},
 				default: 'quotidien',
 			},
+		},
+		searchPreferences: {
+			preferredRadius: {
+				type: Number,
+				min: [1, 'Rayon de recherche minimum 1 km'],
+				max: [100, 'Rayon de recherche maximum 100 km'],
+				default: 10,
+			},
+			lastSearchLocations: [
+				{
+					city: {
+						type: String,
+						trim: true,
+					},
+					postcode: {
+						type: String,
+						match: [/^[0-9]{5}$/, 'Code postal invalide'],
+					},
+					coordinates: {
+						lat: {
+							type: Number,
+							min: [-90, 'Latitude invalide'],
+							max: [90, 'Latitude invalide'],
+						},
+						lon: {
+							type: Number,
+							min: [-180, 'Longitude invalide'],
+							max: [180, 'Longitude invalide'],
+						},
+					},
+				},
+			],
 		},
 		emailVerificationCode: {
 			type: String,

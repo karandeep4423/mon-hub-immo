@@ -33,6 +33,7 @@ export const ProposeCollaborationModal: React.FC<
 	const [formData, setFormData] = useState({
 		commissionPercentage: '',
 		message: '',
+		agreeToTerms: false,
 	});
 	const [error, setError] = useState<string | null>(null);
 
@@ -54,6 +55,7 @@ export const ProposeCollaborationModal: React.FC<
 			setFormData({
 				commissionPercentage: '',
 				message: '',
+				agreeToTerms: false,
 			});
 		} catch (error: unknown) {
 			const message =
@@ -67,7 +69,7 @@ export const ProposeCollaborationModal: React.FC<
 		}
 	};
 
-	const handleInputChange = (field: string, value: string) => {
+	const handleInputChange = (field: string, value: string | boolean) => {
 		setFormData((prev) => ({ ...prev, [field]: value }));
 	};
 
@@ -176,12 +178,34 @@ export const ProposeCollaborationModal: React.FC<
 								handleInputChange('message', e.target.value)
 							}
 							placeholder="Expliquez pourquoi cette collaboration serait bénéfique..."
-							className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-600 focus:border-brand-600"
+							className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-cyan-500 focus:border-cyan-500"
 							maxLength={500}
 						/>
 						<div className="text-xs text-gray-500 mt-1">
 							{formData.message.length}/500 caractères
 						</div>
+					</div>
+
+					<div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+						<label className="flex items-start space-x-3 cursor-pointer">
+							<input
+								type="checkbox"
+								checked={formData.agreeToTerms}
+								onChange={(e) =>
+									handleInputChange(
+										'agreeToTerms',
+										e.target.checked,
+									)
+								}
+								className="mt-1 rounded border-gray-300 text-cyan-600 shadow-sm focus:border-cyan-300 focus:ring focus:ring-offset-0 focus:ring-cyan-200 focus:ring-opacity-50"
+							/>
+							<span className="text-sm text-gray-700 leading-relaxed">
+								Je contribue à une collaboration saine et
+								équitable entre membres de MonHubimmo. En cas de
+								non-respect, mon accès pourra être suspendu sans
+								remboursement.
+							</span>
+						</label>
 					</div>
 
 					<div className="flex justify-end space-x-3 pt-4">
@@ -196,7 +220,9 @@ export const ProposeCollaborationModal: React.FC<
 						<Button
 							type="submit"
 							disabled={
-								isLoading || !formData.commissionPercentage
+								isLoading ||
+								!formData.commissionPercentage ||
+								!formData.agreeToTerms
 							}
 						>
 							{isLoading

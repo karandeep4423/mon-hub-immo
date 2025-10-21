@@ -185,9 +185,11 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 										{formatActivityTime(activity.createdAt)}
 									</time>
 								</div>
-								<p className="text-sm text-gray-700 mb-3">
-									{activity.content}
-								</p>
+								{activity.content && (
+									<p className="text-sm text-gray-700 mb-3">
+										{activity.content}
+									</p>
+								)}
 								<div className="flex items-center space-x-2">
 									<ProfileAvatar
 										user={{

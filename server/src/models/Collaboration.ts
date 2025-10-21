@@ -21,7 +21,7 @@ export interface ICollaboration extends Document {
 
 	// Proposal details
 	proposedCommission: number; // Percentage (e.g., 40 for 40%)
-	proposalMessage: string;
+	proposalMessage?: string;
 
 	// Contract signing
 	ownerSigned: boolean;
@@ -45,14 +45,24 @@ export interface ICollaboration extends Document {
 		| 'premier_contact'
 		| 'visite_programmee'
 		| 'visite_realisee'
-		| 'retour_client';
+		| 'retour_client'
+		| 'offre_en_cours'
+		| 'negociation_en_cours'
+		| 'compromis_signe'
+		| 'signature_notaire'
+		| 'affaire_conclue';
 	progressSteps: Array<{
 		id:
 			| 'accord_collaboration'
 			| 'premier_contact'
 			| 'visite_programmee'
 			| 'visite_realisee'
-			| 'retour_client';
+			| 'retour_client'
+			| 'offre_en_cours'
+			| 'negociation_en_cours'
+			| 'compromis_signe'
+			| 'signature_notaire'
+			| 'affaire_conclue';
 		completed: boolean;
 		validatedAt?: Date; // Date when first agent validated
 		ownerValidated: boolean;
@@ -97,7 +107,12 @@ export interface ICollaboration extends Document {
 			| 'premier_contact'
 			| 'visite_programmee'
 			| 'visite_realisee'
-			| 'retour_client',
+			| 'retour_client'
+			| 'offre_en_cours'
+			| 'negociation_en_cours'
+			| 'compromis_signe'
+			| 'signature_notaire'
+			| 'affaire_conclue',
 		notes: string | undefined,
 		userId: Types.ObjectId,
 		validatedBy: 'owner' | 'collaborator',
@@ -152,7 +167,7 @@ const collaborationSchema = new Schema<ICollaboration>(
 		},
 		proposalMessage: {
 			type: String,
-			required: [true, 'Proposal message is required'],
+			required: false,
 			maxlength: [500, 'Proposal message too long (max 500 characters)'],
 		},
 		ownerSigned: {
@@ -203,6 +218,11 @@ const collaborationSchema = new Schema<ICollaboration>(
 					'visite_programmee',
 					'visite_realisee',
 					'retour_client',
+					'offre_en_cours',
+					'negociation_en_cours',
+					'compromis_signe',
+					'signature_notaire',
+					'affaire_conclue',
 				],
 				message: 'Invalid progress step',
 			},
@@ -218,6 +238,11 @@ const collaborationSchema = new Schema<ICollaboration>(
 						'visite_programmee',
 						'visite_realisee',
 						'retour_client',
+						'offre_en_cours',
+						'negociation_en_cours',
+						'compromis_signe',
+						'signature_notaire',
+						'affaire_conclue',
 					],
 					required: true,
 				},
@@ -323,12 +348,22 @@ collaborationSchema.pre('save', function (next) {
 			| 'visite_programmee'
 			| 'visite_realisee'
 			| 'retour_client'
+			| 'offre_en_cours'
+			| 'negociation_en_cours'
+			| 'compromis_signe'
+			| 'signature_notaire'
+			| 'affaire_conclue'
 		> = [
 			'accord_collaboration',
 			'premier_contact',
 			'visite_programmee',
 			'visite_realisee',
 			'retour_client',
+			'offre_en_cours',
+			'negociation_en_cours',
+			'compromis_signe',
+			'signature_notaire',
+			'affaire_conclue',
 		];
 		this.progressSteps = steps.map((stepId) => ({
 			id: stepId,
@@ -459,12 +494,22 @@ collaborationSchema.methods.updateProgressStatus = function (
 		| 'visite_programmee'
 		| 'visite_realisee'
 		| 'retour_client'
+		| 'offre_en_cours'
+		| 'negociation_en_cours'
+		| 'compromis_signe'
+		| 'signature_notaire'
+		| 'affaire_conclue'
 	> = [
 		'accord_collaboration',
 		'premier_contact',
 		'visite_programmee',
 		'visite_realisee',
 		'retour_client',
+		'offre_en_cours',
+		'negociation_en_cours',
+		'compromis_signe',
+		'signature_notaire',
+		'affaire_conclue',
 	];
 
 	const targetStepIndex = stepOrder.indexOf(targetStep);
@@ -538,6 +583,11 @@ collaborationSchema.methods.updateProgressStatus = function (
 		visite_programmee: 'Visite programmée',
 		visite_realisee: 'Visite réalisée',
 		retour_client: 'Retour client',
+		offre_en_cours: 'Offre en cours',
+		negociation_en_cours: 'Négociation en cours',
+		compromis_signe: 'Compromis signé',
+		signature_notaire: 'Signature notaire',
+		affaire_conclue: 'Affaire conclue',
 	};
 
 	const validatorLabel =
