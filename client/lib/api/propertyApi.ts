@@ -216,6 +216,8 @@ export interface PropertyFilters {
 	minSurface?: number;
 	maxSurface?: number;
 	transactionType?: string;
+	limit?: number;
+	page?: number;
 }
 
 export interface PropertyResponse {

@@ -56,6 +56,12 @@ export default function PropertyDetailsPage() {
 		}
 	}, [propertyId, fetchProperty]);
 
+	// Check if current user is the property owner
+	const isPropertyOwner =
+		user &&
+		property &&
+		(user._id === property.owner._id || user.id === property.owner._id);
+
 	// Fetch collaborations for this property to determine if proposal should be disabled
 	const loadPropertyCollaborations = useCallback(async () => {
 		try {
@@ -80,8 +86,11 @@ export default function PropertyDetailsPage() {
 	}, [propertyId]);
 
 	useEffect(() => {
-		loadPropertyCollaborations();
-	}, [loadPropertyCollaborations]);
+		// Only check collaborations if user is NOT the property owner
+		if (!isPropertyOwner && user) {
+			loadPropertyCollaborations();
+		}
+	}, [loadPropertyCollaborations, isPropertyOwner, user]);
 
 	const handleContactOwner = () => {
 		if (!user) {
@@ -126,13 +135,6 @@ export default function PropertyDetailsPage() {
 		setLightboxInitialIndex(index);
 		setShowLightbox(true);
 	};
-
-	// Determine if the current user is the owner of the property
-	const isOwner = !!(
-		user &&
-		property &&
-		(user._id === property.owner._id || user.id === property.owner._id)
-	);
 
 	if (loading) {
 		return (
@@ -1065,9 +1067,7 @@ export default function PropertyDetailsPage() {
 							{/* Owner Information */}
 							<div className="mb-6 p-4 bg-gray-50 rounded-lg">
 								<h3 className="font-semibold text-gray-900 mb-3">
-									{user &&
-									(user._id === property.owner._id ||
-										user.id === property.owner._id)
+									{isPropertyOwner
 										? 'Votre annonce'
 										: 'Contact'}
 								</h3>
@@ -1080,15 +1080,11 @@ export default function PropertyDetailsPage() {
 										<p className="font-medium text-gray-900">
 											{property.owner.firstName}{' '}
 											{property.owner.lastName}
-											{user &&
-												(user._id ===
-													property.owner._id ||
-													user.id ===
-														property.owner._id) && (
-													<span className="text-sm text-brand-600 ml-2">
-														(Vous)
-													</span>
-												)}
+											{isPropertyOwner && (
+												<span className="text-sm text-brand-600 ml-2">
+													(Vous)
+												</span>
+											)}
 										</p>
 										<p className="text-sm text-gray-600">
 											{property.owner.userType ===
@@ -1100,9 +1096,7 @@ export default function PropertyDetailsPage() {
 								</div>
 
 								{/* Contact Buttons - Only show if not the property owner */}
-								{user &&
-								(user._id === property.owner._id ||
-									user.id === property.owner._id) ? (
+								{isPropertyOwner ? (
 									<div className="bg-brand-50 border border-brand-200 rounded-lg p-3">
 										<div className="flex items-center space-x-2">
 											<svg
@@ -1151,23 +1145,20 @@ export default function PropertyDetailsPage() {
 										</Button>
 										{user && user.userType === 'agent' && (
 											<>
-												{isOwner ? (
-													<div className="w-full p-3 rounded-md border bg-gray-50 text-gray-700 text-sm flex items-center justify-center">
+												{hasBlockingCollab ? (
+													<div className="w-full p-3 rounded-md border bg-blue-50 text-blue-800 text-sm flex items-center justify-center">
 														<span className="mr-2">
-															🚫
+															ℹ️
 														</span>
-														Vous êtes le
-														propriétaire de cette
-														page, vous ne pouvez pas
-														proposer une
-														collaboration.
-													</div>
-												) : hasBlockingCollab ? (
-													<div className="w-full p-3 rounded-md border bg-gray-50 text-gray-700 text-sm flex items-center justify-center">
-														<span className="mr-2">
-															🚫
-														</span>
-														{`Propriété déjà en collaboration (${blockingStatus === 'pending' ? 'en attente' : blockingStatus === 'accepted' ? 'acceptée' : 'active'})`}
+														{`Propriété déjà en collaboration (${
+															blockingStatus ===
+															'pending'
+																? 'en attente'
+																: blockingStatus ===
+																	  'accepted'
+																	? 'acceptée'
+																	: 'active'
+														})`}
 													</div>
 												) : (
 													<Button

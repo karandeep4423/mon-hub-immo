@@ -1,10 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { SearchAd } from '@/types/searchAd';
 import { ProfileAvatar } from '../ui/ProfileAvatar';
+import { collaborationApi } from '@/lib/api/collaborationApi';
+import { useAuth } from '@/hooks/useAuth';
+import { getSearchAdBadgeConfig } from '@/lib/constants/badges';
 
 interface HomeSearchAdCardProps {
 	searchAd: SearchAd;
@@ -13,6 +16,39 @@ interface HomeSearchAdCardProps {
 export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 	searchAd,
 }) => {
+	const { user } = useAuth();
+	const [collaborationStatus, setCollaborationStatus] = useState<
+		'pending' | 'accepted' | 'active' | null
+	>(null);
+
+	useEffect(() => {
+		// Only check collaboration status if user is authenticated
+		if (!user) return;
+
+		const checkCollaboration = async () => {
+			try {
+				const { collaborations } =
+					await collaborationApi.getSearchAdCollaborations(
+						searchAd._id,
+					);
+				const blocking = collaborations.find((c) =>
+					['pending', 'accepted', 'active'].includes(
+						c.status as string,
+					),
+				);
+				if (blocking) {
+					setCollaborationStatus(
+						blocking.status as 'pending' | 'accepted' | 'active',
+					);
+				}
+			} catch {
+				// Silently fail - collaboration status is optional
+			}
+		};
+
+		checkCollaboration();
+	}, [searchAd._id, user]);
+
 	const formatPropertyTypes = (types: string[]) => {
 		const typeMap: Record<string, string> = {
 			house: 'Maison',
@@ -30,7 +66,7 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 	return (
 		<Link href={`/search-ads/${searchAd._id}`} className="block">
 			<div className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 h-full flex flex-col">
-				{/* Header section with default image only (no overlays) */}
+				{/* Header section with image and badges */}
 				<div className="relative h-48 overflow-hidden">
 					<Image
 						src="/recherches-des-biens.png"
@@ -38,6 +74,25 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 						fill
 						className="object-cover"
 					/>
+					{/* Badges overlay */}
+					<div className="absolute top-2 left-2 flex flex-wrap gap-1 max-w-[70%]">
+						{searchAd.badges &&
+							searchAd.badges.length > 0 &&
+							searchAd.badges.slice(0, 4).map((badgeValue) => {
+								const config =
+									getSearchAdBadgeConfig(badgeValue);
+								if (!config) return null;
+
+								return (
+									<span
+										key={badgeValue}
+										className={`${config.bgColor} ${config.color} text-xs px-2 py-1 rounded-full font-semibold`}
+									>
+										{config.label}
+									</span>
+								);
+							})}
+					</div>
 				</div>
 
 				{/* Content section */}
@@ -52,7 +107,18 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 						</p>
 					)}
 
-					<div className="flex space-x-2 mb-3">
+					<div className="flex flex-wrap gap-2 mb-3">
+						{collaborationStatus && (
+							<span className="bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded">
+								ℹ️ En collaboration (
+								{collaborationStatus === 'pending'
+									? 'en attente'
+									: collaborationStatus === 'accepted'
+										? 'acceptée'
+										: 'active'}
+								)
+							</span>
+						)}
 						<span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-1 rounded">
 							{formatPropertyTypes(searchAd.propertyTypes)}
 						</span>

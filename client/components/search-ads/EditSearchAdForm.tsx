@@ -33,6 +33,7 @@ interface FormData {
 	niceToHaves: string[];
 	dealBreakers: string[];
 	status: 'active' | 'paused' | 'fulfilled' | 'sold' | 'rented' | 'archived';
+	badges: string[];
 	clientInfo?: SearchAd['clientInfo'];
 }
 
@@ -72,6 +73,7 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 		niceToHaves: [],
 		dealBreakers: [],
 		status: 'active',
+		badges: [],
 		clientInfo: {},
 	});
 
@@ -108,6 +110,7 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 					niceToHaves: ad.priorities?.niceToHaves || [],
 					dealBreakers: ad.priorities?.dealBreakers || [],
 					status: ad.status,
+					badges: ad.badges || [],
 					clientInfo: ad.clientInfo || {},
 				});
 			} catch (err) {
@@ -151,6 +154,7 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 			| 'mustHaves'
 			| 'niceToHaves'
 			| 'dealBreakers'
+			| 'badges'
 		>,
 	) => {
 		setFormData((prev) => ({
@@ -235,6 +239,7 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 					niceToHaves: formData.niceToHaves,
 					dealBreakers: formData.dealBreakers,
 				},
+				badges: formData.badges,
 				clientInfo: formData.clientInfo,
 			};
 
@@ -279,6 +284,39 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 		'Ascenseur',
 		'Vue dégagée',
 		'Calme',
+	];
+
+	const badgeOptions = [
+		'Vente urgente',
+		'Bien rare',
+		'Secteur recherché',
+		'Bonne affaire',
+		'Fort potentiel',
+		'Mandat possible rapidement',
+		'Signature imminente',
+		'Contact direct propriétaire',
+		'Contact ami / famille',
+		'Contact pro (collègue, artisan, notaire…)',
+		'Vendeur joignable',
+		'Maison individuelle',
+		'Appartement',
+		'Terrain constructible',
+		'Commerce',
+		'Immeuble',
+		'Bâtiment',
+		'Atypique',
+		'Bien à rénover',
+		'Jeune couple primo-accédant',
+		'Famille agrandissement',
+		'Retraité / résidence secondaire',
+		'Investisseur locatif',
+		'Projet rénovation / construction',
+		'Recherche résidence principale',
+		'À rappeler rapidement',
+		'Disponible cette semaine',
+		'Projet à court terme (<3 mois)',
+		'Projet à moyen terme (6-12 mois)',
+		'Projet en réflexion',
 	];
 
 	if (isLoadingAd) {
@@ -911,6 +949,43 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 								</div>
 							</div>
 						</div>
+					</div>
+				</div>
+
+				{/* Badges Section - Full width */}
+				<div className="bg-white p-6 rounded-lg shadow-sm border">
+					<h3 className="text-lg font-semibold text-gray-900 mb-4">
+						🏷️ Badges pour l&apos;annonce
+					</h3>
+					<p className="text-sm text-gray-600 mb-4">
+						Ajoutez des badges pour mettre en avant les
+						caractéristiques importantes de cette recherche
+						(optionnel)
+					</p>
+					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+						{badgeOptions.map((badge) => (
+							<label
+								key={badge}
+								className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer min-h-[3rem]"
+							>
+								<input
+									type="checkbox"
+									value={badge}
+									checked={formData.badges.includes(badge)}
+									onChange={(e) =>
+										handleArrayChange(
+											badge,
+											e.target.checked,
+											'badges',
+										)
+									}
+									className="rounded border-gray-300 text-brand-600 mt-1 flex-shrink-0"
+								/>
+								<span className="text-sm leading-tight break-words">
+									{badge}
+								</span>
+							</label>
+						))}
 					</div>
 				</div>
 

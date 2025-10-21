@@ -207,7 +207,15 @@ export default function Home() {
 
 	// Helper function to filter properties based on current filters
 	const filterProperties = (properties: Property[]): Property[] => {
-		return properties.filter((property) => {
+		console.log('[Home] filterProperties called:', {
+			totalProperties: properties.length,
+			contentFilter,
+			profileFilter,
+			selectedLocationsCount: selectedLocations.length,
+			myAreaLocationsCount: myAreaLocations.length,
+		});
+
+		const filtered = properties.filter((property) => {
 			// Filter by profile (user type)
 			if (profileFilter && property.owner.userType !== profileFilter) {
 				return false;
@@ -240,8 +248,48 @@ export default function Home() {
 					return false;
 				}
 			}
+
+			// Filter by selected locations (when not in "Mon secteur" mode)
+			if (selectedLocations.length > 0 && contentFilter !== 'myArea') {
+				const selectedCities = selectedLocations.map((loc) =>
+					loc.name.toLowerCase(),
+				);
+				const selectedPostalCodes = selectedLocations.map(
+					(loc) => loc.postcode,
+				);
+
+				const propertyPostal = property.postalCode
+					? String(property.postalCode).trim()
+					: '';
+				const propertyCity = property.city
+					? normalizeCity(property.city)
+					: '';
+
+				const matchesByPostal =
+					selectedPostalCodes.length > 0 &&
+					propertyPostal.length > 0 &&
+					selectedPostalCodes.includes(propertyPostal);
+
+				const matchesByCity =
+					selectedCities.length > 0 &&
+					propertyCity.length > 0 &&
+					selectedCities.some((filterCity) =>
+						propertyCity.includes(filterCity),
+					);
+
+				if (!matchesByPostal && !matchesByCity) {
+					return false;
+				}
+			}
+
 			return true;
 		});
+
+		console.log('[Home] filterProperties result:', {
+			filteredCount: filtered.length,
+		});
+
+		return filtered;
 	};
 
 	// Reset to 'all' if favorites is selected but user is not authenticated
@@ -425,8 +473,12 @@ export default function Home() {
 				if (searchTerm) filters.search = searchTerm;
 				if (typeFilter) filters.propertyType = typeFilter;
 
-				// Add location filters (postal codes)
-				if (selectedLocations.length > 0) {
+				// Add location filters (postal codes) - but NOT when in "Mon secteur" mode
+				// "Mon secteur" uses client-side filtering with myAreaLocations
+				if (
+					selectedLocations.length > 0 &&
+					contentFilter !== 'myArea'
+				) {
 					const postalCodes = selectedLocations.map(
 						(loc) => loc.postcode,
 					);
@@ -443,10 +495,21 @@ export default function Home() {
 				if (surfaceFilter.max < 100000)
 					filters.maxSurface = surfaceFilter.max;
 
+				console.log('[Home] Fetching properties with filters:', {
+					contentFilter,
+					selectedLocationsCount: selectedLocations.length,
+					filters,
+				});
+
 				const [propertiesData, searchAdsData] = await Promise.all([
 					PropertyService.getAllProperties(filters),
 					searchAdApi.getAllSearchAds(),
 				]);
+
+				console.log(
+					'[Home] Received properties:',
+					propertiesData?.length,
+				);
 
 				setProperties(propertiesData || []);
 				setSearchAds(searchAdsData || []);
@@ -476,6 +539,7 @@ export default function Home() {
 		priceFilter,
 		surfaceFilter,
 		profileFilter,
+		contentFilter,
 	]);
 
 	// Reset pagination when filters/content change

@@ -53,10 +53,11 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 	}, [searchAd._id]);
 
 	useEffect(() => {
-		if (!isOwner) {
+		// Only check collaborations if user is authenticated and NOT the owner
+		if (!isOwner && currentUser) {
 			loadSearchAdCollaborations();
 		}
-	}, [loadSearchAdCollaborations, isOwner]);
+	}, [loadSearchAdCollaborations, isOwner, currentUser]);
 
 	const handleCollaborate = () => {
 		if (!currentUser) {
@@ -899,9 +900,16 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 									</button>
 
 									{hasBlockingCollab ? (
-										<div className="w-full p-3 rounded-md border bg-gray-50 text-gray-700 text-sm flex items-center justify-center mb-4">
-											<span className="mr-2">🚫</span>
-											{`Annonce déjà en collaboration (${blockingStatus === 'pending' ? 'en attente' : blockingStatus === 'accepted' ? 'acceptée' : 'active'})`}
+										<div className="w-full p-3 rounded-md border bg-blue-50 text-blue-800 text-sm flex items-center justify-center mb-4">
+											<span className="mr-2">ℹ️</span>
+											{`Annonce déjà en collaboration (${
+												blockingStatus === 'pending'
+													? 'en attente'
+													: blockingStatus ===
+														  'accepted'
+														? 'acceptée'
+														: 'active'
+											})`}
 										</div>
 									) : (
 										<button

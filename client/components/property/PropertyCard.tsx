@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Property } from '@/lib/api/propertyApi';
 import { getImageUrl } from '@/lib/utils/imageUtils';
 import { ProfileAvatar, FavoriteButton } from '../ui';
 import { getBadgeConfig } from '@/lib/constants/badges';
+import { collaborationApi } from '@/lib/api/collaborationApi';
+import { useAuth } from '@/hooks/useAuth';
 
 interface PropertyCardProps {
 	property: Property;
@@ -14,6 +16,39 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 	property,
 	onFavoriteToggle,
 }) => {
+	const { user } = useAuth();
+	const [collaborationStatus, setCollaborationStatus] = useState<
+		'pending' | 'accepted' | 'active' | null
+	>(null);
+
+	useEffect(() => {
+		// Only check collaboration status if user is authenticated
+		if (!user) return;
+
+		const checkCollaboration = async () => {
+			try {
+				const { collaborations } =
+					await collaborationApi.getPropertyCollaborations(
+						property._id,
+					);
+				const blocking = collaborations.find((c) =>
+					['pending', 'accepted', 'active'].includes(
+						c.status as string,
+					),
+				);
+				if (blocking) {
+					setCollaborationStatus(
+						blocking.status as 'pending' | 'accepted' | 'active',
+					);
+				}
+			} catch {
+				// Silently fail - collaboration status is optional
+			}
+		};
+
+		checkCollaboration();
+	}, [property._id, user]);
+
 	return (
 		<Link href={`/property/${property._id}`} className="block">
 			<div className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
@@ -31,6 +66,17 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 						}}
 					/>
 					<div className="absolute top-2 left-2 flex flex-wrap gap-1 max-w-[70%]">
+						{collaborationStatus && (
+							<span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+								ℹ️ En collaboration (
+								{collaborationStatus === 'pending'
+									? 'en attente'
+									: collaborationStatus === 'accepted'
+										? 'acceptée'
+										: 'active'}
+								)
+							</span>
+						)}
 						{property.badges &&
 							property.badges.length > 0 &&
 							property.badges.map((badgeValue) => {

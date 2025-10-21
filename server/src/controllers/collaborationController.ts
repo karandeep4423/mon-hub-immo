@@ -465,7 +465,7 @@ export const getCollaborationsByProperty = async (
 
 		const collaborations = await Collaboration.find({
 			postId: propertyId,
-			postType: 'property',
+			postType: 'Property',
 		})
 			.populate('postOwnerId', 'firstName lastName profileImage')
 			.populate('collaboratorId', 'firstName lastName profileImage')
@@ -952,7 +952,7 @@ export const getCollaborationsBySearchAd = async (
 
 		const collaborations = await Collaboration.find({
 			postId: searchAdId,
-			postType: 'searchAd',
+			postType: 'SearchAd',
 		})
 			.populate('postOwnerId', 'firstName lastName profileImage')
 			.populate('collaboratorId', 'firstName lastName profileImage')
