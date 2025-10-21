@@ -1,10 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { SearchAd } from '@/types/searchAd';
 import { User } from '@/types/auth';
 import { ProfileAvatar } from '../ui/ProfileAvatar';
+import { ProposeCollaborationModal } from '../collaboration/ProposeCollaborationModal';
+import { collaborationApi } from '@/lib/api/collaborationApi';
 
 interface SearchAdDetailsProps {
 	searchAd: SearchAd;
@@ -16,11 +18,53 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 	currentUser,
 }) => {
 	const router = useRouter();
+	const isOwner = currentUser?._id === searchAd.authorId._id;
+	const [showCollaborationModal, setShowCollaborationModal] = useState(false);
+	const [hasBlockingCollab, setHasBlockingCollab] = useState<boolean>(false);
+	const [blockingStatus, setBlockingStatus] = useState<
+		'pending' | 'accepted' | 'active' | null
+	>(null);
 
 	const handleContact = () => {
 		router.push(
 			`/chat?userId=${searchAd.authorId._id}&searchAdId=${searchAd._id}&type=search-ad-contact`,
 		);
+	};
+
+	const loadSearchAdCollaborations = useCallback(async () => {
+		try {
+			const { collaborations } =
+				await collaborationApi.getSearchAdCollaborations(searchAd._id);
+			const blocking = collaborations.find((c) =>
+				['pending', 'accepted', 'active'].includes(c.status as string),
+			);
+			if (blocking) {
+				setHasBlockingCollab(true);
+				setBlockingStatus(
+					blocking.status as 'pending' | 'accepted' | 'active',
+				);
+			} else {
+				setHasBlockingCollab(false);
+				setBlockingStatus(null);
+			}
+		} catch (e) {
+			console.warn('Failed to load search ad collaborations', e);
+		}
+	}, [searchAd._id]);
+
+	useEffect(() => {
+		// Only check collaborations if user is authenticated and NOT the owner
+		if (!isOwner && currentUser) {
+			loadSearchAdCollaborations();
+		}
+	}, [loadSearchAdCollaborations, isOwner, currentUser]);
+
+	const handleCollaborate = () => {
+		if (!currentUser) {
+			router.push('/auth/login');
+			return;
+		}
+		setShowCollaborationModal(true);
 	};
 
 	const formatPropertyTypes = (types: string[]) => {
@@ -70,8 +114,6 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 		};
 		return states.map((state) => stateMap[state] || state).join(', ');
 	};
-
-	const isOwner = currentUser?._id === searchAd.authorId._id;
 
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
@@ -827,27 +869,74 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 							</div>
 						</div>
 
-						{!isOwner && (
-							<button
-								onClick={handleContact}
-								className="w-full px-4 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl transition-all duration-200 font-semibold flex items-center justify-center gap-2.5 mb-4 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm"
-							>
-								<svg
-									className="w-4 h-4"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-									/>
-								</svg>
-								<span>Contacter l&apos;auteur</span>
-							</button>
-						)}
+						<div>
+							{isOwner ? (
+								<div className="w-full p-3 rounded-md border bg-gray-50 text-gray-700 text-sm flex items-center justify-center mb-4">
+									<span className="mr-2">🚫</span>
+									Vous êtes le propriétaire de cette page,
+									vous ne pouvez pas proposer une
+									collaboration.
+								</div>
+							) : (
+								<>
+									<button
+										onClick={handleContact}
+										className="w-full px-4 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl transition-all duration-200 font-semibold flex items-center justify-center gap-2.5 mb-4 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm"
+									>
+										<svg
+											className="w-4 h-4"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth={2}
+												d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+											/>
+										</svg>
+										<span>Contacter l&apos;auteur</span>
+									</button>
+
+									{hasBlockingCollab ? (
+										<div className="w-full p-3 rounded-md border bg-blue-50 text-blue-800 text-sm flex items-center justify-center mb-4">
+											<span className="mr-2">ℹ️</span>
+											{`Annonce déjà en collaboration (${
+												blockingStatus === 'pending'
+													? 'en attente'
+													: blockingStatus ===
+														  'accepted'
+														? 'acceptée'
+														: 'active'
+											})`}
+										</div>
+									) : (
+										<button
+											onClick={handleCollaborate}
+											className="w-full px-4 py-3.5 rounded-xl transition-all duration-200 font-semibold flex items-center justify-center gap-2.5 mb-4 text-sm bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+										>
+											<svg
+												className="w-4 h-4"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth={2}
+													d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+												/>
+											</svg>
+											<span>
+												Proposer une collaboration
+											</span>
+										</button>
+									)}
+								</>
+							)}
+						</div>
 
 						<div className="bg-white p-3.5 rounded-xl">
 							<h4 className="font-bold text-gray-900 mb-2.5 flex items-center gap-2 text-sm">
@@ -892,6 +981,30 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 					</div>
 				</div>
 			</div>
+
+			{/* Collaboration Modal */}
+			<ProposeCollaborationModal
+				isOpen={showCollaborationModal}
+				onClose={() => setShowCollaborationModal(false)}
+				post={{
+					type: 'searchAd',
+					id: searchAd._id,
+					ownerUserType: searchAd.authorType,
+					data: {
+						_id: searchAd._id,
+						title: searchAd.title,
+						description: searchAd.description,
+						location: searchAd.location,
+						budget: searchAd.budget,
+						propertyTypes: searchAd.propertyTypes,
+						authorType: searchAd.authorType,
+					},
+				}}
+				onSuccess={() => {
+					setShowCollaborationModal(false);
+					loadSearchAdCollaborations();
+				}}
+			/>
 		</div>
 	);
 };

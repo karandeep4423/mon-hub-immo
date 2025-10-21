@@ -7,7 +7,7 @@ interface ContractViewModalProps {
 	onClose: () => void;
 	contractText: string;
 	collaboration: {
-		propertyOwnerId: {
+		postOwnerId: {
 			firstName: string;
 			lastName: string;
 		};
@@ -276,8 +276,8 @@ export const ContractViewModal: React.FC<ContractViewModalProps> = ({
 									Propriétaire
 								</p>
 								<p className="font-semibold text-gray-900">
-									{collaboration.propertyOwnerId.firstName}{' '}
-									{collaboration.propertyOwnerId.lastName}
+									{collaboration.postOwnerId.firstName}{' '}
+									{collaboration.postOwnerId.lastName}
 								</p>
 								<span className="inline-block mt-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
 									Agent Propriétaire
@@ -350,8 +350,8 @@ export const ContractViewModal: React.FC<ContractViewModalProps> = ({
 									Propriétaire
 								</p>
 								<p className="font-semibold text-gray-900 mb-3">
-									{collaboration.propertyOwnerId.firstName}{' '}
-									{collaboration.propertyOwnerId.lastName}
+									{collaboration.postOwnerId.firstName}{' '}
+									{collaboration.postOwnerId.lastName}
 								</p>
 								<span
 									className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${

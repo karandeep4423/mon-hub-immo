@@ -56,6 +56,12 @@ export default function PropertyDetailsPage() {
 		}
 	}, [propertyId, fetchProperty]);
 
+	// Check if current user is the property owner
+	const isPropertyOwner =
+		user &&
+		property &&
+		(user._id === property.owner._id || user.id === property.owner._id);
+
 	// Fetch collaborations for this property to determine if proposal should be disabled
 	const loadPropertyCollaborations = useCallback(async () => {
 		try {
@@ -80,8 +86,11 @@ export default function PropertyDetailsPage() {
 	}, [propertyId]);
 
 	useEffect(() => {
-		loadPropertyCollaborations();
-	}, [loadPropertyCollaborations]);
+		// Only check collaborations if user is NOT the property owner
+		if (!isPropertyOwner && user) {
+			loadPropertyCollaborations();
+		}
+	}, [loadPropertyCollaborations, isPropertyOwner, user]);
 
 	const handleContactOwner = () => {
 		if (!user) {
@@ -1058,9 +1067,7 @@ export default function PropertyDetailsPage() {
 							{/* Owner Information */}
 							<div className="mb-6 p-4 bg-gray-50 rounded-lg">
 								<h3 className="font-semibold text-gray-900 mb-3">
-									{user &&
-									(user._id === property.owner._id ||
-										user.id === property.owner._id)
+									{isPropertyOwner
 										? 'Votre annonce'
 										: 'Contact'}
 								</h3>
@@ -1073,15 +1080,11 @@ export default function PropertyDetailsPage() {
 										<p className="font-medium text-gray-900">
 											{property.owner.firstName}{' '}
 											{property.owner.lastName}
-											{user &&
-												(user._id ===
-													property.owner._id ||
-													user.id ===
-														property.owner._id) && (
-													<span className="text-sm text-brand-600 ml-2">
-														(Vous)
-													</span>
-												)}
+											{isPropertyOwner && (
+												<span className="text-sm text-brand-600 ml-2">
+													(Vous)
+												</span>
+											)}
 										</p>
 										<p className="text-sm text-gray-600">
 											{property.owner.userType ===
@@ -1093,9 +1096,7 @@ export default function PropertyDetailsPage() {
 								</div>
 
 								{/* Contact Buttons - Only show if not the property owner */}
-								{user &&
-								(user._id === property.owner._id ||
-									user.id === property.owner._id) ? (
+								{isPropertyOwner ? (
 									<div className="bg-brand-50 border border-brand-200 rounded-lg p-3">
 										<div className="flex items-center space-x-2">
 											<svg
@@ -1145,19 +1146,19 @@ export default function PropertyDetailsPage() {
 										{user && user.userType === 'agent' && (
 											<>
 												{hasBlockingCollab ? (
-													<div className="w-full p-3 rounded-md border bg-gray-50 text-gray-700 text-sm flex items-center justify-center">
+													<div className="w-full p-3 rounded-md border bg-blue-50 text-blue-800 text-sm flex items-center justify-center">
 														<span className="mr-2">
-															🚫
+															ℹ️
 														</span>
-														{blockingStatus ===
-															'pending' &&
-															'Propriété déjà en collaboration (en attente).'}
-														{blockingStatus ===
-															'accepted' &&
-															'Propriété déjà en collaboration (acceptée).'}
-														{blockingStatus ===
-															'active' &&
-															'Propriété déjà en collaboration (active).'}
+														{`Propriété déjà en collaboration (${
+															blockingStatus ===
+															'pending'
+																? 'en attente'
+																: blockingStatus ===
+																	  'accepted'
+																	? 'acceptée'
+																	: 'active'
+														})`}
 													</div>
 												) : (
 													<Button
@@ -1242,17 +1243,21 @@ export default function PropertyDetailsPage() {
 				<ProposeCollaborationModal
 					isOpen={showCollaborationModal}
 					onClose={() => setShowCollaborationModal(false)}
-					propertyId={property._id}
-					property={{
-						_id: property._id,
-						title: property.title,
-						price: property.price,
-						city: property.city,
-						postalCode: property.postalCode || '',
-						propertyType: property.propertyType,
-						surface: property.surface,
-						rooms: property.rooms || 0,
-						mainImage: property.mainImage,
+					post={{
+						type: 'property',
+						id: property._id,
+						ownerUserType: property.owner.userType,
+						data: {
+							_id: property._id,
+							title: property.title,
+							price: property.price,
+							city: property.city,
+							postalCode: property.postalCode || '',
+							propertyType: property.propertyType,
+							surface: property.surface,
+							rooms: property.rooms || 0,
+							mainImage: property.mainImage,
+						},
 					}}
 					onSuccess={() => {
 						// Close modal and refresh collaboration info to reflect new blocking state

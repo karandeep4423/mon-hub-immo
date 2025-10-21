@@ -8,6 +8,7 @@ import { ProfileAvatar } from '../ui';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import searchAdApi from '@/lib/api/searchAdApi';
+import { getSearchAdBadgeConfig } from '@/lib/constants/badges';
 
 interface SearchAdCardProps {
 	searchAd: SearchAd;
@@ -125,6 +126,24 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 					fill
 					className="object-cover"
 				/>
+				{/* Badges overlay */}
+				<div className="absolute top-2 left-2 flex flex-wrap gap-1 max-w-[70%]">
+					{searchAd.badges &&
+						searchAd.badges.length > 0 &&
+						searchAd.badges.slice(0, 5).map((badgeValue) => {
+							const config = getSearchAdBadgeConfig(badgeValue);
+							if (!config) return null;
+
+							return (
+								<span
+									key={badgeValue}
+									className={`${config.bgColor} ${config.color} text-xs px-2 py-1 rounded-full font-semibold`}
+								>
+									{config.label}
+								</span>
+							);
+						})}
+				</div>
 			</div>
 
 			{/* Content Section */}

@@ -87,6 +87,11 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 	// Filter and search collaborations
 	const filteredCollaborations = useMemo(() => {
 		return collaborations.filter((collaboration) => {
+			// Skip collaborations with missing participant data
+			if (!collaboration.postOwnerId || !collaboration.collaboratorId) {
+				return false;
+			}
+
 			// Status filter
 			if (
 				statusFilter !== 'all' &&
@@ -97,8 +102,7 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 
 			// Role filter
 			if (roleFilter !== 'all') {
-				const isOwner =
-					collaboration.propertyOwnerId._id === currentUserId;
+				const isOwner = collaboration.postOwnerId._id === currentUserId;
 				if (roleFilter === 'owner' && !isOwner) return false;
 				if (roleFilter === 'collaborator' && isOwner) return false;
 			}
@@ -106,9 +110,9 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 			// Search filter
 			if (searchTerm) {
 				const partner =
-					collaboration.propertyOwnerId._id === currentUserId
+					collaboration.postOwnerId._id === currentUserId
 						? collaboration.collaboratorId
-						: collaboration.propertyOwnerId;
+						: collaboration.postOwnerId;
 				const partnerName =
 					`${partner.firstName} ${partner.lastName}`.toLowerCase();
 				const collaborationId = collaboration._id.toLowerCase();
@@ -126,21 +130,26 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 
 	// Statistics
 	const stats = useMemo(() => {
-		const total = collaborations.length;
-		const pending = collaborations.filter(
+		// Filter out collaborations with missing data
+		const validCollaborations = collaborations.filter(
+			(c) => c.postOwnerId && c.collaboratorId,
+		);
+
+		const total = validCollaborations.length;
+		const pending = validCollaborations.filter(
 			(c) => c.status === 'pending',
 		).length;
-		const accepted = collaborations.filter(
+		const accepted = validCollaborations.filter(
 			(c) => c.status === 'accepted',
 		).length;
-		const active = collaborations.filter(
+		const active = validCollaborations.filter(
 			(c) => c.status === 'active',
 		).length;
-		const completed = collaborations.filter(
+		const completed = validCollaborations.filter(
 			(c) => c.status === 'completed',
 		).length;
-		const asOwner = collaborations.filter(
-			(c) => c.propertyOwnerId._id === currentUserId,
+		const asOwner = validCollaborations.filter(
+			(c) => c.postOwnerId?._id === currentUserId,
 		).length;
 		const asCollaborator = total - asOwner;
 

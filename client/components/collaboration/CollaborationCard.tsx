@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '../ui/Card';
@@ -6,6 +7,8 @@ import { CollaborationStatusBadge } from './CollaborationStatusBadge';
 import { ProfileAvatar } from '../ui/ProfileAvatar';
 import { Collaboration } from '../../types/collaboration';
 import { Property, propertyService } from '../../lib/api/propertyApi';
+import type { SearchAd } from '../../types/searchAd';
+import searchAdApi from '../../lib/api/searchAdApi';
 import { PROGRESS_STEPS_CONFIG } from './progress-tracking/types';
 
 interface CollaborationCardProps {
@@ -35,54 +38,70 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 }) => {
 	const router = useRouter();
 	const [property, setProperty] = useState<Property | null>(null);
-	const [loadingProperty, setLoadingProperty] = useState(true);
+	const [searchAd, setSearchAd] = useState<SearchAd | null>(null);
+	const [loadingPost, setLoadingPost] = useState(true);
 
-	// Fetch property data
+	// Fetch property or search ad data
 	useEffect(() => {
-		const fetchProperty = async () => {
+		const fetchPostData = async () => {
 			try {
-				// Extract property ID - handle both string and object cases
-				let propertyId: string;
+				// Extract post ID - handle both string and object cases
+				let postId: string;
 
-				if (typeof collaboration.propertyId === 'string') {
-					propertyId = collaboration.propertyId;
+				if (typeof collaboration.postId === 'string') {
+					postId = collaboration.postId;
 				} else if (
-					collaboration.propertyId &&
-					typeof collaboration.propertyId === 'object'
+					collaboration.postId &&
+					typeof collaboration.postId === 'object'
 				) {
-					// If it's an object, try to get the _id property
-					propertyId =
-						(collaboration.propertyId as { _id?: string })._id ||
-						'';
+					postId =
+						(collaboration.postId as { _id?: string })._id || '';
 				} else {
-					propertyId = '';
+					postId = '';
 				}
 
-				if (!propertyId) {
-					console.warn('No valid property ID found in collaboration');
-					setLoadingProperty(false);
+				if (!postId) {
+					console.warn('No valid post ID found in collaboration');
+					setLoadingPost(false);
 					return;
 				}
 
-				const propertyData =
-					await propertyService.getPropertyById(propertyId);
-				setProperty(propertyData);
+				if (collaboration.postType === 'Property') {
+					const propertyData =
+						await propertyService.getPropertyById(postId);
+					setProperty(propertyData);
+				} else if (collaboration.postType === 'SearchAd') {
+					const searchAdData =
+						await searchAdApi.getSearchAdById(postId);
+					setSearchAd(searchAdData);
+				}
 			} catch (error) {
-				console.error('Error fetching property:', error);
+				console.error('Error fetching post data:', error);
 			} finally {
-				setLoadingProperty(false);
+				setLoadingPost(false);
 			}
 		};
 
-		if (collaboration.propertyId) {
-			fetchProperty();
+		if (collaboration.postId) {
+			fetchPostData();
 		}
-	}, [collaboration.propertyId]);
+	}, [collaboration.postId, collaboration.postType]);
 
-	const isOwner = collaboration.propertyOwnerId._id === currentUserId;
+	// Early return if participant data is missing
+	if (!collaboration.postOwnerId || !collaboration.collaboratorId) {
+		return (
+			<div className="bg-white rounded-lg shadow-sm border border-red-200 p-4">
+				<p className="text-red-600 text-sm">
+					⚠️ Données de collaboration incomplètes
+				</p>
+			</div>
+		);
+	}
+
+	const isOwner = collaboration.postOwnerId._id === currentUserId;
 
 	// Both participants
-	const ownerUser = collaboration.propertyOwnerId;
+	const ownerUser = collaboration.postOwnerId;
 	const collaboratorUser = collaboration.collaboratorId;
 	const shortCollabId = collaboration._id.slice(-6);
 
@@ -94,22 +113,55 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 		0;
 	const totalSteps = Object.keys(PROGRESS_STEPS_CONFIG).length;
 
-	// Get property display info
-	const propertyTitle = property
+	// Get post display info (property or search ad)
+	const postTitle = property
 		? `${property.propertyType} ${property.rooms ? property.rooms + ' pièces' : ''}`
-		: 'Propriété';
-	const propertyLocation = property
-		? `${property.city}${property.postalCode ? ' (' + property.postalCode + ')' : ''}`
-		: 'Location inconnue';
-	const propertyImage =
-		typeof property?.mainImage === 'string'
-			? property.mainImage
-			: property?.mainImage?.url || '/api/placeholder/300/200';
-	const propertyPrice = property?.price || 0;
+		: searchAd
+			? searchAd.title
+			: collaboration.postType === 'Property'
+				? 'Propriété'
+				: 'Recherche de bien';
 
-	const userCommission = isOwner
-		? 100 - collaboration.proposedCommission
-		: collaboration.proposedCommission;
+	const postLocation = property
+		? `${property.city}${property.postalCode ? ' (' + property.postalCode + ')' : ''}`
+		: searchAd
+			? searchAd.location.cities.join(', ')
+			: 'Location inconnue';
+
+	const postImage =
+		collaboration.postType === 'Property'
+			? typeof property?.mainImage === 'string'
+				? property.mainImage
+				: property?.mainImage?.url || '/api/placeholder/300/200'
+			: '/recherches-des-biens.png';
+
+	const postPrice = property?.price || 0;
+
+	// Determine compensation display
+	const getCompensationDisplay = () => {
+		if (collaboration.compensationType === 'gift_vouchers') {
+			return {
+				type: 'Chèques cadeaux',
+				value: `${collaboration.compensationAmount || 0}`,
+			};
+		} else if (collaboration.compensationType === 'fixed_amount') {
+			return {
+				type: 'Montant fixe',
+				value: `${collaboration.compensationAmount || 0}€`,
+			};
+		} else {
+			// percentage or default
+			const userCommission = isOwner
+				? 100 - collaboration.proposedCommission
+				: collaboration.proposedCommission;
+			return {
+				type: 'Commission',
+				value: `${userCommission}%`,
+			};
+		}
+	};
+
+	const compensationInfo = getCompensationDisplay();
 
 	// Get latest activity (sorted by most recent)
 	const latestActivity =
@@ -139,15 +191,15 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 	};
 	return (
 		<Card className="overflow-hidden">
-			{/* Property Header */}
+			{/* Post Header (Property or Search Ad) */}
 			<div className="flex items-start space-x-4 p-4">
 				<div className="relative w-20 h-20 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
-					{loadingProperty ? (
+					{loadingPost ? (
 						<div className="w-full h-full bg-gray-300 animate-pulse" />
 					) : (
 						<img
-							src={propertyImage}
-							alt={propertyTitle}
+							src={postImage}
+							alt={postTitle}
 							width={80}
 							height={100}
 							className="object-cover h-full"
@@ -158,15 +210,15 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 					<div className="flex items-center justify-between">
 						<div>
 							<h3 className="text-lg font-semibold text-gray-900 truncate">
-								{loadingProperty ? (
+								{loadingPost ? (
 									<div className="h-5 bg-gray-300 animate-pulse rounded w-32" />
 								) : (
-									propertyTitle
+									postTitle
 								)}
 							</h3>
 							{property && (
 								<p className="text-sm text-blue-600 font-medium">
-									{propertyPrice.toLocaleString('fr-FR')} €
+									{postPrice.toLocaleString('fr-FR')} €
 								</p>
 							)}
 						</div>
@@ -195,10 +247,10 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 							/>
 						</svg>
 						<span className="text-sm">
-							{loadingProperty ? (
+							{loadingPost ? (
 								<div className="h-4 bg-gray-300 animate-pulse rounded w-24" />
 							) : (
-								propertyLocation
+								postLocation
 							)}
 						</span>
 					</div>
@@ -338,40 +390,56 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 				</div>
 			)}
 
-			{/* Commission & Status Details */}
+			{/* Compensation & Status Details */}
 			<div className="px-4 pb-4">
 				<div className="bg-gray-50 rounded-lg p-3">
 					<div className="flex items-center justify-between mb-2">
-						<div>
-							<p className="text-sm font-medium text-gray-900">
-								Commission partagée
+						<div className="w-full">
+							<p className="text-sm font-medium text-gray-900 mb-2">
+								{compensationInfo.type}
 							</p>
-							<div className="flex items-center space-x-4 mt-1">
-								<div className="text-center">
-									<p className="text-xs text-gray-500">
-										Propriétaire
+							{collaboration.compensationType ===
+								'gift_vouchers' ||
+							collaboration.compensationType ===
+								'fixed_amount' ? (
+								<div className="text-center py-2">
+									<p className="text-lg font-bold text-blue-600">
+										{compensationInfo.value}
 									</p>
-									<p className="text-sm font-semibold text-gray-900">
-										{isOwner
-											? userCommission
-											: 100 -
-												collaboration.proposedCommission}
-										%
-									</p>
-								</div>
-								<div className="text-center">
-									<p className="text-xs text-gray-500">
-										Collaborateur
-									</p>
-									<p className="text-sm font-semibold text-blue-600">
-										{isOwner
-											? collaboration.proposedCommission
-											: userCommission}
-										%
+									<p className="text-xs text-gray-500 mt-1">
+										{collaboration.compensationType ===
+										'gift_vouchers'
+											? 'Chèques cadeaux pour le collaborateur'
+											: 'Montant fixe pour le collaborateur'}
 									</p>
 								</div>
-							</div>
+							) : (
+								<div className="flex items-center space-x-4 mt-1">
+									<div className="text-center flex-1">
+										<p className="text-xs text-gray-500">
+											Propriétaire
+										</p>
+										<p className="text-sm font-semibold text-gray-900">
+											{isOwner
+												? compensationInfo.value
+												: `${100 - collaboration.proposedCommission}%`}
+										</p>
+									</div>
+									<div className="text-center flex-1">
+										<p className="text-xs text-gray-500">
+											Collaborateur
+										</p>
+										<p className="text-sm font-semibold text-blue-600">
+											{isOwner
+												? `${collaboration.proposedCommission}%`
+												: compensationInfo.value}
+										</p>
+									</div>
+								</div>
+							)}
 						</div>
+					</div>
+					<div className="mt-2">
 						{collaboration.status === 'pending' && (
 							<span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
 								⏳ En attente
@@ -403,15 +471,21 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 							</span>
 						)}
 					</div>
-					{property && (
-						<p className="text-xs text-gray-600">
-							Estimation commission:{' '}
-							{Math.round(
-								(propertyPrice * userCommission) / 100,
-							).toLocaleString('fr-FR')}{' '}
-							€
-						</p>
-					)}
+					{property &&
+						collaboration.compensationType === 'percentage' && (
+							<p className="text-xs text-gray-600 mt-2">
+								Estimation commission:{' '}
+								{Math.round(
+									(postPrice *
+										(isOwner
+											? 100 -
+												collaboration.proposedCommission
+											: collaboration.proposedCommission)) /
+										100,
+								).toLocaleString('fr-FR')}{' '}
+								€
+							</p>
+						)}
 				</div>
 			</div>
 

@@ -21,8 +21,8 @@ export const useCollaborationPermissions = (
 		const userId = user.id || user._id;
 		const isOwner =
 			userId &&
-			(userId === collaboration.propertyOwnerId?._id ||
-				userId === collaboration.propertyOwnerId);
+			(userId === collaboration.postOwnerId?._id ||
+				userId === collaboration.postOwnerId);
 		const isCollaborator =
 			userId &&
 			(userId === collaboration.collaboratorId?._id ||

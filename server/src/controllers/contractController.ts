@@ -34,7 +34,7 @@ export const signContract = async (
 
 		const collaboration = await Collaboration.findById(id)
 			.populate(
-				'propertyOwnerId',
+				'postOwnerId',
 				'firstName lastName email profileImage',
 			)
 			.populate(
@@ -58,7 +58,7 @@ export const signContract = async (
 			return;
 		}
 
-		const isOwner = collaboration.propertyOwnerId._id.toString() === userId;
+		const isOwner = collaboration.postOwnerId._id.toString() === userId;
 		const isCollaborator =
 			collaboration.collaboratorId._id.toString() === userId;
 
@@ -118,13 +118,13 @@ export const signContract = async (
 			status: collaboration.status,
 			currentStep: collaboration.currentStep,
 			propertyOwner: {
-				id: collaboration.propertyOwnerId._id,
-				name: `${(collaboration.propertyOwnerId as unknown as PopulatedUser).firstName} ${(collaboration.propertyOwnerId as unknown as PopulatedUser).lastName}`,
+				id: collaboration.postOwnerId._id,
+				name: `${(collaboration.postOwnerId as unknown as PopulatedUser).firstName} ${(collaboration.postOwnerId as unknown as PopulatedUser).lastName}`,
 				email: (
-					collaboration.propertyOwnerId as unknown as PopulatedUser
+					collaboration.postOwnerId as unknown as PopulatedUser
 				).email,
 				profileImage:
-					(collaboration.propertyOwnerId as unknown as PopulatedUser)
+					(collaboration.postOwnerId as unknown as PopulatedUser)
 						.profileImage || null,
 			},
 			collaborator: {
@@ -154,7 +154,7 @@ export const signContract = async (
 		// Notify the other party about signing
 		const signRecipientId = isOwner
 			? collaboration.collaboratorId._id
-			: collaboration.propertyOwnerId._id;
+			: collaboration.postOwnerId._id;
 		const signer = await User.findById(userId).select(
 			'firstName lastName email profileImage',
 		);
@@ -179,7 +179,7 @@ export const signContract = async (
 		// If both have signed and it became active, notify activation
 		if (collaboration.ownerSigned && collaboration.collaboratorSigned) {
 			const otherPartyId = isOwner
-				? collaboration.propertyOwnerId._id
+				? collaboration.postOwnerId._id
 				: collaboration.collaboratorId._id;
 			await notificationService.create({
 				recipientId: otherPartyId,
@@ -219,7 +219,7 @@ export const updateContract = async (
 
 		const collaboration = await Collaboration.findById(id)
 			.populate(
-				'propertyOwnerId',
+				'postOwnerId',
 				'firstName lastName email profileImage',
 			)
 			.populate(
@@ -245,7 +245,7 @@ export const updateContract = async (
 		}
 
 		// Check if user is part of this collaboration
-		const isOwner = collaboration.propertyOwnerId._id.toString() === userId;
+		const isOwner = collaboration.postOwnerId._id.toString() === userId;
 		const isCollaborator =
 			collaboration.collaboratorId._id.toString() === userId;
 
@@ -302,13 +302,13 @@ export const updateContract = async (
 			status: collaboration.status,
 			currentStep: collaboration.currentStep,
 			propertyOwner: {
-				id: collaboration.propertyOwnerId._id,
-				name: `${(collaboration.propertyOwnerId as unknown as PopulatedUser).firstName} ${(collaboration.propertyOwnerId as unknown as PopulatedUser).lastName}`,
+				id: collaboration.postOwnerId._id,
+				name: `${(collaboration.postOwnerId as unknown as PopulatedUser).firstName} ${(collaboration.postOwnerId as unknown as PopulatedUser).lastName}`,
 				email: (
-					collaboration.propertyOwnerId as unknown as PopulatedUser
+					collaboration.postOwnerId as unknown as PopulatedUser
 				).email,
 				profileImage:
-					(collaboration.propertyOwnerId as unknown as PopulatedUser)
+					(collaboration.postOwnerId as unknown as PopulatedUser)
 						.profileImage || null,
 			},
 			collaborator: {
@@ -342,7 +342,7 @@ export const updateContract = async (
 		if (contractChanged) {
 			const updateRecipientId = isOwner
 				? collaboration.collaboratorId._id
-				: collaboration.propertyOwnerId._id;
+				: collaboration.postOwnerId._id;
 			const actor = await User.findById(userId).select(
 				'firstName lastName email profileImage',
 			);
@@ -389,7 +389,7 @@ export const getContract = async (
 
 		const collaboration = await Collaboration.findById(id)
 			.populate(
-				'propertyOwnerId',
+				'postOwnerId',
 				'firstName lastName email profileImage',
 			)
 			.populate(
@@ -406,7 +406,7 @@ export const getContract = async (
 		}
 
 		// Check if user is part of this collaboration
-		const isOwner = collaboration.propertyOwnerId._id.toString() === userId;
+		const isOwner = collaboration.postOwnerId._id.toString() === userId;
 		const isCollaborator =
 			collaboration.collaboratorId._id.toString() === userId;
 
@@ -423,7 +423,7 @@ export const getContract = async (
 			!collaboration.contractText ||
 			collaboration.contractText.trim() === ''
 		) {
-			const ownerName = `${(collaboration.propertyOwnerId as unknown as PopulatedUser).firstName} ${(collaboration.propertyOwnerId as unknown as PopulatedUser).lastName}`;
+			const ownerName = `${(collaboration.postOwnerId as unknown as PopulatedUser).firstName} ${(collaboration.postOwnerId as unknown as PopulatedUser).lastName}`;
 			const collaboratorName = `${(collaboration.collaboratorId as unknown as PopulatedUser).firstName} ${(collaboration.collaboratorId as unknown as PopulatedUser).lastName}`;
 			const ownerCommission = 100 - collaboration.proposedCommission;
 			const collaboratorCommission = collaboration.proposedCommission;
@@ -490,13 +490,13 @@ Date : ${new Date().toLocaleDateString('fr-FR')}`;
 			status: collaboration.status,
 			currentStep: collaboration.currentStep,
 			propertyOwner: {
-				id: collaboration.propertyOwnerId._id,
-				name: `${(collaboration.propertyOwnerId as unknown as PopulatedUser).firstName} ${(collaboration.propertyOwnerId as unknown as PopulatedUser).lastName}`,
+				id: collaboration.postOwnerId._id,
+				name: `${(collaboration.postOwnerId as unknown as PopulatedUser).firstName} ${(collaboration.postOwnerId as unknown as PopulatedUser).lastName}`,
 				email: (
-					collaboration.propertyOwnerId as unknown as PopulatedUser
+					collaboration.postOwnerId as unknown as PopulatedUser
 				).email,
 				profileImage:
-					(collaboration.propertyOwnerId as unknown as PopulatedUser)
+					(collaboration.postOwnerId as unknown as PopulatedUser)
 						.profileImage || null,
 			},
 			collaborator: {

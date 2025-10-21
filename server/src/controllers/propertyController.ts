@@ -142,7 +142,7 @@ export const getProperties = async (
 	try {
 		const {
 			page = 1,
-			limit = 12,
+			limit,
 			propertyType,
 			city,
 			postalCode,
@@ -205,26 +205,28 @@ export const getProperties = async (
 		const sort: any = {};
 		sort[sortBy as string] = sortOrder === 'desc' ? -1 : 1;
 
-		// Calculate pagination
-		const skip = (Number(page) - 1) * Number(limit);
+		// Calculate pagination only if limit is provided
+		const skip = limit ? (Number(page) - 1) * Number(limit) : 0;
 
 		// Execute query
+		let query = Property.find(filter)
+			.populate('owner', 'firstName lastName email profileImage userType')
+			.sort(sort)
+			.skip(skip);
+
+		// Only apply limit if provided
+		if (limit) {
+			query = query.limit(Number(limit));
+		}
+
 		const [properties, total] = await Promise.all([
-			Property.find(filter)
-				.populate(
-					'owner',
-					'firstName lastName email profileImage userType',
-				)
-				.sort(sort)
-				.skip(skip)
-				.limit(Number(limit))
-				.lean(),
+			query.lean().exec(),
 			Property.countDocuments(filter),
 		]);
 
 		// Calculate pagination info
-		const totalPages = Math.ceil(total / Number(limit));
-		const hasNextPage = Number(page) < totalPages;
+		const totalPages = limit ? Math.ceil(total / Number(limit)) : 1;
+		const hasNextPage = limit ? Number(page) < totalPages : false;
 		const hasPrevPage = Number(page) > 1;
 
 		res.status(200).json({

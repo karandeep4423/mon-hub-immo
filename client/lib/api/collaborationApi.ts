@@ -31,6 +31,16 @@ export const collaborationApi = {
 		return response.data;
 	},
 
+	// Get collaborations for a specific search ad
+	getSearchAdCollaborations: async (
+		searchAdId: string,
+	): Promise<{ collaborations: Collaboration[] }> => {
+		const response = await api.get(
+			`/collaboration/search-ad/${searchAdId}`,
+		);
+		return response.data;
+	},
+
 	// Respond to a collaboration proposal
 	respond: async (
 		collaborationId: string,
