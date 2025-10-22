@@ -13,7 +13,11 @@ import { Server as HttpServer } from 'http';
 export function createSocketServer(httpServer: HttpServer): Server {
 	const io = new Server(httpServer, {
 		cors: {
-			origin: ['http://localhost:3000', 'http://localhost:3001', process.env.FRONTEND_URL || 'https://mon-hub-immo.vercel.app'],
+			origin: [
+				'http://localhost:3000',
+				'http://localhost:3001',
+				process.env.FRONTEND_URL || 'https://mon-hub-immo.vercel.app',
+			],
 			methods: ['GET', 'POST'],
 			credentials: true,
 		},
@@ -46,6 +50,10 @@ export const SOCKET_EVENTS = {
 	NEW_MESSAGE: 'newMessage',
 	MESSAGES_READ: 'messagesRead',
 	MESSAGE_DELETED: 'messageDeleted',
+
+	// Chat thread focus tracking (for suppressing noisy notifications)
+	CHAT_ACTIVE_THREAD: 'chat:activeThread',
+	CHAT_INACTIVE_THREAD: 'chat:inactiveThread',
 } as const;
 
 /**

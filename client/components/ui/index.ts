@@ -27,11 +27,19 @@ export { EnergyRatingSelector } from './EnergyRatingSelector';
 export { PropertyTypeSelector } from './PropertyTypeSelector';
 export { NumberInput } from './NumberInput';
 export { Select } from './Select';
-export { LocationSearchInput } from './LocationSearchInput';
+// Location search components (consolidated)
+export {
+	LocationSearch,
+	UnifiedSearchBar,
+	SingleUnifiedSearch,
+} from './LocationSearch';
+export {
+	BaseLocationAutocomplete,
+	type LocationItem,
+} from './BaseLocationAutocomplete';
+export type { LocationItem as LocationItemType } from '@/types/location';
+// Additional location components
 export { CityAutocomplete } from './CityAutocomplete';
 export { MultiCityAutocomplete } from './MultiCityAutocomplete';
 export { AddressAutocomplete } from './AddressAutocomplete';
-export type { LocationItem } from './LocationSearchInput';
 export { LocationSearchWithRadius } from './LocationSearchWithRadius';
-export { UnifiedSearchBar } from './UnifiedSearchBar';
-export { SingleUnifiedSearch } from './SingleUnifiedSearch';

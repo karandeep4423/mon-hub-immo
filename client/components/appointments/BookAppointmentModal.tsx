@@ -6,6 +6,8 @@ import { appointmentApi } from '@/lib/api/appointmentApi';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import type { CreateAppointmentData } from '@/types/appointment';
+import { useForm } from '@/hooks/useForm';
+import { logger } from '@/lib/utils/logger';
 
 interface BookAppointmentModalProps {
 	isOpen: boolean;
@@ -19,6 +21,10 @@ interface BookAppointmentModalProps {
 	};
 }
 
+interface AppointmentFormData
+	extends CreateAppointmentData,
+		Record<string, unknown> {}
+
 export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 	isOpen,
 	onClose,
@@ -27,27 +33,17 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 	const { user } = useAuth();
 	const router = useRouter();
 	const [step, setStep] = useState(1);
-	const [loading, setLoading] = useState(false);
 	const [availableSlots, setAvailableSlots] = useState<string[]>([]);
 	const [loadingSlots, setLoadingSlots] = useState(false);
 
-	const [formData, setFormData] = useState<CreateAppointmentData>({
-		agentId: agent._id,
-		appointmentType: 'conseil',
-		scheduledDate: '',
-		scheduledTime: '',
-		contactDetails: {
-			name: user ? `${user.firstName} ${user.lastName}` : '',
-			email: user?.email || '',
-			phone: user?.phone || '',
-		},
-		propertyDetails: {},
-		notes: '',
-	});
-
-	const resetForm = useCallback(() => {
-		setStep(1);
-		setFormData({
+	const {
+		values,
+		isSubmitting,
+		setFieldValue,
+		handleSubmit,
+		resetForm: resetFormValues,
+	} = useForm<AppointmentFormData>({
+		initialValues: {
 			agentId: agent._id,
 			appointmentType: 'conseil',
 			scheduledDate: '',
@@ -59,9 +55,23 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 			},
 			propertyDetails: {},
 			notes: '',
-		});
+		},
+		onSubmit: async () => {
+			if (!user) {
+				router.push('/auth/login?redirect=/monagentimmo');
+				return;
+			}
+			await appointmentApi.createAppointment(values);
+			alert('Demande de rendez-vous envoyée avec succès !');
+			onClose();
+		},
+	});
+
+	const resetForm = useCallback(() => {
+		setStep(1);
+		resetFormValues();
 		setAvailableSlots([]);
-	}, [agent._id, user]);
+	}, [resetFormValues]);
 
 	useEffect(() => {
 		if (!isOpen) {
@@ -74,43 +84,22 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 			setLoadingSlots(true);
 			const response = await appointmentApi.getAvailableSlots(
 				agent._id,
-				formData.scheduledDate,
+				values.scheduledDate,
 			);
 			setAvailableSlots(response.slots || []);
 		} catch (error) {
-			console.error('Error fetching slots:', error);
+			logger.error('Error fetching slots:', error);
 			setAvailableSlots([]);
 		} finally {
 			setLoadingSlots(false);
 		}
-	}, [agent._id, formData.scheduledDate]);
+	}, [agent._id, values.scheduledDate]);
 
 	useEffect(() => {
-		if (formData.scheduledDate && step === 2) {
+		if (values.scheduledDate && step === 2) {
 			fetchAvailableSlots();
 		}
-	}, [formData.scheduledDate, step, fetchAvailableSlots]);
-
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-
-		if (!user) {
-			router.push('/auth/login?redirect=/monagentimmo');
-			return;
-		}
-
-		try {
-			setLoading(true);
-			await appointmentApi.createAppointment(formData);
-			alert('Demande de rendez-vous envoyée avec succès !');
-			onClose();
-		} catch (error) {
-			console.error('Error creating appointment:', error);
-			alert('Une erreur est survenue lors de la création du rendez-vous');
-		} finally {
-			setLoading(false);
-		}
-	};
+	}, [values.scheduledDate, step, fetchAvailableSlots]);
 
 	const getMinDate = () => {
 		const tomorrow = new Date();
@@ -275,18 +264,17 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 											key={type.value}
 											type="button"
 											onClick={() =>
-												setFormData({
-													...formData,
-													appointmentType:
-														type.value as
-															| 'estimation'
-															| 'vente'
-															| 'achat'
-															| 'conseil',
-												})
+												setFieldValue(
+													'appointmentType',
+													type.value as
+														| 'estimation'
+														| 'vente'
+														| 'achat'
+														| 'conseil',
+												)
 											}
 											className={`relative p-3 md:p-4 rounded-xl border-2 transition-all duration-200 ${
-												formData.appointmentType ===
+												values.appointmentType ===
 												type.value
 													? 'border-brand bg-brand-50 shadow-md scale-[1.02]'
 													: 'border-gray-200 hover:border-brand/50 hover:bg-gray-50'
@@ -301,7 +289,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 											<div className="text-[10px] md:text-xs text-gray-500 mt-0.5">
 												{type.desc}
 											</div>
-											{formData.appointmentType ===
+											{values.appointmentType ===
 												type.value && (
 												<div className="absolute top-2 right-2 bg-brand text-white rounded-full p-0.5">
 													<svg
@@ -346,12 +334,12 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 									required
 									min={getMinDate()}
 									max={getMaxDate()}
-									value={formData.scheduledDate}
+									value={values.scheduledDate}
 									onChange={(e) =>
-										setFormData({
-											...formData,
-											scheduledDate: e.target.value,
-										})
+										setFieldValue(
+											'scheduledDate',
+											e.target.value,
+										)
 									}
 									className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-all text-sm md:text-base"
 								/>
@@ -425,13 +413,13 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 													key={slot}
 													type="button"
 													onClick={() =>
-														setFormData({
-															...formData,
-															scheduledTime: slot,
-														})
+														setFieldValue(
+															'scheduledTime',
+															slot,
+														)
 													}
 													className={`relative p-3 md:p-3.5 rounded-lg border-2 transition-all duration-200 text-center font-semibold ${
-														formData.scheduledTime ===
+														values.scheduledTime ===
 														slot
 															? 'border-brand bg-brand text-white shadow-lg scale-105'
 															: 'border-gray-200 bg-white hover:border-brand/50 hover:bg-brand-50 text-gray-700'
@@ -440,7 +428,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 													<div className="text-sm md:text-base">
 														{slot}
 													</div>
-													{formData.scheduledTime ===
+													{values.scheduledTime ===
 														slot && (
 														<div className="absolute -top-1 -right-1 bg-white text-brand rounded-full p-0.5 shadow">
 															<svg
@@ -518,14 +506,11 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 									<input
 										type="text"
 										required
-										value={formData.contactDetails.name}
+										value={values.contactDetails.name}
 										onChange={(e) =>
-											setFormData({
-												...formData,
-												contactDetails: {
-													...formData.contactDetails,
-													name: e.target.value,
-												},
+											setFieldValue('contactDetails', {
+												...values.contactDetails,
+												name: e.target.value,
 											})
 										}
 										className="w-full px-3 md:px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-all text-sm"
@@ -538,14 +523,11 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 									<input
 										type="tel"
 										required
-										value={formData.contactDetails.phone}
+										value={values.contactDetails.phone}
 										onChange={(e) =>
-											setFormData({
-												...formData,
-												contactDetails: {
-													...formData.contactDetails,
-													phone: e.target.value,
-												},
+											setFieldValue('contactDetails', {
+												...values.contactDetails,
+												phone: e.target.value,
 											})
 										}
 										className="w-full px-3 md:px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-all text-sm"
@@ -560,14 +542,11 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 								<input
 									type="email"
 									required
-									value={formData.contactDetails.email}
+									value={values.contactDetails.email}
 									onChange={(e) =>
-										setFormData({
-											...formData,
-											contactDetails: {
-												...formData.contactDetails,
-												email: e.target.value,
-											},
+										setFieldValue('contactDetails', {
+											...values.contactDetails,
+											email: e.target.value,
 										})
 									}
 									className="w-full px-3 md:px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-all text-sm"
@@ -581,15 +560,12 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 								<input
 									type="text"
 									value={
-										formData.propertyDetails?.address || ''
+										values.propertyDetails?.address || ''
 									}
 									onChange={(e) =>
-										setFormData({
-											...formData,
-											propertyDetails: {
-												...formData.propertyDetails,
-												address: e.target.value,
-											},
+										setFieldValue('propertyDetails', {
+											...values.propertyDetails,
+											address: e.target.value,
 										})
 									}
 									placeholder="Ex: 123 rue de la Paix, Paris"
@@ -602,12 +578,9 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 									Message (optionnel)
 								</label>
 								<textarea
-									value={formData.notes || ''}
+									value={values.notes || ''}
 									onChange={(e) =>
-										setFormData({
-											...formData,
-											notes: e.target.value,
-										})
+										setFieldValue('notes', e.target.value)
 									}
 									rows={3}
 									placeholder="Décrivez votre projet ou vos questions..."
@@ -627,7 +600,6 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 								onClick={() => setStep(step - 1)}
 								variant="outline"
 								className="flex-1"
-								disabled={loading}
 							>
 								← Retour
 							</Button>
@@ -637,8 +609,8 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 								type="button"
 								onClick={() => setStep(step + 1)}
 								disabled={
-									(step === 1 && !formData.scheduledDate) ||
-									(step === 2 && !formData.scheduledTime)
+									(step === 1 && !values.scheduledDate) ||
+									(step === 2 && !values.scheduledTime)
 								}
 								className="flex-1 bg-brand hover:bg-brand-dark text-white font-semibold"
 							>
@@ -648,10 +620,9 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 							<Button
 								type="submit"
 								onClick={handleSubmit}
-								disabled={loading}
 								className="flex-1 bg-brand hover:bg-brand-dark text-white font-semibold"
 							>
-								{loading ? (
+								{isSubmitting ? (
 									<span className="flex items-center justify-center">
 										<svg
 											className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"

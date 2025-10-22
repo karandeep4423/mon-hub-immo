@@ -9,38 +9,69 @@ import { CityAutocomplete } from '../ui/CityAutocomplete';
 import { ProfileImageUploader } from '../ui/ProfileImageUploader';
 import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/lib/api/authApi';
+import { useForm } from '@/hooks/useForm';
+
+interface ProfileCompletionFormData extends Record<string, unknown> {
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone: string;
+	profileImage: string;
+	postalCode: string;
+	city: string;
+	interventionRadius: number;
+	coveredCities: string;
+	network: string;
+	siretNumber: string;
+	mandateTypes: string[];
+	yearsExperience: string;
+	personalPitch: string;
+	collaborateWithAgents: boolean;
+	shareCommission: boolean;
+	independentAgent: boolean;
+	alertsEnabled: boolean;
+	alertFrequency: 'quotidien' | 'hebdomadaire';
+	acceptTerms: boolean;
+}
 
 export const ProfileCompletion: React.FC = () => {
 	const router = useRouter();
 	const { user, updateUser } = useAuth();
-
 	const [loading, setLoading] = useState(false);
-	const [formData, setFormData] = useState({
-		// Personal info (pre-filled from user)
-		firstName: user?.firstName || '',
-		lastName: user?.lastName || '',
-		email: user?.email || '',
-		phone: user?.phone || '',
-		profileImage: user?.profileImage || '',
 
-		// Professional info
-		postalCode: '',
-		city: '',
-		interventionRadius: 20,
-		coveredCities: '',
-		network: 'IAD',
-		siretNumber: '',
-		mandateTypes: [] as string[],
-		yearsExperience: '',
-		personalPitch: '',
-		collaborateWithAgents: true,
-		shareCommission: false,
-		independentAgent: false,
-		alertsEnabled: false,
-		alertFrequency: 'quotidien' as 'quotidien' | 'hebdomadaire',
-		acceptTerms: false,
-	});
-	const [errors, setErrors] = useState<Record<string, string>>({});
+	const { values, errors, isSubmitting, setFieldValue, handleSubmit } =
+		useForm<ProfileCompletionFormData>({
+			initialValues: {
+				firstName: user?.firstName || '',
+				lastName: user?.lastName || '',
+				email: user?.email || '',
+				phone: user?.phone || '',
+				profileImage: user?.profileImage || '',
+				postalCode: '',
+				city: '',
+				interventionRadius: 20,
+				coveredCities: '',
+				network: 'IAD',
+				siretNumber: '',
+				mandateTypes: [],
+				yearsExperience: '',
+				personalPitch: '',
+				collaborateWithAgents: true,
+				shareCommission: false,
+				independentAgent: false,
+				alertsEnabled: false,
+				alertFrequency: 'quotidien',
+				acceptTerms: false,
+			},
+			onSubmit: async (data) => {
+				const response = await authService.completeProfile(data);
+				if (response.success && response.user) {
+					updateUser(response.user);
+					toast.success('Profil complété avec succès !');
+					router.push('/auth/welcome');
+				}
+			},
+		});
 
 	useEffect(() => {
 		if (!user && !loading) {

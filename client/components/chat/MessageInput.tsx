@@ -8,6 +8,7 @@ import TypingIndicator from './TypingIndicator';
 import { ButtonSpinner } from './ui';
 import { ChatApi } from '@/lib/api/chatApi';
 import { CHAT_TEXT } from '@/lib/constants/text';
+import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -177,7 +178,7 @@ const MessageInput: React.FC<MessageInputProps> = React.memo(
 					}));
 					await sendMessage({ attachments });
 				} catch (err) {
-					console.error('Failed to upload/send attachments', err);
+					logger.error('Failed to upload/send attachments', err);
 				} finally {
 					setIsUploading(false);
 					if (fileInputRef.current) fileInputRef.current.value = '';
@@ -215,7 +216,7 @@ const MessageInput: React.FC<MessageInputProps> = React.memo(
 		 * Log selected user changes for debugging
 		 */
 		useEffect(() => {
-			console.log(
+			logger.debug(
 				'💬 MessageInput: Selected user changed:',
 				selectedUser?.firstName ||
 					selectedUser?.name ||
@@ -236,14 +237,14 @@ const MessageInput: React.FC<MessageInputProps> = React.memo(
 				e.preventDefault();
 
 				if (!isValidMessage(message, selectedUser)) {
-					console.error(
+					logger.error(
 						'❌ Cannot submit - invalid message or no user selected',
 					);
 					return;
 				}
 
 				if (!selectedUser) {
-					console.error(
+					logger.error(
 						'❌ MessageInput: Cannot send message - no user selected',
 					);
 					return;
@@ -253,9 +254,9 @@ const MessageInput: React.FC<MessageInputProps> = React.memo(
 					await sendMessage({ text: message });
 					setMessage('');
 					stopTyping();
-					console.log('✅ MessageInput: Message sent successfully');
+					logger.debug('✅ MessageInput: Message sent successfully');
 				} catch (error) {
-					console.error(
+					logger.error(
 						'❌ MessageInput: Failed to send message:',
 						error,
 					);

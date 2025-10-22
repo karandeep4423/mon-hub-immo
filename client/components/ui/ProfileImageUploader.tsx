@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ImageUploader } from './ImageUploader';
 import Image from 'next/image';
 import { api } from '@/lib/api';
+import { logger } from '@/lib/utils/logger';
 
 interface ImageFile {
 	file: File;
@@ -49,12 +50,17 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 			// 2. bucket.s3.amazonaws.com/key
 			// 3. CloudFront URLs with key in path
 
-			console.log('Extracting S3 key from URL:', url);
-			console.log('Extracted pathname:', pathname);
+			logger.debug('[ProfileImageUploader] Extracting S3 key', {
+				url,
+				pathname,
+			});
 
 			return pathname || null;
 		} catch (error) {
-			console.error('Failed to extract S3 key from URL:', url, error);
+			logger.error('[ProfileImageUploader] Failed to extract S3 key', {
+				url,
+				error,
+			});
 			return null;
 		}
 	};
@@ -80,14 +86,20 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 		try {
 			// First, delete the old image if it exists
 			if (currentImageUrl) {
-				console.log('Current image URL to delete:', currentImageUrl);
+				logger.debug(
+					'[ProfileImageUploader] Deleting old image',
+					currentImageUrl,
+				);
 				const oldImageKey = extractS3KeyFromUrl(currentImageUrl);
-				console.log('Extracted S3 key for deletion:', oldImageKey);
+				logger.debug(
+					'[ProfileImageUploader] Extracted S3 key for deletion',
+					oldImageKey,
+				);
 
 				if (oldImageKey) {
 					try {
-						console.log(
-							'Attempting to delete S3 object with key:',
+						logger.debug(
+							'[ProfileImageUploader] Attempting S3 deletion',
 							oldImageKey,
 						);
 						const deleteResponse = await api.delete(
@@ -96,23 +108,19 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 								data: { keys: [oldImageKey] },
 							},
 						);
-						console.log(
-							'S3 deletion response:',
+						logger.debug(
+							'[ProfileImageUploader] S3 deletion success',
 							deleteResponse.data,
 						);
-						console.log(
-							'Old profile image deleted from S3:',
-							oldImageKey,
-						);
 					} catch (deleteError) {
-						console.error(
-							'Failed to delete old profile image:',
+						logger.error(
+							'[ProfileImageUploader] Failed to delete old image',
 							deleteError,
 						);
 						// Continue with upload even if delete fails
 					}
 				} else {
-					console.warn(
+					logger.warn(
 						'Could not extract S3 key from URL:',
 						currentImageUrl,
 					);
@@ -135,7 +143,7 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 				throw new Error(response.data.message || 'Upload failed');
 			}
 		} catch (error) {
-			console.error('Image upload failed:', error);
+			logger.error('Image upload failed:', error);
 			const errorMessage =
 				(error as { response?: { data?: { message?: string } } })
 					?.response?.data?.message || 'Failed to upload image';

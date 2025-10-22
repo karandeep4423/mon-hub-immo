@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import type { User } from '@/types/auth';
+import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
 // PROFILE AVATAR COMPONENT
@@ -193,7 +194,7 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
 
 	// Debug logging to track why images aren't showing
 	if (isObj && !hasProfileImage) {
-		console.log('ProfileAvatar: No image for user', {
+		logger.debug('ProfileAvatar: No image for user', {
 			userId: userObj._id,
 			profileImage: userObj.profileImage,
 			avatarUrl: userObj.avatarUrl,

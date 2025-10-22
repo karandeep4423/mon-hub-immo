@@ -24,6 +24,8 @@ import {
 	DateSeparator,
 } from './ui';
 import TypingIndicator from './TypingIndicator';
+import { logger } from '@/lib/utils/logger';
+import { SOCKET_EVENTS } from '@/lib/constants/socket';
 // import { CHAT_TEXT } from '@/lib/constants/text';
 
 // ============================================================================
@@ -137,35 +139,44 @@ const ChatMessages: React.FC = () => {
 
 		// Load older messages when near top - with better UX
 		if (isNearTop(scrollTop, 50) && selectedUser?._id && !isLoadingOlder) {
-			console.log('🔄 Loading older messages...');
+			logger.debug('🔄 Loading older messages');
 			setIsLoadingOlder(true);
 
 			// Find and store the current anchor message for scroll restoration
 			const anchor = findBestAnchorMessage(container);
 			if (anchor) {
-				console.log('📍 Scroll anchor set:', anchor.messageId);
+				logger.debug('📍 Scroll anchor set', {
+					messageId: anchor.messageId,
+				});
 			}
 
 			try {
 				const older = await loadOlderMessages();
 				if (older && older.length > 0) {
-					console.log(`✅ Loaded ${older.length} older messages`);
+					logger.debug('✅ Loaded older messages', {
+						count: older.length,
+					});
 
 					// Restore scroll position after DOM update
 					requestAnimationFrame(() => {
 						if (anchor && container) {
 							restoreScrollPosition(container, anchor);
-							console.log(
-								'🎯 Scroll position restored to anchor:',
-								anchor.messageId,
+							logger.debug(
+								'🎯 Scroll position restored to anchor',
+								{
+									messageId: anchor.messageId,
+								},
 							);
 						}
 					});
 				} else {
-					console.log('📭 No more older messages to load');
+					logger.debug('📭 No more older messages to load');
 				}
 			} catch (error) {
-				console.error('❌ Error loading older messages:', error);
+				logger.error('❌ Error loading older messages', {
+					error:
+						error instanceof Error ? error.message : String(error),
+				});
 			} finally {
 				setIsLoadingOlder(false);
 			}
@@ -187,15 +198,16 @@ const ChatMessages: React.FC = () => {
 	 */
 	useEffect(() => {
 		if (selectedUser?._id) {
-			console.log(
-				'📱 ChatMessages: Loading messages for user:',
-				selectedUser._id,
-			);
+			logger.debug('📱 ChatMessages: Loading messages for user', {
+				userId: selectedUser._id,
+			});
 			getMessages(selectedUser._id);
 			setShouldAutoScroll(true);
 			setIsLoadingOlder(false); // Reset loading state for new conversation
 		} else {
-			console.log('📱 ChatMessages: No user selected, clearing messages');
+			logger.debug(
+				'📱 ChatMessages: No user selected, clearing messages',
+			);
 			setIsLoadingOlder(false);
 		}
 	}, [selectedUser?._id, getMessages]);
@@ -257,7 +269,12 @@ const ChatMessages: React.FC = () => {
 				try {
 					await api.put(`/message/read/${selectedUser._id}`);
 				} catch (error) {
-					console.error('Error marking messages as read:', error);
+					logger.error('Error marking messages as read', {
+						error:
+							error instanceof Error
+								? error.message
+								: String(error),
+					});
 				}
 			}
 		};
@@ -275,14 +292,14 @@ const ChatMessages: React.FC = () => {
 			readBy: string;
 			senderId: string;
 		}) => {
-			console.log('Messages read by:', data.readBy);
+			logger.debug('Messages read by', { readBy: data.readBy });
 			// You can update the UI to show read receipts here
 		};
 
-		socket.on('messagesRead', handleMessagesRead);
+		socket.on(SOCKET_EVENTS.MESSAGES_READ, handleMessagesRead);
 
 		return () => {
-			socket.off('messagesRead', handleMessagesRead);
+			socket.off(SOCKET_EVENTS.MESSAGES_READ, handleMessagesRead);
 		};
 	}, [socket]);
 

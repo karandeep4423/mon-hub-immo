@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../../ui/Button';
 import { Modal } from '../../ui/Modal';
+import { logger } from '@/lib/utils/logger';
 
 interface StepValidationModalProps {
 	isOpen: boolean;
@@ -29,7 +30,7 @@ export const StepValidationModal: React.FC<StepValidationModalProps> = ({
 			setNote('');
 			onClose();
 		} catch (error) {
-			console.error('Error validating step:', error);
+			logger.error('Error validating step:', error);
 		} finally {
 			setIsSubmitting(false);
 		}

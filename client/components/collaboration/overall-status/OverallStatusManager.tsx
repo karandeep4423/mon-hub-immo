@@ -3,6 +3,7 @@ import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
 import { OverallStatusManagerProps, OverallCollaborationStatus } from './types';
 import { OverallStatusBadge } from './OverallStatusBadge';
+import { logger } from '@/lib/utils/logger';
 
 export const OverallStatusManager: React.FC<OverallStatusManagerProps> = ({
 	currentStatus,
@@ -24,7 +25,7 @@ export const OverallStatusManager: React.FC<OverallStatusManagerProps> = ({
 			await onStatusUpdate(newStatus);
 			setShowActions(false);
 		} catch (error) {
-			console.error('Error updating status:', error);
+			logger.error('Error updating status:', error);
 		} finally {
 			setIsUpdating(false);
 		}

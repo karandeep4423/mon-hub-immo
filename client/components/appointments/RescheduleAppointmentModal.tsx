@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 import { appointmentApi } from '@/lib/api/appointmentApi';
 import type { Appointment } from '@/types/appointment';
+import { logger } from '@/lib/utils/logger';
 
 interface RescheduleAppointmentModalProps {
 	isOpen: boolean;
@@ -54,7 +55,10 @@ export const RescheduleAppointmentModal: React.FC<
 			);
 			setAvailableSlots(response.slots || []);
 		} catch (error) {
-			console.error('Error fetching slots:', error);
+			logger.error(
+				'[RescheduleAppointmentModal] Error fetching slots',
+				error,
+			);
 			setAvailableSlots([]);
 		} finally {
 			setLoadingSlots(false);
@@ -85,7 +89,10 @@ export const RescheduleAppointmentModal: React.FC<
 			onSuccess();
 			onClose();
 		} catch (error) {
-			console.error('Error rescheduling appointment:', error);
+			logger.error(
+				'[RescheduleAppointmentModal] Error rescheduling appointment',
+				error,
+			);
 			alert(
 				'Une erreur est survenue lors de la reprogrammation du rendez-vous',
 			);

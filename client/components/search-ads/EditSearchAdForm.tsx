@@ -6,7 +6,8 @@ import searchAdApi from '@/lib/api/searchAdApi';
 import { useAuth } from '@/hooks/useAuth';
 import { SearchAd } from '@/types/searchAd';
 import { SearchAdClientInfoForm } from './SearchAdClientInfoForm';
-import { MultiCityAutocomplete } from '../ui/MultiCityAutocomplete';
+import { BaseLocationAutocomplete, type LocationItem } from '../ui';
+import { logger } from '@/lib/utils/logger';
 
 interface FormData {
 	title: string;
@@ -115,7 +116,7 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 				});
 			} catch (err) {
 				setError("Impossible de charger l'annonce.");
-				console.error(err);
+				logger.error(err);
 			} finally {
 				setIsLoadingAd(false);
 			}
@@ -252,7 +253,7 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 			setError(
 				"Une erreur est survenue lors de la modification de l'annonce.",
 			);
-			console.error(err);
+			logger.error(err);
 		} finally {
 			setIsLoading(false);
 		}
@@ -508,13 +509,22 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 						</h3>
 
 						<div className="space-y-4">
-							<MultiCityAutocomplete
+							<BaseLocationAutocomplete
+								mode="multi"
 								label="Ville(s), quartier(s) ciblé(s) *"
-								value={formData.cities}
-								onChange={(value) =>
+								value={
+									formData.cities
+										? formData.cities
+												.split(',')
+												.map((c) => c.trim())
+										: []
+								}
+								onMultiSelect={(locations: LocationItem[]) =>
 									setFormData((prev) => ({
 										...prev,
-										cities: value,
+										cities: locations
+											.map((loc) => loc.name)
+											.join(', '),
 									}))
 								}
 								placeholder="Rechercher et ajouter des villes..."

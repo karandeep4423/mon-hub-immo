@@ -3,6 +3,8 @@
  * Uses api-adresse.data.gouv.fr for real-time municipality lookup
  */
 
+import { logger } from '@/lib/utils/logger';
+
 export interface FrenchMunicipality {
 	name: string;
 	postcode: string;
@@ -47,17 +49,14 @@ export async function searchMunicipalities(
 	const isPostalCode = /^\d+$/.test(trimmedQuery);
 	const minLength = isPostalCode ? 2 : 3;
 
-	console.log(
-		'[searchMunicipalities] Query:',
-		trimmedQuery,
-		'isPostalCode:',
+	logger.debug('[searchMunicipalities] Query', {
+		query: trimmedQuery,
 		isPostalCode,
-		'minLength:',
 		minLength,
-	);
+	});
 
 	if (!trimmedQuery || trimmedQuery.length < minLength) {
-		console.log(
+		logger.debug(
 			'[searchMunicipalities] Query too short, returning empty array',
 		);
 		return [];
@@ -78,34 +77,34 @@ export async function searchMunicipalities(
 		}
 
 		const url = `${API_BASE}/search/?${params}`;
-		console.log('[searchMunicipalities] Fetching URL:', url);
+		logger.debug('[searchMunicipalities] Fetching URL', url);
 
 		const response = await fetch(url);
 
-		console.log(
-			'[searchMunicipalities] Response status:',
-			response.status,
-			response.statusText,
-		);
+		logger.debug('[searchMunicipalities] Response status', {
+			status: response.status,
+			statusText: response.statusText,
+		});
 
 		if (!response.ok) {
-			console.error(
-				'[searchMunicipalities] API error:',
-				response.status,
-				response.statusText,
-			);
+			logger.error('[searchMunicipalities] API error', {
+				status: response.status,
+				statusText: response.statusText,
+			});
 			return [];
 		}
 
 		const data = await response.json();
 
-		console.log(
-			'[searchMunicipalities] API returned features:',
+		logger.debug(
+			'[searchMunicipalities] API returned features',
 			data.features?.length || 0,
 		);
 
 		if (!data.features || !Array.isArray(data.features)) {
-			console.log('[searchMunicipalities] No features found in response');
+			logger.debug(
+				'[searchMunicipalities] No features found in response',
+			);
 			return [];
 		}
 
@@ -120,14 +119,14 @@ export async function searchMunicipalities(
 			context: feature.properties.context,
 		}));
 
-		console.log(
-			'[searchMunicipalities] Returning results:',
+		logger.debug(
+			'[searchMunicipalities] Returning results',
 			results.length,
 		);
 		return results;
 	} catch (error) {
-		console.error(
-			'[searchMunicipalities] Error fetching municipalities:',
+		logger.error(
+			'[searchMunicipalities] Error fetching municipalities',
 			error,
 		);
 		return [];
@@ -184,7 +183,7 @@ export async function getMunicipalitiesByPostalPrefix(
 				context: feature.properties.context,
 			}));
 	} catch (error) {
-		console.error('Error fetching nearby municipalities:', error);
+		logger.error('Error fetching nearby municipalities', error);
 		return [];
 	}
 }
@@ -208,7 +207,7 @@ export async function getMunicipalitiesNearby(
 		const response = await fetch(`${API_BASE}/reverse/?${params}`);
 
 		if (!response.ok) {
-			console.error('API reverse geocode error:', response.statusText);
+			logger.error('API reverse geocode error', response.statusText);
 			return [];
 		}
 
@@ -242,7 +241,7 @@ export async function getMunicipalitiesNearby(
 
 		return municipalities;
 	} catch (error) {
-		console.error('Error fetching nearby municipalities:', error);
+		logger.error('Error fetching nearby municipalities', error);
 		return [];
 	}
 }
@@ -288,7 +287,7 @@ export async function getMunicipalityByPostalCode(
 			context: feature.properties.context,
 		};
 	} catch (error) {
-		console.error('Error fetching municipality:', error);
+		logger.error('Error fetching municipality', error);
 		return null;
 	}
 }

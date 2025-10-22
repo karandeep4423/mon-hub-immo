@@ -8,6 +8,7 @@ import { Button } from '../ui/Button';
 import { useNotification } from '@/hooks/useNotification';
 import { useAuth } from '@/hooks/useAuth';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { logger } from '@/lib/utils/logger';
 
 const DAYS_OF_WEEK = [
 	{ value: 1, label: 'Lundi' },
@@ -95,7 +96,7 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 					'success',
 				);
 			} catch (error) {
-				console.error('Error auto-saving availability:', error);
+				logger.error('Error auto-saving availability:', error);
 				showNotification('Erreur lors de la sauvegarde', 'error');
 			} finally {
 				setSaving(false);
@@ -143,7 +144,7 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 					advanceBookingDays: 30,
 				});
 			} else {
-				console.error('Error fetching availability:', error);
+				logger.error('Error fetching availability:', error);
 			}
 		} finally {
 			setLoading(false);
@@ -370,7 +371,7 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 				'success',
 			);
 		} catch (error) {
-			console.error('Error blocking date:', error);
+			logger.error('Error blocking date:', error);
 			showNotification('Erreur lors du blocage de la date', 'error');
 		} finally {
 			setSaving(false);
@@ -396,7 +397,7 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 			setAvailability(updatedAvailability);
 			showNotification('Date débloquée avec succès', 'success');
 		} catch (error) {
-			console.error('Error removing blocked date:', error);
+			logger.error('Error removing blocked date:', error);
 			showNotification('Erreur lors du déblocage de la date', 'error');
 		} finally {
 			setSaving(false);

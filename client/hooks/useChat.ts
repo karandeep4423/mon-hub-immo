@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSocket } from '../context/SocketContext';
 import { useAuth } from './useAuth';
+import { useSocketListeners } from './useSocketListener';
 import { chatStore } from '@/store/chatStore';
 import type {
 	ChatUser,
@@ -13,6 +14,7 @@ import type {
 import type { User as AuthUser } from '@/types/auth';
 import type { Socket } from 'socket.io-client';
 import { SOCKET_EVENTS } from '@/lib/constants/socket';
+import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -61,7 +63,7 @@ const useChatStoreState = () => {
 	const [state, setState] = useState(chatStore.getState());
 
 	useEffect(() => {
-		console.log('🔌 useChat: Subscribing to chatStore');
+		logger.debug('🔌 useChat: Subscribing to chatStore');
 		const unsubscribe = chatStore.subscribe(() => {
 			const newState = chatStore.getState();
 			setState(newState);
@@ -84,13 +86,17 @@ const useSocketEventHandlers = (
 		try {
 			await chatStore.markMessagesAsRead(senderId);
 		} catch (error) {
-			console.error('Error marking messages as read:', error);
+			logger.error('Error marking messages as read', {
+				error: error instanceof Error ? error.message : String(error),
+			});
 		}
 	}, []);
 
 	const handleNewMessage = useCallback(
 		(msg: ChatMessage) => {
-			console.log('📨 Received newMessage in useChat:', msg);
+			logger.debug('📨 Received newMessage in useChat', {
+				messageId: msg._id,
+			});
 			const currentUser = user?._id || user?.id;
 			const selectedUserId = state.selectedUser?._id;
 
@@ -111,7 +117,7 @@ const useSocketEventHandlers = (
 
 	const handleUserTyping = useCallback(
 		(data: TypingEvent) => {
-			console.log('⌨️ User typing event:', data);
+			logger.debug('⌨️ User typing event', { userId: data.senderId });
 			if (data.senderId === state.selectedUser?._id) {
 				chatStore.setUserTyping(data.senderId, data.isTyping);
 			}
@@ -121,7 +127,7 @@ const useSocketEventHandlers = (
 
 	const handleUserStatusUpdate = useCallback(
 		(data: { userId: string; status: string; lastSeen: string }) => {
-			console.log('👤 User status update:', data);
+			logger.debug('👤 User status update', { userId: data.userId });
 			chatStore.updateUserStatus(data.userId, {
 				isOnline: data.status === 'online',
 				lastSeen: data.lastSeen,
@@ -132,7 +138,7 @@ const useSocketEventHandlers = (
 
 	const handleMessagesRead = useCallback(
 		(data: ReadReceiptEvent) => {
-			console.log('✅ Messages read by:', data.readBy);
+			logger.debug('✅ Messages read by', { readBy: data.readBy });
 			const currentUser = user?._id || user?.id;
 
 			// If I am the sender, mark my messages to this reader as read locally
@@ -173,38 +179,30 @@ const useSocketEventListeners = (
 ) => {
 	useEffect(() => {
 		if (!socket || !isConnected) {
-			console.log('Socket not connected yet, isConnected:', isConnected);
+			logger.debug('Socket not connected yet', { isConnected });
 			return;
 		}
 
-		console.log('🔌 Subscribing to socket events in useChat');
+		logger.debug('🔌 Subscribing to socket events in useChat');
 
-		// Register all event handlers
-		socket.on(SOCKET_EVENTS.NEW_MESSAGE, handlers.handleNewMessage);
-		socket.on(SOCKET_EVENTS.USER_TYPING, handlers.handleUserTyping);
-		socket.on(
-			SOCKET_EVENTS.USER_STATUS_UPDATE,
-			handlers.handleUserStatusUpdate,
-		);
-		socket.on(SOCKET_EVENTS.MESSAGES_READ, handlers.handleMessagesRead);
-		socket.on(SOCKET_EVENTS.MESSAGE_DELETED, handlers.handleMessageDeleted);
+		// Use reusable socket listeners pattern
+		const chatListeners = {
+			[SOCKET_EVENTS.NEW_MESSAGE]: handlers.handleNewMessage,
+			[SOCKET_EVENTS.USER_TYPING]: handlers.handleUserTyping,
+			[SOCKET_EVENTS.USER_STATUS_UPDATE]: handlers.handleUserStatusUpdate,
+			[SOCKET_EVENTS.MESSAGES_READ]: handlers.handleMessagesRead,
+			[SOCKET_EVENTS.MESSAGE_DELETED]: handlers.handleMessageDeleted,
+		};
+
+		Object.entries(chatListeners).forEach(([event, handler]) => {
+			socket.on(event, handler);
+		});
 
 		// Cleanup event listeners
 		return () => {
-			socket.off(SOCKET_EVENTS.NEW_MESSAGE, handlers.handleNewMessage);
-			socket.off(SOCKET_EVENTS.USER_TYPING, handlers.handleUserTyping);
-			socket.off(
-				SOCKET_EVENTS.USER_STATUS_UPDATE,
-				handlers.handleUserStatusUpdate,
-			);
-			socket.off(
-				SOCKET_EVENTS.MESSAGES_READ,
-				handlers.handleMessagesRead,
-			);
-			socket.off(
-				SOCKET_EVENTS.MESSAGE_DELETED,
-				handlers.handleMessageDeleted,
-			);
+			Object.entries(chatListeners).forEach(([event, handler]) => {
+				socket.off(event, handler);
+			});
 		};
 	}, [
 		socket,
@@ -282,7 +280,12 @@ const useChatActions = (): ChatActions => {
 				try {
 					await chatStore.markMessagesAsRead(senderId);
 				} catch (error) {
-					console.error('Error marking messages as read:', error);
+					logger.error('Error marking messages as read', {
+						error:
+							error instanceof Error
+								? error.message
+								: String(error),
+					});
 				}
 			},
 		}),

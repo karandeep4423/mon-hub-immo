@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import searchAdApi from '@/lib/api/searchAdApi';
 import { getSearchAdBadgeConfig } from '@/lib/constants/badges';
+import { logger } from '@/lib/utils/logger';
 
 interface SearchAdCardProps {
 	searchAd: SearchAd;
@@ -52,7 +53,7 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 				onUpdate();
 			}
 		} catch (error) {
-			console.error('Erreur lors de la suppression:', error);
+			logger.error('Erreur lors de la suppression:', error);
 			// Could add toast notification here instead of alert
 		} finally {
 			setIsDeleting(false);
@@ -69,7 +70,7 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 				onUpdate();
 			}
 		} catch (error) {
-			console.error('Erreur lors de la mise à jour du statut:', error);
+			logger.error('Erreur lors de la mise à jour du statut:', error);
 		} finally {
 			setIsUpdatingStatus(false);
 		}

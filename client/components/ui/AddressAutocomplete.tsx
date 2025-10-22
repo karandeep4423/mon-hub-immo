@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { logger } from '@/lib/utils/logger';
 
 interface AddressAutocompleteProps {
 	label?: string;
@@ -116,7 +117,7 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
 				setSuggestions(results);
 				setShowDropdown(results.length > 0);
 			} catch (error) {
-				console.error('Error fetching address suggestions:', error);
+				logger.error('Error fetching address suggestions:', error);
 				setSuggestions([]);
 			} finally {
 				setIsLoading(false);

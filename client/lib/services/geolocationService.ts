@@ -3,6 +3,11 @@
  * Handles browser geolocation for finding nearby posts
  */
 
+import { logger } from '@/lib/utils/logger';
+import { reverseGeocode } from '@/lib/api/geocodingApi';
+import { storage, STORAGE_KEYS } from '@/lib/utils/storageManager';
+import type { Location } from '@/types/location';
+
 export interface GeolocationResult {
 	latitude: number;
 	longitude: number;
@@ -27,11 +32,11 @@ export async function requestGeolocation(): Promise<GeolocationResult> {
 			return;
 		}
 
-		console.log('[Geolocation] Requesting user location...');
+		logger.info('[Geolocation] Requesting user location...');
 
 		navigator.geolocation.getCurrentPosition(
 			(position) => {
-				console.log('[Geolocation] Location granted:', {
+				logger.info('[Geolocation] Location granted', {
 					lat: position.coords.latitude,
 					lon: position.coords.longitude,
 					accuracy: position.coords.accuracy,
@@ -44,7 +49,7 @@ export async function requestGeolocation(): Promise<GeolocationResult> {
 				});
 			},
 			(error) => {
-				console.error('[Geolocation] Error:', error.message);
+				logger.error('[Geolocation] Error', error.message);
 
 				const errorMessages: Record<number, string> = {
 					1: 'Permission refusée. Vous pouvez activer la localisation dans les paramètres de votre navigateur.',
@@ -82,10 +87,10 @@ export async function checkGeolocationPermission(): Promise<
 		const result = await navigator.permissions.query({
 			name: 'geolocation',
 		});
-		console.log('[Geolocation] Permission status:', result.state);
+		logger.debug('[Geolocation] Permission status', result.state);
 		return result.state as 'granted' | 'denied' | 'prompt';
 	} catch (error) {
-		console.error('[Geolocation] Error checking permission:', error);
+		logger.error('[Geolocation] Error checking permission', error);
 		return 'prompt';
 	}
 }
@@ -94,8 +99,8 @@ export async function checkGeolocationPermission(): Promise<
  * Store geolocation preference in localStorage
  */
 export function setGeolocationPreference(allowed: boolean): void {
-	localStorage.setItem(
-		'geolocation_preference',
+	storage.set(
+		STORAGE_KEYS.GEOLOCATION_PREFERENCE,
 		allowed ? 'allowed' : 'denied',
 	);
 }
@@ -104,6 +109,7 @@ export function setGeolocationPreference(allowed: boolean): void {
  * Get stored geolocation preference
  */
 export function getGeolocationPreference(): 'allowed' | 'denied' | null {
-	const pref = localStorage.getItem('geolocation_preference');
-	return pref as 'allowed' | 'denied' | null;
+	return storage.get<'allowed' | 'denied'>(
+		STORAGE_KEYS.GEOLOCATION_PREFERENCE,
+	);
 }

@@ -11,9 +11,10 @@ import { ProfileUpdateModal } from '../dashboard-agent';
 import { User } from '@/types/auth';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { formatNumber } from '@/lib/utils/format';
-import { ApporteurAppointments } from '../appointments/ApporteurAppointments';
+import { AppointmentsManager } from '../appointments/AppointmentsManager';
 import { appointmentApi } from '@/lib/api/appointmentApi';
 import { useEffect } from 'react';
+import { logger } from '@/lib/utils/logger';
 
 const Home = () => {
 	const { user } = useAuth();
@@ -51,7 +52,7 @@ const Home = () => {
 				total: appointments.length,
 			});
 		} catch (error) {
-			console.error('Error fetching appointment stats:', error);
+			logger.error('Error fetching appointment stats:', error);
 		}
 	};
 
@@ -466,7 +467,9 @@ const Home = () => {
 						</div>
 					)}
 					{activeTab === 'searches' && <MySearches />}
-					{activeTab === 'appointments' && <ApporteurAppointments />}
+					{activeTab === 'appointments' && (
+						<AppointmentsManager userType="apporteur" />
+					)}
 				</div>
 			</div>
 			{user && (

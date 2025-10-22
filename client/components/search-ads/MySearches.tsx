@@ -1,41 +1,32 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import searchAdApi from '@/lib/api/searchAdApi';
-import { SearchAd } from '@/types/searchAd';
 import { SearchAdCard } from './SearchAdCard';
 import { Button } from '../ui/Button';
 import { useRouter } from 'next/navigation';
+import { useFetch } from '@/hooks/useFetch';
 
 export const MySearches = () => {
-	const [myAds, setMyAds] = useState<SearchAd[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
 	const router = useRouter();
 
-	const refreshAds = async () => {
-		try {
-			setLoading(true);
-			const ads = await searchAdApi.getMySearchAds();
-			setMyAds(ads);
-		} catch (err) {
-			setError('Impossible de charger vos recherches.');
-			console.error(err);
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	useEffect(() => {
-		refreshAds();
-	}, []);
+	// Fetch user's search ads using useFetch hook
+	const {
+		data: myAds,
+		loading,
+		error,
+		refetch: refreshAds,
+	} = useFetch(() => searchAdApi.getMySearchAds(), {
+		initialData: [],
+		showErrorToast: true,
+		errorMessage: 'Impossible de charger vos recherches.',
+	});
 
 	if (loading) {
 		return <div>Chargement de vos recherches...</div>;
 	}
 
 	if (error) {
-		return <div className="text-red-500">{error}</div>;
+		return <div className="text-red-500">{error.message}</div>;
 	}
 
 	return (
@@ -48,7 +39,7 @@ export const MySearches = () => {
 					Créer une recherche
 				</Button>
 			</div>
-			{myAds.length > 0 ? (
+			{myAds && myAds.length > 0 ? (
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 					{myAds.map((ad) => (
 						<SearchAdCard

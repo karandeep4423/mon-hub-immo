@@ -8,6 +8,8 @@ import { formatMessageTime, truncateMessage } from './utils/messageUtils';
 import { LoadingUsers, UnreadBadge } from './ui';
 import { ProfileAvatar } from '../ui';
 import { CHAT_TEXT } from '@/lib/constants/text';
+import type { ChatUser, ChatMessage } from '@/types/chat';
+import { logger } from '@/lib/utils/logger';
 
 interface ChatSidebarProps {
 	onClose?: () => void;
@@ -29,22 +31,21 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
 		getUsers();
 	}, [getUsers]);
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const handleUserSelect = (user: any) => {
+	const handleUserSelect = (user: ChatUser) => {
 		setSelectedUser(user);
 		if (onClose) onClose();
 	};
 
 	// All utility functions moved to messageUtils - using imports now
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const formatLastMessage = (lastMessage: any) => {
+	const formatLastMessage = (
+		lastMessage?: ChatMessage | ChatUser['lastMessage'],
+	) => {
 		if (!lastMessage) return CHAT_TEXT.noMessagesYet;
 		return truncateMessage(lastMessage.text || '', 30);
 	};
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const getLastSeenText = (userId: string, userObj?: any) => {
+	const getLastSeenText = (userId: string, userObj?: ChatUser) => {
 		const status = userStatuses[userId];
 		const isOnline = onlineUsers.includes(userId);
 
@@ -79,7 +80,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
 						{/* Refresh button */}
 						<button
 							onClick={() => {
-								console.log(
+								logger.debug(
 									'🔄 Manual refresh of conversations...',
 								);
 								getUsers();

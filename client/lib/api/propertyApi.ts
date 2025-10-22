@@ -1,6 +1,23 @@
 // client/lib/propertyService.ts
 import { api } from '../api';
+import { handleApiError } from '../utils/errorHandler';
 
+/**
+ * Property interface representing a real estate listing
+ *
+ * @interface Property
+ * @property {string} _id - Unique identifier for the property
+ * @property {string} title - Property title/headline
+ * @property {string} description - Detailed property description
+ * @property {number} price - Property price (sale or rent)
+ * @property {number} surface - Total surface area in m²
+ * @property {string} propertyType - Type of property (Appartement, Maison, etc.)
+ * @property {string} transactionType - Transaction type (Vente or Location)
+ * @property {string} [address] - Street address
+ * @property {string} city - City name
+ * @property {string} [postalCode] - Postal/ZIP code
+ * @property {string} sector - Property sector/neighborhood
+ */
 export interface Property {
 	_id: string;
 	title: string;
@@ -205,6 +222,23 @@ export interface PropertyFormData {
 	clientInfo?: Property['clientInfo'];
 }
 
+/**
+ * Property filters for search and filtering operations
+ *
+ * @interface PropertyFilters
+ * @property {string} [search] - Text search query
+ * @property {string} [propertyType] - Filter by property type
+ * @property {string} [sector] - Filter by sector/neighborhood
+ * @property {string} [city] - Filter by city
+ * @property {string} [postalCode] - Filter by postal code
+ * @property {number} [minPrice] - Minimum price filter
+ * @property {number} [maxPrice] - Maximum price filter
+ * @property {number} [minSurface] - Minimum surface area in m²
+ * @property {number} [maxSurface] - Maximum surface area in m²
+ * @property {string} [transactionType] - Filter by transaction type
+ * @property {number} [limit] - Number of results per page
+ * @property {number} [page] - Page number for pagination
+ */
 export interface PropertyFilters {
 	search?: string;
 	propertyType?: string;
@@ -262,10 +296,40 @@ export interface MyPropertyStatsResponse {
 
 /**
  * Property Service - Centralized API operations for properties
+ *
+ * @class PropertyService
+ * @description Provides methods for managing real estate property listings
+ * @example
+ * ```typescript
+ * // Get all properties
+ * const properties = await PropertyService.getAllProperties();
+ *
+ * // Get properties with filters
+ * const filtered = await PropertyService.getAllProperties({
+ *   city: 'Paris',
+ *   minPrice: 200000,
+ *   transactionType: 'Vente'
+ * });
+ * ```
  */
 export class PropertyService {
 	/**
 	 * Get all properties with optional filters
+	 *
+	 * @static
+	 * @async
+	 * @param {PropertyFilters} [filters] - Optional filters to apply
+	 * @returns {Promise<Property[]>} Array of properties matching the filters
+	 * @throws {Error} If the API request fails
+	 *
+	 * @example
+	 * ```typescript
+	 * const properties = await PropertyService.getAllProperties({
+	 *   city: 'Lyon',
+	 *   propertyType: 'Appartement',
+	 *   minSurface: 50
+	 * });
+	 * ```
 	 */
 	static async getAllProperties(
 		filters?: PropertyFilters,
@@ -286,26 +350,55 @@ export class PropertyService {
 			);
 			return response.data.data.properties;
 		} catch (error) {
-			console.error('Error fetching properties:', error);
-			throw new Error('Erreur lors de la récupération des biens');
+			throw handleApiError(
+				error,
+				'PropertyService.getAllProperties',
+				'Erreur lors de la récupération des biens',
+			);
 		}
 	}
 
 	/**
 	 * Get a single property by ID
+	 *
+	 * @static
+	 * @async
+	 * @param {string} id - The unique identifier of the property
+	 * @returns {Promise<Property>} The property data
+	 * @throws {Error} If the property is not found or the API request fails
+	 *
+	 * @example
+	 * ```typescript
+	 * const property = await PropertyService.getPropertyById('60f7b3b3e4b0e4a4f8c4b3a1');
+	 * console.log(property.title, property.price);
+	 * ```
 	 */
 	static async getPropertyById(id: string): Promise<Property> {
 		try {
 			const response = await api.get<PropertyResponse>(`/property/${id}`);
 			return response.data.data;
 		} catch (error) {
-			console.error('Error fetching property:', error);
-			throw new Error('Erreur lors de la récupération du bien');
+			throw handleApiError(
+				error,
+				'PropertyService.getPropertyById',
+				'Erreur lors de la récupération du bien',
+			);
 		}
 	}
 
 	/**
 	 * Get current user's properties
+	 *
+	 * @static
+	 * @async
+	 * @returns {Promise<MyPropertiesResponse['data']>} User's properties data
+	 * @throws {Error} If the API request fails
+	 *
+	 * @example
+	 * ```typescript
+	 * const { properties } = await PropertyService.getMyProperties();
+	 * console.log(`You have ${properties.length} properties`);
+	 * ```
 	 */
 	static async getMyProperties(): Promise<MyPropertiesResponse['data']> {
 		try {
@@ -314,13 +407,28 @@ export class PropertyService {
 			);
 			return response.data.data;
 		} catch (error) {
-			console.error('Error fetching my properties:', error);
-			throw new Error('Erreur lors de la récupération de vos biens');
+			throw handleApiError(
+				error,
+				'PropertyService.getMyProperties',
+				'Erreur lors de la récupération de vos biens',
+			);
 		}
 	}
 
 	/**
 	 * Get aggregated stats for current user's properties
+	 *
+	 * @static
+	 * @async
+	 * @returns {Promise<MyPropertyStatsResponse['data']>} Aggregated statistics including total properties, views, value, and breakdown by status
+	 * @throws {Error} If the API request fails
+	 *
+	 * @example
+	 * ```typescript
+	 * const stats = await PropertyService.getMyPropertyStats();
+	 * console.log(`Total properties: ${stats.totalProperties}`);
+	 * console.log(`Total views: ${stats.totalViews}`);
+	 * ```
 	 */
 	static async getMyPropertyStats(): Promise<
 		MyPropertyStatsResponse['data']
@@ -330,8 +438,9 @@ export class PropertyService {
 				await api.get<MyPropertyStatsResponse>('/property/my/stats');
 			return response.data.data;
 		} catch (error) {
-			console.error('Error fetching my property stats:', error);
-			throw new Error(
+			throw handleApiError(
+				error,
+				'PropertyService.getMyPropertyStats',
 				'Erreur lors de la récupération des statistiques de vos biens',
 			);
 		}
@@ -339,6 +448,23 @@ export class PropertyService {
 
 	/**
 	 * Create a new property with images in single request
+	 *
+	 * @static
+	 * @async
+	 * @param {Omit<PropertyFormData, 'mainImage' | 'galleryImages'>} propertyData - Property data excluding image fields
+	 * @param {File} [mainImageFile] - Main property image file
+	 * @param {File[]} [galleryImageFiles=[]] - Additional gallery image files
+	 * @returns {Promise<Property>} The created property
+	 * @throws {Error} If the API request fails
+	 *
+	 * @example
+	 * ```typescript
+	 * const property = await PropertyService.createProperty(
+	 *   { title: 'Appartement Paris', price: 300000, ... },
+	 *   mainImageFile,
+	 *   [gallery1, gallery2]
+	 * );
+	 * ```
 	 */
 	static async createProperty(
 		propertyData: Omit<PropertyFormData, 'mainImage' | 'galleryImages'>,
@@ -388,18 +514,40 @@ export class PropertyService {
 				},
 			);
 			return response.data.data;
-		} catch (error: unknown) {
-			console.error('Error creating property:', error);
-			const err = error as { response?: { data?: { message?: string } } };
-			const errorMessage =
-				err.response?.data?.message ||
-				'Erreur lors de la création du bien';
-			throw new Error(errorMessage);
+		} catch (error) {
+			throw handleApiError(
+				error,
+				'PropertyService.createProperty',
+				'Erreur lors de la création du bien',
+			);
 		}
 	}
 
 	/**
 	 * Update a property with images in single request
+	 *
+	 * @static
+	 * @async
+	 * @param {string} propertyId - The ID of the property to update
+	 * @param {Omit<PropertyFormData, 'mainImage' | 'galleryImages'>} propertyData - Updated property data
+	 * @param {File} [newMainImageFile] - New main image file (optional)
+	 * @param {File[]} [newGalleryImageFiles=[]] - New gallery image files
+	 * @param {{ url: string; key: string } | null} [existingMainImage] - Existing main image to keep
+	 * @param {Array<{ url: string; key: string }>} [existingGalleryImages=[]] - Existing gallery images to keep
+	 * @returns {Promise<Property>} The updated property
+	 * @throws {Error} If the API request fails
+	 *
+	 * @example
+	 * ```typescript
+	 * const updated = await PropertyService.updateProperty(
+	 *   'property-id',
+	 *   { price: 350000, ... },
+	 *   newMainImage,
+	 *   [],
+	 *   existingMainImage,
+	 *   existingGallery
+	 * );
+	 * ```
 	 */
 	static async updateProperty(
 		propertyId: string,
@@ -467,34 +615,55 @@ export class PropertyService {
 				},
 			);
 			return response.data.data;
-		} catch (error: unknown) {
-			console.error('Error updating property:', error);
-			const err = error as { response?: { data?: { message?: string } } };
-			const errorMessage =
-				err.response?.data?.message ||
-				'Erreur lors de la mise à jour du bien';
-			throw new Error(errorMessage);
+		} catch (error) {
+			throw handleApiError(
+				error,
+				'PropertyService.updateProperty',
+				'Erreur lors de la mise à jour du bien',
+			);
 		}
 	}
 
 	/**
 	 * Delete a property
+	 *
+	 * @static
+	 * @async
+	 * @param {string} id - The ID of the property to delete
+	 * @returns {Promise<void>}
+	 * @throws {Error} If the API request fails
+	 *
+	 * @example
+	 * ```typescript
+	 * await PropertyService.deleteProperty('property-id');
+	 * ```
 	 */
 	static async deleteProperty(id: string): Promise<void> {
 		try {
 			await api.delete(`/property/${id}`);
-		} catch (error: unknown) {
-			console.error('Error deleting property:', error);
-			const err = error as { response?: { data?: { message?: string } } };
-			const errorMessage =
-				err.response?.data?.message ||
-				'Erreur lors de la suppression du bien';
-			throw new Error(errorMessage);
+		} catch (error) {
+			throw handleApiError(
+				error,
+				'PropertyService.deleteProperty',
+				'Erreur lors de la suppression du bien',
+			);
 		}
 	}
 
 	/**
 	 * Update property status
+	 *
+	 * @static
+	 * @async
+	 * @param {string} id - The ID of the property
+	 * @param {Property['status']} status - New status (draft, active, sold, rented, archived)
+	 * @returns {Promise<Property>} The updated property
+	 * @throws {Error} If the API request fails
+	 *
+	 * @example
+	 * ```typescript
+	 * const property = await PropertyService.updatePropertyStatus('property-id', 'sold');
+	 * ```
 	 */
 	static async updatePropertyStatus(
 		id: string,
@@ -506,13 +675,12 @@ export class PropertyService {
 				{ status },
 			);
 			return response.data.data;
-		} catch (error: unknown) {
-			console.error('Error updating property status:', error);
-			const err = error as { response?: { data?: { message?: string } } };
-			const errorMessage =
-				err.response?.data?.message ||
-				'Erreur lors de la mise à jour du statut';
-			throw new Error(errorMessage);
+		} catch (error) {
+			throw handleApiError(
+				error,
+				'PropertyService.updatePropertyStatus',
+				'Erreur lors de la mise à jour du statut',
+			);
 		}
 	}
 
@@ -526,8 +694,11 @@ export class PropertyService {
 			);
 			return response.data.data.properties;
 		} catch (error) {
-			console.error('Error searching properties:', error);
-			throw new Error('Erreur lors de la recherche');
+			throw handleApiError(
+				error,
+				'PropertyService.searchProperties',
+				'Erreur lors de la recherche',
+			);
 		}
 	}
 }

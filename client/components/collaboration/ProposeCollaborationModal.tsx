@@ -7,6 +7,7 @@ import { collaborationApi } from '../../lib/api/collaborationApi';
 import { toast } from 'react-toastify';
 import type { Property } from '@/lib/api/propertyApi';
 import type { SearchAd } from '@/types/searchAd';
+import { useForm } from '@/hooks/useForm';
 
 type PostData =
 	| {
@@ -49,116 +50,97 @@ interface ProposeCollaborationModalProps {
 	onSuccess?: () => void;
 }
 
+interface CollaborationFormData extends Record<string, unknown> {
+	commissionPercentage: string;
+	compensationType: 'percentage' | 'fixed_amount' | 'gift_vouchers';
+	compensationAmount: string;
+	message: string;
+	agreeToTerms: boolean;
+}
+
 export const ProposeCollaborationModal: React.FC<
 	ProposeCollaborationModalProps
 > = ({ isOpen, onClose, post, onSuccess }) => {
-	const [isLoading, setIsLoading] = useState(false);
-	const [formData, setFormData] = useState({
-		commissionPercentage: '',
-		compensationType: 'percentage' as
-			| 'percentage'
-			| 'fixed_amount'
-			| 'gift_vouchers',
-		compensationAmount: '',
-		message: '',
-		agreeToTerms: false,
-	});
 	const [error, setError] = useState<string | null>(null);
-
-	// Check if post owner is apporteur
 	const isApporteurPost = post.ownerUserType === 'apporteur';
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setIsLoading(true);
-		setError(null);
-
-		try {
-			// Validate for apporteur posts
-			if (isApporteurPost) {
-				if (formData.compensationType === 'percentage') {
-					const percentage = parseFloat(
-						formData.commissionPercentage,
-					);
-					if (percentage >= 50) {
-						throw new Error(
-							"Le pourcentage de commission doit être inférieur à 50% pour les posts d'apporteur",
-						);
-					}
-				} else if (!formData.compensationAmount) {
-					throw new Error(
-						'Veuillez saisir un montant de compensation',
-					);
-				}
-			}
-
-			// Build request payload
-			const payload: {
-				propertyId?: string;
-				searchAdId?: string;
-				commissionPercentage?: number;
-				message: string;
-				compensationType?:
-					| 'percentage'
-					| 'fixed_amount'
-					| 'gift_vouchers';
-				compensationAmount?: number;
-			} = {
-				...(post.type === 'property'
-					? { propertyId: post.id }
-					: { searchAdId: post.id }),
-				message: formData.message,
-			};
-
-			// Add commission percentage for percentage type or non-apporteur posts
-			if (
-				!isApporteurPost ||
-				formData.compensationType === 'percentage'
-			) {
-				payload.commissionPercentage = parseFloat(
-					formData.commissionPercentage,
-				);
-			} else {
-				// For non-percentage compensation on apporteur posts, set a nominal value
-				payload.commissionPercentage = 0;
-			}
-
-			// Add compensation fields for apporteur posts
-			if (isApporteurPost) {
-				payload.compensationType = formData.compensationType;
-				if (formData.compensationType !== 'percentage') {
-					payload.compensationAmount = parseFloat(
-						formData.compensationAmount,
-					);
-				}
-			}
-
-			await collaborationApi.propose(payload);
-			toast.success('Collaboration proposée avec succès');
-			onSuccess?.();
-			onClose();
-			setFormData({
+	const { values, isSubmitting, setFieldValue, handleSubmit, resetForm } =
+		useForm<CollaborationFormData>({
+			initialValues: {
 				commissionPercentage: '',
 				compensationType: 'percentage',
 				compensationAmount: '',
 				message: '',
 				agreeToTerms: false,
-			});
-		} catch (error: unknown) {
-			const message =
-				error instanceof Error
-					? error.message
-					: 'Erreur lors de la proposition de collaboration';
-			setError(message);
-			toast.error(message);
-		} finally {
-			setIsLoading(false);
-		}
-	};
+			},
+			onSubmit: async (data) => {
+				setError(null);
 
-	const handleInputChange = (field: string, value: string | boolean) => {
-		setFormData((prev) => ({ ...prev, [field]: value }));
-	};
+				// Validate for apporteur posts
+				if (isApporteurPost) {
+					if (data.compensationType === 'percentage') {
+						const percentage = parseFloat(
+							data.commissionPercentage,
+						);
+						if (percentage >= 50) {
+							throw new Error(
+								"Le pourcentage de commission doit être inférieur à 50% pour les posts d'apporteur",
+							);
+						}
+					} else if (!data.compensationAmount) {
+						throw new Error(
+							'Veuillez saisir un montant de compensation',
+						);
+					}
+				}
+
+				// Build request payload
+				const payload: {
+					propertyId?: string;
+					searchAdId?: string;
+					commissionPercentage?: number;
+					message: string;
+					compensationType?:
+						| 'percentage'
+						| 'fixed_amount'
+						| 'gift_vouchers';
+					compensationAmount?: number;
+				} = {
+					...(post.type === 'property'
+						? { propertyId: post.id }
+						: { searchAdId: post.id }),
+					message: data.message,
+				};
+
+				// Add commission percentage
+				if (
+					!isApporteurPost ||
+					data.compensationType === 'percentage'
+				) {
+					payload.commissionPercentage = parseFloat(
+						data.commissionPercentage,
+					);
+				} else {
+					payload.commissionPercentage = 0;
+				}
+
+				// Add compensation fields for apporteur posts
+				if (isApporteurPost) {
+					payload.compensationType = data.compensationType;
+					if (data.compensationType !== 'percentage') {
+						payload.compensationAmount = parseFloat(
+							data.compensationAmount,
+						);
+					}
+				}
+
+				await collaborationApi.propose(payload);
+				toast.success('Collaboration proposée avec succès');
+				onSuccess?.();
+				onClose();
+				resetForm();
+			},
+		});
 
 	const renderPostDetails = () => {
 		if (post.type === 'property') {
@@ -282,11 +264,11 @@ export const ProposeCollaborationModal: React.FC<
 										name="compensationType"
 										value="percentage"
 										checked={
-											formData.compensationType ===
+											values.compensationType ===
 											'percentage'
 										}
 										onChange={(e) =>
-											handleInputChange(
+											setFieldValue(
 												'compensationType',
 												e.target.value,
 											)
@@ -303,11 +285,11 @@ export const ProposeCollaborationModal: React.FC<
 										name="compensationType"
 										value="fixed_amount"
 										checked={
-											formData.compensationType ===
+											values.compensationType ===
 											'fixed_amount'
 										}
 										onChange={(e) =>
-											handleInputChange(
+											setFieldValue(
 												'compensationType',
 												e.target.value,
 											)
@@ -324,11 +306,11 @@ export const ProposeCollaborationModal: React.FC<
 										name="compensationType"
 										value="gift_vouchers"
 										checked={
-											formData.compensationType ===
+											values.compensationType ===
 											'gift_vouchers'
 										}
 										onChange={(e) =>
-											handleInputChange(
+											setFieldValue(
 												'compensationType',
 												e.target.value,
 											)
@@ -345,7 +327,7 @@ export const ProposeCollaborationModal: React.FC<
 
 					{/* Percentage Commission Field */}
 					{(!isApporteurPost ||
-						formData.compensationType === 'percentage') && (
+						values.compensationType === 'percentage') && (
 						<div>
 							<label
 								htmlFor="commissionPercentage"
@@ -359,9 +341,9 @@ export const ProposeCollaborationModal: React.FC<
 								min="1"
 								max={isApporteurPost ? '49' : '50'}
 								step="0.1"
-								value={formData.commissionPercentage}
+								value={values.commissionPercentage}
 								onChange={(e) =>
-									handleInputChange(
+									setFieldValue(
 										'commissionPercentage',
 										e.target.value,
 									)
@@ -379,14 +361,13 @@ export const ProposeCollaborationModal: React.FC<
 
 					{/* Compensation Amount Field for Apporteur Posts */}
 					{isApporteurPost &&
-						formData.compensationType !== 'percentage' && (
+						values.compensationType !== 'percentage' && (
 							<div>
 								<label
 									htmlFor="compensationAmount"
 									className="block text-sm font-medium text-gray-700 mb-2"
 								>
-									{formData.compensationType ===
-									'fixed_amount'
+									{values.compensationType === 'fixed_amount'
 										? 'Montant en euros (€)'
 										: 'Nombre de chèques cadeaux'}
 								</label>
@@ -395,20 +376,20 @@ export const ProposeCollaborationModal: React.FC<
 									type="number"
 									min="1"
 									step={
-										formData.compensationType ===
+										values.compensationType ===
 										'fixed_amount'
 											? '0.01'
 											: '1'
 									}
-									value={formData.compensationAmount}
+									value={values.compensationAmount}
 									onChange={(e) =>
-										handleInputChange(
+										setFieldValue(
 											'compensationAmount',
 											e.target.value,
 										)
 									}
 									placeholder={
-										formData.compensationType ===
+										values.compensationType ===
 										'fixed_amount'
 											? '500'
 											: '2'
@@ -416,8 +397,7 @@ export const ProposeCollaborationModal: React.FC<
 									required
 								/>
 								<div className="text-xs text-gray-500 mt-1">
-									{formData.compensationType ===
-									'fixed_amount'
+									{values.compensationType === 'fixed_amount'
 										? 'Montant fixe en euros'
 										: 'Nombre de chèques cadeaux à offrir'}
 								</div>
@@ -434,16 +414,16 @@ export const ProposeCollaborationModal: React.FC<
 						<textarea
 							id="message"
 							rows={4}
-							value={formData.message}
+							value={values.message}
 							onChange={(e) =>
-								handleInputChange('message', e.target.value)
+								setFieldValue('message', e.target.value)
 							}
 							placeholder="Expliquez pourquoi cette collaboration serait bénéfique..."
 							className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-cyan-500 focus:border-cyan-500"
 							maxLength={500}
 						/>
 						<div className="text-xs text-gray-500 mt-1">
-							{formData.message.length}/500 caractères
+							{values.message.length}/500 caractères
 						</div>
 					</div>
 
@@ -451,9 +431,9 @@ export const ProposeCollaborationModal: React.FC<
 						<label className="flex items-start space-x-3 cursor-pointer">
 							<input
 								type="checkbox"
-								checked={formData.agreeToTerms}
+								checked={values.agreeToTerms}
 								onChange={(e) =>
-									handleInputChange(
+									setFieldValue(
 										'agreeToTerms',
 										e.target.checked,
 									)
@@ -474,22 +454,22 @@ export const ProposeCollaborationModal: React.FC<
 							type="button"
 							variant="secondary"
 							onClick={onClose}
-							disabled={isLoading}
+							disabled={isSubmitting}
 						>
 							Annuler
 						</Button>
 						<Button
 							type="submit"
 							disabled={
-								isLoading ||
-								!formData.agreeToTerms ||
+								isSubmitting ||
+								!values.agreeToTerms ||
 								(isApporteurPost &&
-								formData.compensationType !== 'percentage'
-									? !formData.compensationAmount
-									: !formData.commissionPercentage)
+								values.compensationType !== 'percentage'
+									? !values.compensationAmount
+									: !values.commissionPercentage)
 							}
 						>
-							{isLoading
+							{isSubmitting
 								? 'Envoi...'
 								: 'Proposer la collaboration'}
 						</Button>

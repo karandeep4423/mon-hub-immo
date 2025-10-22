@@ -8,6 +8,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { searchMunicipalities } from '@/lib/services/frenchAddressApi';
+import { logger } from '@/lib/utils/logger';
 
 interface CityAutocompleteSuggestion {
 	name: string;
@@ -71,7 +72,7 @@ export const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
 				setSuggestions(municipalities);
 				setShowDropdown(municipalities.length > 0);
 			} catch (error) {
-				console.error('Error fetching city suggestions:', error);
+				logger.error('Error fetching city suggestions:', error);
 				setSuggestions([]);
 			} finally {
 				setLoading(false);

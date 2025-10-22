@@ -4,6 +4,7 @@ import { useNotifications } from '@/store/notifications';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ProfileAvatar } from '../ui/ProfileAvatar';
+import { logger } from '@/lib/utils/logger';
 
 export const NotificationBell = () => {
 	const router = useRouter();
@@ -54,7 +55,7 @@ export const NotificationBell = () => {
 		}
 	};
 
-	console.log('Notifications state:', state);
+	logger.debug('Notifications state:', state);
 	return (
 		<div ref={ref} className="relative">
 			<button
@@ -115,7 +116,7 @@ export const NotificationBell = () => {
 												meta?.actorAvatar;
 
 											// Debug logging
-											console.log(
+											logger.debug(
 												'Notification avatar data:',
 												{
 													notificationId: n.id,

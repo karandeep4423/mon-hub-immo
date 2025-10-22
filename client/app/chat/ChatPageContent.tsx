@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import type { Property } from '@/lib/api/propertyApi';
 import { SearchAd } from '@/types/searchAd';
 import searchAdApi from '@/lib/api/searchAdApi';
+import { logger } from '@/lib/utils/logger';
 
 export const ChatPageContent = () => {
 	const searchParams = useSearchParams();
@@ -28,7 +29,7 @@ export const ChatPageContent = () => {
 	} | null>(null);
 
 	const userId = searchParams?.get('userId');
-	console.log('ChatPageContent - userId from URL:', userId);
+	logger.debug('[ChatPageContent] userId from URL', userId);
 	const propertyId = searchParams?.get('propertyId');
 	const collaborationType = searchParams?.get('type');
 	const searchAdId = searchParams?.get('searchAdId');
@@ -48,29 +49,32 @@ export const ChatPageContent = () => {
 				const existingUser = users.find((user) => user._id === userId);
 
 				if (existingUser) {
-					console.log(
-						'Found user in existing conversations:',
+					logger.debug(
+						'[ChatPageContent] Found user in existing conversations',
 						existingUser,
 					);
 					setSelectedUser(existingUser);
 					setIsInitialized(true);
 				} else {
 					// If not found in existing conversations, fetch user by ID
-					console.log(
-						'User not in conversations, fetching by ID:',
+					logger.debug(
+						'[ChatPageContent] User not in conversations, fetching by ID',
 						userId,
 					);
 					const fetchedUser = await getUserById(userId);
 
 					if (fetchedUser) {
-						console.log(
-							'Fetched user for new conversation:',
+						logger.debug(
+							'[ChatPageContent] Fetched user for new conversation',
 							fetchedUser,
 						);
 						setSelectedUser(fetchedUser);
 						setIsInitialized(true);
 					} else {
-						console.error('Failed to fetch user by ID:', userId);
+						logger.error(
+							'[ChatPageContent] Failed to fetch user by ID',
+							userId,
+						);
 					}
 				}
 
@@ -86,10 +90,13 @@ export const ChatPageContent = () => {
 							propertyDetails: data.data,
 							collaborationType: collaborationType || undefined,
 						});
-						console.log('Property context set:', data.data.title);
+						logger.debug(
+							'[ChatPageContent] Property context set',
+							data.data.title,
+						);
 					} catch (error) {
-						console.error(
-							'Failed to fetch property details:',
+						logger.error(
+							'[ChatPageContent] Failed to fetch property details',
 							error,
 						);
 						// Set context without property details
@@ -111,10 +118,13 @@ export const ChatPageContent = () => {
 							searchAdId,
 							searchAdDetails: adDetails,
 						});
-						console.log('Search ad context set:', adDetails.title);
+						logger.debug(
+							'[ChatPageContent] Search ad context set',
+							adDetails.title,
+						);
 					} catch (error) {
-						console.error(
-							'Failed to fetch search ad details:',
+						logger.error(
+							'[ChatPageContent] Failed to fetch search ad details',
 							error,
 						);
 						setSearchAdContext({

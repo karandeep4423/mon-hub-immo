@@ -13,8 +13,9 @@ import Link from 'next/link';
 import { MySearches } from '../search-ads/MySearches';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { formatNumber } from '@/lib/utils/format';
-import { AgentAppointments } from '../appointments/AgentAppointments';
+import { AppointmentsManager } from '../appointments/AppointmentsManager';
 import { appointmentApi } from '@/lib/api/appointmentApi';
+import { logger } from '@/lib/utils/logger';
 
 export const DashboardContent: React.FC = () => {
 	const router = useRouter();
@@ -52,7 +53,10 @@ export const DashboardContent: React.FC = () => {
 				total: appointments.length,
 			});
 		} catch (error) {
-			console.error('Error fetching appointment stats:', error);
+			logger.error(
+				'[DashboardContent] Error fetching appointment stats',
+				error,
+			);
 		}
 	};
 
@@ -664,7 +668,9 @@ export const DashboardContent: React.FC = () => {
 					/>
 				)}
 				{activeTab === 'searches' && <MySearches />}
-				{activeTab === 'appointments' && <AgentAppointments />}
+				{activeTab === 'appointments' && (
+					<AppointmentsManager userType="agent" />
+				)}
 			</main>
 		</div>
 	);

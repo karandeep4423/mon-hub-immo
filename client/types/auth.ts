@@ -11,8 +11,7 @@ export interface AuthResponse {
 
 // Update User interface
 export interface User {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	id: any;
+	id: string;
 	_id: string;
 	firstName: string;
 	lastName: string;

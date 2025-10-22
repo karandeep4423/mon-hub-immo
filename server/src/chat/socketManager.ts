@@ -1,5 +1,6 @@
 import { Server, Socket } from 'socket.io';
 import { User } from '../models/User';
+import { SOCKET_EVENTS } from './socketConfig';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -119,7 +120,7 @@ const announceUserStatusUpdate = (
 		status,
 		lastSeen,
 	};
-	io.emit('userStatusUpdate', statusUpdate);
+	io.emit(SOCKET_EVENTS.USER_STATUS_UPDATE, statusUpdate);
 };
 
 // ============================================================================
@@ -139,7 +140,7 @@ const handleTyping = (
 	const receiverSocketId = getReceiverSocketId(userSocketMap, receiverId);
 
 	if (receiverSocketId) {
-		io.to(receiverSocketId).emit('userTyping', {
+		io.to(receiverSocketId).emit(SOCKET_EVENTS.USER_TYPING, {
 			senderId: userId,
 			isTyping,
 		});
@@ -203,7 +204,7 @@ const handleDisconnection = async (
 	}
 
 	// Send updated online users list to all clients
-	io.emit('getOnlineUsers', getOnlineUsers(userSocketMap));
+	io.emit(SOCKET_EVENTS.GET_ONLINE_USERS, getOnlineUsers(userSocketMap));
 };
 
 /**
@@ -219,17 +220,17 @@ const setupSocketEventListeners = (
 	setActiveThread: (userId: string, peerId?: string) => void,
 ): void => {
 	// Handle typing events
-	socket.on('typing', (data: TypingData) => {
+	socket.on(SOCKET_EVENTS.TYPING, (data: TypingData) => {
 		handleTyping(io, getUserSocketMap(), userId, data);
 	});
 
 	// Handle user status updates
-	socket.on('updateStatus', async (status: StatusData) => {
+	socket.on(SOCKET_EVENTS.UPDATE_STATUS, async (status: StatusData) => {
 		await handleStatusUpdate(io, userId, status);
 	});
 
 	// Handle disconnection
-	socket.on('disconnect', async () => {
+	socket.on(SOCKET_EVENTS.DISCONNECT, async () => {
 		// Clear active thread on disconnect
 		setActiveThread(userId, undefined);
 		await handleDisconnection(
@@ -241,12 +242,12 @@ const setupSocketEventListeners = (
 	});
 
 	// Track active chat thread for notification suppression
-	socket.on('chat:activeThread', (data: { peerId: string }) => {
+	socket.on(SOCKET_EVENTS.CHAT_ACTIVE_THREAD, (data: { peerId: string }) => {
 		if (!data || !data.peerId) return;
 		setActiveThread(userId, data.peerId);
 	});
 
-	socket.on('chat:inactiveThread', () => {
+	socket.on(SOCKET_EVENTS.CHAT_INACTIVE_THREAD, () => {
 		setActiveThread(userId, undefined);
 	});
 };
@@ -274,7 +275,7 @@ const handleConnection = (
 	}
 
 	// Send updated online users list to all clients
-	io.emit('getOnlineUsers', getOnlineUsers(getUserSocketMap()));
+	io.emit(SOCKET_EVENTS.GET_ONLINE_USERS, getOnlineUsers(getUserSocketMap()));
 
 	// Set up event listeners for this socket
 	setupSocketEventListeners(

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -7,6 +7,8 @@ import { Collaboration } from '../../types/collaboration';
 import { collaborationApi } from '../../lib/api/collaborationApi';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { toast } from 'react-toastify';
+import { logger } from '@/lib/utils/logger';
+import { useFetch } from '@/hooks/useFetch';
 
 interface CollaborationListProps {
 	currentUserId: string;
@@ -17,9 +19,6 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 	currentUserId,
 	onClose,
 }) => {
-	const [collaborations, setCollaborations] = useState<Collaboration[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
 	const [searchTerm, setSearchTerm] = useState('');
 	const [statusFilter, setStatusFilter] = useState<string>('all');
 	const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -32,22 +31,23 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 	);
 	const [confirmLoading, setConfirmLoading] = useState(false);
 
-	const fetchCollaborations = async () => {
-		try {
-			setIsLoading(true);
-			const response = await collaborationApi.getUserCollaborations();
-			setCollaborations(response.collaborations);
-		} catch (err) {
-			console.error('Error fetching collaborations:', err);
-			setError('Erreur lors du chargement des collaborations');
-		} finally {
-			setIsLoading(false);
-		}
-	};
+	// Fetch collaborations using useFetch hook
+	const {
+		data: collabData,
+		loading: isLoading,
+		error: fetchError,
+		refetch: fetchCollaborations,
+	} = useFetch(() => collaborationApi.getUserCollaborations(), {
+		initialData: { collaborations: [] },
+		showErrorToast: true,
+		errorMessage: 'Erreur lors du chargement des collaborations',
+	});
 
-	useEffect(() => {
-		fetchCollaborations();
-	}, []);
+	const collaborations = useMemo(
+		() => collabData?.collaborations || [],
+		[collabData],
+	);
+	const error = fetchError?.message || null;
 
 	const openConfirm = (
 		mode: 'cancel' | 'terminate',
@@ -73,7 +73,7 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 			setTargetCollab(null);
 			await fetchCollaborations();
 		} catch (err) {
-			console.error('Error updating collaboration status:', err);
+			logger.error('Error updating collaboration status:', err);
 			const msg =
 				err instanceof Error
 					? err.message

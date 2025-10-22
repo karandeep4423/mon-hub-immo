@@ -10,18 +10,47 @@ import { loginSchema } from '@/lib/validation';
 import { LoginData } from '@/types/auth';
 import { AUTH_TEXT } from '@/lib/constants/text';
 import Link from 'next/link';
+import { useForm } from '@/hooks/useForm';
+
+interface LoginFormData extends LoginData, Record<string, unknown> {}
+
 export const LoginWithUserType: React.FC = () => {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const { login } = useAuth();
 
 	const [selectedUserType, setSelectedUserType] = useState('agent');
-	const [loading, setLoading] = useState(false);
-	const [formData, setFormData] = useState<LoginData>({
-		email: '',
-		password: '',
-	});
-	const [errors, setErrors] = useState<Record<string, string>>({});
+
+	const { values, errors, isSubmitting, handleInputChange, handleSubmit } =
+		useForm<LoginFormData>({
+			initialValues: {
+				email: '',
+				password: '',
+			},
+			onSubmit: async (data) => {
+				loginSchema.parse(data);
+
+				const response = await authService.login(data);
+
+				if (response.success && response.token && response.user) {
+					login(response.token, response.user);
+					toast.success(response.message);
+
+					if (response.requiresProfileCompletion) {
+						router.push('/auth/complete-profile');
+					} else {
+						router.push('/dashboard');
+					}
+				} else if (response.requiresVerification) {
+					toast.warning(response.message);
+					router.push(
+						`/auth/verify-email?email=${encodeURIComponent(data.email)}`,
+					);
+				} else {
+					toast.error(response.message);
+				}
+			},
+		});
 
 	useEffect(() => {
 		const typeFromUrl = searchParams.get('type');
@@ -35,64 +64,6 @@ export const LoginWithUserType: React.FC = () => {
 		{ id: 'apporteur', icon: '🤝', title: AUTH_TEXT.providerTitle },
 		{ id: 'partenaire', icon: '📋', title: 'Accès Partenaire' },
 	];
-
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const { name, value } = e.target;
-		setFormData((prev) => ({ ...prev, [name]: value }));
-		if (errors[name]) {
-			setErrors((prev) => ({ ...prev, [name]: '' }));
-		}
-	};
-
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setErrors({});
-
-		try {
-			loginSchema.parse(formData);
-			setLoading(true);
-
-			const response = await authService.login({
-				...formData,
-			});
-
-			if (response.success && response.token && response.user) {
-				login(response.token, response.user);
-				toast.success(response.message);
-
-				// Check if profile completion is required
-				if (response.requiresProfileCompletion) {
-					router.push('/auth/complete-profile');
-				} else {
-					router.push('/dashboard');
-				}
-			} else if (response.requiresVerification) {
-				toast.warning(response.message);
-				router.push(
-					`/auth/verify-email?email=${encodeURIComponent(formData.email)}`,
-				);
-			} else {
-				toast.error(response.message);
-			}
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		} catch (error: any) {
-			if (error.errors) {
-				const validationErrors: Record<string, string> = {};
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				error.errors.forEach((err: any) => {
-					validationErrors[err.path[0]] = err.message;
-				});
-				setErrors(validationErrors);
-			} else {
-				toast.error(
-					error.response?.data?.message ||
-						AUTH_TEXT.somethingWentWrong,
-				);
-			}
-		} finally {
-			setLoading(false);
-		}
-	};
 
 	const selectedType = userTypes.find((type) => type.id === selectedUserType);
 
@@ -416,8 +387,8 @@ export const LoginWithUserType: React.FC = () => {
 										label=""
 										type="email"
 										name="email"
-										value={formData.email}
-										onChange={handleChange}
+										value={values.email}
+										onChange={handleInputChange}
 										error={errors.email}
 										placeholder={AUTH_TEXT.emailPlaceholder}
 										required
@@ -429,8 +400,8 @@ export const LoginWithUserType: React.FC = () => {
 										label=""
 										type="password"
 										name="password"
-										value={formData.password}
-										onChange={handleChange}
+										value={values.password}
+										onChange={handleInputChange}
 										error={errors.password}
 										placeholder={
 											AUTH_TEXT.passwordPlaceholder
@@ -450,7 +421,7 @@ export const LoginWithUserType: React.FC = () => {
 
 								<Button
 									type="submit"
-									loading={loading}
+									loading={isSubmitting}
 									className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg"
 									size="lg"
 								>

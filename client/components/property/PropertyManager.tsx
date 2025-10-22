@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button, ConfirmDialog } from '@/components/ui';
 import PropertyForm from './PropertyForm';
 import { useAuth } from '@/hooks/useAuth';
+import { useFetch } from '@/hooks/useFetch';
 import { PROPERTY_TEXT, getPropertyCountText } from '@/lib/constants/text';
 import {
 	PropertyService,
@@ -13,17 +14,33 @@ import {
 import { getImageUrl } from '@/lib/utils/imageUtils';
 import { toast } from 'react-toastify';
 import { getBadgeConfig } from '@/lib/constants/badges';
+import { logger } from '@/lib/utils/logger';
 
 const PropertyManager: React.FC = () => {
 	const { user } = useAuth();
-	const [properties, setProperties] = useState<Property[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
 	const [showForm, setShowForm] = useState(false);
 	const [editingProperty, setEditingProperty] = useState<Property | null>(
 		null,
 	);
 	const [formLoading, setFormLoading] = useState(false);
+
+	// Fetch properties using useFetch hook
+	const {
+		data: propertiesData,
+		loading,
+		error: fetchError,
+		refetch: refetchProperties,
+	} = useFetch(() => PropertyService.getMyProperties(), {
+		initialData: { properties: [] },
+		showErrorToast: true,
+		errorMessage: 'Erreur lors de la récupération de vos biens',
+	});
+
+	const properties = useMemo(
+		() => propertiesData?.properties || [],
+		[propertiesData],
+	);
+	const error = fetchError?.message || null;
 
 	// Filter states
 	const [searchTerm, setSearchTerm] = useState('');
@@ -39,54 +56,26 @@ const PropertyManager: React.FC = () => {
 	);
 	const [deleteLoading, setDeleteLoading] = useState(false);
 
-	useEffect(() => {
-		fetchMyProperties();
-	}, []);
-
-	const fetchMyProperties = async () => {
-		try {
-			setLoading(true);
-			const data = await PropertyService.getMyProperties();
-			setProperties(data.properties);
-		} catch (error: unknown) {
-			console.error('Error fetching properties:', error);
-			const errorMessage =
-				error instanceof Error
-					? error.message
-					: 'Erreur lors de la récupération de vos biens';
-			setError(errorMessage);
-		} finally {
-			setLoading(false);
-		}
-	};
-
 	const handleCreateProperty = async (formData: PropertyFormData) => {
 		try {
 			setFormLoading(true);
-			setError(null);
 
-			console.log('Property created in form:', formData);
+			logger.debug('Property created in form:', formData);
 
 			// Property is already created by PropertyForm using createPropertyWithImages
-			// Just update the local state and close form
-			if ('_id' in formData && formData._id) {
-				setProperties((prev) => [formData as Property, ...prev]);
-			}
+			// Refetch to get updated list
+			await refetchProperties();
 
 			setShowForm(false);
-			setError(null);
 
-			// Show success message with toast
 			toast.success('Annonce créée avec succès !');
 		} catch (error: unknown) {
-			console.error('Error in property creation callback:', error);
+			logger.error('Error in property creation callback:', error);
 			const errorMessage =
 				error instanceof Error
 					? error.message
 					: 'Erreur lors de la création du bien';
-			setError(errorMessage);
-
-			// Scroll to top to show error
+			toast.error(errorMessage);
 			window.scrollTo({ top: 0, behavior: 'smooth' });
 		} finally {
 			setFormLoading(false);
@@ -100,34 +89,24 @@ const PropertyManager: React.FC = () => {
 
 		try {
 			setFormLoading(true);
-			setError(null);
 
-			console.log('Property updated in form:', formData);
+			logger.debug('Property updated in form:', formData);
 
 			// Property is already updated by PropertyForm using updatePropertyWithImages
-			// Just update the local state and close form
-			const updatedProperty = formData as Property;
-			setProperties((prev) =>
-				prev.map((p) =>
-					p._id === editingProperty._id ? updatedProperty : p,
-				),
-			);
+			// Refetch to get updated list
+			await refetchProperties();
 
 			setEditingProperty(null);
 			setShowForm(false);
-			setError(null);
 
-			// Show success message with toast
 			toast.success('Annonce mise à jour avec succès !');
 		} catch (error: unknown) {
-			console.error('Error in property update callback:', error);
+			logger.error('Error in property update callback:', error);
 			const errorMessage =
 				error instanceof Error
 					? error.message
 					: 'Erreur lors de la mise à jour du bien';
-			setError(errorMessage);
-
-			// Scroll to top to show error
+			toast.error(errorMessage);
 			window.scrollTo({ top: 0, behavior: 'smooth' });
 		} finally {
 			setFormLoading(false);
@@ -145,19 +124,16 @@ const PropertyManager: React.FC = () => {
 		try {
 			setDeleteLoading(true);
 			await PropertyService.deleteProperty(propertyToDelete);
-			setProperties((prev) =>
-				prev.filter((p) => p._id !== propertyToDelete),
-			);
+			await refetchProperties();
 			toast.success('Bien supprimé avec succès !');
 			setShowConfirmDialog(false);
 			setPropertyToDelete(null);
 		} catch (error: unknown) {
-			console.error('Error deleting property:', error);
+			logger.error('Error deleting property:', error);
 			const errorMessage =
 				error instanceof Error
 					? error.message
 					: 'Erreur lors de la suppression du bien';
-			setError(errorMessage);
 			toast.error(errorMessage);
 		} finally {
 			setDeleteLoading(false);
@@ -233,20 +209,16 @@ const PropertyManager: React.FC = () => {
 		newStatus: Property['status'],
 	) => {
 		try {
-			const updatedProperty = await PropertyService.updatePropertyStatus(
-				propertyId,
-				newStatus,
-			);
-			setProperties((prev) =>
-				prev.map((p) => (p._id === propertyId ? updatedProperty : p)),
-			);
+			await PropertyService.updatePropertyStatus(propertyId, newStatus);
+			await refetchProperties();
+			toast.success('Statut mis à jour avec succès !');
 		} catch (error: unknown) {
-			console.error('Error updating status:', error);
+			logger.error('Error updating status:', error);
 			const errorMessage =
 				error instanceof Error
 					? error.message
 					: 'Erreur lors de la mise à jour du statut';
-			setError(errorMessage);
+			toast.error(errorMessage);
 		}
 	};
 
@@ -496,7 +468,9 @@ const PropertyManager: React.FC = () => {
 									{filteredProperties.length}
 								</span>{' '}
 								résultat
-								{filteredProperties.length !== 1 ? 's' : ''} sur{' '}
+								{filteredProperties.length !== 1
+									? 's'
+									: ''} sur{' '}
 								<span className="font-semibold text-gray-900">
 									{properties.length}
 								</span>{' '}

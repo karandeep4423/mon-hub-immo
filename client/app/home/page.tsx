@@ -26,6 +26,7 @@ import {
 	setGeolocationPreference,
 	getGeolocationPreference,
 } from '@/lib/services/geolocationService';
+import { logger } from '@/lib/utils/logger';
 
 type ContentFilter =
 	| 'all'
@@ -81,7 +82,7 @@ export default function Home() {
 					preferredRadius: newRadius,
 				});
 			} catch (error) {
-				console.error('Error saving radius preference:', error);
+				logger.error('Error saving radius preference:', error);
 			}
 		}
 	};
@@ -207,7 +208,7 @@ export default function Home() {
 
 	// Helper function to filter properties based on current filters
 	const filterProperties = (properties: Property[]): Property[] => {
-		console.log('[Home] filterProperties called:', {
+		logger.debug('[Home] filterProperties called:', {
 			totalProperties: properties.length,
 			contentFilter,
 			profileFilter,
@@ -285,7 +286,7 @@ export default function Home() {
 			return true;
 		});
 
-		console.log('[Home] filterProperties result:', {
+		logger.debug('[Home] filterProperties result:', {
 			filteredCount: filtered.length,
 		});
 
@@ -320,7 +321,7 @@ export default function Home() {
 		setContentFilter('myArea');
 		setIsInitialLoad(false);
 
-		console.log(
+		logger.debug(
 			'[Home] Auto-activated "Mon secteur" for agent:',
 			city,
 			postalCode,
@@ -338,7 +339,7 @@ export default function Home() {
 			if (!city || !postalCode) return;
 
 			try {
-				console.log(
+				logger.debug(
 					'[Home] Loading "Mon secteur" locations:',
 					city,
 					postalCode,
@@ -357,7 +358,7 @@ export default function Home() {
 				);
 
 				if (!agentCity) {
-					console.error(
+					logger.error(
 						'[Home] Could not find coordinates for agent city:',
 						city,
 						postalCode,
@@ -365,7 +366,7 @@ export default function Home() {
 					return;
 				}
 
-				console.log('[Home] Agent city coordinates:', agentCity);
+				logger.debug('[Home] Agent city coordinates:', agentCity);
 
 				// Get all cities within 50km radius using coordinates
 				const nearbyCities = await getMunicipalitiesNearby(
@@ -388,17 +389,17 @@ export default function Home() {
 				);
 
 				setMyAreaLocations(locationItems);
-				console.log(
+				logger.debug(
 					'[Home] "Mon secteur" locations loaded:',
 					locationItems.length,
 					'cities within 50km',
 				);
-				console.log(
+				logger.debug(
 					'[Home] Postal codes:',
 					locationItems.map((l) => l.postcode),
 				);
 			} catch (error) {
-				console.error(
+				logger.error(
 					'[Home] Error loading "Mon secteur" locations:',
 					error,
 				);
@@ -416,7 +417,7 @@ export default function Home() {
 			const storedPref = getGeolocationPreference();
 			if (storedPref) {
 				// User already made a choice
-				console.log(
+				logger.debug(
 					'[Home] Geolocation preference already set:',
 					storedPref,
 				);
@@ -425,7 +426,7 @@ export default function Home() {
 
 			// Check browser permission
 			const permission = await checkGeolocationPermission();
-			console.log('[Home] Geolocation permission status:', permission);
+			logger.debug('[Home] Geolocation permission status:', permission);
 
 			if (permission === 'prompt') {
 				// Show custom prompt
@@ -446,12 +447,12 @@ export default function Home() {
 			setGeolocationPreference(true);
 			setShowGeolocationPrompt(false);
 			setGeolocationError(null);
-			console.log('[Home] Geolocation granted:', location);
+			logger.debug('[Home] Geolocation granted:', location);
 		} catch (error: unknown) {
 			const err = error as { message: string };
 			setGeolocationError(err.message);
 			setGeolocationPreference(false);
-			console.error('[Home] Geolocation error:', err.message);
+			logger.error('[Home] Geolocation error:', err.message);
 		}
 	};
 
@@ -459,7 +460,7 @@ export default function Home() {
 	const handleDenyGeolocation = () => {
 		setGeolocationPreference(false);
 		setShowGeolocationPrompt(false);
-		console.log('[Home] Geolocation denied by user');
+		logger.debug('[Home] Geolocation denied by user');
 	};
 
 	// Debounce effect for search term
@@ -495,7 +496,7 @@ export default function Home() {
 				if (surfaceFilter.max < 100000)
 					filters.maxSurface = surfaceFilter.max;
 
-				console.log('[Home] Fetching properties with filters:', {
+				logger.debug('[Home] Fetching properties with filters:', {
 					contentFilter,
 					selectedLocationsCount: selectedLocations.length,
 					filters,
@@ -506,7 +507,7 @@ export default function Home() {
 					searchAdApi.getAllSearchAds(),
 				]);
 
-				console.log(
+				logger.debug(
 					'[Home] Received properties:',
 					propertiesData?.length,
 				);
@@ -515,7 +516,7 @@ export default function Home() {
 				setSearchAds(searchAdsData || []);
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} catch (error: any) {
-				console.error('Error fetching data:', error);
+				logger.error('Error fetching data:', error);
 				setError(
 					error.message || 'Erreur lors du chargement des données',
 				);

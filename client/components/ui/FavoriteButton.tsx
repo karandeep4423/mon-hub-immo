@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFavoritesStore } from '@/store/favoritesStore';
+import { logger } from '@/lib/utils/logger';
 
 interface FavoriteButtonProps {
 	itemId: string;
@@ -84,7 +85,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
 					: await toggleSearchAdFavorite(actualItemId);
 			onToggle?.(newIsFavorite);
 		} catch (error) {
-			console.error('Error toggling favorite:', error);
+			logger.error('Error toggling favorite:', error);
 			// Show error toast/notification here if needed
 		} finally {
 			setIsLoading(false);

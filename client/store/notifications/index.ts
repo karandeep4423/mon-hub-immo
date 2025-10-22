@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNotification } from '@/hooks/useNotification';
 import { useAuth } from '@/hooks/useAuth';
 import type { User } from '@/types/auth';
+import { logger } from '@/lib/utils/logger';
 
 const OS_NOTIFY_COOLDOWN_MS = 3000;
 
@@ -217,11 +218,11 @@ export const useNotifications = () => {
 			// Only refetch on REconnection, not first connection
 			if (!hasConnectedOnce) {
 				hasConnectedOnce = true;
-				console.log('� Initial socket connection established');
+				logger.debug('🔌 Initial socket connection established');
 				return;
 			}
 
-			console.log('�🔄 Socket reconnected, refetching notifications...');
+			logger.debug('🔄 Socket reconnected, refetching notifications');
 			// Refetch notifications on reconnect to catch any missed during disconnect
 			try {
 				const now = Date.now();
@@ -246,24 +247,28 @@ export const useNotifications = () => {
 					unreadCount,
 				}));
 			} catch (err) {
-				console.error(
-					'Failed to refetch notifications on reconnect:',
-					err,
-				);
+				logger.error('Failed to refetch notifications on reconnect', {
+					error: err instanceof Error ? err.message : String(err),
+				});
 			}
 		};
+		// Use reusable socket listeners pattern
+		const listeners = {
+			'notification:new': onNew,
+			'notifications:count': onCount,
+			'notification:read': onRead,
+			'notifications:readAll': onReadAll,
+			connect: onReconnect,
+		};
 
-		socket.on('notification:new', onNew);
-		socket.on('notifications:count', onCount);
-		socket.on('notification:read', onRead);
-		socket.on('notifications:readAll', onReadAll);
-		socket.on('connect', onReconnect);
+		Object.entries(listeners).forEach(([event, handler]) => {
+			socket.on(event, handler);
+		});
+
 		return () => {
-			socket.off('notification:new', onNew);
-			socket.off('notifications:count', onCount);
-			socket.off('notification:read', onRead);
-			socket.off('notifications:readAll', onReadAll);
-			socket.off('connect', onReconnect);
+			Object.entries(listeners).forEach(([event, handler]) => {
+				socket.off(event, handler);
+			});
 		};
 	}, [socket, showNotification]);
 

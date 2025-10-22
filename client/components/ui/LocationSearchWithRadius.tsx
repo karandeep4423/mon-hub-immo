@@ -6,6 +6,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { logger } from '@/lib/utils/logger';
 import {
 	searchMunicipalities,
 	getMunicipalitiesByPostalPrefix,
@@ -95,7 +96,7 @@ export const LocationSearchWithRadius: React.FC<
 
 				setSuggestions(locationItems);
 			} catch (error) {
-				console.error('Error fetching municipalities:', error);
+				logger.error('Error fetching municipalities:', error);
 				setSuggestions([]);
 			} finally {
 				setLoading(false);
@@ -164,7 +165,7 @@ export const LocationSearchWithRadius: React.FC<
 			// Pre-select the main location
 			setSelectedNearby(new Set([location.value]));
 		} catch (error) {
-			console.error('Error fetching nearby cities:', error);
+			logger.error('Error fetching nearby cities:', error);
 			// Fallback: just add the selected location
 			onLocationsChange([location]);
 		} finally {

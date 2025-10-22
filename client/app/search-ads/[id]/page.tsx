@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { SearchAdDetails } from '@/components/search-ads/SearchAdDetails';
 import { useAuth } from '@/hooks/useAuth';
 import searchAdApi from '@/lib/api/searchAdApi';
 import type { SearchAd } from '@/types/searchAd';
+import { useFetch } from '@/hooks';
 
 export default function SearchAdDetailsPage() {
 	const params = useParams();
@@ -13,29 +13,16 @@ export default function SearchAdDetailsPage() {
 	const { user } = useAuth();
 	const searchAdId = params?.id as string;
 
-	const [searchAd, setSearchAd] = useState<SearchAd | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-
-	useEffect(() => {
-		const fetchSearchAd = async () => {
-			try {
-				setLoading(true);
-				setError(null);
-				const ad = await searchAdApi.getSearchAdById(searchAdId);
-				setSearchAd(ad);
-			} catch (err) {
-				console.error('Error fetching search ad:', err);
-				setError('Impossible de charger les détails de la recherche.');
-			} finally {
-				setLoading(false);
-			}
-		};
-
-		if (searchAdId) {
-			fetchSearchAd();
-		}
-	}, [searchAdId]);
+	// Fetch search ad details using useFetch hook
+	const {
+		data: searchAd,
+		loading,
+		error,
+	} = useFetch<SearchAd>(() => searchAdApi.getSearchAdById(searchAdId), {
+		skip: !searchAdId,
+		showErrorToast: true,
+		errorMessage: 'Impossible de charger les détails de la recherche',
+	});
 
 	if (loading) {
 		return (
@@ -57,8 +44,9 @@ export default function SearchAdDetailsPage() {
 						Recherche introuvable
 					</h1>
 					<p className="text-gray-600 mb-4">
-						{error ||
-							'Cette recherche n&apos;existe pas ou a été supprimée.'}
+						{error
+							? error.message
+							: 'Cette recherche n&apos;existe pas ou a été supprimée.'}
 					</p>
 					<button
 						onClick={() => router.push('/home')}

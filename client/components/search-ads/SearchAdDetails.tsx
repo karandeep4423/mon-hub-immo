@@ -1,12 +1,23 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { SearchAd } from '@/types/searchAd';
 import { User } from '@/types/auth';
-import { ProfileAvatar } from '../ui/ProfileAvatar';
 import { ProposeCollaborationModal } from '../collaboration/ProposeCollaborationModal';
 import { collaborationApi } from '@/lib/api/collaborationApi';
+import { useFetch } from '@/hooks/useFetch';
+import {
+	SearchAdHeader,
+	SearchAdAuthorInfo,
+	PropertyCriteriaCard,
+	LocationCard,
+	BudgetCard,
+	PropertyCharacteristicsCard,
+	PrioritiesCard,
+	SearchAdMetaCard,
+	ContactCard,
+} from './details';
 
 interface SearchAdDetailsProps {
 	searchAd: SearchAd;
@@ -20,44 +31,35 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 	const router = useRouter();
 	const isOwner = currentUser?._id === searchAd.authorId._id;
 	const [showCollaborationModal, setShowCollaborationModal] = useState(false);
-	const [hasBlockingCollab, setHasBlockingCollab] = useState<boolean>(false);
-	const [blockingStatus, setBlockingStatus] = useState<
-		'pending' | 'accepted' | 'active' | null
-	>(null);
+
+	// Fetch collaborations using useFetch - skip if user is owner or not authenticated
+	const shouldFetchCollabs = !isOwner && !!currentUser;
+	const { data: collabData, refetch: refetchCollaborations } = useFetch(
+		() => collaborationApi.getSearchAdCollaborations(searchAd._id),
+		{
+			initialData: { collaborations: [] },
+			skip: !shouldFetchCollabs,
+		},
+	);
+
+	// Check for blocking collaboration
+	const { hasBlockingCollab, blockingStatus } = useMemo(() => {
+		const blocking = collabData?.collaborations.find((c) =>
+			['pending', 'accepted', 'active'].includes(c.status as string),
+		);
+		return {
+			hasBlockingCollab: !!blocking,
+			blockingStatus: blocking
+				? (blocking.status as 'pending' | 'accepted' | 'active')
+				: null,
+		};
+	}, [collabData]);
 
 	const handleContact = () => {
 		router.push(
 			`/chat?userId=${searchAd.authorId._id}&searchAdId=${searchAd._id}&type=search-ad-contact`,
 		);
 	};
-
-	const loadSearchAdCollaborations = useCallback(async () => {
-		try {
-			const { collaborations } =
-				await collaborationApi.getSearchAdCollaborations(searchAd._id);
-			const blocking = collaborations.find((c) =>
-				['pending', 'accepted', 'active'].includes(c.status as string),
-			);
-			if (blocking) {
-				setHasBlockingCollab(true);
-				setBlockingStatus(
-					blocking.status as 'pending' | 'accepted' | 'active',
-				);
-			} else {
-				setHasBlockingCollab(false);
-				setBlockingStatus(null);
-			}
-		} catch (e) {
-			console.warn('Failed to load search ad collaborations', e);
-		}
-	}, [searchAd._id]);
-
-	useEffect(() => {
-		// Only check collaborations if user is authenticated and NOT the owner
-		if (!isOwner && currentUser) {
-			loadSearchAdCollaborations();
-		}
-	}, [loadSearchAdCollaborations, isOwner, currentUser]);
 
 	const handleCollaborate = () => {
 		if (!currentUser) {
@@ -67,494 +69,21 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 		setShowCollaborationModal(true);
 	};
 
-	const formatPropertyTypes = (types: string[]) => {
-		const typeMap: Record<string, string> = {
-			house: 'Maison',
-			apartment: 'Appartement',
-			land: 'Terrain',
-			building: 'Immeuble',
-			commercial: 'Commercial',
-		};
-		return types.map((type) => typeMap[type] || type).join(', ');
-	};
-
-	const formatProjectType = (type: string) => {
-		const typeMap: Record<string, string> = {
-			primary: 'Résidence principale',
-			secondary: 'Résidence secondaire',
-			investment: 'Investissement',
-		};
-		return typeMap[type] || type;
-	};
-
-	const formatFinancingType = (type: string) => {
-		const typeMap: Record<string, string> = {
-			loan: 'Prêt bancaire',
-			cash: 'Cash',
-			pending: "En attente d'accord",
-		};
-		return typeMap[type] || type;
-	};
-
-	const formatFloors = (floors: string) => {
-		const floorMap: Record<string, string> = {
-			any: 'Tous étages',
-			not_ground_floor: 'Pas de rez-de-chaussée',
-			ground_floor_only: 'Rez-de-chaussée uniquement',
-		};
-		return floorMap[floors] || floors;
-	};
-
-	const formatState = (states: string[]) => {
-		const stateMap: Record<string, string> = {
-			new: 'Neuf',
-			good: 'Bon état',
-			refresh: 'À rafraîchir',
-			renovate: 'À rénover',
-		};
-		return states.map((state) => stateMap[state] || state).join(', ');
-	};
-
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-				{/* Header */}
-				<div className="mb-10">
-					<div className="flex items-center justify-between mb-6">
-						<button
-							onClick={() => router.back()}
-							className="group flex items-center gap-2 text-gray-600 hover:text-cyan-600 transition-all duration-200 font-medium"
-						>
-							<svg
-								className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform duration-200"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M15 19l-7-7 7-7"
-								/>
-							</svg>
-							<span>Retour</span>
-						</button>
-
-						<div className="flex items-center gap-3">
-							<span
-								className={`px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide shadow-sm ${
-									searchAd.status === 'active'
-										? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
-										: searchAd.status === 'paused'
-											? 'bg-gradient-to-r from-yellow-400 to-orange-400 text-white'
-											: 'bg-gradient-to-r from-gray-400 to-gray-500 text-white'
-								}`}
-							>
-								{searchAd.status === 'active'
-									? '✓ Actif'
-									: searchAd.status === 'paused'
-										? '⏸ En pause'
-										: '✓ Réalisé'}
-							</span>
-							<span
-								className={`px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide shadow-sm ${
-									searchAd.authorType === 'agent'
-										? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
-										: 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-								}`}
-							>
-								{searchAd.authorType === 'agent'
-									? '👨‍💼 Agent'
-									: '🤝 Apporteur'}
-							</span>
-						</div>
-					</div>
-
-					<div className="space-y-3 mb-6">
-						<h1 className="text-2xl lg:text-3xl font-bold text-gray-900 leading-tight">
-							{searchAd.title}
-						</h1>
-
-						{searchAd.description && (
-							<p className="text-base text-gray-600 leading-relaxed max-w-4xl">
-								{searchAd.description}
-							</p>
-						)}
-					</div>
-
-					{/* Author Info */}
-					<div className="bg-gradient-to-r from-white to-gray-50 p-5 rounded-xl shadow-md border border-gray-200/50 hover:shadow-lg transition-shadow duration-300">
-						<div className="flex items-center gap-4">
-							<ProfileAvatar
-								user={searchAd.authorId}
-								size="lg"
-								className="w-14 h-14 ring-4 ring-white shadow-md"
-							/>
-							<div className="flex-1">
-								<h3 className="text-lg font-bold text-gray-900 mb-0.5">
-									{searchAd.authorId.firstName}{' '}
-									{searchAd.authorId.lastName}
-								</h3>
-								<p className="text-sm text-gray-600 font-medium">
-									{searchAd.authorType === 'agent'
-										? '🏢 Agent immobilier professionnel'
-										: "🤝 Apporteur d'affaires certifié"}
-								</p>
-							</div>
-						</div>
-					</div>
-				</div>
+				<SearchAdHeader searchAd={searchAd} />
+				<SearchAdAuthorInfo searchAd={searchAd} />
 
 				{/* Details Grid */}
 				<div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
-					{/* Property Criteria */}
-					<div className="group bg-white p-6 rounded-xl shadow-md border border-gray-200/50 hover:shadow-xl hover:border-cyan-200 transition-all duration-300">
-						<div className="flex items-center gap-3 mb-4">
-							<div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center shadow-md">
-								<span className="text-xl">🏠</span>
-							</div>
-							<h3 className="text-lg font-bold text-gray-900">
-								Type de bien recherché
-							</h3>
-						</div>
-						<div className="space-y-3">
-							<div>
-								<span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">
-									Types de propriété
-								</span>
-								<p className="text-gray-900 font-medium text-base">
-									{formatPropertyTypes(
-										searchAd.propertyTypes,
-									)}
-								</p>
-							</div>
+					<PropertyCriteriaCard searchAd={searchAd} />
+					<LocationCard searchAd={searchAd} />
+					<BudgetCard searchAd={searchAd} />
 
-							{searchAd.propertyState &&
-								searchAd.propertyState.length > 0 && (
-									<div>
-										<span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">
-											État du bien
-										</span>
-										<p className="text-gray-900 font-medium text-base">
-											{searchAd.propertyState.includes(
-												'new',
-											)
-												? '✨ Neuf'
-												: '🏘️ Ancien'}
-										</p>
-									</div>
-								)}
+					<PropertyCharacteristicsCard searchAd={searchAd} />
 
-							{searchAd.projectType && (
-								<div>
-									<span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">
-										Type de projet
-									</span>
-									<p className="text-gray-900 font-medium text-base">
-										{formatProjectType(
-											searchAd.projectType,
-										)}
-									</p>
-								</div>
-							)}
-						</div>
-					</div>
-
-					{/* Location */}
-					<div className="group bg-white p-6 rounded-xl shadow-md border border-gray-200/50 hover:shadow-xl hover:border-cyan-200 transition-all duration-300">
-						<div className="flex items-center gap-3 mb-4">
-							<div className="w-10 h-10 bg-gradient-to-br from-red-500 to-pink-500 rounded-lg flex items-center justify-center shadow-md">
-								<span className="text-xl">📍</span>
-							</div>
-							<h3 className="text-lg font-bold text-gray-900">
-								Localisation
-							</h3>
-						</div>
-						<div className="space-y-3">
-							<div>
-								<span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">
-									Zones ciblées
-								</span>
-								<p className="text-gray-900 font-medium text-base">
-									{searchAd.location.cities.join(', ')}
-								</p>
-							</div>
-
-							{searchAd.location.maxDistance && (
-								<div>
-									<span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">
-										Distance maximale
-									</span>
-									<p className="text-gray-900 font-medium text-base">
-										🚗 {searchAd.location.maxDistance} km
-									</p>
-								</div>
-							)}
-
-							{searchAd.location.openToOtherAreas && (
-								<div className="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-lg border border-green-200">
-									<div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-sm"></div>
-									<span className="text-xs font-medium text-green-800">
-										Ouvert à d&apos;autres zones
-									</span>
-								</div>
-							)}
-						</div>
-					</div>
-
-					{/* Budget */}
-					<div className="group bg-white p-6 rounded-xl shadow-md border border-gray-200/50 hover:shadow-xl hover:border-cyan-200 transition-all duration-300">
-						<div className="flex items-center gap-3 mb-4">
-							<div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center shadow-md">
-								<span className="text-xl">💰</span>
-							</div>
-							<h3 className="text-lg font-bold text-gray-900">
-								Budget
-							</h3>
-						</div>
-						<div className="space-y-3">
-							<div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-3 rounded-lg border border-emerald-200">
-								<span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider block mb-1.5">
-									Budget maximum
-								</span>
-								<p className="text-emerald-900 text-xl font-bold">
-									{searchAd.budget.max.toLocaleString()} €
-								</p>
-							</div>
-
-							{searchAd.budget.ideal && (
-								<div>
-									<span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">
-										Budget idéal
-									</span>
-									<p className="text-gray-900 font-medium text-base">
-										{searchAd.budget.ideal.toLocaleString()}{' '}
-										€
-									</p>
-								</div>
-							)}
-
-							{searchAd.budget.financingType && (
-								<div>
-									<span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">
-										Type de financement
-									</span>
-									<p className="text-gray-900 font-medium text-base">
-										{formatFinancingType(
-											searchAd.budget.financingType,
-										)}
-									</p>
-								</div>
-							)}
-
-							<div className="space-y-2 pt-1">
-								{searchAd.budget.isSaleInProgress && (
-									<div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg">
-										<div className="w-1.5 h-1.5 bg-blue-500 rounded-full shadow-sm"></div>
-										<span className="text-xs font-medium text-blue-800">
-											Vente en cours
-										</span>
-									</div>
-								)}
-								{searchAd.budget.hasBankApproval && (
-									<div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-lg">
-										<div className="w-1.5 h-1.5 bg-green-500 rounded-full shadow-sm"></div>
-										<span className="text-xs font-medium text-green-800">
-											Accord bancaire obtenu
-										</span>
-									</div>
-								)}
-							</div>
-						</div>
-					</div>
-
-					{/* Property Characteristics */}
-					<div className="group bg-white p-6 rounded-xl shadow-md border border-gray-200/50 hover:shadow-xl hover:border-cyan-200 transition-all duration-300">
-						<div className="flex items-center gap-3 mb-4">
-							<div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-500 rounded-lg flex items-center justify-center shadow-md">
-								<span className="text-xl">📐</span>
-							</div>
-							<h3 className="text-lg font-bold text-gray-900">
-								Caractéristiques
-							</h3>
-						</div>
-						<div className="space-y-3">
-							{searchAd.minRooms && (
-								<div className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
-									<span className="text-xs font-medium text-gray-700">
-										🚪 Pièces minimum
-									</span>
-									<span className="text-base font-bold text-gray-900">
-										{searchAd.minRooms}
-									</span>
-								</div>
-							)}
-
-							{searchAd.minBedrooms && (
-								<div className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
-									<span className="text-xs font-medium text-gray-700">
-										🛏️ Chambres minimum
-									</span>
-									<span className="text-base font-bold text-gray-900">
-										{searchAd.minBedrooms}
-									</span>
-								</div>
-							)}
-
-							{searchAd.minSurface && (
-								<div className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
-									<span className="text-xs font-medium text-gray-700">
-										📏 Surface minimum
-									</span>
-									<span className="text-base font-bold text-gray-900">
-										{searchAd.minSurface} m²
-									</span>
-								</div>
-							)}
-
-							{searchAd.acceptedFloors && (
-								<div>
-									<span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">
-										Étages acceptés
-									</span>
-									<p className="text-gray-900 font-medium text-sm">
-										{formatFloors(searchAd.acceptedFloors)}
-									</p>
-								</div>
-							)}
-
-							<div className="space-y-2 pt-1">
-								{searchAd.hasExterior && (
-									<div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-lg">
-										<div className="w-1.5 h-1.5 bg-green-500 rounded-full shadow-sm"></div>
-										<span className="text-xs font-medium text-green-800">
-											🌳 Extérieur requis
-										</span>
-									</div>
-								)}
-								{searchAd.hasParking && (
-									<div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-lg">
-										<div className="w-1.5 h-1.5 bg-green-500 rounded-full shadow-sm"></div>
-										<span className="text-xs font-medium text-green-800">
-											🅿️ Parking requis
-										</span>
-									</div>
-								)}
-							</div>
-
-							{searchAd.desiredState &&
-								searchAd.desiredState.length > 0 && (
-									<div>
-										<span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">
-											État souhaité
-										</span>
-										<p className="text-gray-900 font-medium text-sm">
-											{formatState(searchAd.desiredState)}
-										</p>
-									</div>
-								)}
-						</div>
-					</div>
-
-					{/* Priorities */}
-					{searchAd.priorities && (
-						<div className="bg-white p-6 rounded-xl shadow-md border border-gray-200/50 hover:shadow-xl hover:border-cyan-200 transition-all duration-300 lg:col-span-2">
-							<div className="flex items-center gap-3 mb-5">
-								<div className="w-10 h-10 bg-gradient-to-br from-rose-500 to-red-500 rounded-lg flex items-center justify-center shadow-md">
-									<span className="text-xl">❤️</span>
-								</div>
-								<h3 className="text-lg font-bold text-gray-900">
-									Priorités personnelles
-								</h3>
-							</div>
-							<div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-								{searchAd.priorities.mustHaves &&
-									searchAd.priorities.mustHaves.length >
-										0 && (
-										<div className="bg-gradient-to-br from-red-50 to-rose-50 p-4 rounded-xl border-2 border-red-200">
-											<h4 className="font-bold text-red-900 mb-2.5 flex items-center gap-2 text-sm">
-												<span className="text-base">
-													🔴
-												</span>
-												<span>Indispensables</span>
-											</h4>
-											<div className="space-y-2">
-												{searchAd.priorities.mustHaves.map(
-													(item, index) => (
-														<div
-															key={index}
-															className="flex items-start gap-2 text-sm"
-														>
-															<div className="w-1 h-1 bg-red-600 rounded-full mt-1.5 flex-shrink-0"></div>
-															<span className="text-red-900 font-medium">
-																{item}
-															</span>
-														</div>
-													),
-												)}
-											</div>
-										</div>
-									)}
-
-								{searchAd.priorities.niceToHaves &&
-									searchAd.priorities.niceToHaves.length >
-										0 && (
-										<div className="bg-gradient-to-br from-yellow-50 to-amber-50 p-4 rounded-xl border-2 border-yellow-200">
-											<h4 className="font-bold text-yellow-900 mb-2.5 flex items-center gap-2 text-sm">
-												<span className="text-base">
-													🟡
-												</span>
-												<span>Souhaitables</span>
-											</h4>
-											<div className="space-y-2">
-												{searchAd.priorities.niceToHaves.map(
-													(item, index) => (
-														<div
-															key={index}
-															className="flex items-start gap-2 text-sm"
-														>
-															<div className="w-1 h-1 bg-yellow-600 rounded-full mt-1.5 flex-shrink-0"></div>
-															<span className="text-yellow-900 font-medium">
-																{item}
-															</span>
-														</div>
-													),
-												)}
-											</div>
-										</div>
-									)}
-
-								{searchAd.priorities.dealBreakers &&
-									searchAd.priorities.dealBreakers.length >
-										0 && (
-										<div className="bg-gradient-to-br from-gray-100 to-gray-50 p-4 rounded-xl border-2 border-gray-300">
-											<h4 className="font-bold text-gray-900 mb-2.5 flex items-center gap-2 text-sm">
-												<span className="text-base">
-													⚫
-												</span>
-												<span>Points de blocage</span>
-											</h4>
-											<div className="space-y-2">
-												{searchAd.priorities.dealBreakers.map(
-													(item, index) => (
-														<div
-															key={index}
-															className="flex items-start gap-2 text-sm"
-														>
-															<div className="w-1 h-1 bg-gray-600 rounded-full mt-1.5 flex-shrink-0"></div>
-															<span className="text-gray-900 font-medium">
-																{item}
-															</span>
-														</div>
-													),
-												)}
-											</div>
-										</div>
-									)}
-							</div>
-						</div>
-					)}
+					<PrioritiesCard searchAd={searchAd} />
 
 					{/* Client Information */}
 					{searchAd.clientInfo && (
@@ -796,189 +325,16 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 						</div>
 					)}
 
-					{/* Metadata */}
-					<div className="group bg-white p-6 rounded-xl shadow-md border border-gray-200/50 hover:shadow-xl hover:border-cyan-200 transition-all duration-300">
-						<div className="flex items-center gap-3 mb-4">
-							<div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-blue-500 rounded-xl flex items-center justify-center shadow-md">
-								<span className="text-xl">📅</span>
-							</div>
-							<h3 className="text-lg font-bold text-gray-900">
-								Informations
-							</h3>
-						</div>
-						<div className="space-y-3">
-							<div className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
-								<span className="text-xs font-medium text-gray-700">
-									📌 Créée le
-								</span>
-								<p className="text-gray-900 font-semibold text-base">
-									{new Date(
-										searchAd.createdAt,
-									).toLocaleDateString('fr-FR', {
-										year: 'numeric',
-										month: 'long',
-										day: 'numeric',
-									})}
-								</p>
-							</div>
+					<SearchAdMetaCard searchAd={searchAd} />
 
-							<div className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
-								<span className="text-xs font-medium text-gray-700">
-									🔄 Mise à jour
-								</span>
-								<p className="text-gray-900 font-semibold text-base">
-									{new Date(
-										searchAd.updatedAt,
-									).toLocaleDateString('fr-FR', {
-										year: 'numeric',
-										month: 'long',
-										day: 'numeric',
-									})}
-								</p>
-							</div>
-						</div>
-					</div>
-
-					{/* Contact Section */}
-					<div className="bg-gradient-to-br from-cyan-50 to-blue-50 p-6 rounded-xl shadow-md border-2 border-cyan-200">
-						<div className="flex items-center gap-3 mb-5">
-							<div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
-								<span className="text-xl">💬</span>
-							</div>
-							<h3 className="text-lg font-bold text-gray-900">
-								Contact
-							</h3>
-						</div>
-
-						<div className="flex items-center gap-3.5 mb-5 bg-white p-3.5 rounded-xl shadow-sm">
-							<ProfileAvatar
-								user={searchAd.authorId}
-								size="lg"
-								className="w-12 h-12 ring-2 ring-cyan-200"
-							/>
-							<div>
-								<h4 className="font-bold text-gray-900 text-base">
-									{searchAd.authorId.firstName}{' '}
-									{searchAd.authorId.lastName}
-								</h4>
-								<p className="text-xs text-gray-600 font-medium">
-									{searchAd.authorType === 'agent'
-										? '🏢 Agent immobilier'
-										: "🤝 Apporteur d'affaires"}
-								</p>
-							</div>
-						</div>
-
-						<div>
-							{isOwner ? (
-								<div className="w-full p-3 rounded-md border bg-gray-50 text-gray-700 text-sm flex items-center justify-center mb-4">
-									<span className="mr-2">🚫</span>
-									Vous êtes le propriétaire de cette page,
-									vous ne pouvez pas proposer une
-									collaboration.
-								</div>
-							) : (
-								<>
-									<button
-										onClick={handleContact}
-										className="w-full px-4 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl transition-all duration-200 font-semibold flex items-center justify-center gap-2.5 mb-4 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm"
-									>
-										<svg
-											className="w-4 h-4"
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24"
-										>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth={2}
-												d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-											/>
-										</svg>
-										<span>Contacter l&apos;auteur</span>
-									</button>
-
-									{hasBlockingCollab ? (
-										<div className="w-full p-3 rounded-md border bg-blue-50 text-blue-800 text-sm flex items-center justify-center mb-4">
-											<span className="mr-2">ℹ️</span>
-											{`Annonce déjà en collaboration (${
-												blockingStatus === 'pending'
-													? 'en attente'
-													: blockingStatus ===
-														  'accepted'
-														? 'acceptée'
-														: 'active'
-											})`}
-										</div>
-									) : (
-										<button
-											onClick={handleCollaborate}
-											className="w-full px-4 py-3.5 rounded-xl transition-all duration-200 font-semibold flex items-center justify-center gap-2.5 mb-4 text-sm bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-										>
-											<svg
-												className="w-4 h-4"
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24"
-											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth={2}
-													d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-												/>
-											</svg>
-											<span>
-												Proposer une collaboration
-											</span>
-										</button>
-									)}
-								</>
-							)}
-						</div>
-
-						<div className="bg-white p-3.5 rounded-xl">
-							<h4 className="font-bold text-gray-900 mb-2.5 flex items-center gap-2 text-sm">
-								<span>📤</span>
-								<span>Partager cette annonce</span>
-							</h4>
-							<button
-								onClick={() => {
-									if (navigator.share) {
-										navigator.share({
-											title: searchAd.title,
-											text: `Découvrez cette recherche immobilière: ${searchAd.title}`,
-											url: window.location.href,
-										});
-									} else {
-										navigator.clipboard.writeText(
-											window.location.href,
-										);
-										alert(
-											'Lien copié dans le presse-papiers!',
-										);
-									}
-								}}
-								className="w-full px-3.5 py-2.5 bg-white border-2 border-gray-300 hover:border-cyan-500 hover:bg-cyan-50 text-gray-700 hover:text-cyan-700 rounded-lg transition-all duration-200 font-semibold flex items-center justify-center gap-2 group text-xs"
-							>
-								<svg
-									className="w-4 h-4 group-hover:rotate-12 transition-transform duration-200"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-									/>
-								</svg>
-								<span>Partager le lien</span>
-							</button>
-						</div>
-					</div>
+					<ContactCard
+						searchAd={searchAd}
+						isOwner={isOwner}
+						hasBlockingCollab={hasBlockingCollab}
+						blockingStatus={blockingStatus}
+						onContact={handleContact}
+						onCollaborate={handleCollaborate}
+					/>
 				</div>
 			</div>
 
@@ -1002,7 +358,7 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 				}}
 				onSuccess={() => {
 					setShowCollaborationModal(false);
-					loadSearchAdCollaborations();
+					refetchCollaborations();
 				}}
 			/>
 		</div>

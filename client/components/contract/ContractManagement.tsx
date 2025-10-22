@@ -6,6 +6,7 @@ import { contractApi, ContractData } from '@/lib/api/contractApi';
 import { useAuth } from '@/hooks/useAuth';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { toast } from 'react-toastify';
+import { logger } from '@/lib/utils/logger';
 
 interface ContractManagementProps {
 	collaborationId: string;
@@ -35,12 +36,12 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 			try {
 				setIsLoading(true);
 				setError(null);
-				console.log(
+				logger.debug(
 					'Loading contract for collaboration:',
 					collaborationId,
 				);
 				const response = await contractApi.getContract(collaborationId);
-				console.log('Contract API response:', response);
+				logger.debug('Contract API response:', response);
 
 				if (response && response.contract) {
 					setContract(response.contract);
@@ -53,7 +54,7 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 					throw new Error('Invalid contract response structure');
 				}
 			} catch (err) {
-				console.error('Error fetching contract:', err);
+				logger.error('Error fetching contract:', err);
 				setError('Erreur lors du chargement du contrat');
 			} finally {
 				setIsLoading(false);
@@ -103,7 +104,7 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 
 			onContractUpdate?.(response.contract);
 		} catch (err) {
-			console.error('Error updating contract:', err);
+			logger.error('Error updating contract:', err);
 			const errorMessage =
 				err instanceof Error
 					? err.message
@@ -138,7 +139,7 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 				);
 			}
 		} catch (err) {
-			console.error('Error signing contract:', err);
+			logger.error('Error signing contract:', err);
 			const errorMessage =
 				err instanceof Error
 					? err.message
@@ -189,7 +190,7 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 		: contract.ownerSigned;
 
 	// Debug logging
-	console.log('Contract Management Debug:', {
+	logger.debug('Contract Management Debug:', {
 		contract,
 		user,
 		propertyOwnerId: contract.propertyOwner.id,

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
 import { ProfileAvatar } from '../../ui/ProfileAvatar';
+import { logger } from '@/lib/utils/logger';
 
 export interface Activity {
 	id: string;
@@ -51,7 +52,7 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 			setShowAddForm(false);
 			onRefresh?.();
 		} catch (error) {
-			console.error('Error adding note:', error);
+			logger.error('Error adding note:', error);
 		} finally {
 			setIsAdding(false);
 		}

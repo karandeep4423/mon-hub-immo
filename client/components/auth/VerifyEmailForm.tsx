@@ -8,17 +8,58 @@ import { Input } from '../ui/Input';
 import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/lib/api/authApi';
 import { verifyEmailSchema } from '@/lib/validation';
+import { useForm } from '@/hooks/useForm';
+
+interface VerifyEmailFormData extends Record<string, unknown> {
+	code: string;
+}
 
 export const VerifyEmailForm: React.FC = () => {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const { login } = useAuth();
-	const [loading, setLoading] = useState(false);
 	const [resendLoading, setResendLoading] = useState(false);
 	const [email, setEmail] = useState('');
-	const [code, setCode] = useState('');
-	const [error, setError] = useState('');
 	const [timer, setTimer] = useState(0);
+
+	const {
+		values,
+		errors,
+		isSubmitting,
+		handleInputChange,
+		handleSubmit,
+		setErrors,
+	} = useForm<VerifyEmailFormData>({
+		initialValues: {
+			code: '',
+		},
+		onSubmit: async (data) => {
+			if (!email) {
+				setErrors({ email: 'Email requis' });
+				return;
+			}
+
+			verifyEmailSchema.parse({ email, code: data.code });
+
+			const response = await authService.verifyEmail({
+				email,
+				code: data.code,
+			});
+
+			if (response.success && response.token && response.user) {
+				login(response.token, response.user);
+				toast.success(response.message);
+
+				if (response.requiresProfileCompletion) {
+					router.push('/auth/complete-profile');
+				} else {
+					router.push('/auth/welcome');
+				}
+			} else {
+				setErrors({ code: response.message });
+			}
+		},
+	});
 
 	useEffect(() => {
 		const emailParam = searchParams.get('email');
@@ -35,51 +76,6 @@ export const VerifyEmailForm: React.FC = () => {
 			return () => clearInterval(interval);
 		}
 	}, [timer]);
-
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setError('');
-
-		if (!email) {
-			setError('Email requis');
-			return;
-		}
-
-		try {
-			verifyEmailSchema.parse({ email, code });
-			setLoading(true);
-
-			const response = await authService.verifyEmail({ email, code });
-
-			if (response.success && response.token && response.user) {
-				login(response.token, response.user);
-				toast.success(response.message);
-
-				if (response.requiresProfileCompletion) {
-					router.push('/auth/complete-profile');
-				} else {
-					router.push('/auth/welcome');
-				}
-			} else {
-				setError(response.message);
-			}
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		} catch (validationError: any) {
-			if (validationError.errors) {
-				setError(
-					validationError.errors[0]?.message ||
-						'Code de vérification invalide',
-				);
-			} else {
-				setError(
-					validationError.response?.data?.message ||
-						"Une erreur s'est produite",
-				);
-			}
-		} finally {
-			setLoading(false);
-		}
-	};
 
 	const handleResendCode = async () => {
 		if (!email || timer > 0) return;
@@ -137,22 +133,27 @@ export const VerifyEmailForm: React.FC = () => {
 							<Input
 								label=""
 								type="text"
-								value={code}
+								name="code"
+								value={values.code}
 								onChange={(e) => {
-									setCode(
-										e.target.value
-											.replace(/\D/g, '')
-											.slice(0, 6),
-									);
-									setError('');
+									const value = e.target.value
+										.replace(/\D/g, '')
+										.slice(0, 6);
+									handleInputChange({
+										target: {
+											name: 'code',
+											value,
+											type: 'text',
+										},
+									} as React.ChangeEvent<HTMLInputElement>);
 								}}
-								error={error}
+								error={errors.code}
 								placeholder="Code à 6 chiffres"
 								maxLength={6}
 								className="text-center text-xl sm:text-2xl tracking-[0.5em] font-mono"
 								required
 							/>
-							{error && (
+							{errors.code && (
 								<div className="flex items-center justify-center text-red-600 text-sm mt-2">
 									<svg
 										className="w-4 h-4 mr-1"
@@ -165,7 +166,7 @@ export const VerifyEmailForm: React.FC = () => {
 											clipRule="evenodd"
 										/>
 									</svg>
-									{error}
+									{errors.code}
 								</div>
 							)}
 						</div>
@@ -173,12 +174,12 @@ export const VerifyEmailForm: React.FC = () => {
 						{/* Verify Button */}
 						<Button
 							type="submit"
-							loading={loading}
+							loading={isSubmitting}
 							className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
 							size="lg"
-							disabled={code.length !== 6}
+							disabled={values.code.length !== 6}
 						>
-							{loading ? 'Vérification...' : 'Vérifier'}
+							{isSubmitting ? 'Vérification...' : 'Vérifier'}
 						</Button>
 					</form>
 

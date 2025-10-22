@@ -5,22 +5,39 @@ import type {
 	ChatMessage as Message,
 	SendMessageData,
 } from '@/types/chat';
+import { handleApiError } from '../utils/errorHandler';
 
 export class ChatApi {
 	/**
 	 * Get users with existing conversations
 	 */
 	static async getConversationUsers(): Promise<User[]> {
-		const response = await api.get('/message/users');
-		return response.data;
+		try {
+			const response = await api.get('/message/users');
+			return response.data;
+		} catch (error) {
+			throw handleApiError(
+				error,
+				'chatApi.getConversationUsers',
+				'Erreur lors de la récupération des conversations',
+			);
+		}
 	}
 
 	/**
 	 * Get user by ID for initiating new conversations
 	 */
 	static async getUserById(userId: string): Promise<User> {
-		const response = await api.get(`/message/user/${userId}`);
-		return response.data;
+		try {
+			const response = await api.get(`/message/user/${userId}`);
+			return response.data;
+		} catch (error) {
+			throw handleApiError(
+				error,
+				'chatApi.getUserById',
+				"Erreur lors de la récupération de l'utilisateur",
+			);
+		}
 	}
 
 	/**
@@ -30,14 +47,23 @@ export class ChatApi {
 		userId: string,
 		options?: { before?: string; limit?: number },
 	): Promise<Message[]> {
-		const params = new URLSearchParams();
-		if (options?.before) params.append('before', options.before);
-		if (options?.limit) params.append('limit', options.limit.toString());
+		try {
+			const params = new URLSearchParams();
+			if (options?.before) params.append('before', options.before);
+			if (options?.limit)
+				params.append('limit', options.limit.toString());
 
-		const response = await api.get(`/message/${userId}`, {
-			params: Object.fromEntries(params),
-		});
-		return response.data;
+			const response = await api.get(`/message/${userId}`, {
+				params: Object.fromEntries(params),
+			});
+			return response.data;
+		} catch (error) {
+			throw handleApiError(
+				error,
+				'chatApi.getMessages',
+				'Erreur lors de la récupération des messages',
+			);
+		}
 	}
 
 	/**
@@ -47,11 +73,19 @@ export class ChatApi {
 		receiverId: string,
 		messageData: SendMessageData,
 	): Promise<Message> {
-		const response = await api.post(
-			`/message/send/${receiverId}`,
-			messageData,
-		);
-		return response.data;
+		try {
+			const response = await api.post(
+				`/message/send/${receiverId}`,
+				messageData,
+			);
+			return response.data;
+		} catch (error) {
+			throw handleApiError(
+				error,
+				'chatApi.sendMessage',
+				"Erreur lors de l'envoi du message",
+			);
+		}
 	}
 
 	/**
@@ -63,25 +97,49 @@ export class ChatApi {
 		mime: string;
 		size: number;
 	}> {
-		const form = new FormData();
-		form.append('file', file);
-		const resp = await api.post('/upload/chat-file', form, {
-			headers: { 'Content-Type': 'multipart/form-data' },
-		});
-		return resp.data.data;
+		try {
+			const form = new FormData();
+			form.append('file', file);
+			const resp = await api.post('/upload/chat-file', form, {
+				headers: { 'Content-Type': 'multipart/form-data' },
+			});
+			return resp.data.data;
+		} catch (error) {
+			throw handleApiError(
+				error,
+				'chatApi.uploadChatFile',
+				'Erreur lors du téléchargement du fichier',
+			);
+		}
 	}
 
 	/**
 	 * Mark messages as read
 	 */
 	static async markMessagesAsRead(senderId: string): Promise<void> {
-		await api.put(`/message/read/${senderId}`);
+		try {
+			await api.put(`/message/read/${senderId}`);
+		} catch (error) {
+			throw handleApiError(
+				error,
+				'chatApi.markMessagesAsRead',
+				'Erreur lors du marquage des messages comme lus',
+			);
+		}
 	}
 
 	/**
 	 * Delete a message I sent
 	 */
 	static async deleteMessage(messageId: string): Promise<void> {
-		await api.delete(`/message/${messageId}`);
+		try {
+			await api.delete(`/message/${messageId}`);
+		} catch (error) {
+			throw handleApiError(
+				error,
+				'chatApi.deleteMessage',
+				'Erreur lors de la suppression du message',
+			);
+		}
 	}
 }

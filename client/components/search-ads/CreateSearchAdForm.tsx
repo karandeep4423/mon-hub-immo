@@ -4,11 +4,12 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import searchAdApi from '@/lib/api/searchAdApi';
 import { useAuth } from '@/hooks/useAuth';
+import { useForm } from '@/hooks/useForm';
 import { SearchAdClientInfoForm } from './SearchAdClientInfoForm';
-import { MultiCityAutocomplete } from '@/components/ui';
+import { BaseLocationAutocomplete, type LocationItem } from '@/components/ui';
 import type { SearchAd } from '@/types/searchAd';
 
-interface FormData {
+interface FormData extends Record<string, unknown> {
 	title: string;
 	description: string;
 	propertyTypes: string[];
@@ -40,36 +41,95 @@ interface FormData {
 export const CreateSearchAdForm = () => {
 	const router = useRouter();
 	const { user } = useAuth();
-	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const [formData, setFormData] = useState<FormData>({
-		title: '',
-		description: '',
-		propertyTypes: [],
-		propertyState: [],
-		projectType: '',
-		cities: '',
-		maxDistance: undefined,
-		openToOtherAreas: false,
-		budgetMax: 0,
-		budgetIdeal: undefined,
-		financingType: '',
-		isSaleInProgress: false,
-		hasBankApproval: false,
-		minSurface: undefined,
-		minRooms: undefined,
-		minBedrooms: undefined,
-		hasExterior: false,
-		hasParking: false,
-		acceptedFloors: undefined,
-		desiredState: [],
-		mustHaves: [],
-		niceToHaves: [],
-		dealBreakers: [],
-		status: 'active',
-		badges: [],
-		clientInfo: {},
-	});
+
+	const { values, isSubmitting, setFieldValue, handleSubmit } =
+		useForm<FormData>({
+			initialValues: {
+				title: '',
+				description: '',
+				propertyTypes: [],
+				propertyState: [],
+				projectType: '',
+				cities: '',
+				maxDistance: undefined,
+				openToOtherAreas: false,
+				budgetMax: 0,
+				budgetIdeal: undefined,
+				financingType: '',
+				isSaleInProgress: false,
+				hasBankApproval: false,
+				minSurface: undefined,
+				minRooms: undefined,
+				minBedrooms: undefined,
+				hasExterior: false,
+				hasParking: false,
+				acceptedFloors: undefined,
+				desiredState: [],
+				mustHaves: [],
+				niceToHaves: [],
+				dealBreakers: [],
+				status: 'active',
+				badges: [],
+				clientInfo: {},
+			},
+			onSubmit: async (data) => {
+				if (!user) {
+					setError(
+						'Vous devez être connecté pour créer une annonce.',
+					);
+					return;
+				}
+
+				const validationError = validateForm();
+				if (validationError) {
+					setError(validationError);
+					return;
+				}
+
+				setError(null);
+
+				const adData = {
+					...data,
+					authorId: user._id,
+					status: data.status,
+					authorType: user.userType as 'agent' | 'apporteur',
+					location: {
+						cities: data.cities
+							.split(',')
+							.map((city) => city.trim()),
+						maxDistance: data.maxDistance,
+						openToOtherAreas: data.openToOtherAreas,
+					},
+					propertyTypes: data.propertyTypes as (
+						| 'house'
+						| 'apartment'
+						| 'land'
+						| 'building'
+						| 'commercial'
+					)[],
+					budget: {
+						max: data.budgetMax,
+						ideal: data.budgetIdeal,
+						financingType: data.financingType,
+						isSaleInProgress: data.isSaleInProgress,
+						hasBankApproval: data.hasBankApproval,
+					},
+					priorities: {
+						mustHaves: data.mustHaves,
+						niceToHaves: data.niceToHaves,
+						dealBreakers: data.dealBreakers,
+					},
+					badges: data.badges,
+					clientInfo: data.clientInfo,
+				};
+
+				await searchAdApi.createSearchAd(
+					adData as Parameters<typeof searchAdApi.createSearchAd>[0],
+				);
+				router.push('/mesannonces');
+			},
+		});
 
 	const propertyTypes = [
 		'house',
@@ -139,14 +199,14 @@ export const CreateSearchAdForm = () => {
 		const { name, value, type } = e.target;
 		if (type === 'checkbox') {
 			const checked = (e.target as HTMLInputElement).checked;
-			setFormData((prev) => ({ ...prev, [name]: checked }));
+			setFieldValue((prev) => ({ ...prev, [name]: checked }));
 		} else if (type === 'number') {
-			setFormData((prev) => ({
+			setFieldValue((prev) => ({
 				...prev,
 				[name]: value ? parseInt(value) : undefined,
 			}));
 		} else {
-			setFormData((prev) => ({ ...prev, [name]: value }));
+			setFieldValue((prev) => ({ ...prev, [name]: value }));
 		}
 	};
 
@@ -164,7 +224,7 @@ export const CreateSearchAdForm = () => {
 			| 'badges'
 		>,
 	) => {
-		setFormData((prev) => ({
+		setFieldValue((prev) => ({
 			...prev,
 			[field]: checked
 				? [...prev[field], value]
@@ -173,90 +233,22 @@ export const CreateSearchAdForm = () => {
 	};
 
 	const validateForm = (): string | null => {
-		if (!formData.title || formData.title.length < 5) {
+		if (!values.title || values.title.length < 5) {
 			return 'Le titre doit contenir au moins 5 caractères.';
 		}
-		if (!formData.description || formData.description.length < 10) {
+		if (!values.description || values.description.length < 10) {
 			return 'La description doit contenir au moins 10 caractères.';
 		}
-		if (formData.propertyTypes.length === 0) {
+		if (values.propertyTypes.length === 0) {
 			return 'Veuillez sélectionner au moins un type de bien.';
 		}
-		if (!formData.cities || formData.cities.length < 2) {
+		if (!values.cities || values.cities.length < 2) {
 			return 'La localisation est requise.';
 		}
-		if (formData.budgetMax <= 0) {
+		if (values.budgetMax <= 0) {
 			return 'Le budget maximum doit être positif.';
 		}
 		return null;
-	};
-
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-
-		if (!user) {
-			setError('Vous devez être connecté pour créer une annonce.');
-			return;
-		}
-
-		const validationError = validateForm();
-		if (validationError) {
-			setError(validationError);
-			return;
-		}
-
-		setIsLoading(true);
-		setError(null);
-
-		try {
-			const adData = {
-				...formData,
-				authorId: user._id,
-				status: formData.status,
-				authorType: user.userType as 'agent' | 'apporteur',
-				// Transform to expected API format
-				location: {
-					cities: formData.cities
-						.split(',')
-						.map((city) => city.trim()),
-					maxDistance: formData.maxDistance,
-					openToOtherAreas: formData.openToOtherAreas,
-				},
-				propertyTypes: formData.propertyTypes as (
-					| 'house'
-					| 'apartment'
-					| 'land'
-					| 'building'
-					| 'commercial'
-				)[],
-				budget: {
-					max: formData.budgetMax,
-					ideal: formData.budgetIdeal,
-					financingType: formData.financingType,
-					isSaleInProgress: formData.isSaleInProgress,
-					hasBankApproval: formData.hasBankApproval,
-				},
-				priorities: {
-					mustHaves: formData.mustHaves,
-					niceToHaves: formData.niceToHaves,
-					dealBreakers: formData.dealBreakers,
-				},
-				badges: formData.badges,
-				clientInfo: formData.clientInfo,
-			};
-
-			await searchAdApi.createSearchAd(
-				adData as Parameters<typeof searchAdApi.createSearchAd>[0],
-			);
-			router.push('/dashboard');
-		} catch (err) {
-			setError(
-				"Une erreur est survenue lors de la création de l'annonce.",
-			);
-			console.error(err);
-		} finally {
-			setIsLoading(false);
-		}
 	};
 
 	return (
@@ -291,7 +283,7 @@ export const CreateSearchAdForm = () => {
 									id="title"
 									name="title"
 									type="text"
-									value={formData.title}
+									value={values.title}
 									onChange={handleInputChange}
 									className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-600 focus:border-brand-600"
 									placeholder="Recherche appartement familial à Paris"
@@ -309,7 +301,7 @@ export const CreateSearchAdForm = () => {
 									id="description"
 									name="description"
 									rows={4}
-									value={formData.description}
+									value={values.description}
 									onChange={handleInputChange}
 									className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-600 focus:border-brand-600"
 									placeholder="Décrivez les besoins spécifiques de votre client..."
@@ -339,7 +331,7 @@ export const CreateSearchAdForm = () => {
 											<input
 												type="checkbox"
 												value={type}
-												checked={formData.propertyTypes.includes(
+												checked={values.propertyTypes.includes(
 													type,
 												)}
 												onChange={(e) =>
@@ -382,7 +374,7 @@ export const CreateSearchAdForm = () => {
 											<input
 												type="checkbox"
 												value={state}
-												checked={formData.propertyState.includes(
+												checked={values.propertyState.includes(
 													state,
 												)}
 												onChange={(e) =>
@@ -415,7 +407,7 @@ export const CreateSearchAdForm = () => {
 								<select
 									id="projectType"
 									name="projectType"
-									value={formData.projectType}
+									value={values.projectType}
 									onChange={handleInputChange}
 									className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
 								>
@@ -441,12 +433,21 @@ export const CreateSearchAdForm = () => {
 						</h3>
 
 						<div className="space-y-4">
-							<MultiCityAutocomplete
-								value={formData.cities}
-								onChange={(value) =>
-									setFormData((prev) => ({
+							<BaseLocationAutocomplete
+								mode="multi"
+								value={
+									values.cities
+										? values.cities
+												.split(',')
+												.map((c) => c.trim())
+										: []
+								}
+								onMultiSelect={(locations: LocationItem[]) =>
+									setFieldValue((prev) => ({
 										...prev,
-										cities: value,
+										cities: locations
+											.map((loc) => loc.name)
+											.join(', '),
 									}))
 								}
 								label="Ville(s), quartier(s) ciblé(s)"
@@ -467,7 +468,7 @@ export const CreateSearchAdForm = () => {
 										id="maxDistance"
 										name="maxDistance"
 										type="number"
-										value={formData.maxDistance || ''}
+										value={values.maxDistance || ''}
 										onChange={handleInputChange}
 										className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
 									/>
@@ -478,7 +479,7 @@ export const CreateSearchAdForm = () => {
 										<input
 											type="checkbox"
 											name="openToOtherAreas"
-											checked={formData.openToOtherAreas}
+											checked={values.openToOtherAreas}
 											onChange={handleInputChange}
 											className="rounded border-gray-300 text-blue-600"
 										/>
@@ -511,7 +512,7 @@ export const CreateSearchAdForm = () => {
 										id="budgetMax"
 										name="budgetMax"
 										type="number"
-										value={formData.budgetMax || ''}
+										value={values.budgetMax || ''}
 										onChange={handleInputChange}
 										className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
 									/>
@@ -528,7 +529,7 @@ export const CreateSearchAdForm = () => {
 										id="budgetIdeal"
 										name="budgetIdeal"
 										type="number"
-										value={formData.budgetIdeal || ''}
+										value={values.budgetIdeal || ''}
 										onChange={handleInputChange}
 										className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
 									/>
@@ -546,7 +547,7 @@ export const CreateSearchAdForm = () => {
 								<select
 									id="financingType"
 									name="financingType"
-									value={formData.financingType}
+									value={values.financingType}
 									onChange={handleInputChange}
 									className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
 								>
@@ -568,7 +569,7 @@ export const CreateSearchAdForm = () => {
 									<input
 										type="checkbox"
 										name="isSaleInProgress"
-										checked={formData.isSaleInProgress}
+										checked={values.isSaleInProgress}
 										onChange={handleInputChange}
 										className="rounded border-gray-300 text-blue-600"
 									/>
@@ -582,7 +583,7 @@ export const CreateSearchAdForm = () => {
 									<input
 										type="checkbox"
 										name="hasBankApproval"
-										checked={formData.hasBankApproval}
+										checked={values.hasBankApproval}
 										onChange={handleInputChange}
 										className="rounded border-gray-300 text-blue-600"
 									/>
@@ -614,7 +615,7 @@ export const CreateSearchAdForm = () => {
 										id="minRooms"
 										name="minRooms"
 										type="number"
-										value={formData.minRooms || ''}
+										value={values.minRooms || ''}
 										onChange={handleInputChange}
 										className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
 									/>
@@ -631,7 +632,7 @@ export const CreateSearchAdForm = () => {
 										id="minBedrooms"
 										name="minBedrooms"
 										type="number"
-										value={formData.minBedrooms || ''}
+										value={values.minBedrooms || ''}
 										onChange={handleInputChange}
 										className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
 									/>
@@ -648,7 +649,7 @@ export const CreateSearchAdForm = () => {
 										id="minSurface"
 										name="minSurface"
 										type="number"
-										value={formData.minSurface || ''}
+										value={values.minSurface || ''}
 										onChange={handleInputChange}
 										className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
 									/>
@@ -660,7 +661,7 @@ export const CreateSearchAdForm = () => {
 									<input
 										type="checkbox"
 										name="hasExterior"
-										checked={formData.hasExterior}
+										checked={values.hasExterior}
 										onChange={handleInputChange}
 										className="rounded border-gray-300 text-blue-600"
 									/>
@@ -674,7 +675,7 @@ export const CreateSearchAdForm = () => {
 									<input
 										type="checkbox"
 										name="hasParking"
-										checked={formData.hasParking}
+										checked={values.hasParking}
 										onChange={handleInputChange}
 										className="rounded border-gray-300 text-blue-600"
 									/>
@@ -694,7 +695,7 @@ export const CreateSearchAdForm = () => {
 								<select
 									id="acceptedFloors"
 									name="acceptedFloors"
-									value={formData.acceptedFloors || ''}
+									value={values.acceptedFloors || ''}
 									onChange={handleInputChange}
 									className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
 								>
@@ -726,7 +727,7 @@ export const CreateSearchAdForm = () => {
 											<input
 												type="checkbox"
 												value={state}
-												checked={formData.desiredState.includes(
+												checked={values.desiredState.includes(
 													state,
 												)}
 												onChange={(e) =>
@@ -775,7 +776,7 @@ export const CreateSearchAdForm = () => {
 											<input
 												type="checkbox"
 												value={priority}
-												checked={formData.mustHaves.includes(
+												checked={values.mustHaves.includes(
 													priority,
 												)}
 												onChange={(e) =>
@@ -787,11 +788,10 @@ export const CreateSearchAdForm = () => {
 												}
 												className="rounded border-gray-300 text-red-600 mt-1 flex-shrink-0"
 												disabled={
-													!formData.mustHaves.includes(
+													!values.mustHaves.includes(
 														priority,
 													) &&
-													formData.mustHaves.length >=
-														3
+													values.mustHaves.length >= 3
 												}
 											/>
 											<span className="text-sm leading-tight break-words">
@@ -819,7 +819,7 @@ export const CreateSearchAdForm = () => {
 											<input
 												type="checkbox"
 												value={priority}
-												checked={formData.niceToHaves.includes(
+												checked={values.niceToHaves.includes(
 													priority,
 												)}
 												onChange={(e) =>
@@ -831,11 +831,11 @@ export const CreateSearchAdForm = () => {
 												}
 												className="rounded border-gray-300 text-yellow-600 mt-1 flex-shrink-0"
 												disabled={
-													!formData.niceToHaves.includes(
+													!values.niceToHaves.includes(
 														priority,
 													) &&
-													formData.niceToHaves
-														.length >= 3
+													values.niceToHaves.length >=
+														3
 												}
 											/>
 											<span className="text-sm leading-tight break-words">
@@ -863,7 +863,7 @@ export const CreateSearchAdForm = () => {
 											<input
 												type="checkbox"
 												value={priority}
-												checked={formData.dealBreakers.includes(
+												checked={values.dealBreakers.includes(
 													priority,
 												)}
 												onChange={(e) =>
@@ -904,7 +904,7 @@ export const CreateSearchAdForm = () => {
 								<input
 									type="checkbox"
 									value={badge}
-									checked={formData.badges.includes(badge)}
+									checked={values.badges.includes(badge)}
 									onChange={(e) =>
 										handleArrayChange(
 											badge,
@@ -934,9 +934,9 @@ export const CreateSearchAdForm = () => {
 						</p>
 					</div>
 					<SearchAdClientInfoForm
-						clientInfo={formData.clientInfo || {}}
+						clientInfo={values.clientInfo || {}}
 						onChange={(clientInfo) =>
-							setFormData((prev) => ({ ...prev, clientInfo }))
+							setFieldValue((prev) => ({ ...prev, clientInfo }))
 						}
 					/>
 				</div>{' '}
@@ -953,9 +953,9 @@ export const CreateSearchAdForm = () => {
 									Statut de la recherche
 								</label>
 								<select
-									value={formData.status}
+									value={values.status}
 									onChange={(e) =>
-										setFormData((prev) => ({
+										setFieldValue((prev) => ({
 											...prev,
 											status: e.target
 												.value as FormData['status'],

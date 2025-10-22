@@ -8,6 +8,7 @@ import { MessageTime } from './ui';
 import { formatTimeOnly, formatFileSize } from './utils/messageUtils';
 import { getIconForMime } from './ui/FileTypeIcons';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -93,7 +94,7 @@ const getContainerClasses = (isMyMessage: boolean): string => {
  */
 const handleImageClick = (imageUrl: string): void => {
 	// Could implement image preview/modal here
-	console.log('Image clicked:', imageUrl);
+	logger.debug('Image clicked:', imageUrl);
 };
 
 // ============================================================================
@@ -320,7 +321,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
 			try {
 				await chatStore.deleteMessage(message._id);
 			} catch (e) {
-				console.error('Failed to delete message', e);
+				logger.error('Failed to delete message', e);
 			} finally {
 				setDeleting(false);
 				setConfirmOpen(false);

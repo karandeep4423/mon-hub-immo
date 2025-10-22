@@ -9,11 +9,12 @@ import { ProposeCollaborationModal } from '@/components/collaboration/ProposeCol
 import { ProfileAvatar } from '@/components/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { collaborationApi } from '@/lib/api/collaborationApi';
-import { api } from '@/lib/api';
-import type { Property } from '@/lib/api/propertyApi';
+import { PropertyService, type Property } from '@/lib/api/propertyApi';
 import { getImageUrl } from '@/lib/utils/imageUtils';
 import { toast } from 'react-toastify';
 import { getBadgeConfig } from '@/lib/constants/badges';
+import { logger } from '@/lib/utils/logger';
+import { useFetch } from '@/hooks';
 
 export default function PropertyDetailsPage() {
 	const params = useParams();
@@ -21,9 +22,17 @@ export default function PropertyDetailsPage() {
 	const { user } = useAuth();
 	const propertyId = params?.id as string;
 
-	const [property, setProperty] = useState<Property | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
+	// Fetch property using useFetch hook
+	const {
+		data: property,
+		loading,
+		error,
+	} = useFetch<Property>(() => PropertyService.getPropertyById(propertyId), {
+		skip: !propertyId,
+		showErrorToast: true,
+		errorMessage: 'Erreur lors du chargement du bien',
+	});
+
 	const [currentImageIndex, setCurrentImageIndex] = useState(0);
 	const [showCollaborationModal, setShowCollaborationModal] = useState(false);
 	const [hasBlockingCollab, setHasBlockingCollab] = useState<boolean>(false);
@@ -32,29 +41,6 @@ export default function PropertyDetailsPage() {
 	>(null);
 	const [showLightbox, setShowLightbox] = useState(false);
 	const [lightboxInitialIndex, setLightboxInitialIndex] = useState(0);
-
-	const fetchProperty = useCallback(async () => {
-		try {
-			setLoading(true);
-			const { data } = await api.get(`/property/${propertyId}`);
-			setProperty(data.data);
-		} catch (error) {
-			console.error('Error fetching property:', error);
-			setError(
-				error instanceof Error
-					? error.message
-					: 'Erreur lors du chargement du bien',
-			);
-		} finally {
-			setLoading(false);
-		}
-	}, [propertyId]);
-
-	useEffect(() => {
-		if (propertyId) {
-			fetchProperty();
-		}
-	}, [propertyId, fetchProperty]);
 
 	// Check if current user is the property owner
 	const isPropertyOwner =
@@ -81,7 +67,7 @@ export default function PropertyDetailsPage() {
 				setBlockingStatus(null);
 			}
 		} catch (e) {
-			console.warn('Failed to load property collaborations', e);
+			logger.warn('Failed to load property collaborations', e);
 		}
 	}, [propertyId]);
 
@@ -152,7 +138,9 @@ export default function PropertyDetailsPage() {
 						Bien non trouvé
 					</h1>
 					<p className="text-gray-600 mb-6">
-						{error || "Ce bien n'existe pas ou a été supprimé."}
+						{error
+							? error.message
+							: "Ce bien n'existe pas ou a été supprimé."}
 					</p>
 					<Button onClick={() => router.push('/home')}>
 						← Retour aux annonces

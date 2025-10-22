@@ -6,6 +6,7 @@ import { Button } from '../ui/Button';
 import { ProfileUpdateModal } from './ProfileUpdateModal';
 import { ProfileAvatar } from '../ui';
 import { User } from '@/types/auth';
+import { storage, STORAGE_KEYS } from '@/lib/utils/storageManager';
 
 interface AgentProfileCardProps {
 	user: User;
@@ -18,21 +19,19 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 
 	// Restore persisted collapse state
 	useEffect(() => {
-		try {
-			const v = localStorage.getItem('dashboard.profInfo.open');
-			if (v !== null) setIsInfoOpen(v === '1');
-		} catch {}
+		const value = storage.get<string>(
+			STORAGE_KEYS.DASHBOARD_PROF_INFO_OPEN,
+		);
+		if (value !== null) setIsInfoOpen(value === '1');
 	}, []);
 
 	const toggleInfo = () => {
 		setIsInfoOpen((prev) => {
 			const next = !prev;
-			try {
-				localStorage.setItem(
-					'dashboard.profInfo.open',
-					next ? '1' : '0',
-				);
-			} catch {}
+			storage.set(
+				STORAGE_KEYS.DASHBOARD_PROF_INFO_OPEN,
+				next ? '1' : '0',
+			);
 			return next;
 		});
 	};

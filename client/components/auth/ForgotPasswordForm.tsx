@@ -7,47 +7,28 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { authService } from '@/lib/api/authApi';
 import { forgotPasswordSchema } from '@/lib/validation';
+import { useForm } from '@/hooks/useForm';
+
+interface ForgotPasswordFormData extends Record<string, unknown> {
+	email: string;
+}
 
 export const ForgotPasswordForm: React.FC = () => {
 	const router = useRouter();
-	const [loading, setLoading] = useState(false);
-	const [email, setEmail] = useState('');
-	const [error, setError] = useState('');
 	const [success, setSuccess] = useState(false);
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setError('');
-
-		try {
-			forgotPasswordSchema.parse({ email });
-			setLoading(true);
-
-			const response = await authService.forgotPassword({ email });
-
-			if (response.success) {
-				setSuccess(true);
-				toast.success(response.message);
-			} else {
-				setError(response.message);
-			}
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		} catch (validationError: any) {
-			if (validationError.errors) {
-				setError(
-					validationError.errors[0]?.message ||
-						'Adresse email invalide',
-				);
-			} else {
-				setError(
-					validationError.response?.data?.message ||
-						"Une erreur s'est produite",
-				);
-			}
-		} finally {
-			setLoading(false);
-		}
-	};
+	const { values, errors, isSubmitting, handleInputChange, handleSubmit } =
+		useForm<ForgotPasswordFormData>({
+			initialValues: { email: '' },
+			onSubmit: async (data) => {
+				forgotPasswordSchema.parse(data);
+				const response = await authService.forgotPassword(data);
+				if (response.success) {
+					setSuccess(true);
+					toast.success(response.message);
+				}
+			},
+		});
 
 	if (success) {
 		return (
@@ -88,7 +69,7 @@ export const ForgotPasswordForm: React.FC = () => {
 								réinitialisation à
 							</p>
 							<p className="font-semibold text-gray-900 text-sm">
-								{email}
+								{values.email}
 							</p>
 						</div>
 
@@ -96,7 +77,7 @@ export const ForgotPasswordForm: React.FC = () => {
 							<Button
 								onClick={() =>
 									router.push(
-										`/auth/reset-password?email=${encodeURIComponent(email)}`,
+										`/auth/reset-password?email=${encodeURIComponent(values.email)}`,
 									)
 								}
 								className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
@@ -150,17 +131,15 @@ export const ForgotPasswordForm: React.FC = () => {
 							<Input
 								label=""
 								type="email"
-								value={email}
-								onChange={(e) => {
-									setEmail(e.target.value);
-									setError('');
-								}}
-								error={error}
+								name="email"
+								value={values.email}
+								onChange={handleInputChange}
+								error={errors.email}
 								placeholder="Votre adresse email"
 								required
 								className="text-center"
 							/>
-							{error && (
+							{errors.email && (
 								<div className="flex items-center justify-center text-red-600 text-sm mt-2">
 									<svg
 										className="w-4 h-4 mr-1"
@@ -173,7 +152,7 @@ export const ForgotPasswordForm: React.FC = () => {
 											clipRule="evenodd"
 										/>
 									</svg>
-									{error}
+									{errors.email}
 								</div>
 							)}
 						</div>
@@ -181,11 +160,11 @@ export const ForgotPasswordForm: React.FC = () => {
 						{/* Submit Button */}
 						<Button
 							type="submit"
-							loading={loading}
+							loading={isSubmitting}
 							className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
 							size="lg"
 						>
-							{loading
+							{isSubmitting
 								? 'Envoi en cours...'
 								: 'Envoyer les instructions'}
 						</Button>

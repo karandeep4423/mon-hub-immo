@@ -9,6 +9,7 @@ import {
 	ProgressStepData,
 } from './types';
 import { STEP_ORDER } from '../../../lib/constants/stepOrder';
+import { logger } from '@/lib/utils/logger';
 
 interface ProgressStatusModalProps {
 	isOpen: boolean;
@@ -62,7 +63,7 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 			onClose();
 			setNotes('');
 		} catch (error) {
-			console.error('Error updating status:', error);
+			logger.error('Error updating status:', error);
 		} finally {
 			setIsUpdating(false);
 		}

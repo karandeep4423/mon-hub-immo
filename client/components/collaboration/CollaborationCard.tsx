@@ -10,6 +10,7 @@ import { Property, propertyService } from '../../lib/api/propertyApi';
 import type { SearchAd } from '../../types/searchAd';
 import searchAdApi from '../../lib/api/searchAdApi';
 import { PROGRESS_STEPS_CONFIG } from './progress-tracking/types';
+import { logger } from '@/lib/utils/logger';
 
 interface CollaborationCardProps {
 	collaboration: Collaboration;
@@ -61,7 +62,7 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 				}
 
 				if (!postId) {
-					console.warn('No valid post ID found in collaboration');
+					logger.warn('No valid post ID found in collaboration');
 					setLoadingPost(false);
 					return;
 				}
@@ -76,7 +77,7 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 					setSearchAd(searchAdData);
 				}
 			} catch (error) {
-				console.error('Error fetching post data:', error);
+				logger.error('Error fetching post data:', error);
 			} finally {
 				setLoadingPost(false);
 			}
@@ -597,7 +598,7 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 						className="bg-green-600 hover:bg-green-700 text-white"
 						onClick={() => {
 							// Handle accept
-							console.log('Accept collaboration');
+							logger.debug('Accept collaboration');
 						}}
 					>
 						✅ Accepter

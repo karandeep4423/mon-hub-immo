@@ -1,6 +1,7 @@
 import { ChatApi } from '@/lib/api/chatApi';
 import { toast } from 'react-toastify';
 import { chatLogger } from '@/lib/utils/logger';
+import { logger } from '@/lib/utils/logger';
 import type {
 	ChatUser as User,
 	ChatMessage as Message,
@@ -382,8 +383,9 @@ export const createChatStore = (): ChatStore => {
 
 		setState({ users: reorderedUsers });
 
-		console.log(
-			`📝 Updated last message for user ${message.senderId}: "${message.text}" at ${message.createdAt}`,
+		logger.debug(
+			`[ChatStore] Updated last message for user ${message.senderId}`,
+			{ text: message.text, createdAt: message.createdAt },
 		);
 	};
 
@@ -435,12 +437,13 @@ export const createChatStore = (): ChatStore => {
 				sortUsersByRecentActivity(usersWithLastMessage);
 			setState({ users: reorderedUsers });
 
-			console.log(
-				`📝 Updated last message for user ${peerUserId}: "${message.text}" at ${message.createdAt}`,
+			logger.debug(
+				`[ChatStore] Updated last message for user ${peerUserId}`,
+				{ text: message.text, createdAt: message.createdAt },
 			);
 		} else {
-			console.log(
-				'⚠️ ChatStore: Received message from user not in sidebar:',
+			logger.debug(
+				'[ChatStore] Received message from user not in sidebar',
 				peerUserId,
 			);
 			// Could fetch user details here if needed, but this should be rare
@@ -563,8 +566,8 @@ export const createChatStore = (): ChatStore => {
 
 		// Ensure we're only loading messages for the currently selected user
 		if (state.selectedUser?._id !== userId) {
-			console.log(
-				'🚫 ChatStore: Ignoring messages fetch for non-selected user:',
+			logger.debug(
+				'[ChatStore] Ignoring messages fetch for non-selected user',
 				userId,
 			);
 			return;
@@ -574,19 +577,17 @@ export const createChatStore = (): ChatStore => {
 
 		try {
 			const messages = await ChatApi.getMessages(userId, { limit: 30 });
-			console.log(
-				'✅ ChatStore: Messages fetched for user:',
+			logger.debug('[ChatStore] Messages fetched for user', {
 				userId,
-				'- Count:',
-				messages.length,
-			);
+				count: messages.length,
+			});
 
 			// Double-check the user is still selected before setting messages
 			if (state.selectedUser?._id === userId) {
 				setMessages(messages);
 			} else {
-				console.log(
-					'🚫 ChatStore: User changed during fetch, ignoring messages for:',
+				logger.debug(
+					'[ChatStore] User changed during fetch, ignoring messages for',
 					userId,
 				);
 			}
@@ -657,12 +658,10 @@ export const createChatStore = (): ChatStore => {
 			return;
 		}
 
-		console.log(
-			'📤 ChatStore: Sending message:',
+		logger.debug('[ChatStore] Sending message to', {
+			userId: state.selectedUser._id,
 			messageData,
-			'to:',
-			state.selectedUser._id,
-		);
+		});
 
 		setSendingMessage(true);
 
@@ -672,15 +671,15 @@ export const createChatStore = (): ChatStore => {
 				messageData,
 			);
 			chatLogger.success('Message sent:', newMessage);
-			console.log(
-				'📋 ChatStore: Current processed IDs before add:',
+			logger.debug(
+				'[ChatStore] Current processed IDs before add',
 				Array.from(processedMessageIds),
 			);
 
 			// Store sent message ID to prevent duplicate when socket echoes it back
 			processedMessageIds.add(String(newMessage._id));
-			console.log(
-				'📋 ChatStore: Added message ID to processed:',
+			logger.debug(
+				'[ChatStore] Added message ID to processed',
 				String(newMessage._id),
 			);
 
@@ -690,18 +689,17 @@ export const createChatStore = (): ChatStore => {
 				newMessage,
 			]);
 			setState({ messages: updatedMessages });
-			console.log(
-				'📋 ChatStore: Messages after send:',
-				updatedMessages.length,
-			);
+			logger.debug('[ChatStore] Messages after send', {
+				count: updatedMessages.length,
+			});
 
 			// Ensure the selected user is in the users list (for new conversations)
 			const existingUser = state.users.find(
 				(u) => u._id === state.selectedUser!._id,
 			);
 			if (!existingUser) {
-				console.log(
-					'📝 ChatStore: Adding new user to sidebar:',
+				logger.debug(
+					'[ChatStore] Adding new user to sidebar',
 					state.selectedUser!._id,
 				);
 				const updatedUsers = [

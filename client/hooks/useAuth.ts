@@ -1,17 +1,24 @@
 'use client';
 
-import { useContext } from 'react';
-import { AuthContext } from '@/context/AuthContext';
+import { useAuthStore } from '@/store/authStore';
 
-// Custom hook to use the Auth context
+// Custom hook to use the Auth store
 export const useAuth = () => {
-	const context = useContext(AuthContext);
+	const user = useAuthStore((state) => state.user);
+	const loading = useAuthStore((state) => state.loading);
+	const login = useAuthStore((state) => state.login);
+	const logout = useAuthStore((state) => state.logout);
+	const updateUser = useAuthStore((state) => state.updateUser);
+	const refreshUser = useAuthStore((state) => state.refreshUser);
 
-	if (context === undefined) {
-		throw new Error('useAuth must be used within an AuthProvider');
-	}
-
-	return context;
+	return {
+		user,
+		loading,
+		login,
+		logout,
+		updateUser,
+		refreshUser,
+	};
 };
 
 // Additional auth-related hooks

@@ -1,7 +1,7 @@
 // app/layout.tsx
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { AuthProvider } from '@/providers/AuthProvider';
+import { AuthInitializer } from '@/components/auth/AuthInitializer';
 import { ToastContainer } from 'react-toastify';
 import { SocketWrapper } from '@/components/chat/SocketWrapper';
 import Header from '@/components/header/Header';
@@ -25,7 +25,7 @@ export default function RootLayout({
 		<html lang="en">
 			<body className={inter.className}>
 				<ErrorBoundary>
-					<AuthProvider>
+					<AuthInitializer>
 						<SocketWrapper>
 							<Header />
 							{children}
@@ -42,7 +42,7 @@ export default function RootLayout({
 							pauseOnHover
 							theme="light"
 						/>
-					</AuthProvider>
+					</AuthInitializer>
 				</ErrorBoundary>
 			</body>
 		</html>

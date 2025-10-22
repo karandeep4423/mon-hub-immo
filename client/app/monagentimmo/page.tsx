@@ -1,64 +1,62 @@
 'use client';
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import Image from 'next/image';
-import { api } from '@/lib/api';
+import { AgentService, type Agent } from '@/lib/api/agentApi';
+import { useFetch } from '@/hooks';
 import { AgentCard } from '@/components/appointments/AgentCard';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { BookAppointmentModal } from '@/components/appointments/BookAppointmentModal';
-import { CityAutocomplete } from '@/components/ui/CityAutocomplete';
-
-interface Agent {
-	_id: string;
-	firstName: string;
-	lastName: string;
-	email: string;
-	phone?: string;
-	profileImage?: string;
-	professionalInfo?: {
-		postalCode?: string;
-		city?: string;
-		interventionRadius?: number;
-		network?: string;
-		siretNumber?: string;
-		yearsExperience?: number;
-		personalPitch?: string;
-	};
-}
+import { BaseLocationAutocomplete } from '@/components/ui';
 
 export default function MonAgentImmoPage() {
-	const [agents, setAgents] = useState<Agent[]>([]);
-	const [loading, setLoading] = useState(true);
+	// Fetch agents using useFetch hook (replaces manual state management)
+	const { data: agents = [], loading } = useFetch<Agent[]>(
+		() => AgentService.getAllAgents(),
+		{
+			showErrorToast: true,
+			errorMessage: 'Impossible de charger les agents',
+		},
+	);
+
+	// Search state
 	const [searchCity, setSearchCity] = useState('');
 	const [searchPostalCode, setSearchPostalCode] = useState('');
-	const [filteredAgents, setFilteredAgents] = useState<Agent[]>([]);
 	const [searchPerformed, setSearchPerformed] = useState(false);
 	const [searching, setSearching] = useState(false);
+
+	// UI refs
 	const carouselRef = useRef<HTMLDivElement>(null);
 	const searchSectionRef = useRef<HTMLDivElement>(null);
+
+	// Booking modal state
 	const [showBooking, setShowBooking] = useState(false);
 	const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
 
-	const fetchAgents = useCallback(async () => {
-		try {
-			setLoading(true);
-			const response = await api.get('/auth/agents');
-			setAgents(response.data.data || []);
-			setFilteredAgents(response.data.data || []);
-		} catch (error) {
-			console.error('Error fetching agents:', error);
-		} finally {
-			setLoading(false);
+	// Filtered agents based on search (using useMemo for performance)
+	const filteredAgents = useMemo(() => {
+		if (!searchPerformed || (!searchCity && !searchPostalCode)) {
+			return agents;
 		}
-	}, []);
 
-	useEffect(() => {
-		fetchAgents();
-	}, [fetchAgents]);
+		const cityQuery = searchCity.toLowerCase().trim();
+		const postalQuery = searchPostalCode.trim();
 
+		return agents.filter((agent) => {
+			const agentCity = agent.professionalInfo?.city?.toLowerCase() || '';
+			const agentPostalCode = agent.professionalInfo?.postalCode || '';
+
+			const cityMatch = !cityQuery || agentCity.includes(cityQuery);
+			const postalMatch =
+				!postalQuery || agentPostalCode.includes(postalQuery);
+
+			return cityMatch && postalMatch;
+		});
+	}, [agents, searchCity, searchPostalCode, searchPerformed]);
+
+	// Handle search button click
 	const handleSearch = () => {
 		if (!searchCity.trim() && !searchPostalCode.trim()) {
-			setFilteredAgents(agents);
 			setSearchPerformed(false);
 			return;
 		}
@@ -67,23 +65,6 @@ export default function MonAgentImmoPage() {
 
 		// Simulate a brief loading state for better UX
 		setTimeout(() => {
-			const cityQuery = searchCity.toLowerCase().trim();
-			const postalQuery = searchPostalCode.trim();
-
-			const filtered = agents.filter((agent) => {
-				const agentCity =
-					agent.professionalInfo?.city?.toLowerCase() || '';
-				const agentPostalCode =
-					agent.professionalInfo?.postalCode || '';
-
-				const cityMatch = !cityQuery || agentCity.includes(cityQuery);
-				const postalMatch =
-					!postalQuery || agentPostalCode.includes(postalQuery);
-
-				return cityMatch && postalMatch;
-			});
-
-			setFilteredAgents(filtered);
 			setSearchPerformed(true);
 			setSearching(false);
 
@@ -188,17 +169,18 @@ export default function MonAgentImmoPage() {
 												d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
 											/>
 										</svg>
-										<CityAutocomplete
+										<BaseLocationAutocomplete
+											mode="single"
 											value={searchCity}
-											onCitySelect={(
-												city,
-												postalCode,
-											) => {
-												setSearchCity(city);
-												setSearchPostalCode(postalCode);
+											onSelect={(location) => {
+												setSearchCity(location.name);
+												setSearchPostalCode(
+													location.postcode,
+												);
 											}}
 											placeholder="Entrez votre ville ou code postal"
 											className="border-0 shadow-none focus:ring-0 pl-8 py-2.5 text-gray-900"
+											showPostalCode={false}
 										/>
 									</div>
 									<button
@@ -423,7 +405,6 @@ export default function MonAgentImmoPage() {
 										onClick={() => {
 											setSearchCity('');
 											setSearchPostalCode('');
-											setFilteredAgents(agents);
 											setSearchPerformed(false);
 										}}
 										className="bg-brand hover:bg-brand-dark text-white px-8 py-3 rounded-full font-medium transition-all shadow-md hover:shadow-lg active:scale-95 inline-flex items-center gap-2"
@@ -471,7 +452,6 @@ export default function MonAgentImmoPage() {
 										onClick={() => {
 											setSearchCity('');
 											setSearchPostalCode('');
-											setFilteredAgents(agents);
 											setSearchPerformed(false);
 										}}
 										className="text-brand hover:text-brand-dark font-medium border-2 border-brand hover:border-brand-dark px-6 py-2.5 rounded-full transition-all hover:bg-brand/5 active:scale-95 inline-flex items-center justify-center gap-2 whitespace-nowrap"

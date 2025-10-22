@@ -1,3 +1,5 @@
+import { logger } from '../utils/logger';
+
 export interface ContactFormData {
 	name: string;
 	email: string;
@@ -38,7 +40,7 @@ export class ContactApi {
 				throw new Error("Erreur lors de l'envoi du message");
 			}
 		} catch (error) {
-			console.error('Contact form error:', error);
+			logger.error('[ContactApi] Contact form submission failed', error);
 			return {
 				success: false,
 				message:
