@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { LoadingSpinner } from './LoadingSpinner';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { CHAT_TEXT } from '@/lib/constants/text';
 
 /**

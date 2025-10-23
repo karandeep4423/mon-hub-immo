@@ -11,6 +11,8 @@ import {
 	searchMunicipalities,
 	getMunicipalitiesByPostalPrefix,
 } from '@/lib/services/frenchAddressApi';
+import { DEBOUNCE_AUTOCOMPLETE_MS } from '@/lib/constants';
+import { useClickOutside } from '@/hooks/useClickOutside';
 
 export interface LocationItem {
 	name: string;
@@ -54,8 +56,8 @@ export const LocationSearchWithRadius: React.FC<
 	);
 	const [showNearbyCities, setShowNearbyCities] = useState(false);
 	const [showDropdown, setShowDropdown] = useState(false);
-	const [loading, setLoading] = useState(false);
-	const [loadingNearby, setLoadingNearby] = useState(false);
+	const [isFetching, setIsFetching] = useState(false);
+	const [isFetchingNearby, setIsFetchingNearby] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
 
@@ -70,11 +72,11 @@ export const LocationSearchWithRadius: React.FC<
 
 			if (!trimmedInput || trimmedInput.length < minLength) {
 				setSuggestions([]);
-				setLoading(false);
+				setIsFetching(false);
 				return;
 			}
 
-			setLoading(true);
+			setIsFetching(true);
 			try {
 				const municipalities = await searchMunicipalities(
 					inputValue,
@@ -99,34 +101,23 @@ export const LocationSearchWithRadius: React.FC<
 				logger.error('Error fetching municipalities:', error);
 				setSuggestions([]);
 			} finally {
-				setLoading(false);
+				setIsFetching(false);
 			}
 		};
 
-		const debounceTimer = setTimeout(fetchSuggestions, 300);
+		const debounceTimer = setTimeout(
+			fetchSuggestions,
+			DEBOUNCE_AUTOCOMPLETE_MS,
+		);
 		return () => clearTimeout(debounceTimer);
 	}, [inputValue, selectedLocations]);
 
 	// Handle click outside
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			if (
-				dropdownRef.current &&
-				!dropdownRef.current.contains(event.target as Node) &&
-				!inputRef.current?.contains(event.target as Node)
-			) {
-				setShowDropdown(false);
-			}
-		};
-
-		document.addEventListener('mousedown', handleClickOutside);
-		return () =>
-			document.removeEventListener('mousedown', handleClickOutside);
-	}, []);
+	useClickOutside([dropdownRef, inputRef], () => setShowDropdown(false));
 
 	const handleSelectLocation = async (location: LocationItem) => {
 		// Fetch nearby cities with same postal code prefix
-		setLoadingNearby(true);
+		setIsFetchingNearby(true);
 		setShowNearbyCities(true);
 
 		try {
@@ -155,7 +146,7 @@ export const LocationSearchWithRadius: React.FC<
 				setSuggestions([]);
 				setShowDropdown(false);
 				setShowNearbyCities(false);
-				setLoadingNearby(false);
+				setIsFetchingNearby(false);
 				return;
 			}
 
@@ -169,7 +160,7 @@ export const LocationSearchWithRadius: React.FC<
 			// Fallback: just add the selected location
 			onLocationsChange([location]);
 		} finally {
-			setLoadingNearby(false);
+			setIsFetchingNearby(false);
 		}
 	};
 
@@ -297,7 +288,7 @@ export const LocationSearchWithRadius: React.FC<
 							placeholder={placeholder}
 							className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand text-sm"
 						/>
-						{loading && (
+						{isFetching && (
 							<div className="absolute inset-y-0 right-0 pr-3 flex items-center">
 								<svg
 									className="animate-spin h-5 w-5 text-gray-400"
@@ -335,7 +326,7 @@ export const LocationSearchWithRadius: React.FC<
 										Sélectionnez les communes (
 										{nearbyCities.length})
 									</div>
-									{loadingNearby && (
+									{isFetchingNearby && (
 										<div className="text-sm text-gray-500 flex items-center">
 											<svg
 												className="animate-spin h-4 w-4 mr-2 text-brand"

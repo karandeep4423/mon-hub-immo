@@ -3,7 +3,6 @@
 import React from 'react';
 import { getUserStatusText } from './utils/userUtils';
 import { formatMessageTime } from './utils/messageUtils';
-import { OnlineIndicator } from './ui';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -50,7 +49,7 @@ interface MessageTimestampProps {
  * Get status indicator color
  */
 const getStatusColor = (isOnline?: boolean): string => {
-	return isOnline ? 'text-[#00b4d8]' : 'text-gray-500';
+	return isOnline ? 'text-brand' : 'text-gray-500';
 };
 
 // ============================================================================
@@ -172,7 +171,12 @@ const MessageStatus: React.FC<MessageStatusProps> = React.memo(
 			<div
 				className={`text-xs px-4 pb-2 flex items-center space-x-2 ${className}`}
 			>
-				{selectedUser?.isOnline && <OnlineIndicator size="sm" />}
+				{selectedUser?.isOnline && (
+					<span
+						className="w-2 h-2 bg-green-500 rounded-full"
+						aria-label="Online"
+					></span>
+				)}
 				<span className={statusColor}>{statusText}</span>
 			</div>
 		);

@@ -19,6 +19,7 @@ interface UseFormReturn<T> {
 	clearErrors: () => void;
 	handleSubmit: (e?: React.FormEvent) => Promise<void>;
 	resetForm: () => void;
+	setValues: (values: T) => void;
 }
 
 export const useForm = <T extends Record<string, unknown>>({
@@ -108,5 +109,6 @@ export const useForm = <T extends Record<string, unknown>>({
 		clearErrors,
 		handleSubmit,
 		resetForm,
+		setValues,
 	};
 };

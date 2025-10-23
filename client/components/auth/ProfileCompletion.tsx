@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { Button } from '../ui/Button';
@@ -8,9 +8,11 @@ import { Input } from '../ui/Input';
 import { CityAutocomplete } from '../ui/CityAutocomplete';
 import { ProfileImageUploader } from '../ui/ProfileImageUploader';
 import { useAuth } from '@/hooks/useAuth';
+import { useRequireAuth } from '@/hooks';
 import { authService } from '@/lib/api/authApi';
 import { useForm } from '@/hooks/useForm';
 import { PageLoader } from '../ui/LoadingSpinner';
+import { TOAST_MESSAGES } from '@/lib/constants';
 
 interface ProfileCompletionFormData extends Record<string, unknown> {
 	firstName: string;
@@ -38,7 +40,8 @@ interface ProfileCompletionFormData extends Record<string, unknown> {
 export const ProfileCompletion: React.FC = () => {
 	const router = useRouter();
 	const { user, updateUser } = useAuth();
-	const [loading, setLoading] = useState(false);
+	// Ensure authenticated users only; redirects to login if not
+	useRequireAuth();
 
 	const { values, errors, isSubmitting, setFieldValue, handleSubmit } =
 		useForm<ProfileCompletionFormData>({
@@ -68,35 +71,33 @@ export const ProfileCompletion: React.FC = () => {
 				const response = await authService.completeProfile(data);
 				if (response.success && response.user) {
 					updateUser(response.user);
-					toast.success('Profil complété avec succès !');
+					toast.success(TOAST_MESSAGES.AUTH.PROFILE_COMPLETED);
 					router.push('/auth/welcome');
 				}
 			},
 		});
 
 	useEffect(() => {
-		if (!user && !loading) {
-			router.push('/auth/login');
-			return;
-		}
+		// Only proceed with role/completion checks when we have a user
+		if (!user || isSubmitting) return;
 
 		// Allow access if user is logged in and is an agent (regardless of profile completion status)
-		if (user && user.userType !== 'agent') {
-			toast.error('Cette page est réservée aux agents');
+		if (user.userType !== 'agent') {
+			toast.error(TOAST_MESSAGES.AUTH.AGENT_ONLY_ACCESS);
 			router.push('/dashboard');
 			return;
 		}
 
 		// If profile is already completed, redirect to dashboard
-		if (user && user.profileCompleted) {
+		if (user.profileCompleted) {
 			router.push('/dashboard');
 			return;
 		}
-	}, [user, loading, router]);
+	}, [user, isSubmitting, router]);
 
-	// Update the loading condition
-	if (loading) {
-		return <PageLoader message="Loading..." />;
+	// Update the isSubmitting condition
+	if (isSubmitting) {
+		return <PageLoader message="isSubmitting..." />;
 	}
 
 	if (!user) {
@@ -113,102 +114,28 @@ export const ProfileCompletion: React.FC = () => {
 		if (type === 'checkbox') {
 			const checked = (e.target as HTMLInputElement).checked;
 			if (name === 'mandateTypes') {
-				setFormData((prev) => ({
-					...prev,
-					mandateTypes: checked
-						? [...prev.mandateTypes, value]
-						: prev.mandateTypes.filter((t) => t !== value),
-				}));
+				const currentMandates = values.mandateTypes || [];
+				setFieldValue(
+					'mandateTypes',
+					checked
+						? [...currentMandates, value]
+						: currentMandates.filter((t) => t !== value),
+				);
 			} else {
-				setFormData((prev) => ({ ...prev, [name]: checked }));
+				setFieldValue(name, checked);
 			}
 		} else {
-			setFormData((prev) => ({ ...prev, [name]: value }));
-		}
-
-		if (errors[name]) {
-			setErrors((prev) => ({ ...prev, [name]: '' }));
+			setFieldValue(name, value);
 		}
 	};
 
 	const handleImageUploaded = (imageUrl: string) => {
-		setFormData((prev) => ({
-			...prev,
-			profileImage: imageUrl,
-		}));
-		// Clear error when image is uploaded
-		if (errors.profileImage) {
-			setErrors((prev) => ({
-				...prev,
-				profileImage: '',
-			}));
-		}
+		setFieldValue('profileImage', imageUrl);
 	};
 
 	const handleImageRemove = () => {
-		setFormData((prev) => ({
-			...prev,
-			profileImage: '',
-		}));
+		setFieldValue('profileImage', '');
 	};
-
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setErrors({});
-
-		if (!formData.acceptTerms) {
-			setErrors({ acceptTerms: 'Vous devez accepter les conditions' });
-			return;
-		}
-
-		try {
-			setLoading(true);
-
-			const response = await authService.completeProfile({
-				professionalInfo: {
-					postalCode: formData.postalCode,
-					city: formData.city,
-					interventionRadius: Number(formData.interventionRadius),
-					coveredCities: formData.coveredCities
-						.split(',')
-						.map((c) => c.trim()),
-					network: formData.network,
-					siretNumber: formData.siretNumber,
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					mandateTypes: formData.mandateTypes as any,
-					yearsExperience: Number(formData.yearsExperience),
-					personalPitch: formData.personalPitch,
-					collaborateWithAgents: formData.collaborateWithAgents,
-					shareCommission: formData.shareCommission,
-					independentAgent: formData.independentAgent,
-					alertsEnabled: formData.alertsEnabled,
-					alertFrequency: formData.alertFrequency,
-				},
-				profileImage: formData.profileImage,
-			});
-
-			if (response.success && response.user) {
-				// CRITICAL: Update the auth context with the complete user data
-				updateUser(response.user);
-				toast.success('Profil complété avec succès !');
-				router.push('/dashboard');
-			} else {
-				toast.error(response.message);
-			}
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		} catch (error: any) {
-			toast.error(
-				error.response?.data?.message ||
-					'Erreur lors de la création du profil',
-			);
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	if (!user) {
-		return <div>Loading...</div>;
-	}
 
 	return (
 		<div className="min-h-screen bg-gray-50">
@@ -237,7 +164,7 @@ export const ProfileCompletion: React.FC = () => {
 							<Input
 								label="Prénom"
 								name="firstName"
-								value={formData.firstName}
+								value={values.firstName}
 								onChange={handleChange}
 								error={errors.firstName}
 								disabled
@@ -245,10 +172,10 @@ export const ProfileCompletion: React.FC = () => {
 
 							<div className="md:col-start-2 flex items-center justify-center">
 								<ProfileImageUploader
-									currentImageUrl={formData.profileImage}
+									currentImageUrl={values.profileImage}
 									onImageUploaded={handleImageUploaded}
 									onRemove={handleImageRemove}
-									disabled={loading}
+									disabled={isSubmitting}
 									size="medium"
 									uploadingText="Uploading profile image..."
 								/>
@@ -257,7 +184,7 @@ export const ProfileCompletion: React.FC = () => {
 							<Input
 								label="Nom"
 								name="lastName"
-								value={formData.lastName}
+								value={values.lastName}
 								onChange={handleChange}
 								error={errors.lastName}
 								disabled
@@ -268,7 +195,7 @@ export const ProfileCompletion: React.FC = () => {
 							<Input
 								label="Email"
 								name="email"
-								value={formData.email}
+								value={values.email}
 								onChange={handleChange}
 								error={errors.email}
 								disabled
@@ -277,7 +204,7 @@ export const ProfileCompletion: React.FC = () => {
 							<Input
 								label="Téléphone pro"
 								name="phone"
-								value={formData.phone}
+								value={values.phone}
 								onChange={handleChange}
 								error={errors.phone}
 								placeholder="0123456789"
@@ -294,7 +221,7 @@ export const ProfileCompletion: React.FC = () => {
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<CityAutocomplete
 								label="Ville principale"
-								value={formData.city}
+								value={values.city}
 								onCitySelect={(cityName, postalCode) => {
 									handleChange({
 										target: {
@@ -316,7 +243,7 @@ export const ProfileCompletion: React.FC = () => {
 							<Input
 								label="Code postal"
 								name="postalCode"
-								value={formData.postalCode}
+								value={values.postalCode}
 								onChange={handleChange}
 								error={errors.postalCode}
 								placeholder="22100"
@@ -329,7 +256,7 @@ export const ProfileCompletion: React.FC = () => {
 								</label>
 								<select
 									name="interventionRadius"
-									value={formData.interventionRadius}
+									value={values.interventionRadius}
 									onChange={handleChange}
 									className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
 								>
@@ -348,7 +275,7 @@ export const ProfileCompletion: React.FC = () => {
 							</label>
 							<textarea
 								name="coveredCities"
-								value={formData.coveredCities}
+								value={values.coveredCities}
 								onChange={handleChange}
 								rows={3}
 								className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
@@ -370,7 +297,7 @@ export const ProfileCompletion: React.FC = () => {
 								</label>
 								<select
 									name="network"
-									value={formData.network}
+									value={values.network}
 									onChange={handleChange}
 									className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
 								>
@@ -388,7 +315,7 @@ export const ProfileCompletion: React.FC = () => {
 							<Input
 								label="Numéro SIRET"
 								name="siretNumber"
-								value={formData.siretNumber}
+								value={values.siretNumber}
 								onChange={handleChange}
 								error={errors.siretNumber}
 								placeholder="12345678901234"
@@ -414,7 +341,7 @@ export const ProfileCompletion: React.FC = () => {
 												type="checkbox"
 												name="mandateTypes"
 												value={mandate.id}
-												checked={formData.mandateTypes.includes(
+												checked={values.mandateTypes.includes(
 													mandate.id,
 												)}
 												onChange={handleChange}
@@ -432,7 +359,7 @@ export const ProfileCompletion: React.FC = () => {
 								label="Années d'expérience"
 								name="yearsExperience"
 								type="number"
-								value={formData.yearsExperience}
+								value={values.yearsExperience}
 								onChange={handleChange}
 								error={errors.yearsExperience}
 								placeholder="5"
@@ -448,7 +375,7 @@ export const ProfileCompletion: React.FC = () => {
 
 						<textarea
 							name="personalPitch"
-							value={formData.personalPitch}
+							value={values.personalPitch}
 							onChange={handleChange}
 							rows={4}
 							className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
@@ -460,7 +387,7 @@ export const ProfileCompletion: React.FC = () => {
 								<input
 									type="checkbox"
 									name="collaborateWithAgents"
-									checked={formData.collaborateWithAgents}
+									checked={values.collaborateWithAgents}
 									onChange={handleChange}
 									className="rounded border-gray-300 text-cyan-600 shadow-sm focus:border-cyan-300 focus:ring focus:ring-offset-0 focus:ring-cyan-200 focus:ring-opacity-50"
 								/>
@@ -474,7 +401,7 @@ export const ProfileCompletion: React.FC = () => {
 								<input
 									type="checkbox"
 									name="shareCommission"
-									checked={formData.shareCommission}
+									checked={values.shareCommission}
 									onChange={handleChange}
 									className="rounded border-gray-300 text-cyan-600 shadow-sm focus:border-cyan-300 focus:ring focus:ring-offset-0 focus:ring-cyan-200 focus:ring-opacity-50"
 								/>
@@ -501,7 +428,7 @@ export const ProfileCompletion: React.FC = () => {
 								<input
 									type="checkbox"
 									name="independentAgent"
-									checked={formData.independentAgent}
+									checked={values.independentAgent}
 									onChange={handleChange}
 									className="rounded border-gray-300 text-cyan-600 shadow-sm focus:border-cyan-300 focus:ring focus:ring-offset-0 focus:ring-cyan-200 focus:ring-opacity-50"
 								/>
@@ -515,7 +442,7 @@ export const ProfileCompletion: React.FC = () => {
 								<input
 									type="checkbox"
 									name="acceptTerms"
-									checked={formData.acceptTerms}
+									checked={values.acceptTerms}
 									onChange={handleChange}
 									className="rounded border-gray-300 text-cyan-600 shadow-sm focus:border-cyan-300 focus:ring focus:ring-offset-0 focus:ring-cyan-200 focus:ring-opacity-50"
 								/>
@@ -536,7 +463,7 @@ export const ProfileCompletion: React.FC = () => {
 					<div className="pt-6">
 						<Button
 							type="submit"
-							loading={loading}
+							loading={isSubmitting}
 							className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
 							size="lg"
 						>

@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import React, { useState } from 'react';
+import React from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import type { Property } from '@/lib/api/propertyApi';
 import type { SearchAd } from '@/types/searchAd';
 import { useForm } from '@/hooks/useForm';
+import { TOAST_MESSAGES } from '@/lib/constants';
 
 type PostData =
 	| {
@@ -61,7 +62,6 @@ interface CollaborationFormData extends Record<string, unknown> {
 export const ProposeCollaborationModal: React.FC<
 	ProposeCollaborationModalProps
 > = ({ isOpen, onClose, post, onSuccess }) => {
-	const [error, setError] = useState<string | null>(null);
 	const isApporteurPost = post.ownerUserType === 'apporteur';
 
 	const { values, isSubmitting, setFieldValue, handleSubmit, resetForm } =
@@ -74,8 +74,6 @@ export const ProposeCollaborationModal: React.FC<
 				agreeToTerms: false,
 			},
 			onSubmit: async (data) => {
-				setError(null);
-
 				// Validate for apporteur posts
 				if (isApporteurPost) {
 					if (data.compensationType === 'percentage') {
@@ -135,7 +133,7 @@ export const ProposeCollaborationModal: React.FC<
 				}
 
 				await collaborationApi.propose(payload);
-				toast.success('Collaboration proposée avec succès');
+				toast.success(TOAST_MESSAGES.COLLABORATION.PROPOSE_SUCCESS);
 				onSuccess?.();
 				onClose();
 				resetForm();
@@ -244,12 +242,6 @@ export const ProposeCollaborationModal: React.FC<
 				</div>
 
 				<form onSubmit={handleSubmit} className="space-y-4">
-					{error && (
-						<div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
-							{error}
-						</div>
-					)}
-
 					{/* Compensation Type Selection for Apporteur Posts */}
 					{isApporteurPost && (
 						<div className="space-y-3">

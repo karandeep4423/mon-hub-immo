@@ -5,11 +5,11 @@ import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 import ChatMessages from '@/components/chat/ChatMessages';
 import MessageInput from '@/components/chat/MessageInput';
 import { getDetailedUserPresenceText } from '@/components/chat/utils';
-import { User } from '@/types/auth';
+import { ChatUser } from '@/types/chat';
 
 interface CollaborationChatProps {
 	isOpen: boolean;
-	selectedUser: User | null;
+	selectedUser: ChatUser | null;
 	onlineUsers: string[];
 	onClose: () => void;
 }

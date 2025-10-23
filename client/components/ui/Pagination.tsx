@@ -1,15 +1,15 @@
 import React from 'react';
 
-type Props = {
+interface PaginationProps {
 	currentPage: number;
 	totalItems: number;
 	pageSize?: number;
 	onPageChange: (page: number) => void;
 	className?: string;
 	scrollTargetId?: string;
-};
+}
 
-export const Pagination: React.FC<Props> = ({
+export const Pagination: React.FC<PaginationProps> = ({
 	currentPage,
 	totalItems,
 	pageSize = 9,

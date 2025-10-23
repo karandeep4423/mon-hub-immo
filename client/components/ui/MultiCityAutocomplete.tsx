@@ -5,9 +5,9 @@
 
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { searchMunicipalities } from '@/lib/services/frenchAddressApi';
-import { logger } from '@/lib/utils/logger';
+import { useAutocomplete } from '@/hooks/useAutocomplete';
 
 interface City {
 	name: string;
@@ -32,13 +32,32 @@ export const MultiCityAutocomplete: React.FC<MultiCityAutocompleteProps> = ({
 	label,
 	required = false,
 }) => {
-	const [inputValue, setInputValue] = useState('');
 	const [selectedCities, setSelectedCities] = useState<City[]>([]);
-	const [suggestions, setSuggestions] = useState<City[]>([]);
-	const [showDropdown, setShowDropdown] = useState(false);
-	const [loading, setLoading] = useState(false);
-	const dropdownRef = useRef<HTMLDivElement>(null);
-	const inputRef = useRef<HTMLInputElement>(null);
+
+	const {
+		inputRef,
+		dropdownRef,
+		inputValue,
+		setInputValue,
+		suggestions,
+		loading,
+		showDropdown,
+		setShowDropdown,
+		handleInputChange,
+		handleFocus,
+	} = useAutocomplete<City>({
+		debounceMs: 300,
+		minLength: 2,
+		fetchSuggestions: async (query: string, limit: number) => {
+			const municipalities = await searchMunicipalities(query, limit);
+			return municipalities.map((m) => ({
+				name: m.name,
+				postcode: m.postcode,
+				display: `${m.name} (${m.postcode})`,
+			}));
+		},
+		limit: 8,
+	});
 
 	// Initialize selected cities from value prop
 	useEffect(() => {
@@ -57,105 +76,47 @@ export const MultiCityAutocomplete: React.FC<MultiCityAutocompleteProps> = ({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [value]);
 
-	// Fetch suggestions from API
-	useEffect(() => {
-		const fetchSuggestions = async () => {
-			const trimmedInput = inputValue.trim();
+	const handleSuggestionClick = useCallback(
+		(city: City) => {
+			const newSelectedCities = [...selectedCities, city];
+			setSelectedCities(newSelectedCities);
 
-			if (!trimmedInput || trimmedInput.length < 2) {
-				setSuggestions([]);
-				setLoading(false);
-				return;
-			}
+			// Update parent with comma-separated string
+			const cityString = newSelectedCities
+				.map((c) => c.display)
+				.join(', ');
+			onChange(cityString);
 
-			setLoading(true);
-			try {
-				const municipalities = await searchMunicipalities(
-					inputValue,
-					8,
-				);
+			setInputValue('');
+			setShowDropdown(false);
+			inputRef.current?.focus();
+		},
+		[selectedCities, onChange, setInputValue, setShowDropdown, inputRef],
+	);
 
-				const cityItems: City[] = municipalities.map((m) => ({
-					name: m.name,
-					postcode: m.postcode,
-					display: `${m.name} (${m.postcode})`,
-				}));
+	const handleRemoveCity = useCallback(
+		(indexToRemove: number) => {
+			const newSelectedCities = selectedCities.filter(
+				(_, index) => index !== indexToRemove,
+			);
+			setSelectedCities(newSelectedCities);
 
-				// Filter out already selected cities
-				const filtered = cityItems.filter(
-					(city) =>
-						!selectedCities.some(
-							(selected) => selected.display === city.display,
-						),
-				);
+			// Update parent with comma-separated string
+			const cityString = newSelectedCities
+				.map((c) => c.display)
+				.join(', ');
+			onChange(cityString);
+		},
+		[selectedCities, onChange],
+	);
 
-				setSuggestions(filtered);
-				setShowDropdown(filtered.length > 0);
-			} catch (error) {
-				logger.error('Error fetching city suggestions:', error);
-				setSuggestions([]);
-			} finally {
-				setLoading(false);
-			}
-		};
-
-		const debounceTimer = setTimeout(fetchSuggestions, 300);
-		return () => clearTimeout(debounceTimer);
-	}, [inputValue, selectedCities]);
-
-	// Close dropdown when clicking outside
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			if (
-				dropdownRef.current &&
-				!dropdownRef.current.contains(event.target as Node) &&
-				inputRef.current &&
-				!inputRef.current.contains(event.target as Node)
-			) {
-				setShowDropdown(false);
-			}
-		};
-
-		document.addEventListener('mousedown', handleClickOutside);
-		return () =>
-			document.removeEventListener('mousedown', handleClickOutside);
-	}, []);
-
-	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		setInputValue(e.target.value);
-		setShowDropdown(true);
-	};
-
-	const handleSuggestionClick = (city: City) => {
-		const newSelectedCities = [...selectedCities, city];
-		setSelectedCities(newSelectedCities);
-
-		// Update parent with comma-separated string
-		const cityString = newSelectedCities.map((c) => c.display).join(', ');
-		onChange(cityString);
-
-		setInputValue('');
-		setShowDropdown(false);
-		setSuggestions([]);
-		inputRef.current?.focus();
-	};
-
-	const handleRemoveCity = (indexToRemove: number) => {
-		const newSelectedCities = selectedCities.filter(
-			(_, index) => index !== indexToRemove,
-		);
-		setSelectedCities(newSelectedCities);
-
-		// Update parent with comma-separated string
-		const cityString = newSelectedCities.map((c) => c.display).join(', ');
-		onChange(cityString);
-	};
-
-	const handleFocus = () => {
-		if (suggestions.length > 0) {
-			setShowDropdown(true);
-		}
-	};
+	// Filter out already selected cities from suggestions
+	const filteredSuggestions = suggestions.filter(
+		(city) =>
+			!selectedCities.some(
+				(selected) => selected.display === city.display,
+			),
+	);
 
 	return (
 		<div className="space-y-2">
@@ -220,12 +181,12 @@ export const MultiCityAutocomplete: React.FC<MultiCityAutocompleteProps> = ({
 				)}
 
 				{/* Suggestions Dropdown */}
-				{showDropdown && suggestions.length > 0 && (
+				{showDropdown && filteredSuggestions.length > 0 && (
 					<div
 						ref={dropdownRef}
-						className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+						className="absolute z-[9999] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto"
 					>
-						{suggestions.map((suggestion, index) => (
+						{filteredSuggestions.map((suggestion, index) => (
 							<button
 								key={`${suggestion.display}-${index}`}
 								type="button"

@@ -1,16 +1,10 @@
 // client/components/auth/SignUpForm.tsx
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
+import React from 'react';
 import { Button } from '@/components/ui/Button';
-import { authService } from '@/lib/api/authApi';
-import { signUpSchema, type SignUpFormData } from '@/lib/validation';
-import { AUTH_TEXT } from '@/lib/constants/text';
-import { ZodError } from 'zod';
 import { StepIndicator } from '@/components/auth/StepIndicator';
-import { useMutation } from '@/hooks/useMutation';
+import { useSignUpForm } from '@/hooks/useSignUpForm';
 import {
 	BasicInfoStep,
 	UserTypeStep,
@@ -20,256 +14,30 @@ import {
 } from '@/components/auth/signup-steps';
 
 export const SignUpForm: React.FC = () => {
-	const router = useRouter();
-	const [currentStep, setCurrentStep] = useState(1);
-	const [formData, setFormData] = useState<SignUpFormData>({
-		firstName: '',
-		lastName: '',
-		email: '',
-		phone: '',
-		userType: '',
-		password: '',
-		confirmPassword: '',
-		// Agent-specific fields
-		agentType: '', // Type of agent
-		tCard: '', // T card number
-		sirenNumber: '', // SIREN number
-		rsacNumber: '', // RSAC registration number
-		collaboratorCertificate: '', // Certificate from employer
-	});
-
-	const [errors, setErrors] = useState<Record<string, string>>({});
-	const [showPassword, setShowPassword] = useState(false);
-	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-	const [identityCardFile, setIdentityCardFile] = useState<File | null>(null);
-
-	const { mutate: signUpMutation, loading } = useMutation(
-		async (data: SignUpFormData) => {
-			const validatedData = signUpSchema.parse(data);
-			return await authService.signUp({
-				firstName: validatedData.firstName,
-				lastName: validatedData.lastName,
-				email: validatedData.email,
-				phone: validatedData.phone,
-				password: validatedData.password,
-				confirmPassword: validatedData.confirmPassword,
-				userType: validatedData.userType as '' | 'agent' | 'apporteur',
-			});
-		},
-		{
-			onSuccess: (response, variables) => {
-				if (response.success) {
-					toast.success(AUTH_TEXT.signupSuccess);
-					router.push(
-						`/auth/verify-email?email=${encodeURIComponent(variables.email)}&redirect=profile`,
-					);
-				} else {
-					toast.error(response.message);
-				}
-			},
-			onError: (error) => {
-				if (error.errors) {
-					const backendErrors: Record<string, string> = {};
-					error.errors.forEach((err) => {
-						backendErrors[err.field] = err.message;
-					});
-					setErrors(backendErrors);
-				} else {
-					toast.error(error.message || AUTH_TEXT.somethingWentWrong);
-				}
-			},
-			errorMessage: AUTH_TEXT.somethingWentWrong,
-		},
-	);
+	const {
+		currentStep,
+		formData,
+		showPassword,
+		showConfirmPassword,
+		identityCardFile,
+		loading,
+		errors,
+		setShowPassword,
+		setShowConfirmPassword,
+		setIdentityCardFile,
+		handleChange,
+		handleNext,
+		handlePrevious,
+		handleSubmit,
+	} = useSignUpForm();
 
 	const steps = [
-		{ id: 1, label: 'Informations' },
+		{ id: 1, label: 'Informations de base' },
 		{ id: 2, label: 'Rôle' },
-		{ id: 3, label: 'Professionnel' },
-		{ id: 4, label: 'Sécurité' },
-		{ id: 5, label: 'Confirmation' },
+		{ id: 3, label: 'Informations professionnelles' },
+		{ id: 4, label: 'Mot de passe' },
+		{ id: 5, label: 'Révision' },
 	];
-
-	const handleChange = (
-		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-	) => {
-		const { name, value } = e.target;
-
-		// If userType changes and it's not 'agent', clear agent fields
-		if (name === 'userType' && value !== 'agent') {
-			setFormData((prev) => ({
-				...prev,
-				[name]: value,
-				agentType: '',
-				tCard: '',
-				sirenNumber: '',
-				rsacNumber: '',
-				collaboratorCertificate: '',
-			}));
-			setIdentityCardFile(null);
-		} else if (name === 'agentType') {
-			// Clear identity card when agent type changes
-			setIdentityCardFile(null);
-			setFormData((prev) => ({ ...prev, [name]: value }));
-		} else {
-			setFormData((prev) => ({ ...prev, [name]: value }));
-		}
-
-		// Clear field error when user starts typing
-		if (errors[name]) {
-			setErrors((prev) => ({ ...prev, [name]: '' }));
-		}
-
-		// Clear confirm password error when password changes
-		if (name === 'password' && errors.confirmPassword) {
-			setErrors((prev) => ({ ...prev, confirmPassword: '' }));
-		}
-
-		// Clear confirm password error when confirm password changes and matches
-		if (
-			name === 'confirmPassword' &&
-			errors.confirmPassword &&
-			value === formData.password
-		) {
-			setErrors((prev) => ({ ...prev, confirmPassword: '' }));
-		}
-	};
-
-	const validateStep = (step: number): boolean => {
-		const newErrors: Record<string, string> = {};
-
-		switch (step) {
-			case 1: // Basic Information
-				if (!formData.firstName.trim())
-					newErrors.firstName = 'Prénom requis';
-				if (!formData.lastName.trim())
-					newErrors.lastName = 'Nom requis';
-				if (!formData.email.trim()) newErrors.email = 'Email requis';
-				else if (!/\S+@\S+\.\S+/.test(formData.email))
-					newErrors.email = 'Email invalide';
-				if (!formData.phone.trim())
-					newErrors.phone = 'Téléphone requis';
-				else if (!/^0[1-9]\d{8}$/.test(formData.phone))
-					newErrors.phone = 'Format: 0123456789';
-				break;
-
-			case 2: // User Type
-				if (!formData.userType)
-					newErrors.userType = 'Veuillez choisir un rôle';
-				break;
-
-			case 3: // Agent Professional Info (if agent)
-				if (formData.userType === 'agent') {
-					if (!formData.agentType)
-						newErrors.agentType = "Type d'agent requis";
-
-					if (formData.agentType === 'independent') {
-						if (!formData.tCard && !formData.sirenNumber) {
-							newErrors.tCard = 'Carte T ou SIREN requis';
-						}
-					} else if (formData.agentType === 'commercial') {
-						if (!formData.sirenNumber && !formData.rsacNumber) {
-							newErrors.sirenNumber = 'SIREN ou RSAC requis';
-						}
-					} else if (formData.agentType === 'employee') {
-						if (!formData.collaboratorCertificate) {
-							newErrors.collaboratorCertificate =
-								'Certificat requis';
-						}
-					}
-				}
-				break;
-
-			case 4: // Password
-				if (!formData.password)
-					newErrors.password = 'Mot de passe requis';
-				else if (formData.password.length < 8)
-					newErrors.password = 'Minimum 8 caractères';
-				else if (
-					!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)
-				)
-					newErrors.password = '1 majuscule, 1 minuscule, 1 chiffre';
-
-				if (!formData.confirmPassword)
-					newErrors.confirmPassword = 'Confirmation requise';
-				else if (formData.password !== formData.confirmPassword)
-					newErrors.confirmPassword =
-						'Les mots de passe ne correspondent pas';
-				break;
-		}
-
-		setErrors(newErrors);
-		return Object.keys(newErrors).length === 0;
-	};
-
-	const handleNext = () => {
-		if (validateStep(currentStep)) {
-			// Skip step 3 if user is not an agent
-			if (currentStep === 2 && formData.userType !== 'agent') {
-				setCurrentStep(4);
-			} else {
-				setCurrentStep((prev) => Math.min(prev + 1, steps.length));
-			}
-		}
-	};
-
-	const handlePrevious = () => {
-		// Skip step 3 if user is not an agent when going back
-		if (currentStep === 4 && formData.userType !== 'agent') {
-			setCurrentStep(2);
-		} else {
-			setCurrentStep((prev) => Math.max(prev - 1, 1));
-		}
-	};
-
-	const validateForm = () => {
-		try {
-			signUpSchema.parse(formData);
-			return {};
-		} catch (error) {
-			if (error instanceof ZodError) {
-				const newErrors: Record<string, string> = {};
-				error.issues.forEach((err) => {
-					if (err.path.length > 0) {
-						newErrors[err.path[0] as string] = err.message;
-					}
-				});
-				return newErrors;
-			}
-			return {};
-		}
-	};
-
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setErrors({});
-
-		// Validate final step
-		if (!validateStep(4)) {
-			return;
-		}
-
-		// Validate entire form
-		const validationErrors = validateForm();
-		if (Object.keys(validationErrors).length > 0) {
-			setErrors(validationErrors);
-			return;
-		}
-
-		try {
-			await signUpMutation(formData);
-		} catch (error) {
-			if (error instanceof ZodError) {
-				const newErrors: Record<string, string> = {};
-				error.issues.forEach((err) => {
-					if (err.path.length > 0) {
-						newErrors[err.path[0] as string] = err.message;
-					}
-				});
-				setErrors(newErrors);
-			}
-		}
-	};
 
 	return (
 		<div className="min-h-screen bg-white flex">

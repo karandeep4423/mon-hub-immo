@@ -1,3 +1,4 @@
+import { DAYS_OF_WEEK } from '@/lib/constants';
 import { DayScheduleCard } from './DayScheduleCard';
 import type { DayAvailability } from '@/types/appointment';
 
@@ -13,16 +14,6 @@ interface WeeklyScheduleTabProps {
 	) => void;
 	onRemoveSlotFromDay: (day: number, slotIndex: number) => void;
 }
-
-const DAYS_OF_WEEK = [
-	{ value: 1, label: 'Lundi' },
-	{ value: 2, label: 'Mardi' },
-	{ value: 3, label: 'Mercredi' },
-	{ value: 4, label: 'Jeudi' },
-	{ value: 5, label: 'Vendredi' },
-	{ value: 6, label: 'Samedi' },
-	{ value: 0, label: 'Dimanche' },
-];
 
 export const WeeklyScheduleTab = ({
 	weeklySchedule,

@@ -9,6 +9,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { toast } from 'react-toastify';
 import { useFetch } from '@/hooks/useFetch';
 import { useMutation } from '@/hooks/useMutation';
+import { TOAST_MESSAGES } from '@/lib/constants';
 
 interface CollaborationListProps {
 	currentUserId: string;
@@ -39,7 +40,7 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 	} = useFetch(() => collaborationApi.getUserCollaborations(), {
 		initialData: { collaborations: [] },
 		showErrorToast: true,
-		errorMessage: 'Erreur lors du chargement des collaborations',
+		errorMessage: TOAST_MESSAGES.COLLABORATION.FETCH_ERROR,
 	});
 
 	// Mutation for cancel/terminate actions
@@ -55,14 +56,14 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 			onSuccess: async (_, variables) => {
 				toast.success(
 					variables.mode === 'cancel'
-						? 'Collaboration annulée'
-						: 'Collaboration terminée',
+						? TOAST_MESSAGES.COLLABORATION.CANCEL_SUCCESS
+						: TOAST_MESSAGES.COLLABORATION.COMPLETE_SUCCESS,
 				);
 				setConfirmOpen(false);
 				setTargetCollab(null);
 				await fetchCollaborations();
 			},
-			errorMessage: 'Action impossible sur la collaboration',
+			errorMessage: TOAST_MESSAGES.COLLABORATION.STATUS_UPDATE_ERROR,
 		},
 	);
 

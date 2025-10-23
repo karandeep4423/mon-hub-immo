@@ -4,6 +4,7 @@ import React from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Collaboration } from '@/types/collaboration';
+import { formatDateShort } from '@/lib/utils/date';
 
 interface CollaborationContractProps {
 	collaboration: Collaboration;
@@ -76,9 +77,7 @@ export const CollaborationContract: React.FC<CollaborationContractProps> = ({
 				{bothSigned && collaboration.ownerSignedAt && (
 					<div className="text-xs text-gray-500 pt-2 border-t">
 						Contrat signé le:{' '}
-						{new Date(
-							collaboration.ownerSignedAt,
-						).toLocaleDateString('fr-FR')}
+						{formatDateShort(collaboration.ownerSignedAt)}
 					</div>
 				)}
 			</div>

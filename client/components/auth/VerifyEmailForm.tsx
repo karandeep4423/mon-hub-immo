@@ -10,6 +10,7 @@ import { useMutation } from '@/hooks/useMutation';
 import { authService } from '@/lib/api/authApi';
 import { verifyEmailSchema } from '@/lib/validation';
 import { useForm } from '@/hooks/useForm';
+import { AUTH_ROUTES } from '@/lib/constants';
 
 interface VerifyEmailFormData extends Record<string, unknown> {
 	code: string;
@@ -69,9 +70,9 @@ export const VerifyEmailForm: React.FC = () => {
 				toast.success(response.message);
 
 				if (response.requiresProfileCompletion) {
-					router.push('/auth/complete-profile');
+					router.push(AUTH_ROUTES.COMPLETE_PROFILE);
 				} else {
-					router.push('/auth/welcome');
+					router.push(AUTH_ROUTES.WELCOME);
 				}
 			} else {
 				setErrors({ code: response.message });
@@ -205,7 +206,7 @@ export const VerifyEmailForm: React.FC = () => {
 						<div>
 							<button
 								type="button"
-								onClick={() => router.push('/auth/login')}
+								onClick={() => router.push(AUTH_ROUTES.LOGIN)}
 								className="text-gray-600 hover:text-gray-500 text-sm font-medium transition-colors"
 							>
 								Retour à la connexion

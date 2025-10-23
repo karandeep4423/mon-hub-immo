@@ -6,6 +6,7 @@ import {
 	BADGE_VARIANT_CLASSES,
 	type BadgeVariant,
 } from '@/lib/constants/statusConfigs';
+import { logger } from '@/lib/utils/logger';
 
 // Legacy interface for backward compatibility
 interface LegacyStatusBadgeProps {
@@ -70,8 +71,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = (props) => {
 
 		if (!config) {
 			// Fallback for unknown statuses
-			console.warn(
-				`Unknown status "${props.status}" for entity type "${props.entityType}"`,
+			logger.warn(
+				`[StatusBadge] Unknown status "${props.status}" for entity type "${props.entityType}"`,
 			);
 			return (
 				<span

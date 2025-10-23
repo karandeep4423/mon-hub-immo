@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
+import { useDropzone, FileRejection } from 'react-dropzone';
 
 interface ImageFile {
 	file: File;
@@ -28,12 +28,11 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 	const [uploadError, setUploadError] = useState<string>('');
 
 	const onDrop = useCallback(
-		(acceptedFiles: File[], rejectedFiles: unknown[]) => {
+		(acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
 			setUploadError('');
 
 			if (rejectedFiles.length > 0) {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const error = (rejectedFiles[0] as any).errors[0];
+				const error = rejectedFiles[0].errors[0];
 				if (error.code === 'file-too-large') {
 					setUploadError('Le fichier est trop volumineux (max 5MB)');
 				} else if (error.code === 'file-invalid-type') {

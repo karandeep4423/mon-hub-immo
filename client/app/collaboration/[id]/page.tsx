@@ -9,6 +9,7 @@ import { useMutation } from '@/hooks/useMutation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
+import { TOAST_MESSAGES } from '@/lib/constants';
 
 // New detail components
 import {
@@ -85,14 +86,14 @@ export default function CollaborationPage() {
 			onSuccess: async (_, variables) => {
 				toast.success(
 					variables.action === 'cancelled'
-						? 'Collaboration annulée'
-						: 'Collaboration terminée',
+						? TOAST_MESSAGES.COLLABORATION.CANCEL_SUCCESS
+						: TOAST_MESSAGES.COLLABORATION.COMPLETE_SUCCESS,
 				);
 				await fetchCollaboration();
 				setConfirmOpen(false);
 				setPendingAction(null);
 			},
-			errorMessage: 'Action impossible sur la collaboration',
+			errorMessage: TOAST_MESSAGES.COLLABORATION.STATUS_UPDATE_ERROR,
 		},
 	);
 
@@ -103,13 +104,13 @@ export default function CollaborationPage() {
 		collaboration &&
 		userId &&
 		(userId === collaboration.postOwnerId?._id ||
-			userId === collaboration.postOwnerId);
+			userId === (collaboration.postOwnerId as unknown as string));
 	const isCollaborator =
 		user &&
 		collaboration &&
 		userId &&
 		(userId === collaboration.collaboratorId?._id ||
-			userId === collaboration.collaboratorId);
+			userId === (collaboration.collaboratorId as unknown as string));
 	const canUpdate = Boolean(isOwner || isCollaborator);
 	const isActive = collaboration?.status === 'active';
 

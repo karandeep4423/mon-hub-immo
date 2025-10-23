@@ -14,6 +14,7 @@ import { PropertyFormStep3 } from './PropertyFormStep3';
 import { PropertyFormStep4 } from './PropertyFormStep4';
 import { PropertyFormStep5 } from './PropertyFormStep5';
 import { logger } from '@/lib/utils/logger';
+import { UI_TRANSITION_MS } from '@/lib/constants';
 
 interface ExistingImage {
 	url: string;
@@ -112,7 +113,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({
 			logger.debug('[PropertyForm] Moving to step:', nextStep);
 			setJustNavigated(true);
 			setCurrentStep(nextStep);
-			setTimeout(() => setJustNavigated(false), 100);
+			setTimeout(() => setJustNavigated(false), UI_TRANSITION_MS);
 		} else {
 			logger.warn(
 				'[PropertyForm] Validation failed, staying on step:',

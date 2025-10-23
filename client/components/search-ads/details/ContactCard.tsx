@@ -1,6 +1,7 @@
 import React from 'react';
 import { SearchAd } from '@/types/searchAd';
 import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
+import { shareContent } from '@/lib/utils/share';
 
 interface ContactCardProps {
 	searchAd: SearchAd;
@@ -118,18 +119,14 @@ export const ContactCard: React.FC<ContactCardProps> = ({
 					<span>Partager cette annonce</span>
 				</h4>
 				<button
-					onClick={() => {
-						if (navigator.share) {
-							navigator.share({
-								title: searchAd.title,
-								text: `Découvrez cette recherche immobilière: ${searchAd.title}`,
-								url: window.location.href,
-							});
-						} else {
-							navigator.clipboard.writeText(window.location.href);
-							alert('Lien copié dans le presse-papiers!');
-						}
-					}}
+					onClick={() =>
+						shareContent({
+							title: searchAd.title,
+							text: `Découvrez cette recherche immobilière: ${searchAd.title}`,
+							successMessage:
+								'Lien copié dans le presse-papiers!',
+						})
+					}
 					className="w-full px-3.5 py-2.5 bg-white border-2 border-gray-300 hover:border-cyan-500 hover:bg-cyan-50 text-gray-700 hover:text-cyan-700 rounded-lg transition-all duration-200 font-semibold flex items-center justify-center gap-2 group text-xs"
 				>
 					<svg

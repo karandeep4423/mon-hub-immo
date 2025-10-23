@@ -76,7 +76,7 @@ const getBubbleClasses = (isMyMessage: boolean): string => {
 		'max-w-[70%] sm:max-w-[85%] rounded-lg px-4 py-2 shadow-sm';
 
 	if (isMyMessage) {
-		return `${baseClasses} bg-[#00b4d8] text-white rounded-br-sm`;
+		return `${baseClasses} bg-brand text-white rounded-br-sm`;
 	}
 
 	return `${baseClasses} bg-white text-gray-800 border border-gray-200 rounded-bl-sm`;
@@ -178,7 +178,7 @@ const DocTile: React.FC<{
 
 	// Brand-colored container using project accent #00b4d8
 	return (
-		<div className="mt-2 w-full max-w-[420px] rounded-xl border border-[#0094b3] bg-[#00b4d8] text-white shadow-sm">
+		<div className="mt-2 w-full max-w-[420px] rounded-xl border border-brand-dark bg-brand text-white shadow-sm">
 			<div className="flex items-center gap-3 px-4 pt-3">
 				<div
 					className={`h-12 w-12 ${badgeBg} rounded-md flex items-center justify-center select-none`}

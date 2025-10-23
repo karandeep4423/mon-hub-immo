@@ -4,9 +4,9 @@
  */
 
 import { logger } from '@/lib/utils/logger';
-import { reverseGeocode } from '@/lib/api/geocodingApi';
+// import { reverseGeocode } from '@/lib/api/geocodingApi';
 import { storage, STORAGE_KEYS } from '@/lib/utils/storageManager';
-import type { Location } from '@/types/location';
+// import type { Location } from '@/types/location';
 
 export interface GeolocationResult {
 	latitude: number;

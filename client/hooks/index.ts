@@ -6,11 +6,11 @@
 // Authentication
 export {
 	useAuth,
-	useRequireAuth,
 	useProtectedRoute,
 	useProfileStatus,
 	useUserTypeHelpers,
 } from './useAuth';
+export { useRequireAuth } from './useRequireAuth';
 
 // Socket listeners (NEW - reusable patterns)
 export {
@@ -30,14 +30,30 @@ export type {
 	MutationResponse,
 } from './useMutation';
 
+// Address & Location search
+export { useAddressSearch } from './useAddressSearch';
+export type { AddressSuggestion } from './useAddressSearch';
+
 // Chat
 export { useChat } from './useChat';
+
+// Form validation (NEW - reusable validation patterns)
+export { useFormValidation, commonValidationRules } from './useFormValidation';
+export type {
+	ValidationRule,
+	FieldValidation,
+	ValidationSchema,
+	StepValidationSchema,
+} from './useFormValidation';
 
 // Notifications
 export { useNotification } from './useNotification';
 
 // Appointments
 export { useAppointmentNotifications } from './useAppointmentNotifications';
+
+// Autocomplete
+export { useAutocomplete } from './useAutocomplete';
 
 // Collaboration
 export { useCollaborationData } from './useCollaborationData';

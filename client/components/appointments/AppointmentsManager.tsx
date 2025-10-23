@@ -1,20 +1,20 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { appointmentApi } from '@/lib/api/appointmentApi';
 import { Appointment } from '@/types/appointment';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { Button } from '../ui/Button';
-import { formatDate, formatTime } from '@/lib/utils/date';
 import { AvailabilityManager } from './AvailabilityManager';
 import { useAppointmentNotifications } from '@/hooks/useAppointmentNotifications';
 import { useFetch } from '@/hooks';
 import { logger } from '@/lib/utils/logger';
-import { UserAvatar } from '../chat/ui/UserAvatar';
 import { RescheduleAppointmentModal } from './RescheduleAppointmentModal';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { APPOINTMENT_STATUSES } from '@/lib/constants';
 import Link from 'next/link';
+import { AppointmentCard } from './AppointmentCard';
+import { AppointmentFilters } from './AppointmentFilters';
 
 type AppointmentStatus =
 	| 'pending'
@@ -27,7 +27,9 @@ type UserType = 'agent' | 'apporteur';
 
 type ConfirmAction = {
 	appointmentId: string;
-	status: 'confirmed' | 'cancelled';
+	status:
+		| typeof APPOINTMENT_STATUSES.CONFIRMED
+		| typeof APPOINTMENT_STATUSES.CANCELLED;
 	title: string;
 	description: string;
 	variant: 'danger' | 'primary' | 'warning';
@@ -45,7 +47,6 @@ interface AppointmentsManagerProps {
 export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 	userType,
 }) => {
-	const router = useRouter();
 	const [filter, setFilter] = useState<AppointmentStatus | 'all'>('all');
 	const [actionLoading, setActionLoading] = useState<string | null>(null);
 	const [viewMode, setViewMode] = useState<ViewMode>('appointments');
@@ -98,11 +99,13 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 
 	const openConfirmDialog = (
 		appointmentId: string,
-		status: 'confirmed' | 'cancelled',
+		status:
+			| typeof APPOINTMENT_STATUSES.CONFIRMED
+			| typeof APPOINTMENT_STATUSES.CANCELLED,
 		appointmentType: string,
 		otherUserName: string,
 	) => {
-		if (status === 'confirmed') {
+		if (status === APPOINTMENT_STATUSES.CONFIRMED) {
 			setConfirmAction({
 				appointmentId,
 				status,
@@ -127,40 +130,20 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 			: appointments.filter((apt) => apt.status === filter);
 
 	const stats = {
-		pending: appointments.filter((apt) => apt.status === 'pending').length,
-		confirmed: appointments.filter((apt) => apt.status === 'confirmed')
-			.length,
+		all: appointments.length,
+		pending: appointments.filter(
+			(apt) => apt.status === APPOINTMENT_STATUSES.PENDING,
+		).length,
+		confirmed: appointments.filter(
+			(apt) => apt.status === APPOINTMENT_STATUSES.CONFIRMED,
+		).length,
+		cancelled: appointments.filter(
+			(apt) => apt.status === APPOINTMENT_STATUSES.CANCELLED,
+		).length,
+		completed: appointments.filter(
+			(apt) => apt.status === APPOINTMENT_STATUSES.COMPLETED,
+		).length,
 		total: appointments.length,
-	};
-
-	const getStatusColor = (status: AppointmentStatus) => {
-		switch (status) {
-			case 'pending':
-				return 'bg-yellow-100 text-yellow-800';
-			case 'confirmed':
-				return 'bg-green-100 text-green-800';
-			case 'cancelled':
-				return 'bg-red-100 text-red-800';
-			case 'completed':
-				return 'bg-blue-100 text-blue-800';
-			default:
-				return 'bg-gray-100 text-gray-800';
-		}
-	};
-
-	const getStatusLabel = (status: AppointmentStatus) => {
-		switch (status) {
-			case 'pending':
-				return 'En attente';
-			case 'confirmed':
-				return 'Confirmé';
-			case 'cancelled':
-				return 'Annulé';
-			case 'completed':
-				return 'Terminé';
-			default:
-				return status;
-		}
 	};
 
 	if (loading) {
@@ -304,57 +287,12 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 			</div>
 
 			{/* Filters */}
-			<div className="bg-white rounded-lg shadow p-4">
-				<div className="flex flex-wrap gap-2">
-					<Button
-						variant={filter === 'all' ? 'primary' : 'outline'}
-						onClick={() => setFilter('all')}
-						size="sm"
-					>
-						Tous ({appointments.length})
-					</Button>
-					<Button
-						variant={filter === 'pending' ? 'primary' : 'outline'}
-						onClick={() => setFilter('pending')}
-						size="sm"
-					>
-						En attente ({stats.pending})
-					</Button>
-					<Button
-						variant={filter === 'confirmed' ? 'primary' : 'outline'}
-						onClick={() => setFilter('confirmed')}
-						size="sm"
-					>
-						Confirmés ({stats.confirmed})
-					</Button>
-					<Button
-						variant={filter === 'cancelled' ? 'primary' : 'outline'}
-						onClick={() => setFilter('cancelled')}
-						size="sm"
-					>
-						Annulés (
-						{
-							appointments.filter(
-								(apt) => apt.status === 'cancelled',
-							).length
-						}
-						)
-					</Button>
-					<Button
-						variant={filter === 'completed' ? 'primary' : 'outline'}
-						onClick={() => setFilter('completed')}
-						size="sm"
-					>
-						Terminés (
-						{
-							appointments.filter(
-								(apt) => apt.status === 'completed',
-							).length
-						}
-						)
-					</Button>
-				</div>
-			</div>
+			<AppointmentFilters
+				filter={filter}
+				onFilterChange={setFilter}
+				counts={stats}
+				userType={isAgent ? 'agent' : 'apporteur'}
+			/>
 
 			{/* Appointments List */}
 			{filteredAppointments.length === 0 ? (
@@ -378,7 +316,7 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 					<p className="mt-1 text-sm text-gray-500">
 						{filter === 'all'
 							? "Vous n'avez aucun rendez-vous pour le moment."
-							: `Aucun rendez-vous ${getStatusLabel(filter as AppointmentStatus).toLowerCase()}.`}
+							: `Aucun rendez-vous ${filter === 'pending' ? 'en attente' : filter === 'confirmed' ? 'confirmé' : filter === 'cancelled' ? 'annulé' : 'terminé'}.`}
 					</p>
 					{!isAgent && (
 						<div className="mt-6">
@@ -390,297 +328,42 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 				</div>
 			) : (
 				<div className="space-y-4">
-					{filteredAppointments.map((appointment) => {
-						const otherUser = isAgent
-							? appointment.clientId
-							: appointment.agentId;
-
-						// Create a minimal user object for UserAvatar
-						const userForAvatar = {
-							...otherUser,
-							id: otherUser._id,
-							phone: otherUser.phone || '',
-							userType: (isAgent ? 'apporteur' : 'agent') as
-								| 'agent'
-								| 'apporteur',
-							isEmailVerified: true,
-							profileCompleted: true,
-						};
-
-						return (
-							<div
-								key={appointment._id}
-								className="bg-white rounded-lg shadow hover:shadow-md transition-shadow"
-							>
-								<div className="p-6">
-									<div className="flex items-start justify-between">
-										<div className="flex items-start space-x-4 flex-1">
-											<UserAvatar
-												user={userForAvatar}
-												size="lg"
-											/>
-											<div className="flex-1 min-w-0">
-												<div className="flex items-center gap-3 mb-2">
-													<h3 className="text-lg font-semibold text-gray-900">
-														{otherUser.firstName}{' '}
-														{otherUser.lastName}
-													</h3>
-													<span
-														className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(appointment.status)}`}
-													>
-														{getStatusLabel(
-															appointment.status,
-														)}
-													</span>
-												</div>
-
-												<div className="space-y-2 text-sm text-gray-600">
-													<div className="flex items-center">
-														<svg
-															className="w-4 h-4 mr-2 flex-shrink-0"
-															fill="none"
-															stroke="currentColor"
-															viewBox="0 0 24 24"
-														>
-															<path
-																strokeLinecap="round"
-																strokeLinejoin="round"
-																strokeWidth={2}
-																d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-															/>
-														</svg>
-														<span className="font-medium">
-															{
-																appointment.appointmentType
-															}
-														</span>
-													</div>
-
-													<div className="flex items-center">
-														<svg
-															className="w-4 h-4 mr-2 flex-shrink-0"
-															fill="none"
-															stroke="currentColor"
-															viewBox="0 0 24 24"
-														>
-															<path
-																strokeLinecap="round"
-																strokeLinejoin="round"
-																strokeWidth={2}
-																d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-															/>
-														</svg>
-														<span>
-															{formatDate(
-																appointment.scheduledDate,
-															)}{' '}
-															à{' '}
-															{formatTime(
-																appointment.scheduledTime,
-															)}
-														</span>
-													</div>
-
-													{appointment.notes && (
-														<div className="flex items-start">
-															<svg
-																className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5"
-																fill="none"
-																stroke="currentColor"
-																viewBox="0 0 24 24"
-															>
-																<path
-																	strokeLinecap="round"
-																	strokeLinejoin="round"
-																	strokeWidth={
-																		2
-																	}
-																	d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-																/>
-															</svg>
-															<span className="break-words">
-																{
-																	appointment.notes
-																}
-															</span>
-														</div>
-													)}
-
-													{otherUser.email && (
-														<div className="flex items-center">
-															<svg
-																className="w-4 h-4 mr-2 flex-shrink-0"
-																fill="none"
-																stroke="currentColor"
-																viewBox="0 0 24 24"
-															>
-																<path
-																	strokeLinecap="round"
-																	strokeLinejoin="round"
-																	strokeWidth={
-																		2
-																	}
-																	d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-																/>
-															</svg>
-															<span>
-																{
-																	otherUser.email
-																}
-															</span>
-														</div>
-													)}
-
-													{otherUser.phone && (
-														<div className="flex items-center">
-															<svg
-																className="w-4 h-4 mr-2 flex-shrink-0"
-																fill="none"
-																stroke="currentColor"
-																viewBox="0 0 24 24"
-															>
-																<path
-																	strokeLinecap="round"
-																	strokeLinejoin="round"
-																	strokeWidth={
-																		2
-																	}
-																	d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-																/>
-															</svg>
-															<span>
-																{
-																	otherUser.phone
-																}
-															</span>
-														</div>
-													)}
-												</div>
-											</div>
-										</div>
-									</div>
-
-									{/* Actions */}
-									<div className="mt-4 pt-4 border-t border-gray-200">
-										<div className="flex flex-wrap gap-2">
-											{/* Agent-specific actions */}
-											{isAgent &&
-												appointment.status ===
-													'pending' && (
-													<>
-														<Button
-															variant="primary"
-															size="sm"
-															onClick={() =>
-																openConfirmDialog(
-																	appointment._id,
-																	'confirmed',
-																	appointment.appointmentType,
-																	`${otherUser.firstName} ${otherUser.lastName}`,
-																)
-															}
-															disabled={
-																actionLoading ===
-																appointment._id
-															}
-														>
-															{actionLoading ===
-															appointment._id ? (
-																<LoadingSpinner size="sm" />
-															) : (
-																'Accepter'
-															)}
-														</Button>
-														<Button
-															variant="outline"
-															size="sm"
-															onClick={() =>
-																openConfirmDialog(
-																	appointment._id,
-																	'cancelled',
-																	appointment.appointmentType,
-																	`${otherUser.firstName} ${otherUser.lastName}`,
-																)
-															}
-															disabled={
-																actionLoading ===
-																appointment._id
-															}
-															className="border-red-300 text-red-600 hover:bg-red-50"
-														>
-															Refuser
-														</Button>
-													</>
-												)}
-
-											{/* Common actions */}
-											{(appointment.status ===
-												'confirmed' ||
-												appointment.status ===
-													'pending') && (
-												<Button
-													variant="outline"
-													size="sm"
-													onClick={() => {
-														setSelectedAppointment(
-															appointment,
-														);
-														setRescheduleModalOpen(
-															true,
-														);
-													}}
-													disabled={
-														actionLoading ===
-														appointment._id
-													}
-												>
-													<svg
-														className="w-4 h-4 mr-1"
-														fill="none"
-														stroke="currentColor"
-														viewBox="0 0 24 24"
-													>
-														<path
-															strokeLinecap="round"
-															strokeLinejoin="round"
-															strokeWidth={2}
-															d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-														/>
-													</svg>
-													Replanifier
-												</Button>
-											)}
-
-											<Button
-												variant="outline"
-												size="sm"
-												onClick={() =>
-													router.push(
-														`/chat?userId=${otherUser._id}`,
-													)
-												}
-											>
-												<svg
-													className="w-4 h-4 mr-1"
-													fill="none"
-													stroke="currentColor"
-													viewBox="0 0 24 24"
-												>
-													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														strokeWidth={2}
-														d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-													/>
-												</svg>
-												Message
-											</Button>
-										</div>
-									</div>
-								</div>
-							</div>
-						);
-					})}
+					{filteredAppointments.map((appointment) => (
+						<AppointmentCard
+							key={appointment._id}
+							appointment={appointment}
+							isAgent={isAgent}
+							actionLoading={actionLoading}
+							onConfirm={(id) =>
+								openConfirmDialog(
+									id,
+									'confirmed',
+									appointment.appointmentType,
+									`${(isAgent ? appointment.clientId : appointment.agentId).firstName} ${(isAgent ? appointment.clientId : appointment.agentId).lastName}`,
+								)
+							}
+							onReject={(id) =>
+								openConfirmDialog(
+									id,
+									'cancelled',
+									appointment.appointmentType,
+									`${(isAgent ? appointment.clientId : appointment.agentId).firstName} ${(isAgent ? appointment.clientId : appointment.agentId).lastName}`,
+								)
+							}
+							onCancel={(id) =>
+								openConfirmDialog(
+									id,
+									'cancelled',
+									appointment.appointmentType,
+									`${(isAgent ? appointment.clientId : appointment.agentId).firstName} ${(isAgent ? appointment.clientId : appointment.agentId).lastName}`,
+								)
+							}
+							onReschedule={(apt) => {
+								setSelectedAppointment(apt);
+								setRescheduleModalOpen(true);
+							}}
+						/>
+					))}
 				</div>
 			)}
 
@@ -706,7 +389,7 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 				onCancel={() => setConfirmAction(null)}
 				variant={confirmAction?.variant || 'primary'}
 				confirmText={
-					confirmAction?.status === 'confirmed'
+					confirmAction?.status === APPOINTMENT_STATUSES.CONFIRMED
 						? 'Accepter'
 						: 'Refuser'
 				}

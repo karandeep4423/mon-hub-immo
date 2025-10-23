@@ -10,6 +10,7 @@ import { authService } from '@/lib/api/authApi';
 import { User } from '@/types/auth';
 import { useForm } from '@/hooks/useForm';
 import { handleFormSubmitError } from '@/lib/utils/formErrors';
+import { TOAST_MESSAGES } from '@/lib/constants';
 
 interface ProfileUpdateModalProps {
 	isOpen: boolean;
@@ -84,7 +85,7 @@ export const ProfileUpdateModal: React.FC<ProfileUpdateModalProps> = ({
 				changedFields.profileImage = values.profileImage.trim();
 
 			if (Object.keys(changedFields).length === 0) {
-				toast.info('No changes detected');
+				toast.info(TOAST_MESSAGES.AUTH.NO_CHANGES_DETECTED);
 				onClose();
 				return;
 			}
@@ -95,11 +96,14 @@ export const ProfileUpdateModal: React.FC<ProfileUpdateModalProps> = ({
 				if (response.success && response.user) {
 					updateUser(response.user);
 					toast.success(
-						response.message || 'Profile updated successfully',
+						response.message || TOAST_MESSAGES.AUTH.PROFILE_UPDATED,
 					);
 					onClose();
 				} else {
-					toast.error(response.message || 'Failed to update profile');
+					toast.error(
+						response.message ||
+							TOAST_MESSAGES.AUTH.PROFILE_UPDATE_ERROR,
+					);
 				}
 			} catch (error) {
 				handleFormSubmitError(error, setErrors, 'ProfileUpdateModal');

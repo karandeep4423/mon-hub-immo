@@ -2,6 +2,7 @@ import { ChatApi } from '@/lib/api/chatApi';
 import { toast } from 'react-toastify';
 import { chatLogger } from '@/lib/utils/logger';
 import { logger } from '@/lib/utils/logger';
+import { TOAST_MESSAGES } from '@/lib/constants';
 import type {
 	ChatUser as User,
 	ChatMessage as Message,
@@ -527,7 +528,9 @@ export const createChatStore = (): ChatStore => {
 			setUsers(users);
 		} catch (error: unknown) {
 			const errorMessage =
-				error instanceof Error ? error.message : 'Error fetching users';
+				error instanceof Error
+					? error.message
+					: TOAST_MESSAGES.CHAT.FETCH_ERROR;
 			chatLogger.error('Error fetching users:', error);
 			toast.error(errorMessage);
 		} finally {
@@ -555,7 +558,9 @@ export const createChatStore = (): ChatStore => {
 		} catch (error: unknown) {
 			chatLogger.error('Error fetching user by ID:', error);
 			const errorMessage =
-				error instanceof Error ? error.message : 'Error fetching user';
+				error instanceof Error
+					? error.message
+					: TOAST_MESSAGES.CHAT.FETCH_ERROR;
 			toast.error(errorMessage);
 			return null;
 		}
@@ -596,7 +601,7 @@ export const createChatStore = (): ChatStore => {
 			const errorMessage =
 				error instanceof Error
 					? error.message
-					: 'Error fetching messages';
+					: TOAST_MESSAGES.CHAT.FETCH_ERROR;
 			toast.error(errorMessage);
 		} finally {
 			setMessagesLoading(false);
@@ -730,7 +735,7 @@ export const createChatStore = (): ChatStore => {
 			const errorMessage =
 				error instanceof Error
 					? error.message
-					: 'Error sending message';
+					: TOAST_MESSAGES.CHAT.SEND_ERROR;
 			toast.error(errorMessage);
 		} finally {
 			setSendingMessage(false);
@@ -742,7 +747,7 @@ export const createChatStore = (): ChatStore => {
 			await ChatApi.deleteMessage(messageId);
 			removeMessageById(messageId);
 		} catch (error) {
-			toast.error('Failed to delete message');
+			toast.error(TOAST_MESSAGES.CHAT.DELETE_ERROR);
 			throw error as Error;
 		}
 	};

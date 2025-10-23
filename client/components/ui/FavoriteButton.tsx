@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFavoritesStore } from '@/store/favoritesStore';
-import { logger } from '@/lib/utils/logger';
+import { useMutation } from '@/hooks/useMutation';
 
 interface FavoriteButtonProps {
 	itemId: string;
@@ -35,10 +35,31 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
 		isInitialized,
 	} = useFavoritesStore();
 
-	const [isLoading, setIsLoading] = useState(false);
-
 	// Check if user is authenticated
 	const isAuthenticated = !!user;
+
+	// Toggle favorite mutation
+	const { mutate: toggleFavoriteMutation, loading: isLoading } = useMutation<
+		boolean,
+		void
+	>(
+		async () => {
+			return actualItemType === 'property'
+				? await toggleFavorite(actualItemId)
+				: await toggleSearchAdFavorite(actualItemId);
+		},
+		{
+			onSuccess: (newIsFavorite) => {
+				onToggle?.(newIsFavorite);
+			},
+			showSuccessToast: false, // Don't show toast for favorites (too noisy)
+			errorMessage:
+				actualItemType === 'property'
+					? 'Erreur lors de la modification des favoris'
+					: 'Erreur lors de la modification des recherches favorites',
+			context: 'FavoriteButton',
+		},
+	);
 
 	// Get favorite status from store or fallback to initial value
 	// For non-authenticated users, always show as not favorite
@@ -77,19 +98,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
 			return;
 		}
 
-		setIsLoading(true);
-		try {
-			const newIsFavorite =
-				actualItemType === 'property'
-					? await toggleFavorite(actualItemId)
-					: await toggleSearchAdFavorite(actualItemId);
-			onToggle?.(newIsFavorite);
-		} catch (error) {
-			logger.error('Error toggling favorite:', error);
-			// Show error toast/notification here if needed
-		} finally {
-			setIsLoading(false);
-		}
+		await toggleFavoriteMutation();
 	};
 
 	// Always show the button, but handle authentication on click

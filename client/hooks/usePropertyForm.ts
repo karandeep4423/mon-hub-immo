@@ -1,5 +1,74 @@
 import { useState, useCallback } from 'react';
 import { PropertyFormData, Property } from '@/lib/api/propertyApi';
+import {
+	useFormValidation,
+	commonValidationRules,
+	type StepValidationSchema,
+} from './useFormValidation';
+
+// Property form validation schema
+const propertyValidationSchema: StepValidationSchema = {
+	1: {
+		title: {
+			required: 'Le titre est requis',
+			minLength: {
+				value: 10,
+				message: 'Le titre doit contenir au moins 10 caractères',
+			},
+		},
+		description: {
+			required: 'La description est requise',
+			minLength: {
+				value: 50,
+				message: 'La description doit contenir au moins 50 caractères',
+			},
+		},
+		price: {
+			required: 'Le prix est requis',
+			min: {
+				value: 1000,
+				message: 'Le prix doit être supérieur à 1000€',
+			},
+		},
+		surface: {
+			required: 'La surface est requise',
+			min: {
+				value: 1,
+				message: 'La surface doit être supérieure à 1 m²',
+			},
+		},
+	},
+	2: {
+		address: {
+			required: "L'adresse est requise",
+			minLength: {
+				value: 5,
+				message: "L'adresse doit contenir au moins 5 caractères",
+			},
+		},
+		city: {
+			required: 'La ville est requise',
+			minLength: {
+				value: 2,
+				message: 'La ville doit contenir au moins 2 caractères',
+			},
+		},
+		postalCode: commonValidationRules.postalCode,
+		sector: {
+			required: 'Le secteur est requis',
+			minLength: {
+				value: 2,
+				message: 'Le secteur doit contenir au moins 2 caractères',
+			},
+		},
+	},
+	3: {
+		// Property details validation - no required fields
+	},
+	4: {
+		// Image validation - handled separately due to file state
+	},
+};
 
 interface ImageFile {
 	file: File;
@@ -15,10 +84,6 @@ interface ExistingImage {
 interface UsePropertyFormProps {
 	initialData?: Partial<PropertyFormData> | Property;
 	isEditing?: boolean;
-}
-
-interface ValidationErrors {
-	[key: string]: string;
 }
 
 export const usePropertyForm = ({
@@ -71,7 +136,15 @@ export const usePropertyForm = ({
 		...initialData,
 	});
 
-	const [errors, setErrors] = useState<ValidationErrors>({});
+	// Use FormValidation hook
+	const {
+		errors,
+		setErrors,
+		validateStep: validateStepBase,
+		setFieldError,
+		clearFieldError,
+	} = useFormValidation(propertyValidationSchema);
+
 	const [currentStep, setCurrentStep] = useState(1);
 	const [mainImageFiles, setMainImageFiles] = useState<ImageFile[]>([]);
 	const [galleryImageFiles, setGalleryImageFiles] = useState<ImageFile[]>([]);
@@ -94,72 +167,40 @@ export const usePropertyForm = ({
 		) => {
 			setFormData((prev) => ({ ...prev, [field]: value }));
 			if (errors[field]) {
-				setErrors((prev) => ({ ...prev, [field]: '' }));
+				clearFieldError(field);
 			}
 		},
-		[errors],
+		[errors, clearFieldError],
 	);
 
 	const validateStep = useCallback(
 		(step: number): boolean => {
-			const newErrors: ValidationErrors = {};
+			// Use base validation from useFormValidation
+			const isValid = validateStepBase(
+				step,
+				formData as unknown as Record<string, unknown>,
+			);
 
-			switch (step) {
-				case 1:
-					if (!formData.title || formData.title.length < 10) {
-						newErrors.title =
-							'Le titre doit contenir au moins 10 caractères';
-					}
-					if (
-						!formData.description ||
-						formData.description.length < 50
-					) {
-						newErrors.description =
-							'La description doit contenir au moins 50 caractères';
-					}
-					if (!formData.price || formData.price < 1000) {
-						newErrors.price = 'Le prix doit être supérieur à 1000€';
-					}
-					if (!formData.surface || formData.surface < 1) {
-						newErrors.surface =
-							'La surface doit être supérieure à 1 m²';
-					}
-					break;
-				case 2:
-					if (!formData.address || formData.address.length < 5) {
-						newErrors.address =
-							"L'adresse doit contenir au moins 5 caractères";
-					}
-					if (!formData.city || formData.city.length < 2) {
-						newErrors.city =
-							'La ville doit contenir au moins 2 caractères';
-					}
-					if (
-						!formData.postalCode ||
-						!/^[0-9]{5}$/.test(formData.postalCode)
-					) {
-						newErrors.postalCode =
-							'Le code postal doit contenir 5 chiffres';
-					}
-					if (!formData.sector || formData.sector.length < 2) {
-						newErrors.sector =
-							'Le secteur doit contenir au moins 2 caractères';
-					}
-					break;
-				case 3:
-					// Property details validation - no required fields
-					break;
-				case 4:
-					if (mainImageFiles.length === 0 && !existingMainImage) {
-						newErrors.mainImage = "L'image principale est requise";
-					}
-					break;
+			// Step 4: Special image validation
+			if (step === 4) {
+				if (mainImageFiles.length === 0 && !existingMainImage) {
+					setFieldError(
+						'mainImage',
+						"L'image principale est requise",
+					);
+					return false;
+				}
 			}
 
-			setErrors(newErrors);
-			return Object.keys(newErrors).length === 0;
+			return isValid;
 		},
-		[formData, mainImageFiles, existingMainImage],
+		[
+			formData,
+			mainImageFiles,
+			existingMainImage,
+			validateStepBase,
+			setFieldError,
+		],
 	);
 
 	return {

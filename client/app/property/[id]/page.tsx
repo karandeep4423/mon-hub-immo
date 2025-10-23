@@ -6,11 +6,13 @@ import { Button } from '@/components/ui/Button';
 import { ImageLightbox } from '@/components/ui/ImageLightbox';
 import { ProposeCollaborationModal } from '@/components/collaboration/ProposeCollaborationModal';
 import { ProfileAvatar } from '@/components/ui';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { useAuth } from '@/hooks/useAuth';
 import { collaborationApi } from '@/lib/api/collaborationApi';
 import { PropertyService, type Property } from '@/lib/api/propertyApi';
-import { toast } from 'react-toastify';
 import { logger } from '@/lib/utils/logger';
+import { shareContent } from '@/lib/utils/share';
+import { formatDateShort } from '@/lib/utils/date';
 import { useFetch } from '@/hooks';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
 
@@ -21,7 +23,7 @@ import {
 	PropertyFeatures,
 } from '@/components/property/detail';
 
-export default function PropertyDetailsPage() {
+function PropertyDetailsPageContent() {
 	const params = useParams();
 	const router = useRouter();
 	const { user } = useAuth();
@@ -278,10 +280,10 @@ export default function PropertyDetailsPage() {
 										Publié le:
 									</span>
 									<span className="font-medium">
-										{new Date(
+										{formatDateShort(
 											property.publishedAt ||
 												property.createdAt,
-										).toLocaleDateString('fr-FR')}
+										)}
 									</span>
 								</div>
 							</div>
@@ -421,22 +423,12 @@ export default function PropertyDetailsPage() {
 									<Button
 										variant="outline"
 										size="sm"
-										onClick={() => {
-											if (navigator.share) {
-												navigator.share({
-													title: property.title,
-													text: `${property.title} - ${property.price.toLocaleString()}€`,
-													url: window.location.href,
-												});
-											} else {
-												navigator.clipboard.writeText(
-													window.location.href,
-												);
-												toast.success(
-													'Lien copié dans le presse-papiers',
-												);
-											}
-										}}
+										onClick={() =>
+											shareContent({
+												title: property.title,
+												text: `${property.title} - ${property.price.toLocaleString()}€`,
+											})
+										}
 									>
 										<svg
 											className="w-4 h-4 mr-1"
@@ -497,5 +489,30 @@ export default function PropertyDetailsPage() {
 				onClose={() => setShowLightbox(false)}
 			/>
 		</div>
+	);
+}
+
+export default function PropertyDetailsPage() {
+	return (
+		<ErrorBoundary
+			fallback={
+				<div className="min-h-screen flex items-center justify-center p-4">
+					<div className="text-center">
+						<h1 className="text-2xl font-bold text-gray-900 mb-4">
+							Erreur lors du chargement
+						</h1>
+						<p className="text-gray-600 mb-6">
+							Une erreur est survenue lors du chargement des
+							détails du bien.
+						</p>
+						<Button onClick={() => window.location.reload()}>
+							Réessayer
+						</Button>
+					</div>
+				</div>
+			}
+		>
+			<PropertyDetailsPageContent />
+		</ErrorBoundary>
 	);
 }

@@ -1,12 +1,14 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useFetch } from '@/hooks/useFetch';
+import {
+	useSearchAdForm,
+	type SearchAdFormData,
+} from '@/hooks/useSearchAdForm';
 import searchAdApi from '@/lib/api/searchAdApi';
-import { useAuth } from '@/hooks/useAuth';
-import { SearchAd } from '@/types/searchAd';
 import { SearchAdClientInfoForm } from './SearchAdClientInfoForm';
-import { logger } from '@/lib/utils/logger';
 import {
 	BasicInfoSection,
 	PropertyCriteriaSection,
@@ -17,262 +19,74 @@ import {
 	BadgesSection,
 } from './form-sections';
 
-interface FormData {
-	title: string;
-	description: string;
-	propertyTypes: string[];
-	propertyState: string[];
-	projectType: string;
-	cities: string;
-	maxDistance?: number;
-	openToOtherAreas: boolean;
-	budgetMax: number;
-	budgetIdeal?: number;
-	financingType: string;
-	isSaleInProgress: boolean;
-	hasBankApproval: boolean;
-	minSurface?: number;
-	minRooms?: number;
-	minBedrooms?: number;
-	hasExterior: boolean;
-	hasParking: boolean;
-	acceptedFloors?: string;
-	desiredState: string[];
-	mustHaves: string[];
-	niceToHaves: string[];
-	dealBreakers: string[];
-	status: 'active' | 'paused' | 'fulfilled' | 'sold' | 'rented' | 'archived';
-	badges: string[];
-	clientInfo?: SearchAd['clientInfo'];
-}
-
 interface EditSearchAdFormProps {
 	id: string;
 }
 
 export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 	const router = useRouter();
-	const { user } = useAuth();
-	const [isLoading, setIsLoading] = useState(false);
-	const [isLoadingAd, setIsLoadingAd] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-	const [searchAd, setSearchAd] = useState<SearchAd | null>(null);
-	const [formData, setFormData] = useState<FormData>({
-		title: '',
-		description: '',
-		propertyTypes: [],
-		propertyState: [],
-		projectType: '',
-		cities: '',
-		maxDistance: undefined,
-		openToOtherAreas: false,
-		budgetMax: 0,
-		budgetIdeal: undefined,
-		financingType: '',
-		isSaleInProgress: false,
-		hasBankApproval: false,
-		minSurface: undefined,
-		minRooms: undefined,
-		minBedrooms: undefined,
-		hasExterior: false,
-		hasParking: false,
-		acceptedFloors: undefined,
-		desiredState: [],
-		mustHaves: [],
-		niceToHaves: [],
-		dealBreakers: [],
-		status: 'active',
-		badges: [],
-		clientInfo: {},
-	});
+	const { data: searchAd, loading: isLoadingAd } = useFetch(
+		() => searchAdApi.getSearchAdById(id),
+		{
+			deps: [id],
+			showErrorToast: true,
+			errorMessage: "Impossible de charger l'annonce",
+		},
+	);
 
+	const {
+		values,
+		isSubmitting,
+		setFieldValue,
+		handleSubmit,
+		setValues,
+		handleArrayChange,
+	} = useSearchAdForm('edit', id);
+
+	// Populate form when search ad data is loaded
 	useEffect(() => {
-		const fetchSearchAd = async () => {
-			try {
-				setIsLoadingAd(true);
-				const ad = await searchAdApi.getSearchAdById(id);
-				setSearchAd(ad);
-
-				// Populate form with existing data
-				setFormData({
-					title: ad.title,
-					description: ad.description || '',
-					propertyTypes: ad.propertyTypes,
-					propertyState: ad.propertyState || [],
-					projectType: ad.projectType || '',
-					cities: ad.location.cities.join(', '),
-					maxDistance: ad.location.maxDistance,
-					openToOtherAreas: ad.location.openToOtherAreas || false,
-					budgetMax: ad.budget?.max || 0,
-					budgetIdeal: ad.budget?.ideal,
-					financingType: ad.budget?.financingType || '',
-					isSaleInProgress: ad.budget?.isSaleInProgress || false,
-					hasBankApproval: ad.budget?.hasBankApproval || false,
-					minSurface: ad.minSurface,
-					minRooms: ad.minRooms,
-					minBedrooms: ad.minBedrooms,
-					hasExterior: ad.hasExterior || false,
-					hasParking: ad.hasParking || false,
-					acceptedFloors: ad.acceptedFloors,
-					desiredState: ad.desiredState || [],
-					mustHaves: ad.priorities?.mustHaves || [],
-					niceToHaves: ad.priorities?.niceToHaves || [],
-					dealBreakers: ad.priorities?.dealBreakers || [],
-					status: ad.status,
-					badges: ad.badges || [],
-					clientInfo: ad.clientInfo || {},
-				});
-			} catch (err) {
-				setError("Impossible de charger l'annonce.");
-				logger.error(err);
-			} finally {
-				setIsLoadingAd(false);
-			}
-		};
-
-		fetchSearchAd();
-	}, [id]);
-
-	const handleInputChange = (
-		e: React.ChangeEvent<
-			HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-		>,
-	) => {
-		const { name, value, type } = e.target;
-		if (type === 'checkbox') {
-			const checked = (e.target as HTMLInputElement).checked;
-			setFormData((prev) => ({ ...prev, [name]: checked }));
-		} else if (type === 'number') {
-			setFormData((prev) => ({
-				...prev,
-				[name]: value ? parseInt(value) : undefined,
-			}));
-		} else {
-			setFormData((prev) => ({ ...prev, [name]: value }));
+		if (searchAd) {
+			setValues({
+				title: searchAd.title,
+				description: searchAd.description || '',
+				propertyTypes: searchAd.propertyTypes,
+				propertyState: searchAd.propertyState || [],
+				projectType: searchAd.projectType || '',
+				cities: searchAd.location.cities.join(', '),
+				maxDistance: searchAd.location.maxDistance,
+				openToOtherAreas: searchAd.location.openToOtherAreas || false,
+				budgetMax: searchAd.budget?.max || 0,
+				budgetIdeal: searchAd.budget?.ideal,
+				financingType: searchAd.budget?.financingType || '',
+				isSaleInProgress: searchAd.budget?.isSaleInProgress || false,
+				hasBankApproval: searchAd.budget?.hasBankApproval || false,
+				minSurface: searchAd.minSurface,
+				minRooms: searchAd.minRooms,
+				minBedrooms: searchAd.minBedrooms,
+				hasExterior: searchAd.hasExterior || false,
+				hasParking: searchAd.hasParking || false,
+				acceptedFloors: searchAd.acceptedFloors,
+				desiredState: searchAd.desiredState || [],
+				mustHaves: searchAd.priorities?.mustHaves || [],
+				niceToHaves: searchAd.priorities?.niceToHaves || [],
+				dealBreakers: searchAd.priorities?.dealBreakers || [],
+				status: searchAd.status,
+				badges: searchAd.badges || [],
+				clientInfo: searchAd.clientInfo || {},
+			});
 		}
-	};
-
-	const handleArrayChange = (
-		value: string,
-		checked: boolean,
-		field: keyof Pick<
-			FormData,
-			| 'propertyTypes'
-			| 'propertyState'
-			| 'desiredState'
-			| 'mustHaves'
-			| 'niceToHaves'
-			| 'dealBreakers'
-			| 'badges'
-		>,
-	) => {
-		setFormData((prev) => ({
-			...prev,
-			[field]: checked
-				? [...prev[field], value]
-				: prev[field].filter((item) => item !== value),
-		}));
-	};
-
-	const validateForm = (): string | null => {
-		if (!formData.title || formData.title.length < 5) {
-			return 'Le titre doit contenir au moins 5 caractères.';
-		}
-		if (!formData.description || formData.description.length < 10) {
-			return 'La description doit contenir au moins 10 caractères.';
-		}
-		if (formData.propertyTypes.length === 0) {
-			return 'Veuillez sélectionner au moins un type de bien.';
-		}
-		if (!formData.cities || formData.cities.length < 2) {
-			return 'La localisation est requise.';
-		}
-		if (formData.budgetMax <= 0) {
-			return 'Le budget maximum doit être positif.';
-		}
-		return null;
-	};
-
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-
-		if (!user) {
-			setError('Vous devez être connecté pour modifier une annonce.');
-			return;
-		}
-
-		if (!searchAd) {
-			setError('Annonce non trouvée.');
-			return;
-		}
-
-		const validationError = validateForm();
-		if (validationError) {
-			setError(validationError);
-			return;
-		}
-
-		setIsLoading(true);
-		setError(null);
-
-		try {
-			const adData = {
-				...formData,
-				authorId: user._id,
-				status: formData.status,
-				authorType: user.userType as 'agent' | 'apporteur',
-				// Transform to expected API format
-				location: {
-					cities: formData.cities
-						.split(',')
-						.map((city) => city.trim()),
-					maxDistance: formData.maxDistance,
-					openToOtherAreas: formData.openToOtherAreas,
-				},
-				propertyTypes: formData.propertyTypes as (
-					| 'house'
-					| 'apartment'
-					| 'land'
-					| 'building'
-					| 'commercial'
-				)[],
-				budget: {
-					max: formData.budgetMax,
-					ideal: formData.budgetIdeal,
-					financingType: formData.financingType,
-					isSaleInProgress: formData.isSaleInProgress,
-					hasBankApproval: formData.hasBankApproval,
-				},
-				priorities: {
-					mustHaves: formData.mustHaves,
-					niceToHaves: formData.niceToHaves,
-					dealBreakers: formData.dealBreakers,
-				},
-				badges: formData.badges,
-				clientInfo: formData.clientInfo,
-			};
-
-			await searchAdApi.updateSearchAd(
-				id,
-				adData as Parameters<typeof searchAdApi.updateSearchAd>[1],
-			);
-			router.push('/dashboard');
-		} catch (err) {
-			setError(
-				"Une erreur est survenue lors de la modification de l'annonce.",
-			);
-			logger.error(err);
-		} finally {
-			setIsLoading(false);
-		}
-	};
+	}, [searchAd, setValues]);
 
 	if (isLoadingAd) {
 		return <div>Chargement de l&apos;annonce...</div>;
 	}
 
-	if (error && !searchAd) {
-		return <div className="text-red-500">{error}</div>;
+	if (!searchAd) {
+		return (
+			<div className="text-red-500">
+				Impossible de charger l&apos;annonce
+			</div>
+		);
 	}
 
 	return (
@@ -290,24 +104,19 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 				<div className="grid grid-cols-1 lg:grid-cols-2  gap-6">
 					{/* Basic Information */}
 					<BasicInfoSection
-						title={formData.title}
-						description={formData.description}
-						onTitleChange={(value) =>
-							setFormData((prev) => ({ ...prev, title: value }))
-						}
+						title={values.title}
+						description={values.description}
+						onTitleChange={(value) => setFieldValue('title', value)}
 						onDescriptionChange={(value) =>
-							setFormData((prev) => ({
-								...prev,
-								description: value,
-							}))
+							setFieldValue('description', value)
 						}
 					/>
 
 					{/* Property Search Criteria */}
 					<PropertyCriteriaSection
-						propertyTypes={formData.propertyTypes}
-						propertyState={formData.propertyState}
-						projectType={formData.projectType}
+						propertyTypes={values.propertyTypes}
+						propertyState={values.propertyState}
+						projectType={values.projectType}
 						onPropertyTypesChange={(type, checked) =>
 							handleArrayChange(type, checked, 'propertyTypes')
 						}
@@ -315,118 +124,76 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 							handleArrayChange(state, checked, 'propertyState')
 						}
 						onProjectTypeChange={(value) =>
-							setFormData((prev) => ({
-								...prev,
-								projectType: value,
-							}))
+							setFieldValue('projectType', value)
 						}
 					/>
 
 					{/* Location */}
 					<LocationSection
-						cities={formData.cities}
-						maxDistance={formData.maxDistance}
-						openToOtherAreas={formData.openToOtherAreas}
+						cities={values.cities}
+						maxDistance={values.maxDistance}
+						openToOtherAreas={values.openToOtherAreas}
 						onCitiesChange={(value) =>
-							setFormData((prev) => ({ ...prev, cities: value }))
+							setFieldValue('cities', value)
 						}
 						onMaxDistanceChange={(value) =>
-							setFormData((prev) => ({
-								...prev,
-								maxDistance: value,
-							}))
+							setFieldValue('maxDistance', value)
 						}
 						onOpenToOtherAreasChange={(value) =>
-							setFormData((prev) => ({
-								...prev,
-								openToOtherAreas: value,
-							}))
+							setFieldValue('openToOtherAreas', value)
 						}
 					/>
 
 					{/* Budget & Financing */}
 					<BudgetSection
-						budgetMax={formData.budgetMax}
-						budgetIdeal={formData.budgetIdeal}
-						financingType={formData.financingType}
-						isSaleInProgress={formData.isSaleInProgress}
-						hasBankApproval={formData.hasBankApproval}
+						budgetMax={values.budgetMax}
+						budgetIdeal={values.budgetIdeal}
+						financingType={values.financingType}
+						isSaleInProgress={values.isSaleInProgress}
+						hasBankApproval={values.hasBankApproval}
 						onBudgetMaxChange={(value) =>
-							setFormData((prev) => ({
-								...prev,
-								budgetMax: value,
-							}))
+							setFieldValue('budgetMax', value)
 						}
 						onBudgetIdealChange={(value) =>
-							setFormData((prev) => ({
-								...prev,
-								budgetIdeal: value,
-							}))
+							setFieldValue('budgetIdeal', value)
 						}
 						onFinancingTypeChange={(value) =>
-							setFormData((prev) => ({
-								...prev,
-								financingType: value,
-							}))
+							setFieldValue('financingType', value)
 						}
 						onSaleInProgressChange={(value) =>
-							setFormData((prev) => ({
-								...prev,
-								isSaleInProgress: value,
-							}))
+							setFieldValue('isSaleInProgress', value)
 						}
 						onBankApprovalChange={(value) =>
-							setFormData((prev) => ({
-								...prev,
-								hasBankApproval: value,
-							}))
+							setFieldValue('hasBankApproval', value)
 						}
 					/>
 
 					{/* Property Characteristics */}
 					<PropertyDetailsSection
-						minRooms={formData.minRooms}
-						minBedrooms={formData.minBedrooms}
-						minSurface={formData.minSurface}
-						hasExterior={formData.hasExterior}
-						hasParking={formData.hasParking}
-						acceptedFloors={formData.acceptedFloors}
-						desiredState={formData.desiredState}
+						minRooms={values.minRooms}
+						minBedrooms={values.minBedrooms}
+						minSurface={values.minSurface}
+						hasExterior={values.hasExterior}
+						hasParking={values.hasParking}
+						acceptedFloors={values.acceptedFloors}
+						desiredState={values.desiredState}
 						onMinRoomsChange={(value) =>
-							setFormData((prev) => ({
-								...prev,
-								minRooms: value,
-							}))
+							setFieldValue('minRooms', value)
 						}
 						onMinBedroomsChange={(value) =>
-							setFormData((prev) => ({
-								...prev,
-								minBedrooms: value,
-							}))
+							setFieldValue('minBedrooms', value)
 						}
 						onMinSurfaceChange={(value) =>
-							setFormData((prev) => ({
-								...prev,
-								minSurface: value,
-							}))
+							setFieldValue('minSurface', value)
 						}
 						onHasExteriorChange={(value) =>
-							setFormData((prev) => ({
-								...prev,
-								hasExterior: value,
-							}))
+							setFieldValue('hasExterior', value)
 						}
 						onHasParkingChange={(value) =>
-							setFormData((prev) => ({
-								...prev,
-								hasParking: value,
-							}))
+							setFieldValue('hasParking', value)
 						}
 						onAcceptedFloorsChange={(value) =>
-							setFormData((prev) => ({
-								...prev,
-								acceptedFloors: value,
-							}))
+							setFieldValue('acceptedFloors', value)
 						}
 						onDesiredStateChange={(state, checked) =>
 							handleArrayChange(state, checked, 'desiredState')
@@ -435,9 +202,9 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 
 					{/* Personal Priorities */}
 					<PrioritiesSection
-						mustHaves={formData.mustHaves}
-						niceToHaves={formData.niceToHaves}
-						dealBreakers={formData.dealBreakers}
+						mustHaves={values.mustHaves}
+						niceToHaves={values.niceToHaves}
+						dealBreakers={values.dealBreakers}
 						onMustHavesChange={(priority, checked) =>
 							handleArrayChange(priority, checked, 'mustHaves')
 						}
@@ -449,15 +216,13 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 						}
 					/>
 				</div>
-
 				{/* Badges Section - Full width */}
 				<BadgesSection
-					badges={formData.badges}
+					badges={values.badges}
 					onBadgesChange={(badge, checked) =>
 						handleArrayChange(badge, checked, 'badges')
 					}
-				/>
-
+				/>{' '}
 				{/* Client Information - Full width */}
 				<div className="bg-white p-6 rounded-lg shadow-sm border">
 					<div className="mb-4">
@@ -471,13 +236,12 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 						</p>
 					</div>
 					<SearchAdClientInfoForm
-						clientInfo={formData.clientInfo || {}}
+						clientInfo={values.clientInfo || {}}
 						onChange={(clientInfo) =>
-							setFormData((prev) => ({ ...prev, clientInfo }))
+							setFieldValue('clientInfo', clientInfo)
 						}
 					/>
 				</div>
-
 				{/* Status Field and Actions */}
 				<div className="bg-white p-6 rounded-lg shadow-sm border">
 					<div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-end">
@@ -491,13 +255,13 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 									Statut de la recherche
 								</label>
 								<select
-									value={formData.status}
+									value={values.status}
 									onChange={(e) =>
-										setFormData((prev) => ({
-											...prev,
-											status: e.target
-												.value as FormData['status'],
-										}))
+										setFieldValue(
+											'status',
+											e.target
+												.value as SearchAdFormData['status'],
+										)
 									}
 									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
 								>
@@ -526,22 +290,16 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 							</button>
 							<button
 								type="submit"
-								disabled={isLoading}
+								disabled={isSubmitting}
 								className="px-8 py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 disabled:opacity-50 transition-colors text-sm font-medium order-1 sm:order-2"
 							>
-								{isLoading
+								{isSubmitting
 									? 'Modification...'
 									: 'Modifier la recherche'}
 							</button>
 						</div>
 					</div>
 				</div>
-
-				{error && (
-					<div className="rounded-md bg-red-50 p-4">
-						<div className="text-sm text-red-800">{error}</div>
-					</div>
-				)}
 			</form>
 		</div>
 	);

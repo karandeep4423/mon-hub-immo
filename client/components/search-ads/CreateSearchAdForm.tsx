@@ -1,12 +1,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import searchAdApi from '@/lib/api/searchAdApi';
-import { useAuth } from '@/hooks/useAuth';
-import { useForm } from '@/hooks/useForm';
+import {
+	useSearchAdForm,
+	type SearchAdFormData,
+} from '@/hooks/useSearchAdForm';
 import { SearchAdClientInfoForm } from './SearchAdClientInfoForm';
-import type { SearchAd } from '@/types/searchAd';
 import {
 	BasicInfoSection,
 	PropertyCriteriaSection,
@@ -17,167 +16,15 @@ import {
 	BadgesSection,
 } from './form-sections';
 
-interface FormData extends Record<string, unknown> {
-	title: string;
-	description: string;
-	propertyTypes: string[];
-	propertyState: string[];
-	projectType: string;
-	cities: string;
-	maxDistance?: number;
-	openToOtherAreas: boolean;
-	budgetMax: number;
-	budgetIdeal?: number;
-	financingType: string;
-	isSaleInProgress: boolean;
-	hasBankApproval: boolean;
-	minSurface?: number;
-	minRooms?: number;
-	minBedrooms?: number;
-	hasExterior: boolean;
-	hasParking: boolean;
-	acceptedFloors?: string;
-	desiredState: string[];
-	mustHaves: string[];
-	niceToHaves: string[];
-	dealBreakers: string[];
-	status: 'active' | 'paused' | 'fulfilled' | 'sold' | 'rented' | 'archived';
-	badges: string[];
-	clientInfo?: SearchAd['clientInfo'];
-}
-
 export const CreateSearchAdForm = () => {
 	const router = useRouter();
-	const { user } = useAuth();
-	const [error, setError] = useState<string | null>(null);
-
-	const { values, isSubmitting, setFieldValue, handleSubmit } =
-		useForm<FormData>({
-			initialValues: {
-				title: '',
-				description: '',
-				propertyTypes: [],
-				propertyState: [],
-				projectType: '',
-				cities: '',
-				maxDistance: undefined,
-				openToOtherAreas: false,
-				budgetMax: 0,
-				budgetIdeal: undefined,
-				financingType: '',
-				isSaleInProgress: false,
-				hasBankApproval: false,
-				minSurface: undefined,
-				minRooms: undefined,
-				minBedrooms: undefined,
-				hasExterior: false,
-				hasParking: false,
-				acceptedFloors: undefined,
-				desiredState: [],
-				mustHaves: [],
-				niceToHaves: [],
-				dealBreakers: [],
-				status: 'active',
-				badges: [],
-				clientInfo: {},
-			},
-			onSubmit: async (data) => {
-				if (!user) {
-					setError(
-						'Vous devez être connecté pour créer une annonce.',
-					);
-					return;
-				}
-
-				const validationError = validateForm();
-				if (validationError) {
-					setError(validationError);
-					return;
-				}
-
-				setError(null);
-
-				const adData = {
-					...data,
-					authorId: user._id,
-					status: data.status,
-					authorType: user.userType as 'agent' | 'apporteur',
-					location: {
-						cities: data.cities
-							.split(',')
-							.map((city) => city.trim()),
-						maxDistance: data.maxDistance,
-						openToOtherAreas: data.openToOtherAreas,
-					},
-					propertyTypes: data.propertyTypes as (
-						| 'house'
-						| 'apartment'
-						| 'land'
-						| 'building'
-						| 'commercial'
-					)[],
-					budget: {
-						max: data.budgetMax,
-						ideal: data.budgetIdeal,
-						financingType: data.financingType,
-						isSaleInProgress: data.isSaleInProgress,
-						hasBankApproval: data.hasBankApproval,
-					},
-					priorities: {
-						mustHaves: data.mustHaves,
-						niceToHaves: data.niceToHaves,
-						dealBreakers: data.dealBreakers,
-					},
-					badges: data.badges,
-					clientInfo: data.clientInfo,
-				};
-
-				await searchAdApi.createSearchAd(
-					adData as Parameters<typeof searchAdApi.createSearchAd>[0],
-				);
-				router.push('/mesannonces');
-			},
-		});
-
-	const handleArrayChange = (
-		value: string,
-		checked: boolean,
-		field: keyof Pick<
-			FormData,
-			| 'propertyTypes'
-			| 'propertyState'
-			| 'desiredState'
-			| 'mustHaves'
-			| 'niceToHaves'
-			| 'dealBreakers'
-			| 'badges'
-		>,
-	) => {
-		const currentArray = values[field] as string[];
-		const newArray = checked
-			? [...currentArray, value]
-			: currentArray.filter((item) => item !== value);
-		setFieldValue(field, newArray);
-	};
-
-	const validateForm = (): string | null => {
-		if (!values.title || values.title.length < 5) {
-			return 'Le titre doit contenir au moins 5 caractères.';
-		}
-		if (!values.description || values.description.length < 10) {
-			return 'La description doit contenir au moins 10 caractères.';
-		}
-		if (values.propertyTypes.length === 0) {
-			return 'Veuillez sélectionner au moins un type de bien.';
-		}
-		if (!values.cities || values.cities.length < 2) {
-			return 'La localisation est requise.';
-		}
-		if (values.budgetMax <= 0) {
-			return 'Le budget maximum doit être positif.';
-		}
-		return null;
-	};
+	const {
+		values,
+		isSubmitting,
+		setFieldValue,
+		handleSubmit,
+		handleArrayChange,
+	} = useSearchAdForm('create');
 
 	return (
 		<div className="w-full">
@@ -351,7 +198,7 @@ export const CreateSearchAdForm = () => {
 										setFieldValue(
 											'status',
 											e.target
-												.value as FormData['status'],
+												.value as SearchAdFormData['status'],
 										)
 									}
 									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
@@ -391,11 +238,6 @@ export const CreateSearchAdForm = () => {
 						</div>
 					</div>
 				</div>
-				{error && (
-					<div className="rounded-md bg-red-50 p-4">
-						<div className="text-sm text-red-800">{error}</div>
-					</div>
-				)}
 			</form>
 		</div>
 	);

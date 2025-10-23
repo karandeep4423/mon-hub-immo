@@ -9,7 +9,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import searchAdApi from '@/lib/api/searchAdApi';
 import { getSearchAdBadgeConfig } from '@/lib/constants/badges';
-import { logger } from '@/lib/utils/logger';
+import { useMutation } from '@/hooks/useMutation';
+import { formatDateShort } from '@/lib/utils/date';
 
 interface SearchAdCardProps {
 	searchAd: SearchAd;
@@ -26,9 +27,36 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 }) => {
 	const router = useRouter();
 	const { user } = useAuth();
-	const [isDeleting, setIsDeleting] = useState(false);
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-	const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+	// Delete mutation
+	const { mutate: deleteAd, loading: isDeleting } = useMutation<void, void>(
+		async () => await searchAdApi.deleteSearchAd(searchAd._id),
+		{
+			onSuccess: () => {
+				setShowDeleteConfirm(false);
+				onUpdate?.();
+			},
+			successMessage: 'Recherche supprimée avec succès',
+			errorMessage: 'Erreur lors de la suppression',
+			context: 'SearchAdCard',
+		},
+	);
+
+	// Status update mutation
+	const { mutate: updateStatus, loading: isUpdatingStatus } = useMutation<
+		SearchAd,
+		SearchAd['status']
+	>(
+		async (newStatus) =>
+			await searchAdApi.updateSearchAdStatus(searchAd._id, newStatus),
+		{
+			onSuccess: () => onUpdate?.(),
+			successMessage: 'Statut mis à jour avec succès',
+			errorMessage: 'Erreur lors de la mise à jour du statut',
+			context: 'SearchAdCard',
+		},
+	);
 
 	const handleContact = () => {
 		router.push(
@@ -45,35 +73,12 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 	};
 
 	const handleDelete = async () => {
-		setIsDeleting(true);
-		try {
-			await searchAdApi.deleteSearchAd(searchAd._id);
-			setShowDeleteConfirm(false);
-			if (onUpdate) {
-				onUpdate();
-			}
-		} catch (error) {
-			logger.error('Erreur lors de la suppression:', error);
-			// Could add toast notification here instead of alert
-		} finally {
-			setIsDeleting(false);
-		}
+		await deleteAd();
 	};
 
 	const handleStatusChange = async (newStatus: SearchAd['status']) => {
 		if (newStatus === searchAd.status) return;
-
-		setIsUpdatingStatus(true);
-		try {
-			await searchAdApi.updateSearchAdStatus(searchAd._id, newStatus);
-			if (onUpdate) {
-				onUpdate();
-			}
-		} catch (error) {
-			logger.error('Erreur lors de la mise à jour du statut:', error);
-		} finally {
-			setIsUpdatingStatus(false);
-		}
+		await updateStatus(newStatus);
 	};
 
 	// Check if current user is the owner
@@ -359,9 +364,7 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 							</div>
 						</div>
 						<p className="text-xs text-gray-500">
-							{new Date(searchAd.createdAt).toLocaleDateString(
-								'fr-FR',
-							)}
+							{formatDateShort(searchAd.createdAt)}
 						</p>
 					</div>
 				</div>

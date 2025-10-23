@@ -3,6 +3,7 @@ import { ImageUploader } from './ImageUploader';
 import Image from 'next/image';
 import { api } from '@/lib/api';
 import { logger } from '@/lib/utils/logger';
+import { useMutation } from '@/hooks/useMutation';
 
 interface ImageFile {
 	file: File;
@@ -31,59 +32,14 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 	onRemove,
 	uploadingText = 'Uploading...',
 }) => {
-	const [uploading, setUploading] = useState(false);
 	const [uploadError, setUploadError] = useState<string>('');
 
-	// Extract S3 key from URL
-	const extractS3KeyFromUrl = (url: string): string | null => {
-		try {
-			const urlObj = new URL(url);
-			let pathname = urlObj.pathname;
-
-			// Remove leading slash
-			if (pathname.startsWith('/')) {
-				pathname = pathname.substring(1);
-			}
-
-			// Handle different S3 URL formats:
-			// 1. s3.amazonaws.com/bucket/key
-			// 2. bucket.s3.amazonaws.com/key
-			// 3. CloudFront URLs with key in path
-
-			logger.debug('[ProfileImageUploader] Extracting S3 key', {
-				url,
-				pathname,
-			});
-
-			return pathname || null;
-		} catch (error) {
-			logger.error('[ProfileImageUploader] Failed to extract S3 key', {
-				url,
-				error,
-			});
-			return null;
-		}
-	};
-
-	const sizeClasses = {
-		small: 'w-16 h-16',
-		medium: 'w-20 h-20',
-		large: 'w-32 h-32',
-	};
-
-	const handleImageSelection = (images: ImageFile[]) => {
-		setUploadError('');
-
-		if (images.length > 0) {
-			uploadImage(images[0].file);
-		}
-	};
-
-	const uploadImage = async (file: File) => {
-		setUploading(true);
-		setUploadError('');
-
-		try {
+	// Upload mutation
+	const { mutate: uploadImage, loading: isUploading } = useMutation<
+		string,
+		File
+	>(
+		async (file: File) => {
 			// First, delete the old image if it exists
 			if (currentImageUrl) {
 				logger.debug(
@@ -138,18 +94,67 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 			});
 
 			if (response.data.success && response.data.data) {
-				onImageUploaded(response.data.data.url);
+				return response.data.data.url;
 			} else {
 				throw new Error(response.data.message || 'Upload failed');
 			}
+		},
+		{
+			onSuccess: (imageUrl) => {
+				onImageUploaded(imageUrl);
+				setUploadError('');
+			},
+			onError: (error) => {
+				setUploadError(error.message);
+			},
+			successMessage: 'Image téléchargée avec succès',
+			errorMessage: "Échec du téléchargement de l'image",
+			context: 'ProfileImageUploader',
+		},
+	);
+
+	// Extract S3 key from URL
+	const extractS3KeyFromUrl = (url: string): string | null => {
+		try {
+			const urlObj = new URL(url);
+			let pathname = urlObj.pathname;
+
+			// Remove leading slash
+			if (pathname.startsWith('/')) {
+				pathname = pathname.substring(1);
+			}
+
+			// Handle different S3 URL formats:
+			// 1. s3.amazonaws.com/bucket/key
+			// 2. bucket.s3.amazonaws.com/key
+			// 3. CloudFront URLs with key in path
+
+			logger.debug('[ProfileImageUploader] Extracting S3 key', {
+				url,
+				pathname,
+			});
+
+			return pathname || null;
 		} catch (error) {
-			logger.error('Image upload failed:', error);
-			const errorMessage =
-				(error as { response?: { data?: { message?: string } } })
-					?.response?.data?.message || 'Failed to upload image';
-			setUploadError(errorMessage);
-		} finally {
-			setUploading(false);
+			logger.error('[ProfileImageUploader] Failed to extract S3 key', {
+				url,
+				error,
+			});
+			return null;
+		}
+	};
+
+	const sizeClasses = {
+		small: 'w-16 h-16',
+		medium: 'w-20 h-20',
+		large: 'w-32 h-32',
+	};
+
+	const handleImageSelection = (images: ImageFile[]) => {
+		setUploadError('');
+
+		if (images.length > 0) {
+			uploadImage(images[0].file);
 		}
 	};
 
@@ -198,7 +203,7 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 								<button
 									type="button"
 									onClick={handleRemoveImage}
-									disabled={disabled || uploading}
+									disabled={disabled || isUploading}
 									className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 disabled:opacity-50"
 								>
 									×
@@ -208,9 +213,8 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 					</div>
 				</div>
 			)}
-
 			{/* Upload Status */}
-			{uploading && (
+			{isUploading && (
 				<div className="text-center">
 					<div className="inline-flex items-center space-x-2">
 						<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-cyan-600"></div>
@@ -220,16 +224,14 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 					</div>
 				</div>
 			)}
-
 			{/* Upload Error */}
 			{uploadError && (
 				<div className="text-center">
 					<p className="text-sm text-red-600">{uploadError}</p>
 				</div>
 			)}
-
 			{/* Image Uploader */}
-			{!uploading && (
+			{!isUploading && (
 				<div>
 					<p className="text-sm font-medium text-gray-700 mb-2">
 						{currentImageUrl
@@ -240,11 +242,10 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 						onImagesChange={handleImageSelection}
 						maxImages={1}
 						className="border-cyan-600 border-2"
-						disabled={disabled || uploading}
+						disabled={disabled || isUploading}
 					/>
 				</div>
-			)}
-
+			)}{' '}
 			{/* Help Text */}
 			<div className="text-xs text-gray-500 text-center">
 				<p>Supported formats: JPG, PNG, WebP</p>

@@ -327,3 +327,17 @@ export const getSearchAdBadgeConfig = (
 ): BadgeConfig | undefined => {
 	return SEARCH_AD_BADGES[value];
 };
+
+// Search Ad Badge Options (for forms/selectors)
+export const SEARCH_AD_BADGE_OPTIONS = [
+	'Vente urgente',
+	'Bien rare',
+	'Secteur recherché',
+	'Bonne affaire',
+	'Fort potentiel',
+	'Mandat possible rapidement',
+	'Signature imminente',
+	'Contact direct propriétaire',
+	'Contact ami / famille',
+	'Contact pro (collègue, artisan, notaire…)',
+];

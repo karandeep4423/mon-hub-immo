@@ -5,7 +5,7 @@ import { useChat } from '../../hooks/useChat';
 import { isValidMessageContent } from './utils/messageUtils';
 import { isEnterKeyPress } from './utils/keyboardUtils';
 import TypingIndicator from './TypingIndicator';
-import { ButtonSpinner } from './ui';
+import { ButtonLoader } from '@/components/ui/LoadingSpinner';
 import { ChatApi } from '@/lib/api/chatApi';
 import { CHAT_TEXT } from '@/lib/constants/text';
 import { logger } from '@/lib/utils/logger';
@@ -73,12 +73,12 @@ const SendButton: React.FC<{
 		type="submit"
 		disabled={isDisabled}
 		onClick={onClick}
-		className="px-6 py-3 bg-[#00b4d8] text-white rounded-lg hover:bg-[#0094b3] disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[#00b4d8] focus:ring-offset-2"
+		className="px-6 py-3 bg-brand text-white rounded-lg hover:bg-brand-dark disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
 		aria-label={
 			isSending ? CHAT_TEXT.sendingMessage : CHAT_TEXT.sendMessageButton
 		}
 	>
-		{isSending ? <ButtonSpinner /> : CHAT_TEXT.send}
+		{isSending ? <ButtonLoader /> : CHAT_TEXT.send}
 	</button>
 ));
 
@@ -346,11 +346,11 @@ const MessageInput: React.FC<MessageInputProps> = React.memo(
 							type="button"
 							onClick={onPickFile}
 							disabled={isDisabled}
-							className="px-3 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 text-gray-600 hover:text-[#00b4d8]"
+							className="px-3 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 text-gray-600 hover:text-brand"
 							aria-label="Add attachment"
 						>
 							{isUploading ? (
-								<ButtonSpinner />
+								<ButtonLoader />
 							) : (
 								<svg
 									xmlns="http://www.w3.org/2000/svg"

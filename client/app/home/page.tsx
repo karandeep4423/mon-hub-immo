@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
 	PropertyService,
 	Property,
@@ -10,6 +10,7 @@ import searchAdApi from '@/lib/api/searchAdApi';
 import { SearchAd } from '@/types/searchAd';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { useAuth } from '@/hooks/useAuth';
+import { useFetch } from '@/hooks/useFetch';
 import { GeolocationPrompt } from '@/components/ui';
 import type { LocationItem } from '@/components/ui/LocationSearchWithRadius';
 import { authService } from '@/lib/api/authApi';
@@ -31,6 +32,8 @@ import {
 	getGeolocationPreference,
 } from '@/lib/services/geolocationService';
 import { logger } from '@/lib/utils/logger';
+import { useDebounce } from '@/hooks/useDebounce';
+import { DEBOUNCE_SEARCH_MS } from '@/lib/constants';
 
 type ContentFilter =
 	| 'all'
@@ -43,10 +46,6 @@ export default function Home() {
 	const { user } = useAuth();
 	const { favoritePropertyIds, favoriteSearchAdIds, initializeFavorites } =
 		useFavoritesStore();
-	const [properties, setProperties] = useState<Property[]>([]);
-	const [searchAds, setSearchAds] = useState<SearchAd[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
 	const [searchTerm, setSearchTerm] = useState('');
 	const [typeFilter, setTypeFilter] = useState('');
 	const [selectedLocations, setSelectedLocations] = useState<LocationItem[]>(
@@ -65,6 +64,10 @@ export default function Home() {
 	);
 	const [myAreaLocations, setMyAreaLocations] = useState<LocationItem[]>([]);
 	const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+	// Debounce search term with standard delay
+	const debouncedSearchTerm = useDebounce(searchTerm, DEBOUNCE_SEARCH_MS);
+
 	const PAGE_SIZE = 6;
 	// Normalize city names for robust comparisons (remove accents, trim, lowercase)
 	const normalizeCity = (value: string): string =>
@@ -467,85 +470,65 @@ export default function Home() {
 		logger.debug('[Home] Geolocation denied by user');
 	};
 
-	// Debounce effect for search term
-	useEffect(() => {
-		const fetchData = async () => {
-			try {
-				setLoading(true);
-				setError(null);
+	// Build property filters based on current state
+	const propertyFilters = useMemo((): PropertyFilters => {
+		const filters: PropertyFilters = {};
+		if (debouncedSearchTerm) filters.search = debouncedSearchTerm;
+		if (typeFilter) filters.propertyType = typeFilter;
 
-				const filters: PropertyFilters = {};
-				if (searchTerm) filters.search = searchTerm;
-				if (typeFilter) filters.propertyType = typeFilter;
-
-				// Add location filters (postal codes) - but NOT when in "Mon secteur" mode
-				// "Mon secteur" uses client-side filtering with myAreaLocations
-				if (
-					selectedLocations.length > 0 &&
-					contentFilter !== 'myArea'
-				) {
-					const postalCodes = selectedLocations.map(
-						(loc) => loc.postcode,
-					);
-
-					if (postalCodes.length > 0) {
-						filters.postalCode = postalCodes.join(',');
-					}
-				}
-				if (priceFilter.min > 0) filters.minPrice = priceFilter.min;
-				if (priceFilter.max < 10000000)
-					filters.maxPrice = priceFilter.max;
-				if (surfaceFilter.min > 0)
-					filters.minSurface = surfaceFilter.min;
-				if (surfaceFilter.max < 100000)
-					filters.maxSurface = surfaceFilter.max;
-
-				logger.debug('[Home] Fetching properties with filters:', {
-					contentFilter,
-					selectedLocationsCount: selectedLocations.length,
-					filters,
-				});
-
-				const [propertiesData, searchAdsData] = await Promise.all([
-					PropertyService.getAllProperties(filters),
-					searchAdApi.getAllSearchAds(),
-				]);
-
-				logger.debug(
-					'[Home] Received properties:',
-					propertiesData?.length,
-				);
-
-				setProperties(propertiesData || []);
-				setSearchAds(searchAdsData || []);
-			} catch (error) {
-				const err = error as Error;
-				logger.error('Error fetching data:', err);
-				setError(
-					err.message || 'Erreur lors du chargement des données',
-				);
-			} finally {
-				setLoading(false);
+		// Add location filters (postal codes) - but NOT when in "Mon secteur" mode
+		// "Mon secteur" uses client-side filtering with myAreaLocations
+		if (selectedLocations.length > 0 && contentFilter !== 'myArea') {
+			const postalCodes = selectedLocations.map((loc) => loc.postcode);
+			if (postalCodes.length > 0) {
+				filters.postalCode = postalCodes.join(',');
 			}
-		};
+		}
+		if (priceFilter.min > 0) filters.minPrice = priceFilter.min;
+		if (priceFilter.max < 10000000) filters.maxPrice = priceFilter.max;
+		if (surfaceFilter.min > 0) filters.minSurface = surfaceFilter.min;
+		if (surfaceFilter.max < 100000) filters.maxSurface = surfaceFilter.max;
 
-		const debounceTimer = setTimeout(
-			() => {
-				fetchData();
-			},
-			searchTerm ? 500 : 0,
-		); // 500ms delay for search, immediate for others
-
-		return () => clearTimeout(debounceTimer);
+		return filters;
 	}, [
-		searchTerm,
+		debouncedSearchTerm,
 		typeFilter,
 		selectedLocations,
+		contentFilter,
 		priceFilter,
 		surfaceFilter,
-		profileFilter,
-		contentFilter,
 	]);
+
+	// Fetch properties using useFetch hook
+	const {
+		data: properties = [],
+		loading: loadingProperties,
+		error: propertiesError,
+	} = useFetch<Property[]>(
+		() => PropertyService.getAllProperties(propertyFilters),
+		{
+			initialData: [],
+			showErrorToast: true,
+			errorMessage: 'Erreur lors du chargement des propriétés',
+			deps: [propertyFilters, contentFilter, selectedLocations.length],
+		},
+	);
+
+	// Fetch search ads using useFetch hook
+	const {
+		data: searchAds = [],
+		loading: loadingSearchAds,
+		error: searchAdsError,
+	} = useFetch<SearchAd[]>(() => searchAdApi.getAllSearchAds(), {
+		initialData: [],
+		showErrorToast: true,
+		errorMessage: 'Erreur lors du chargement des annonces de recherche',
+		deps: [],
+	});
+
+	// Combined loading and error states
+	const loading = loadingProperties || loadingSearchAds;
+	const error = propertiesError || searchAdsError;
 
 	// Reset pagination when filters/content change
 	useEffect(() => {
@@ -619,7 +602,10 @@ export default function Home() {
 				</div>
 			) : error ? (
 				<div className="text-center py-12 bg-red-50 rounded-lg">
-					<p className="text-red-600">{error}</p>
+					<p className="text-red-600">
+						{error.message ||
+							'Erreur lors du chargement des données'}
+					</p>
 					<button
 						onClick={() => window.location.reload()}
 						className="mt-4 px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark"

@@ -13,7 +13,13 @@
 
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, {
+	useState,
+	useRef,
+	useEffect,
+	useCallback,
+	RefObject,
+} from 'react';
 import { searchMunicipalities } from '@/lib/services/frenchAddressApi';
 import { useClickOutside, useDebouncedSearch } from '@/hooks';
 
@@ -124,9 +130,15 @@ export const BaseLocationAutocomplete: React.FC<
 	);
 
 	// Click outside handler
-	useClickOutside([inputRef, dropdownRef], () => {
-		setShowDropdown(false);
-	});
+	useClickOutside(
+		[
+			inputRef as RefObject<HTMLElement>,
+			dropdownRef as RefObject<HTMLElement>,
+		],
+		() => {
+			setShowDropdown(false);
+		},
+	);
 
 	// Initialize from value prop
 	useEffect(() => {

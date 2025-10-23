@@ -242,6 +242,7 @@ export function useOptimisticMutation<TData = unknown, TVariables = unknown>(
 		rollback: () => void;
 	},
 ): UseMutationResult<TData, TVariables> {
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const { optimisticUpdate, rollback, ...mutationOptions } = options;
 
 	return useMutation(mutationFn, {

@@ -196,3 +196,41 @@ export function getStatusConfig(
 		status as keyof (typeof STATUS_CONFIGS)[typeof entityType]
 	];
 }
+
+/**
+ * Status value constants for type-safe comparisons
+ * Use these instead of hardcoded strings
+ */
+export const COLLABORATION_STATUSES = {
+	PENDING: 'pending' as const,
+	ACCEPTED: 'accepted' as const,
+	ACTIVE: 'active' as const,
+	COMPLETED: 'completed' as const,
+	REJECTED: 'rejected' as const,
+	CANCELLED: 'cancelled' as const,
+};
+
+export const APPOINTMENT_STATUSES = {
+	PENDING: 'pending' as const,
+	CONFIRMED: 'confirmed' as const,
+	CANCELLED: 'cancelled' as const,
+	COMPLETED: 'completed' as const,
+	REJECTED: 'rejected' as const,
+};
+
+export const SEARCH_AD_STATUSES = {
+	ACTIVE: 'active' as const,
+	PAUSED: 'paused' as const,
+	FULFILLED: 'fulfilled' as const,
+	SOLD: 'sold' as const,
+	RENTED: 'rented' as const,
+	ARCHIVED: 'archived' as const,
+};
+
+export const PROPERTY_STATUSES = {
+	ACTIVE: 'active' as const,
+	DRAFT: 'draft' as const,
+	SOLD: 'sold' as const,
+	RENTED: 'rented' as const,
+	ARCHIVED: 'archived' as const,
+};

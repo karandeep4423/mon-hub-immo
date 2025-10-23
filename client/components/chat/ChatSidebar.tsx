@@ -132,7 +132,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
 						placeholder={CHAT_TEXT.searchUsers}
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
-						className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00b4d8] focus:border-[#00b4d8] outline-none"
+						className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none"
 					/>
 					<svg
 						className="absolute left-3 top-2.5 w-5 h-5 text-gray-400"
@@ -171,7 +171,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
 									onClick={() => handleUserSelect(user)}
 									className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
 										isSelected
-											? 'bg-[#e6f7ff] border-r-4 border-[#00b4d8]'
+											? 'bg-brand-50 border-r-4 border-brand'
 											: ''
 									}`}
 								>

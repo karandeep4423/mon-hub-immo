@@ -13,7 +13,7 @@ export const CollaborationChatButton: React.FC<
 	return (
 		<button
 			onClick={onClick}
-			className="fixed bottom-6 right-6 z-30 bg-[#00b4d8] hover:bg-[#0094b3] text-white p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+			className="fixed bottom-6 right-6 z-30 bg-brand hover:bg-brand-dark text-white p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
 			aria-label="Ouvrir le chat"
 			title={`Chat with collaboration partner${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
 		>

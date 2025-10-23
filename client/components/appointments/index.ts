@@ -3,3 +3,8 @@ export { BookAppointmentModal } from './BookAppointmentModal';
 export { AgentFilters } from './AgentFilters';
 export { AvailabilityManager } from './AvailabilityManager';
 export { AppointmentsManager } from './AppointmentsManager';
+export { AppointmentCard } from './AppointmentCard';
+export { AppointmentFilters } from './AppointmentFilters';
+export { BookingStep1 } from './BookingStep1';
+export { BookingStep2 } from './BookingStep2';
+export { BookingStep3 } from './BookingStep3';

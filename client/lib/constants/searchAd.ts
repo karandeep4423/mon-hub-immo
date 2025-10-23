@@ -16,4 +16,8 @@ export const PRIORITIES = [
 	'Lumineux',
 	'Sans travaux',
 	'Piscine',
+	'Balcon/Terrasse',
+	'Ascenseur',
+	'Vue dégagée',
+	'Calme',
 ];

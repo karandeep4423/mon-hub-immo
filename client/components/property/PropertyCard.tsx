@@ -6,6 +6,7 @@ import { ProfileAvatar, FavoriteButton } from '../ui';
 import { getBadgeConfig } from '@/lib/constants/badges';
 import { collaborationApi } from '@/lib/api/collaborationApi';
 import { useAuth } from '@/hooks/useAuth';
+import { formatDateShort } from '@/lib/utils/date';
 
 interface PropertyCardProps {
 	property: Property;
@@ -192,9 +193,9 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 						</div>
 						<div className="text-right">
 							<p className="text-gray-500 text-xs">
-								{new Date(
+								{formatDateShort(
 									property.publishedAt || property.createdAt,
-								).toLocaleDateString('fr-FR')}
+								)}
 							</p>
 						</div>
 					</div>

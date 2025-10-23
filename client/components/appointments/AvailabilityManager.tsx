@@ -8,6 +8,8 @@ import { useNotification } from '@/hooks/useNotification';
 import { useAuth } from '@/hooks/useAuth';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { logger } from '@/lib/utils/logger';
+import { useFetch } from '@/hooks/useFetch';
+import { DAYS_OF_WEEK } from '@/lib/constants';
 import {
 	AutoSaveIndicator,
 	GeneralSettings,
@@ -15,16 +17,6 @@ import {
 	BlockedDatesTab,
 	InfoBox,
 } from './availability-manager';
-
-const DAYS_OF_WEEK = [
-	{ value: 1, label: 'Lundi' },
-	{ value: 2, label: 'Mardi' },
-	{ value: 3, label: 'Mercredi' },
-	{ value: 4, label: 'Jeudi' },
-	{ value: 5, label: 'Vendredi' },
-	{ value: 6, label: 'Samedi' },
-	{ value: 0, label: 'Dimanche' },
-];
 
 // Helper function to check if time slots overlap
 const hasOverlappingSlots = (
@@ -67,7 +59,6 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 	const [availability, setAvailability] = useState<AgentAvailability | null>(
 		null,
 	);
-	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
 	const [activeTab, setActiveTab] = useState<'weekly' | 'blocked'>('weekly');
 	const [newBlockedDate, setNewBlockedDate] = useState('');
@@ -79,6 +70,49 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 	const [dateToUnblock, setDateToUnblock] = useState<string | null>(null);
 	const { showNotification } = useNotification();
 	const { user } = useAuth();
+
+	// Fetch availability using useFetch hook
+	const { data: fetchedAvailability, loading } = useFetch(
+		() => appointmentApi.getAgentAvailability(user!._id),
+		{
+			deps: [user?._id],
+			skip: !user?._id,
+			showErrorToast: false,
+			onError: (error) => {
+				const responseStatus = (
+					error as { response?: { status?: number } }
+				).response?.status;
+				if (responseStatus === 404) {
+					// Initialize default availability (business hours)
+					setAvailability({
+						agentId: user!._id,
+						weeklySchedule: DAYS_OF_WEEK.map((day) => ({
+							dayOfWeek: day.value as 0 | 1 | 2 | 3 | 4 | 5 | 6,
+							isAvailable: day.value >= 1 && day.value <= 5, // Mon-Fri
+							slots:
+								day.value >= 1 && day.value <= 5
+									? [{ startTime: '09:00', endTime: '18:00' }]
+									: [],
+						})),
+						dateOverrides: [],
+						defaultDuration: 60,
+						bufferTime: 15,
+						maxAppointmentsPerDay: 8,
+						advanceBookingDays: 30,
+					});
+				} else {
+					logger.error('Error fetching availability:', error);
+				}
+			},
+		},
+	);
+
+	// Update local state when data is fetched
+	useEffect(() => {
+		if (fetchedAvailability && !availability) {
+			setAvailability(fetchedAvailability);
+		}
+	}, [fetchedAvailability, availability]);
 
 	// Auto-save with debouncing (2 seconds after last change)
 	const scheduleAutoSave = React.useCallback(() => {
@@ -120,46 +154,6 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 			}
 		};
 	}, [autoSaveTimer]);
-
-	const fetchAvailability = React.useCallback(async () => {
-		if (!user?._id) return;
-
-		try {
-			setLoading(true);
-			const data = await appointmentApi.getAgentAvailability(user._id);
-			setAvailability(data);
-		} catch (error) {
-			const responseStatus = (error as { response?: { status?: number } })
-				.response?.status;
-			if (responseStatus === 404) {
-				// Initialize default availability (business hours)
-				setAvailability({
-					agentId: user._id,
-					weeklySchedule: DAYS_OF_WEEK.map((day) => ({
-						dayOfWeek: day.value as 0 | 1 | 2 | 3 | 4 | 5 | 6,
-						isAvailable: day.value >= 1 && day.value <= 5, // Mon-Fri
-						slots:
-							day.value >= 1 && day.value <= 5
-								? [{ startTime: '09:00', endTime: '18:00' }]
-								: [],
-					})),
-					dateOverrides: [],
-					defaultDuration: 60,
-					bufferTime: 15,
-					maxAppointmentsPerDay: 8,
-					advanceBookingDays: 30,
-				});
-			} else {
-				logger.error('Error fetching availability:', error);
-			}
-		} finally {
-			setLoading(false);
-		}
-	}, [user?._id]);
-
-	useEffect(() => {
-		fetchAvailability();
-	}, [fetchAvailability]);
 
 	// Auto-save when availability changes (triggered by user actions)
 	const [shouldAutoSave, setShouldAutoSave] = React.useState(false);

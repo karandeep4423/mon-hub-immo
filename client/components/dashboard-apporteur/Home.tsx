@@ -13,8 +13,7 @@ import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { formatNumber } from '@/lib/utils/format';
 import { AppointmentsManager } from '../appointments/AppointmentsManager';
 import { appointmentApi } from '@/lib/api/appointmentApi';
-import { useEffect } from 'react';
-import { logger } from '@/lib/utils/logger';
+import { useFetch } from '@/hooks/useFetch';
 
 const Home = () => {
 	const { user } = useAuth();
@@ -26,35 +25,31 @@ const Home = () => {
 		| 'appointments'
 	>('overview');
 	const [showUpdateModal, setShowUpdateModal] = useState(false);
-	const [appointmentStats, setAppointmentStats] = useState({
-		pending: 0,
-		confirmed: 0,
-		total: 0,
-	});
 
 	const { kpis, loading: statsLoading } = useDashboardStats(user?._id);
 
-	useEffect(() => {
-		if (user) {
-			fetchAppointmentStats();
-		}
-	}, [user]);
+	// Use useFetch for appointment stats
+	const { data: appointments } = useFetch(
+		() => appointmentApi.getMyAppointments(),
+		{
+			deps: [user?._id],
+			skip: !user,
+			showErrorToast: false,
+		},
+	);
 
-	const fetchAppointmentStats = async () => {
-		try {
-			const appointments = await appointmentApi.getMyAppointments();
-			setAppointmentStats({
-				pending: appointments.filter((apt) => apt.status === 'pending')
-					.length,
-				confirmed: appointments.filter(
-					(apt) => apt.status === 'confirmed',
-				).length,
-				total: appointments.length,
-			});
-		} catch (error) {
-			logger.error('Error fetching appointment stats:', error);
+	const appointmentStats = React.useMemo(() => {
+		if (!appointments) {
+			return { pending: 0, confirmed: 0, total: 0 };
 		}
-	};
+		return {
+			pending: appointments.filter((apt) => apt.status === 'pending')
+				.length,
+			confirmed: appointments.filter((apt) => apt.status === 'confirmed')
+				.length,
+			total: appointments.length,
+		};
+	}, [appointments]);
 
 	const renderOverview = () => (
 		<div className="space-y-6">

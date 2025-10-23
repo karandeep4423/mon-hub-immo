@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { SearchAd } from '@/types/searchAd';
 import { ProfileAvatar } from '../ui/ProfileAvatar';
 import { collaborationApi } from '@/lib/api/collaborationApi';
 import { useAuth } from '@/hooks/useAuth';
+import { useFetch } from '@/hooks/useFetch';
 import { getSearchAdBadgeConfig } from '@/lib/constants/badges';
+import { formatDateShort } from '@/lib/utils/date';
 
 interface HomeSearchAdCardProps {
 	searchAd: SearchAd;
@@ -17,37 +19,23 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 	searchAd,
 }) => {
 	const { user } = useAuth();
-	const [collaborationStatus, setCollaborationStatus] = useState<
-		'pending' | 'accepted' | 'active' | null
-	>(null);
 
-	useEffect(() => {
-		// Only check collaboration status if user is authenticated
-		if (!user) return;
+	// Use useFetch to get collaboration status
+	const { data: collaborationsData } = useFetch(
+		() =>
+			user
+				? collaborationApi.getSearchAdCollaborations(searchAd._id)
+				: Promise.resolve({ collaborations: [] }),
+		{
+			deps: [searchAd._id, user?._id],
+			showErrorToast: false, // Silently fail - collaboration status is optional
+		},
+	);
 
-		const checkCollaboration = async () => {
-			try {
-				const { collaborations } =
-					await collaborationApi.getSearchAdCollaborations(
-						searchAd._id,
-					);
-				const blocking = collaborations.find((c) =>
-					['pending', 'accepted', 'active'].includes(
-						c.status as string,
-					),
-				);
-				if (blocking) {
-					setCollaborationStatus(
-						blocking.status as 'pending' | 'accepted' | 'active',
-					);
-				}
-			} catch {
-				// Silently fail - collaboration status is optional
-			}
-		};
-
-		checkCollaboration();
-	}, [searchAd._id, user]);
+	// Find blocking collaboration status
+	const collaborationStatus = collaborationsData?.collaborations.find((c) =>
+		['pending', 'accepted', 'active'].includes(c.status as string),
+	)?.status as 'pending' | 'accepted' | 'active' | undefined;
 
 	const formatPropertyTypes = (types: string[]) => {
 		const typeMap: Record<string, string> = {
@@ -155,9 +143,7 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 
 						<div className="text-right">
 							<p className="text-xs text-gray-500">
-								{new Date(
-									searchAd.createdAt,
-								).toLocaleDateString('fr-FR')}
+								{formatDateShort(searchAd.createdAt)}
 							</p>
 						</div>
 					</div>

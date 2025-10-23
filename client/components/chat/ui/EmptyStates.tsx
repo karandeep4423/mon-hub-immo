@@ -35,7 +35,7 @@ interface NoConversationSelectedProps {
 const ChatIcon: React.FC<{ className?: string }> = React.memo(
 	({ className = '' }) => (
 		<svg
-			className={`w-8 h-8 text-[#00b4d8] ${className}`}
+			className={`w-8 h-8 text-brand ${className}`}
 			fill="none"
 			stroke="currentColor"
 			viewBox="0 0 24 24"
@@ -58,7 +58,7 @@ ChatIcon.displayName = 'ChatIcon';
 const MessageIcon: React.FC<{ className?: string }> = React.memo(
 	({ className = '' }) => (
 		<svg
-			className={`w-8 h-8 text-[#00b4d8] ${className}`}
+			className={`w-8 h-8 text-brand ${className}`}
 			fill="none"
 			stroke="currentColor"
 			viewBox="0 0 24 24"
@@ -150,7 +150,7 @@ export const LoadingMessages: React.FC<{ className?: string }> = React.memo(
 			className={`flex-1 flex items-center justify-center bg-gray-50 ${className}`}
 		>
 			<div className="text-center">
-				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00b4d8] mx-auto mb-2"></div>
+				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto mb-2"></div>
 				<p className="text-gray-500">{CHAT_TEXT.loadingMessages}</p>
 			</div>
 		</div>
@@ -170,7 +170,7 @@ export const LoadingUsers: React.FC<{ className?: string }> = React.memo(
 			className={`h-full bg-white border-r border-gray-200 flex items-center justify-center ${className}`}
 		>
 			<div className="text-center">
-				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00b4d8] mx-auto"></div>
+				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto"></div>
 				<p className="text-gray-500 mt-2">{CHAT_TEXT.loadingUsers}</p>
 			</div>
 		</div>

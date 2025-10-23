@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
 				pathname: '/**',
 			},
 		],
+		// Disable optimization for S3 images to avoid 403 errors
+		unoptimized: process.env.NODE_ENV === 'production',
 	},
 };
 

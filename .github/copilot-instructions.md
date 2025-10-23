@@ -50,6 +50,31 @@ npm start  # Uses ts-node-dev with auto-restart
 - **React Context**: Socket.IO only (`SocketContext.tsx`)
 - **Custom hooks**: Domain-specific logic (`useAuth.ts`, `useChat.ts`, `useCollaboration.ts`)
 
+#### Authentication Access Pattern
+
+**Use the wrapper hook for components:**
+
+```typescript
+// ✅ PREFERRED in components
+import { useAuth } from "@/hooks/useAuth";
+const { user, loading, login, logout } = useAuth();
+```
+
+**Use direct store access for:**
+
+1. Selective subscriptions (performance optimization)
+2. Accessing specific state slices
+3. Inside other hooks/utilities
+
+```typescript
+// ✅ GOOD for granular subscriptions
+import { useAuthStore } from "@/store/authStore";
+const user = useAuthStore((state) => state.user); // Only re-renders on user change
+const loading = useAuthStore((state) => state.loading); // Only re-renders on loading change
+```
+
+**Rule of thumb:** Use `useAuth()` hook unless you need fine-grained performance control.
+
 ### API Patterns
 
 ```typescript
@@ -60,6 +85,73 @@ api.interceptors.response.use(); // Handles 401 redirects
 // Server: Express routes with middleware
 router.post("/signup", signupValidation, signup);
 router.get("/profile", authenticateToken, getProfile);
+```
+
+#### Data Fetching Pattern
+
+**Always use custom hooks instead of manual state management:**
+
+```typescript
+// ❌ DON'T: Manual fetching
+const [data, setData] = useState([]);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState(null);
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const result = await api.get("/endpoint");
+      setData(result.data);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchData();
+}, []);
+
+// ✅ DO: Use useFetch hook
+import { useFetch } from "@/hooks/useFetch";
+const { data, loading, error, refetch } = useFetch(() => api.get("/endpoint"), {
+  showErrorToast: true,
+  errorMessage: "Failed to load data",
+});
+
+// ✅ DO: Use useMutation for write operations
+import { useMutation } from "@/hooks/useMutation";
+const { mutate, loading } = useMutation(
+  async (formData) => await api.post("/endpoint", formData),
+  {
+    onSuccess: () => {
+      refetch();
+    },
+    successMessage: "Saved successfully!",
+    errorMessage: "Failed to save",
+  }
+);
+```
+
+#### Error Handling Pattern
+
+**Always use logger and handleApiError:**
+
+```typescript
+// ❌ DON'T: Direct console
+catch (error) {
+  console.error('Error:', error);
+  toast.error('Something went wrong');
+}
+
+// ✅ DO: Use logger and handleApiError
+import { logger } from '@/lib/utils/logger';
+import { handleApiError } from '@/lib/utils/errorHandler';
+
+catch (error) {
+  const apiError = handleApiError(error, 'ComponentName', 'Failed to perform action');
+  logger.error('[ComponentName] Action failed:', apiError);
+  toast.error(apiError.message);
+}
 ```
 
 ### Type Safety

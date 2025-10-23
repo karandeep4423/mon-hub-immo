@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { PropertyService, Property } from '@/lib/api/propertyApi';
 import { toast } from 'react-toastify';
 import { logger } from '@/lib/utils/logger';
+import { TOAST_MESSAGES } from '@/lib/constants';
 
 interface UsePropertyActionsOptions {
 	onSuccess?: () => void;
@@ -34,14 +35,14 @@ export const usePropertyActions = ({
 		try {
 			setDeleteLoading(true);
 			await PropertyService.deleteProperty(propertyId);
-			toast.success('Bien supprimé avec succès !');
+			toast.success(TOAST_MESSAGES.PROPERTIES.DELETE_SUCCESS);
 			onSuccess?.();
 		} catch (error: unknown) {
 			logger.error('Error deleting property:', error);
 			const errorMessage =
 				error instanceof Error
 					? error.message
-					: 'Erreur lors de la suppression du bien';
+					: TOAST_MESSAGES.PROPERTIES.DELETE_ERROR;
 			toast.error(errorMessage);
 			throw error;
 		} finally {
@@ -55,14 +56,14 @@ export const usePropertyActions = ({
 	) => {
 		try {
 			await PropertyService.updatePropertyStatus(propertyId, newStatus);
-			toast.success('Statut mis à jour avec succès !');
+			toast.success(TOAST_MESSAGES.PROPERTIES.STATUS_UPDATE_SUCCESS);
 			onSuccess?.();
 		} catch (error: unknown) {
 			logger.error('Error updating status:', error);
 			const errorMessage =
 				error instanceof Error
 					? error.message
-					: 'Erreur lors de la mise à jour du statut';
+					: TOAST_MESSAGES.PROPERTIES.STATUS_UPDATE_ERROR;
 			toast.error(errorMessage);
 			throw error;
 		}

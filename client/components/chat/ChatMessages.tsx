@@ -26,6 +26,7 @@ import {
 import TypingIndicator from './TypingIndicator';
 import { logger } from '@/lib/utils/logger';
 import { SOCKET_EVENTS } from '@/lib/constants/socket';
+import { DEBOUNCE_SCROLL_MS } from '@/lib/constants';
 // import { CHAT_TEXT } from '@/lib/constants/text';
 
 // ============================================================================
@@ -40,7 +41,7 @@ const ScrollToBottomButton: React.FC<{
 }> = ({ onClick }) => (
 	<button
 		onClick={onClick}
-		className="absolute bottom-4 right-4 bg-[#00b4d8] hover:bg-[#0094b3] text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+		className="absolute bottom-4 right-4 bg-brand hover:bg-brand-dark text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
 		title="Défiler vers le bas"
 	>
 		<svg
@@ -185,7 +186,7 @@ const ChatMessages: React.FC = () => {
 
 	// Debounced version of scroll handler to prevent excessive calls
 	const debouncedHandleScroll = React.useMemo(
-		() => debounce(handleScroll, 100),
+		() => debounce(handleScroll, DEBOUNCE_SCROLL_MS),
 		[handleScroll],
 	);
 

@@ -1,22 +1,10 @@
+import { SEARCH_AD_BADGE_OPTIONS } from '@/lib/constants';
 import { FormSection } from './FormSection';
 
 interface BadgesSectionProps {
 	badges: string[];
 	onBadgesChange: (badge: string, checked: boolean) => void;
 }
-
-const BADGE_OPTIONS = [
-	'Vente urgente',
-	'Bien rare',
-	'Secteur recherché',
-	'Bonne affaire',
-	'Fort potentiel',
-	'Mandat possible rapidement',
-	'Signature imminente',
-	'Contact direct propriétaire',
-	'Contact ami / famille',
-	'Contact pro (collègue, artisan, notaire…)',
-];
 
 export const BadgesSection: React.FC<BadgesSectionProps> = ({
 	badges,
@@ -29,7 +17,7 @@ export const BadgesSection: React.FC<BadgesSectionProps> = ({
 				importantes de cette recherche (optionnel)
 			</p>
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-				{BADGE_OPTIONS.map((badge) => (
+				{SEARCH_AD_BADGE_OPTIONS.map((badge) => (
 					<label
 						key={badge}
 						className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer min-h-[3rem]"

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
@@ -6,6 +6,8 @@ import { contractApi, ContractData } from '@/lib/api/contractApi';
 import { useAuth } from '@/hooks/useAuth';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { toast } from 'react-toastify';
+import { useFetch, useMutation } from '@/hooks';
+import { TOAST_MESSAGES } from '@/lib/constants';
 
 interface ContractManagementProps {
 	collaborationId: string;
@@ -19,10 +21,6 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 	onClose,
 }) => {
 	const { user } = useAuth();
-	const [contract, setContract] = useState<ContractData | null>(null);
-	const [isLoading, setIsLoading] = useState(true);
-	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [error, setError] = useState<string | null>(null);
 	const [isEditing, setIsEditing] = useState(false);
 	const [formData, setFormData] = useState({
 		contractText: '',
@@ -30,34 +28,26 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 	});
 	const [confirmOpen, setConfirmOpen] = useState(false);
 
-	useEffect(() => {
-		const loadContract = async () => {
-			try {
-				setIsLoading(true);
-				setError(null);
-				const response = await contractApi.getContract(collaborationId);
-
-				if (response && response.contract) {
-					setContract(response.contract);
-					setFormData({
-						contractText: response.contract.contractText || '',
-						additionalTerms:
-							response.contract.additionalTerms || '',
-					});
-				} else {
-					throw new Error('Invalid contract response structure');
-				}
-			} catch {
-				setError('Erreur lors du chargement du contrat');
-			} finally {
-				setIsLoading(false);
+	// Fetch contract using useFetch hook
+	const {
+		data: contractResponse,
+		loading: isLoading,
+		error,
+		refetch: reloadContract,
+	} = useFetch(() => contractApi.getContract(collaborationId), {
+		skip: !collaborationId,
+		showErrorToast: false,
+		onSuccess: (response) => {
+			if (response && response.contract) {
+				setFormData({
+					contractText: response.contract.contractText || '',
+					additionalTerms: response.contract.additionalTerms || '',
+				});
 			}
-		};
+		},
+	});
 
-		if (collaborationId) {
-			loadContract();
-		}
-	}, [collaborationId]);
+	const contract = contractResponse?.contract || null;
 
 	const handleEdit = () => {
 		setIsEditing(true);
@@ -75,72 +65,57 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 		});
 	};
 
-	const handleUpdateContract = async () => {
+	// Use useMutation for update contract
+	const { mutate: updateContract, loading: isUpdating } = useMutation(
+		() => contractApi.updateContract(collaborationId, formData),
+		{
+			onSuccess: (response) => {
+				setIsEditing(false);
+				if (response.requiresResigning) {
+					toast.info(TOAST_MESSAGES.CONTRACTS.UPDATE_REQUIRES_RESIGN);
+				}
+				onContractUpdate?.(response.contract);
+				reloadContract();
+			},
+			showErrorToast: true,
+			errorMessage: TOAST_MESSAGES.CONTRACTS.UPDATE_ERROR,
+		},
+	);
+
+	// Use useMutation for sign contract
+	const { mutate: signContract, loading: isSigning } = useMutation(
+		() => contractApi.signContract(collaborationId),
+		{
+			onSuccess: (response) => {
+				onContractUpdate?.(response.contract);
+				if (
+					response.contract.ownerSigned &&
+					response.contract.collaboratorSigned
+				) {
+					toast.success(TOAST_MESSAGES.CONTRACTS.SIGN_SUCCESS_BOTH);
+				} else {
+					toast.success(
+						TOAST_MESSAGES.CONTRACTS.SIGN_SUCCESS_WAITING,
+					);
+				}
+				setConfirmOpen(false);
+				reloadContract();
+			},
+			showErrorToast: true,
+			errorMessage: TOAST_MESSAGES.CONTRACTS.SIGN_ERROR,
+		},
+	);
+
+	const isSubmitting = isUpdating || isSigning;
+
+	const handleUpdateContract = () => {
 		if (!contract) return;
-
-		setIsSubmitting(true);
-		setError(null);
-
-		try {
-			const response = await contractApi.updateContract(
-				collaborationId,
-				formData,
-			);
-			setContract(response.contract);
-			setIsEditing(false);
-
-			if (response.requiresResigning) {
-				toast.info(
-					'Le contrat a été modifié. Les deux parties doivent signer à nouveau.',
-				);
-			}
-
-			onContractUpdate?.(response.contract);
-		} catch (err) {
-			const errorMessage =
-				err instanceof Error
-					? err.message
-					: 'Erreur lors de la mise à jour du contrat';
-			setError(errorMessage);
-		} finally {
-			setIsSubmitting(false);
-		}
+		updateContract({});
 	};
 
-	const doSignContract = async () => {
+	const doSignContract = () => {
 		if (!contract) return;
-
-		setIsSubmitting(true);
-		setError(null);
-
-		try {
-			const response = await contractApi.signContract(collaborationId);
-			setContract(response.contract);
-			onContractUpdate?.(response.contract);
-
-			if (
-				response.contract.ownerSigned &&
-				response.contract.collaboratorSigned
-			) {
-				toast.success(
-					'Félicitations ! Le contrat a été signé par les deux parties. La collaboration est maintenant active.',
-				);
-			} else {
-				toast.success(
-					"Contrat signé avec succès. En attente de la signature de l'autre partie.",
-				);
-			}
-		} catch (err) {
-			const errorMessage =
-				err instanceof Error
-					? err.message
-					: 'Erreur lors de la signature du contrat';
-			setError(errorMessage);
-			toast.error(errorMessage);
-		} finally {
-			setIsSubmitting(false);
-			setConfirmOpen(false);
-		}
+		signContract({});
 	};
 
 	const handleSignContract = () => {
@@ -159,7 +134,7 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 		return (
 			<div className="text-center p-8">
 				<p className="text-red-600">
-					{error || 'Contrat non trouvé ou données incomplètes'}
+					{error ? String(error) : TOAST_MESSAGES.CONTRACTS.NOT_FOUND}
 				</p>
 				{onClose && (
 					<Button onClick={onClose} className="mt-4">
@@ -195,7 +170,9 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 			/>
 			{error && (
 				<div className="bg-red-50 border border-red-200 rounded-lg p-4">
-					<p className="text-red-600">{error}</p>
+					<p className="text-red-600">
+						{error.message || 'Une erreur est survenue'}
+					</p>
 				</div>
 			)}
 

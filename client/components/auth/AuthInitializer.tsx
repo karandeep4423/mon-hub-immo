@@ -14,7 +14,11 @@ import { useAuthStore } from '@/store/authStore';
  * Used in: app/layout.tsx (wraps entire app)
  * Pattern: Zustand store initialization (no Context API)
  */
-export function AuthInitializer({ children }: { children: React.ReactNode }) {
+export const AuthInitializer = ({
+	children,
+}: {
+	children: React.ReactNode;
+}) => {
 	const initialize = useAuthStore((state) => state.initialize);
 
 	useEffect(() => {
@@ -22,4 +26,4 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
 	}, [initialize]);
 
 	return <>{children}</>;
-}
+};

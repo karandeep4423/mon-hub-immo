@@ -36,7 +36,7 @@ export const CollaborationParticipants: React.FC<
 									...owner,
 									profileImage:
 										owner.profileImage || undefined,
-								} as any
+								}
 							}
 							size="md"
 						/>
@@ -63,7 +63,7 @@ export const CollaborationParticipants: React.FC<
 									...collaborator,
 									profileImage:
 										collaborator.profileImage || undefined,
-								} as any
+								}
 							}
 							size="md"
 						/>
@@ -84,3 +84,4 @@ export const CollaborationParticipants: React.FC<
 		</Card>
 	);
 };
+
