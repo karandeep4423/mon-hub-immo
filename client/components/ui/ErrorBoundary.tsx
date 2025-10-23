@@ -5,7 +5,7 @@ import { Alert } from './Alert';
 import { Button } from './Button';
 import { logger } from '@/lib/utils/logger';
 
-interface Props {
+interface ErrorBoundaryProps {
 	children: ReactNode;
 	fallback?: ReactNode;
 	onError?: (error: Error, errorInfo: ErrorInfo) => void;
@@ -16,7 +16,7 @@ interface State {
 	error?: Error;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
+export class ErrorBoundary extends Component<ErrorBoundaryProps, State> {
 	public state: State = {
 		hasError: false,
 	};

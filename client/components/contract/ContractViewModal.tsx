@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
-import { Modal } from '../ui/Modal';
-import { Button } from '../ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
+import { formatDateOptional } from '@/lib/utils/date';
 
 interface ContractViewModalProps {
 	isOpen: boolean;
@@ -128,15 +129,6 @@ export const ContractViewModal: React.FC<ContractViewModalProps> = ({
 			printWindow.print();
 			printWindow.close();
 		}, 250);
-	};
-
-	const formatDate = (dateString?: string) => {
-		if (!dateString) return '-';
-		return new Date(dateString).toLocaleDateString('fr-FR', {
-			day: 'numeric',
-			month: 'long',
-			year: 'numeric',
-		});
 	};
 
 	// Parse and format contract text for better display
@@ -368,7 +360,7 @@ export const ContractViewModal: React.FC<ContractViewModalProps> = ({
 									collaboration.ownerSignedAt && (
 										<p className="text-xs text-gray-500 mt-2">
 											Signé le:{' '}
-											{formatDate(
+											{formatDateOptional(
 												collaboration.ownerSignedAt,
 											)}
 										</p>
@@ -397,7 +389,7 @@ export const ContractViewModal: React.FC<ContractViewModalProps> = ({
 									collaboration.collaboratorSignedAt && (
 										<p className="text-xs text-gray-500 mt-2">
 											Signé le:{' '}
-											{formatDate(
+											{formatDateOptional(
 												collaboration.collaboratorSignedAt,
 											)}
 										</p>
@@ -409,7 +401,7 @@ export const ContractViewModal: React.FC<ContractViewModalProps> = ({
 					<div className="mt-8 pt-6 border-t border-gray-200 text-center">
 						<p className="text-xs text-gray-500">
 							Contrat généré le{' '}
-							{formatDate(collaboration.createdAt)} via la
+							{formatDateOptional(collaboration.createdAt)} via la
 							plateforme MonHubImmo
 						</p>
 					</div>

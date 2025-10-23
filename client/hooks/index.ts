@@ -22,6 +22,14 @@ export {
 // Data fetching (NEW - consistent API patterns)
 export { useFetch, usePaginatedFetch } from './useFetch';
 
+// Mutations (NEW - consistent write operations)
+export { useMutation, useOptimisticMutation } from './useMutation';
+export type {
+	UseMutationOptions,
+	UseMutationResult,
+	MutationResponse,
+} from './useMutation';
+
 // Chat
 export { useChat } from './useChat';
 
@@ -44,6 +52,10 @@ export { useLocationHistory } from './useLocationHistory';
 // Forms
 export { useForm } from './useForm';
 export { usePropertyForm } from './usePropertyForm';
+
+// Property
+export { usePropertyFilters } from './usePropertyFilters';
+export { usePropertyActions } from './usePropertyActions';
 
 // Utils
 export { useDebounce } from './useDebounce';

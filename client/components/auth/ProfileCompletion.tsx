@@ -10,6 +10,7 @@ import { ProfileImageUploader } from '../ui/ProfileImageUploader';
 import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/lib/api/authApi';
 import { useForm } from '@/hooks/useForm';
+import { PageLoader } from '../ui/LoadingSpinner';
 
 interface ProfileCompletionFormData extends Record<string, unknown> {
 	firstName: string;
@@ -95,14 +96,7 @@ export const ProfileCompletion: React.FC = () => {
 
 	// Update the loading condition
 	if (loading) {
-		return (
-			<div className="min-h-screen bg-gray-50 flex items-center justify-center">
-				<div className="text-center">
-					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600 mx-auto mb-4"></div>
-					<p className="text-gray-600">Loading...</p>
-				</div>
-			</div>
-		);
+		return <PageLoader message="Loading..." />;
 	}
 
 	if (!user) {

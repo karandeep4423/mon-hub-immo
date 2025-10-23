@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '../ui/Button';
-import PropertyManager from '../property/PropertyManager';
+import { PropertyManager } from '../property/PropertyManager';
 import { CollaborationList } from '../collaboration/CollaborationList';
 import { DASHBOARD_TEXT } from '@/lib/constants/text';
 import { MySearches } from '../search-ads/MySearches';

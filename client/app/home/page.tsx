@@ -8,14 +8,18 @@ import {
 } from '@/lib/api/propertyApi';
 import searchAdApi from '@/lib/api/searchAdApi';
 import { SearchAd } from '@/types/searchAd';
-import { HomeSearchAdCard } from '@/components/search-ads/HomeSearchAdCard';
-import { PropertyCard } from '@/components/property';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { useAuth } from '@/hooks/useAuth';
-import { Pagination } from '@/components/ui/Pagination';
-import { LocationSearchWithRadius, GeolocationPrompt } from '@/components/ui';
+import { GeolocationPrompt } from '@/components/ui';
 import type { LocationItem } from '@/components/ui/LocationSearchWithRadius';
 import { authService } from '@/lib/api/authApi';
+import { PageLoader } from '@/components/ui/LoadingSpinner';
+import {
+	HomeHeader,
+	SearchFiltersPanel,
+	PropertiesSection,
+	SearchAdsSection,
+} from '@/components/home';
 import {
 	getMunicipalitiesNearby,
 	searchMunicipalities,
@@ -514,11 +518,11 @@ export default function Home() {
 
 				setProperties(propertiesData || []);
 				setSearchAds(searchAdsData || []);
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			} catch (error: any) {
-				logger.error('Error fetching data:', error);
+			} catch (error) {
+				const err = error as Error;
+				logger.error('Error fetching data:', err);
 				setError(
-					error.message || 'Erreur lors du chargement des données',
+					err.message || 'Erreur lors du chargement des données',
 				);
 			} finally {
 				setLoading(false);
@@ -574,207 +578,44 @@ export default function Home() {
 			)}
 
 			{/* Header with unified title and stats */}
-			<div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-				<div className="text-sm text-gray-600">
-					{filteredPropertiesCount} bien
-					{filteredPropertiesCount > 1 ? 's' : ''} •{' '}
-					{filteredSearchAdsCount} recherche
-					{filteredSearchAdsCount > 1 ? 's' : ''}
-				</div>
-			</div>
+			<HomeHeader
+				filteredPropertiesCount={filteredPropertiesCount}
+				filteredSearchAdsCount={filteredSearchAdsCount}
+			/>
 
 			{/* Unified Search and Filters */}
-			<div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-				{/* Text Search */}
-				<div className="mb-4">
-					<input
-						type="text"
-						value={searchTerm}
-						onChange={(e) => setSearchTerm(e.target.value)}
-						placeholder="Rechercher par mot-clé..."
-						className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
-					/>
-				</div>
-				{/* Location Search with Radius */}
-				<div className="mb-4">
-					<LocationSearchWithRadius
-						selectedLocations={selectedLocations}
-						onLocationsChange={setSelectedLocations}
-						radiusKm={radiusKm}
-						onRadiusChange={handleRadiusChange}
-						placeholder="Ville ou code postal (ex: Dinan, 22100)"
-					/>
-				</div>{' '}
-				{/* Content Type Filter */}
-				<div className="flex flex-wrap gap-2 mb-4">
-					<button
-						onClick={() => setContentFilter('all')}
-						className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-							contentFilter === 'all'
-								? 'bg-brand text-white'
-								: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-						}`}
-					>
-						Tout ({filteredPropertiesCount + filteredSearchAdsCount}
-						)
-					</button>
-					{isAuthenticated &&
-						user?.professionalInfo?.city &&
-						myAreaLocations.length > 0 && (
-							<button
-								onClick={() => setContentFilter('myArea')}
-								className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-									contentFilter === 'myArea'
-										? 'bg-brand text-white'
-										: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-								}`}
-							>
-								Mon secteur ({myAreaLocations.length} villes)
-							</button>
-						)}
-					<button
-						onClick={() => setContentFilter('properties')}
-						className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-							contentFilter === 'properties'
-								? 'bg-brand text-white'
-								: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-						}`}
-					>
-						Biens à vendre ({filteredPropertiesCount})
-					</button>
-					<button
-						onClick={() => setContentFilter('searchAds')}
-						className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-							contentFilter === 'searchAds'
-								? 'bg-brand text-white'
-								: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-						}`}
-					>
-						Recherche de biens ({filteredSearchAdsCount})
-					</button>
-					{isAuthenticated && (
-						<button
-							onClick={() => setContentFilter('favorites')}
-							className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-								contentFilter === 'favorites'
-									? 'bg-brand text-white'
-									: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-							}`}
-						>
-							Favoris (
-							{favoritePropertyIds.size +
-								favoriteSearchAdIds.size}
-							)
-						</button>
-					)}
-				</div>
-				{/* Property-specific Filters */}
-				{(contentFilter === 'all' ||
-					contentFilter === 'properties' ||
-					contentFilter === 'favorites') && (
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-						<select
-							value={typeFilter}
-							onChange={(e) => setTypeFilter(e.target.value)}
-							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-						>
-							<option value="">Type de bien</option>
-							<option value="Appartement">Appartement</option>
-							<option value="Maison">Maison</option>
-							<option value="Terrain">Terrain</option>
-							<option value="Local commercial">
-								Local commercial
-							</option>
-							<option value="Bureaux">Bureaux</option>
-							<option value="Parking">Parking</option>
-							<option value="Autre">Autre</option>
-						</select>
-
-						<select
-							value={profileFilter}
-							onChange={(e) => setProfileFilter(e.target.value)}
-							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-						>
-							<option value="">Tous les profils</option>
-							<option value="agent">Agent</option>
-							<option value="apporteur">Apporteur</option>
-						</select>
-
-						<div className="flex items-center gap-2">
-							<input
-								type="number"
-								placeholder="Prix min"
-								value={priceFilter.min || ''}
-								onChange={(e) =>
-									setPriceFilter((prev) => ({
-										...prev,
-										min: parseInt(e.target.value) || 0,
-									}))
-								}
-								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-							/>
-							<span className="text-gray-500">-</span>
-							<input
-								type="number"
-								placeholder="Prix max"
-								value={
-									priceFilter.max === 10000000
-										? ''
-										: priceFilter.max
-								}
-								onChange={(e) =>
-									setPriceFilter((prev) => ({
-										...prev,
-										max:
-											parseInt(e.target.value) ||
-											10000000,
-									}))
-								}
-								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-							/>
-						</div>
-
-						{/* Surface habitable */}
-						<div className="flex items-center gap-2">
-							<input
-								type="number"
-								placeholder="Surface min (m²)"
-								value={surfaceFilter.min || ''}
-								onChange={(e) =>
-									setSurfaceFilter((prev) => ({
-										...prev,
-										min: parseInt(e.target.value) || 0,
-									}))
-								}
-								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-							/>
-							<span className="text-gray-500">-</span>
-							<input
-								type="number"
-								placeholder="Surface max (m²)"
-								value={
-									surfaceFilter.max === 100000
-										? ''
-										: surfaceFilter.max
-								}
-								onChange={(e) =>
-									setSurfaceFilter((prev) => ({
-										...prev,
-										max: parseInt(e.target.value) || 100000,
-									}))
-								}
-								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-							/>
-						</div>
-					</div>
-				)}
-			</div>
+			<SearchFiltersPanel
+				searchTerm={searchTerm}
+				onSearchTermChange={setSearchTerm}
+				selectedLocations={selectedLocations}
+				onLocationsChange={setSelectedLocations}
+				radiusKm={radiusKm}
+				onRadiusChange={handleRadiusChange}
+				contentFilter={contentFilter}
+				onContentFilterChange={setContentFilter}
+				typeFilter={typeFilter}
+				onTypeFilterChange={setTypeFilter}
+				profileFilter={profileFilter}
+				onProfileFilterChange={setProfileFilter}
+				priceFilter={priceFilter}
+				onPriceFilterChange={setPriceFilter}
+				surfaceFilter={surfaceFilter}
+				onSurfaceFilterChange={setSurfaceFilter}
+				filteredPropertiesCount={filteredPropertiesCount}
+				filteredSearchAdsCount={filteredSearchAdsCount}
+				isAuthenticated={isAuthenticated}
+				hasMyArea={
+					!!user?.professionalInfo?.city && myAreaLocations.length > 0
+				}
+				myAreaLocationsCount={myAreaLocations.length}
+				favoritePropertyIds={favoritePropertyIds}
+				favoriteSearchAdIds={favoriteSearchAdIds}
+			/>
 
 			{/* Unified Feed */}
 			{loading ? (
 				<div className="text-center py-12">
-					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto mb-4"></div>
-					<p className="text-gray-600">Chargement des annonces...</p>
+					<PageLoader message="Chargement des annonces..." />
 				</div>
 			) : error ? (
 				<div className="text-center py-12 bg-red-50 rounded-lg">
@@ -793,80 +634,14 @@ export default function Home() {
 						contentFilter === 'properties' ||
 						contentFilter === 'favorites' ||
 						contentFilter === 'myArea') && (
-						<div id="properties-section">
-							<h2 className="text-2xl font-bold text-gray-900 mb-6">
-								Les biens à vendre
-							</h2>
-							{(() => {
-								const propertiesToShow =
-									contentFilter === 'favorites'
-										? filteredProperties.filter(
-												(property) =>
-													favoritePropertyIds.has(
-														property._id,
-													),
-											)
-										: filteredProperties;
-
-								return propertiesToShow.length === 0 ? (
-									<div className="text-center py-12 bg-gray-50 rounded-lg">
-										<div className="mx-auto w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
-											<svg
-												className="w-8 h-8 text-gray-400"
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24"
-											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth="2"
-													d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
-												/>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth="2"
-													d="M8 5a2 2 0 012-2h4a2 2 0 012 2v3H8V5z"
-												/>
-											</svg>
-										</div>
-										<h3 className="text-lg font-semibold text-gray-900 mb-2">
-											Aucun bien trouvé
-										</h3>
-										<p className="text-gray-600">
-											{contentFilter === 'favorites'
-												? "Vous n'avez pas encore de biens en favoris."
-												: "Essayez d'ajuster vos filtres pour voir des biens à vendre."}
-										</p>
-									</div>
-								) : (
-									<>
-										<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-											{propertiesToShow
-												.slice(
-													(propPage - 1) * PAGE_SIZE,
-													propPage * PAGE_SIZE,
-												)
-												.map((property) => (
-													<PropertyCard
-														key={property._id}
-														property={property}
-													/>
-												))}
-										</div>
-										<Pagination
-											currentPage={propPage}
-											totalItems={propertiesToShow.length}
-											pageSize={PAGE_SIZE}
-											onPageChange={setPropPage}
-											scrollTargetId="properties-section"
-											className="mt-4"
-										/>
-									</>
-								);
-							})()}
-						</div>
+						<PropertiesSection
+							properties={filteredProperties}
+							contentFilter={contentFilter}
+							favoritePropertyIds={favoritePropertyIds}
+							currentPage={propPage}
+							pageSize={PAGE_SIZE}
+							onPageChange={setPropPage}
+						/>
 					)}
 
 					{/* Search Ads Section */}
@@ -874,75 +649,18 @@ export default function Home() {
 						contentFilter === 'searchAds' ||
 						contentFilter === 'favorites' ||
 						contentFilter === 'myArea') && (
-						<div id="search-ads-section">
-							<h2 className="text-2xl font-bold text-gray-900 mb-6">
-								Recherches clients
-							</h2>
-							{(() => {
-								const filteredSearchAdsToShow =
-									contentFilter === 'favorites'
-										? filterSearchAds(searchAds).filter(
-												(ad) =>
-													favoriteSearchAdIds.has(
-														ad._id,
-													),
-											)
-										: filterSearchAds(searchAds);
-
-								return filteredSearchAdsToShow.length === 0 ? (
-									<div className="text-center py-12 bg-gray-50 rounded-lg">
-										<div className="mx-auto w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
-											<svg
-												className="w-8 h-8 text-gray-400"
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24"
-											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth="2"
-													d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-												/>
-											</svg>
-										</div>
-										<h3 className="text-lg font-semibold text-gray-900 mb-2">
-											Aucune recherche trouvée
-										</h3>
-										<p className="text-gray-600">
-											Essayez d&apos;ajuster vos filtres
-											pour voir des recherches clients.
-										</p>
-									</div>
-								) : (
-									<>
-										<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-											{filteredSearchAdsToShow
-												.slice(
-													(adPage - 1) * PAGE_SIZE,
-													adPage * PAGE_SIZE,
-												)
-												.map((searchAd) => (
-													<HomeSearchAdCard
-														key={searchAd._id}
-														searchAd={searchAd}
-													/>
-												))}
-										</div>
-										<Pagination
-											currentPage={adPage}
-											totalItems={
-												filteredSearchAdsToShow.length
-											}
-											pageSize={PAGE_SIZE}
-											onPageChange={setAdPage}
-											scrollTargetId="search-ads-section"
-											className="mt-4"
-										/>
-									</>
-								);
-							})()}
-						</div>
+						<SearchAdsSection
+							searchAds={
+								contentFilter === 'favorites'
+									? filterSearchAds(searchAds).filter((ad) =>
+											favoriteSearchAdIds.has(ad._id),
+										)
+									: filterSearchAds(searchAds)
+							}
+							currentPage={adPage}
+							pageSize={PAGE_SIZE}
+							onPageChange={setAdPage}
+						/>
 					)}
 				</div>
 			)}

@@ -174,8 +174,14 @@ export class AuthApi {
 	 * Complete user profile (agent-specific)
 	 */
 	static async completeProfile(data: {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		professionalInfo?: any;
+		professionalInfo?: {
+			agentType?: string;
+			registeredCities?: string[];
+			sirenNumber?: string;
+			tCard?: string;
+			rsacNumber?: string;
+			collaboratorCertificate?: string;
+		};
 		profileImage?: string;
 	}): Promise<AuthResponse> {
 		try {

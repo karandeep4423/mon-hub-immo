@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import searchAdApi from '@/lib/api/searchAdApi';
 import type { SearchAd } from '@/types/searchAd';
 import { useFetch } from '@/hooks';
+import { PageLoader } from '@/components/ui/LoadingSpinner';
 
 export default function SearchAdDetailsPage() {
 	const params = useParams();
@@ -25,14 +26,7 @@ export default function SearchAdDetailsPage() {
 	});
 
 	if (loading) {
-		return (
-			<div className="min-h-screen bg-gray-50 flex items-center justify-center">
-				<div className="text-center">
-					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto mb-4"></div>
-					<p className="text-gray-600">Chargement des détails...</p>
-				</div>
-			</div>
-		);
+		return <PageLoader message="Chargement des détails..." />;
 	}
 
 	if (error || !searchAd) {

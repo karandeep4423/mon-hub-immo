@@ -8,8 +8,12 @@ import { logger } from '@/lib/utils/logger';
 
 const OS_NOTIFY_COOLDOWN_MS = 3000;
 
-export type NotificationEntity = { type: 'chat' | 'collaboration'; id: string };
-export type NotificationItem = {
+export interface NotificationEntity {
+	type: 'chat' | 'collaboration';
+	id: string;
+}
+
+export interface NotificationItem {
 	id: string;
 	type:
 		| 'chat:new_message'
@@ -30,14 +34,14 @@ export type NotificationItem = {
 	actorId: string;
 	read: boolean;
 	createdAt: string;
-};
+}
 
-export type NotificationsState = {
+export interface NotificationsState {
 	items: NotificationItem[];
 	nextCursor: string | null;
 	unreadCount: number;
 	loading: boolean;
-};
+}
 
 // Module-level cache keyed by user to avoid refetch storms and cross-user bleed
 type BootData = {

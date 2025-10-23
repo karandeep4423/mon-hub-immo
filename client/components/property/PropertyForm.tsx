@@ -27,7 +27,7 @@ interface PropertyFormProps {
 	isLoading?: boolean;
 }
 
-const PropertyForm: React.FC<PropertyFormProps> = ({
+export const PropertyForm: React.FC<PropertyFormProps> = ({
 	onSubmit,
 	initialData = {},
 	isEditing = false,
@@ -350,5 +350,3 @@ const PropertyForm: React.FC<PropertyFormProps> = ({
 		</div>
 	);
 };
-
-export default PropertyForm;

@@ -22,7 +22,7 @@ export { GeolocationPrompt } from './GeolocationPrompt';
 export { CheckmarkIcon } from './CheckmarkIcon';
 export { StepIndicator } from './StepIndicator';
 export { FavoriteButton } from './FavoriteButton';
-export { StatusBadge } from './StatusBadge';
+export { StatusBadge, Badge } from './StatusBadge';
 export { EnergyRatingSelector } from './EnergyRatingSelector';
 export { PropertyTypeSelector } from './PropertyTypeSelector';
 export { NumberInput } from './NumberInput';

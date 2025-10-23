@@ -3,9 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-toastify';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { useAuth } from '@/hooks/useAuth';
+import { useMutation } from '@/hooks/useMutation';
 import { authService } from '@/lib/api/authApi';
 import { verifyEmailSchema } from '@/lib/validation';
 import { useForm } from '@/hooks/useForm';
@@ -18,9 +19,26 @@ export const VerifyEmailForm: React.FC = () => {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const { login } = useAuth();
-	const [resendLoading, setResendLoading] = useState(false);
 	const [email, setEmail] = useState('');
 	const [timer, setTimer] = useState(0);
+
+	// Mutation for resending verification code
+	const { mutate: resendCode, loading: resendLoading } = useMutation(
+		async (email: string) => {
+			return await authService.resendVerificationCode(email);
+		},
+		{
+			onSuccess: (response) => {
+				if (response.success) {
+					toast.success(response.message);
+					setTimer(60);
+				} else {
+					toast.error(response.message);
+				}
+			},
+			errorMessage: 'Échec du renvoi du code',
+		},
+	);
 
 	const {
 		values,
@@ -79,25 +97,7 @@ export const VerifyEmailForm: React.FC = () => {
 
 	const handleResendCode = async () => {
 		if (!email || timer > 0) return;
-
-		try {
-			setResendLoading(true);
-			const response = await authService.resendVerificationCode(email);
-
-			if (response.success) {
-				toast.success(response.message);
-				setTimer(60);
-			} else {
-				toast.error(response.message);
-			}
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		} catch (error: any) {
-			toast.error(
-				error.response?.data?.message || 'Échec du renvoi du code',
-			);
-		} finally {
-			setResendLoading(false);
-		}
+		await resendCode(email);
 	};
 
 	return (

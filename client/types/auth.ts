@@ -69,7 +69,7 @@ export interface ValidationError {
 	message: string;
 }
 
-export type SignUpData = {
+export interface SignUpData {
 	firstName: string;
 	lastName: string;
 	email: string;
@@ -83,7 +83,7 @@ export type SignUpData = {
 	sirenNumber?: string;
 	rsacNumber?: string;
 	collaboratorCertificate?: string;
-};
+}
 
 export interface LoginData {
 	email: string;

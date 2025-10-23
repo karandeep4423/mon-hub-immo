@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '../ui/Button';
 import { AgentProfileCard } from './AgentProfileCard';
-import PropertyManager from '../property/PropertyManager';
+import { PropertyManager } from '../property/PropertyManager';
 import { CollaborationList } from '../collaboration/CollaborationList';
 import { DASHBOARD_TEXT } from '@/lib/constants/text';
 import Link from 'next/link';
@@ -16,6 +16,7 @@ import { formatNumber } from '@/lib/utils/format';
 import { AppointmentsManager } from '../appointments/AppointmentsManager';
 import { appointmentApi } from '@/lib/api/appointmentApi';
 import { logger } from '@/lib/utils/logger';
+import { PageLoader } from '../ui/LoadingSpinner';
 
 export const DashboardContent: React.FC = () => {
 	const router = useRouter();
@@ -75,14 +76,7 @@ export const DashboardContent: React.FC = () => {
 	}, [user, loading, refreshUser]);
 
 	if (loading) {
-		return (
-			<div className="min-h-screen bg-gray-50 flex items-center justify-center">
-				<div className="text-center">
-					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600 mx-auto mb-4"></div>
-					<p className="text-gray-600">Chargement...</p>
-				</div>
-			</div>
-		);
+		return <PageLoader message="Chargement..." />;
 	}
 
 	if (!user) {

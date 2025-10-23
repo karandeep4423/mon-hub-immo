@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '../ui/Button';
-import { Card } from '../ui/Card';
-import { ProfileAvatar } from '../ui/ProfileAvatar';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 import { contractApi, ContractData } from '@/lib/api/contractApi';
 import { useAuth } from '@/hooks/useAuth';
-import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { toast } from 'react-toastify';
-import { logger } from '@/lib/utils/logger';
 
 interface ContractManagementProps {
 	collaborationId: string;
@@ -36,12 +35,7 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 			try {
 				setIsLoading(true);
 				setError(null);
-				logger.debug(
-					'Loading contract for collaboration:',
-					collaborationId,
-				);
 				const response = await contractApi.getContract(collaborationId);
-				logger.debug('Contract API response:', response);
 
 				if (response && response.contract) {
 					setContract(response.contract);
@@ -53,8 +47,7 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 				} else {
 					throw new Error('Invalid contract response structure');
 				}
-			} catch (err) {
-				logger.error('Error fetching contract:', err);
+			} catch {
 				setError('Erreur lors du chargement du contrat');
 			} finally {
 				setIsLoading(false);
@@ -104,7 +97,6 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 
 			onContractUpdate?.(response.contract);
 		} catch (err) {
-			logger.error('Error updating contract:', err);
 			const errorMessage =
 				err instanceof Error
 					? err.message
@@ -139,7 +131,6 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 				);
 			}
 		} catch (err) {
-			logger.error('Error signing contract:', err);
 			const errorMessage =
 				err instanceof Error
 					? err.message
@@ -188,18 +179,6 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 	const otherPartySigned = isOwner
 		? contract.collaboratorSigned
 		: contract.ownerSigned;
-
-	// Debug logging
-	logger.debug('Contract Management Debug:', {
-		contract,
-		user,
-		propertyOwnerId: contract.propertyOwner.id,
-		userId: user?._id,
-		userIdAlt: user?.id,
-		isOwner,
-		ownerSigned: contract.ownerSigned,
-		collaboratorSigned: contract.collaboratorSigned,
-	});
 
 	return (
 		<div className="space-y-6">

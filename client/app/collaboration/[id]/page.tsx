@@ -2,16 +2,25 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
-import ChatMessages from '@/components/chat/ChatMessages';
-import MessageInput from '@/components/chat/MessageInput';
 import { useChat } from '@/hooks/useChat';
 import { useSocket } from '@/context/SocketContext';
-import { getDetailedUserPresenceText } from '@/components/chat/utils';
+import { useMutation } from '@/hooks/useMutation';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { PageLoader } from '@/components/ui/LoadingSpinner';
+
+// New detail components
+import {
+	CollaborationHeader,
+	CollaborationParticipants,
+	CollaborationContract,
+	CollaborationTimeline,
+	CollaborationPostInfo,
+	CollaborationClientInfo,
+	CollaborationChat,
+	CollaborationChatButton,
+} from '@/components/collaboration/detail';
 
 // Separated workflows
 import { OverallStatusManager } from '@/components/collaboration/overall-status';
@@ -59,10 +68,33 @@ export default function CollaborationPage() {
 	const [showContractModal, setShowContractModal] = useState(false);
 	const [showContractViewModal, setShowContractViewModal] = useState(false);
 	const [confirmOpen, setConfirmOpen] = useState(false);
-	const [confirmLoading, setConfirmLoading] = useState(false);
 	const [pendingAction, setPendingAction] =
 		useState<OverallCollaborationStatus | null>(null);
 	const [isChatOpen, setIsChatOpen] = useState(false);
+
+	// Mutation for cancel/complete actions
+	const { mutate: performAction, loading: confirmLoading } = useMutation(
+		async (data: { id: string; action: 'cancelled' | 'completed' }) => {
+			if (data.action === 'cancelled') {
+				return await collaborationApi.cancel(data.id);
+			} else {
+				return await collaborationApi.complete(data.id);
+			}
+		},
+		{
+			onSuccess: async (_, variables) => {
+				toast.success(
+					variables.action === 'cancelled'
+						? 'Collaboration annulée'
+						: 'Collaboration terminée',
+				);
+				await fetchCollaboration();
+				setConfirmOpen(false);
+				setPendingAction(null);
+			},
+			errorMessage: 'Action impossible sur la collaboration',
+		},
+	);
 
 	// Helper to determine user permissions
 	const userId = user?.id || user?._id;
@@ -113,16 +145,6 @@ export default function CollaborationPage() {
 	const peerUser = users.find((u) => u._id === peerId);
 	const unreadCount = peerUser?.unreadCount || 0;
 
-	// Debug chat state
-	console.log('Chat Debug:', {
-		peerId,
-		peerUser,
-		unreadCount,
-		usersLoaded: users.length,
-		collaboration: !!collaboration,
-		isChatOpen,
-	});
-
 	const openChat = useCallback(async () => {
 		const peerId = resolvePeerId();
 		if (!peerId) return;
@@ -141,20 +163,6 @@ export default function CollaborationPage() {
 		setIsChatOpen(false);
 		// Do not clear selectedUser to keep context when reopening; server thread tracking is handled in useChat
 	}, []);
-
-	// Debug permissions (temporary)
-	console.log('Permission Debug:', {
-		userId,
-		userIdFromId: user?.id,
-		userIdFrom_id: user?._id,
-		fullUser: user,
-		postOwnerId: collaboration?.postOwnerId,
-		collaboratorId: collaboration?.collaboratorId,
-		isOwner,
-		isCollaborator,
-		canUpdate,
-		collaborationType: typeof collaboration?.postOwnerId,
-	});
 
 	const fetchCollaboration = useCallback(async () => {
 		try {
@@ -245,11 +253,10 @@ export default function CollaborationPage() {
 						setSearchAd(searchAdData);
 					}
 				}
-			} catch (error) {
-				console.warn('Failed to fetch post details:', error);
+			} catch {
+				// Failed to fetch post details - non-critical error
 			}
-		} catch (err) {
-			console.error('Error fetching collaboration:', err);
+		} catch {
 			setError('Erreur lors du chargement de la collaboration');
 		} finally {
 			setIsLoading(false);
@@ -296,8 +303,7 @@ export default function CollaborationPage() {
 				}
 
 				await fetchCollaboration();
-			} catch (error) {
-				console.error('Error updating overall status:', error);
+			} catch {
 				setError('Erreur lors de la mise à jour du statut');
 			}
 		},
@@ -306,38 +312,17 @@ export default function CollaborationPage() {
 
 	const handleConfirmAction = useCallback(async () => {
 		if (!collaboration || !pendingAction) return;
-		try {
-			setConfirmLoading(true);
-			if (pendingAction === 'cancelled') {
-				await collaborationApi.cancel(collaboration._id);
-				toast.success('Collaboration annulée');
-			} else if (pendingAction === 'completed') {
-				await collaborationApi.complete(collaboration._id);
-				toast.success('Collaboration terminée');
-			}
-			await fetchCollaboration();
-			setConfirmOpen(false);
-			setPendingAction(null);
-		} catch (err) {
-			console.error('Error executing action:', err);
-			toast.error(
-				err instanceof Error
-					? err.message
-					: 'Action impossible sur la collaboration',
-			);
-		} finally {
-			setConfirmLoading(false);
-		}
-	}, [collaboration, pendingAction, fetchCollaboration]);
+		await performAction({
+			id: collaboration._id,
+			action: pendingAction as 'cancelled' | 'completed',
+		});
+	}, [collaboration, pendingAction, performAction]);
 
 	// Workflow 2: Progress step update handler
 	const handleProgressUpdate = useCallback(
 		async (update: ProgressUpdate) => {
 			// Block progress updates until collaboration is active
 			if (!collaboration || collaboration.status !== 'active') {
-				console.warn(
-					'Progress update blocked: collaboration not active',
-				);
 				return;
 			}
 			try {
@@ -349,8 +334,7 @@ export default function CollaborationPage() {
 					}`,
 				});
 				await fetchCollaboration(); // Refresh data
-			} catch (error) {
-				console.error('Error updating progress:', error);
+			} catch {
 				setError('Erreur lors de la mise à jour du progrès');
 			}
 		},
@@ -366,9 +350,6 @@ export default function CollaborationPage() {
 		}) => {
 			// Block status mutation until collaboration is active
 			if (!collaboration || collaboration.status !== 'active') {
-				console.warn(
-					'Progress status update blocked: collaboration not active',
-				);
 				return;
 			}
 			try {
@@ -379,8 +360,7 @@ export default function CollaborationPage() {
 					validatedBy: update.validatedBy,
 				});
 				await fetchCollaboration(); // Refresh data
-			} catch (error) {
-				console.error('Error updating progress status:', error);
+			} catch {
 				setError('Erreur lors de la mise à jour du statut');
 			}
 		},
@@ -391,7 +371,6 @@ export default function CollaborationPage() {
 	const handleAddActivity = useCallback(
 		async (content: string) => {
 			if (!collaboration || collaboration.status !== 'active') {
-				console.warn('Add activity blocked: collaboration not active');
 				return;
 			}
 
@@ -401,7 +380,6 @@ export default function CollaborationPage() {
 				});
 				await fetchCollaboration(); // Refresh data
 			} catch (error) {
-				console.error('Error adding activity:', error);
 				throw error; // Re-throw for component error handling
 			}
 		},
@@ -448,14 +426,8 @@ export default function CollaborationPage() {
 			)}
 			{/* Loading state */}
 			{(loading || isLoading) && (
-				<div className="min-h-screen flex items-center justify-center">
-					<div className="text-center">
-						<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600 mx-auto"></div>
-						<p className="mt-4 text-gray-600">Chargement...</p>
-					</div>
-				</div>
-			)}
-
+				<PageLoader message="Chargement..." />
+			)}{' '}
 			{/* Error state */}
 			{(error || !collaboration) && !loading && !isLoading && (
 				<div className="min-h-screen flex items-center justify-center">
@@ -469,100 +441,11 @@ export default function CollaborationPage() {
 					</div>
 				</div>
 			)}
-
 			{/* Main content */}
 			{collaboration && !loading && !isLoading && !error && (
 				<div>
 					{/* Header */}
-					<div className="bg-white shadow-sm">
-						<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-							<div className="flex items-center justify-between py-6">
-								<div className="flex items-center space-x-4">
-									<Button
-										onClick={() => router.back()}
-										variant="outline"
-										size="sm"
-									>
-										<svg
-											className="w-4 h-4 mr-2"
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24"
-										>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth="2"
-												d="M10 19l-7-7m0 0l7-7m-7 7h18"
-											/>
-										</svg>
-										Retour
-									</Button>
-									<div>
-										<h1 className="text-2xl font-bold text-gray-900">
-											Collaboration - &quot;Bien
-											immobilier&quot;
-										</h1>
-										<div className="flex items-center space-x-4 mt-1">
-											<div className="flex items-center space-x-1 text-gray-600">
-												<svg
-													className="w-4 h-4"
-													fill="none"
-													stroke="currentColor"
-													viewBox="0 0 24 24"
-												>
-													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														strokeWidth="2"
-														d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-													/>
-													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														strokeWidth="2"
-														d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-													/>
-												</svg>
-												<span>Ville</span>
-											</div>
-										</div>
-									</div>
-								</div>
-								<Button
-									onClick={() =>
-										router.push(
-											`/chat?userId=${
-												isOwner
-													? collaboration
-															.collaboratorId
-															?._id ||
-														collaboration.collaboratorId
-													: collaboration.postOwnerId
-															?._id ||
-														collaboration.postOwnerId
-											}`,
-										)
-									}
-								>
-									<svg
-										className="w-4 h-4 mr-2"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path
-											strokeLinecap="round"
-											strokeLinejoin="round"
-											strokeWidth="2"
-											d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-										/>
-									</svg>
-									Chat
-								</Button>
-							</div>
-						</div>
-					</div>
+					<CollaborationHeader onBack={() => router.back()} />
 
 					{/* Workflow components */}
 					<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -660,636 +543,20 @@ export default function CollaborationPage() {
 
 							<div className="space-y-6">
 								{/* Property or SearchAd Information */}
-								<Card className="p-6">
-									<h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
-										{collaboration.postType === 'Property'
-											? '🏠 Bien immobilier'
-											: '🔍 Recherche de bien'}
-									</h3>
-
-									{/* Property Main Image */}
-									{collaboration.postType === 'Property' &&
-										property?.mainImage && (
-											<div className="mb-4">
-												<div className="w-full h-32 rounded-lg overflow-hidden bg-gray-100 relative">
-													<Image
-														src={
-															typeof property.mainImage ===
-															'object'
-																? property
-																		.mainImage
-																		.url
-																: property.mainImage
-														}
-														alt={
-															property.title ||
-															'Property image'
-														}
-														fill
-														className="object-cover"
-														onError={(e) => {
-															const target =
-																e.target as HTMLImageElement;
-															target.style.display =
-																'none';
-														}}
-													/>
-												</div>
-											</div>
-										)}
-
-									<div className="space-y-3">
-										<div>
-											<span className="text-sm text-gray-600">
-												{collaboration.postType ===
-												'Property'
-													? 'Détails du bien:'
-													: 'Détails de la recherche:'}
-											</span>
-											<a
-												href={`/${collaboration.postType === 'Property' ? 'property' : 'search-ads'}/${
-													typeof collaboration.postId ===
-													'object'
-														? (
-																collaboration.postId as PropertyDetails
-															)?._id ||
-															(
-																collaboration.postId as PropertyDetails
-															)?.id
-														: collaboration.postId
-												}`}
-												target="_blank"
-												rel="noopener noreferrer"
-												className="font-medium text-blue-600 hover:text-blue-800 hover:underline block"
-											>
-												Voir l&apos;annonce
-											</a>
-										</div>
-
-										{/* Property-specific fields */}
-										{collaboration.postType ===
-											'Property' &&
-											property && (
-												<>
-													{property.title && (
-														<div>
-															<span className="text-sm text-gray-600">
-																Titre:
-															</span>
-															<p className="font-medium">
-																{property.title}
-															</p>
-														</div>
-													)}
-													{property.formattedPrice && (
-														<div>
-															<span className="text-sm text-gray-600">
-																Prix:
-															</span>
-															<p className="font-medium">
-																{
-																	property.formattedPrice
-																}
-															</p>
-														</div>
-													)}
-													<div>
-														<span className="text-sm text-gray-600">
-															Surface:
-														</span>
-														<p className="font-medium">
-															{property.surface
-																? `${property.surface} m²`
-																: 'Non spécifié'}
-														</p>
-													</div>
-													<div>
-														<span className="text-sm text-gray-600">
-															Localisation:
-														</span>
-														<p className="font-medium">
-															{property.address ||
-																'Ville'}
-														</p>
-													</div>
-												</>
-											)}
-
-										{/* SearchAd-specific fields */}
-										{collaboration.postType ===
-											'SearchAd' &&
-											searchAd && (
-												<>
-													{searchAd.title && (
-														<div>
-															<span className="text-sm text-gray-600">
-																Titre:
-															</span>
-															<p className="font-medium">
-																{searchAd.title}
-															</p>
-														</div>
-													)}
-													{searchAd.budget && (
-														<div>
-															<span className="text-sm text-gray-600">
-																Budget:
-															</span>
-															<p className="font-medium">
-																{searchAd.budget
-																	.ideal
-																	? `Idéal: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(searchAd.budget.ideal)}`
-																	: `Max: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(searchAd.budget.max)}`}
-															</p>
-														</div>
-													)}
-													{searchAd.propertyTypes &&
-														searchAd.propertyTypes
-															.length > 0 && (
-															<div>
-																<span className="text-sm text-gray-600">
-																	Types de
-																	bien:
-																</span>
-																<p className="font-medium">
-																	{searchAd.propertyTypes.join(
-																		', ',
-																	)}
-																</p>
-															</div>
-														)}
-													{searchAd.location && (
-														<div>
-															<span className="text-sm text-gray-600">
-																Localisation:
-															</span>
-															<p className="font-medium">
-																{Array.isArray(
-																	searchAd
-																		.location
-																		.cities,
-																)
-																	? searchAd.location.cities.join(
-																			', ',
-																		)
-																	: 'Localisation'}
-															</p>
-														</div>
-													)}
-												</>
-											)}
-
-										<div>
-											<span className="text-sm text-gray-600">
-												Statut:
-											</span>
-											<span
-												className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-													collaboration.status ===
-													'active'
-														? 'bg-green-100 text-green-800'
-														: collaboration.status ===
-															  'pending'
-															? 'bg-yellow-100 text-yellow-800'
-															: 'bg-gray-100 text-gray-800'
-												}`}
-											>
-												{collaboration.status ===
-												'active'
-													? 'Active'
-													: collaboration.status ===
-														  'pending'
-														? 'En attente'
-														: collaboration.status}
-											</span>
-										</div>
-									</div>
-								</Card>
+								<CollaborationPostInfo
+									collaboration={collaboration}
+									property={property}
+									searchAd={searchAd}
+								/>
 								{/* Client Information - Only visible for Property collaborations */}
-								{collaboration.postType === 'Property' &&
-									property?.clientInfo &&
-									(collaboration.status === 'accepted' ||
-										collaboration.status === 'active' ||
-										collaboration.status ===
-											'completed') && (
-										<Card className="p-6 bg-blue-50 border-blue-200">
-											<h3 className="text-lg font-medium text-gray-900 mb-4">
-												🔒 Informations client
-												confidentielles
-											</h3>
-											<p className="text-sm text-blue-600 mb-4">
-												Ces informations sont
-												confidentielles et uniquement
-												visibles dans le cadre de cette
-												collaboration.
-											</p>
-
-											{/* Commercial Details */}
-											{(
-												collaboration.postId as PropertyDetails
-											)?.clientInfo
-												?.commercialDetails && (
-												<div className="mb-6 p-4 bg-white rounded-lg">
-													<h4 className="font-medium text-gray-900 mb-3 flex items-center">
-														<span className="mr-2">
-															💡
-														</span>
-														Détails commerciaux
-													</h4>
-													<div className="space-y-3 text-sm">
-														{(
-															collaboration.postId as PropertyDetails
-														)?.clientInfo
-															?.commercialDetails
-															?.strengths && (
-															<div>
-																<span className="font-medium text-gray-700">
-																	Points
-																	forts:
-																</span>
-																<p className="text-gray-600 mt-1">
-																	{
-																		(
-																			collaboration.postId as PropertyDetails
-																		)
-																			?.clientInfo
-																			?.commercialDetails
-																			?.strengths
-																	}
-																</p>
-															</div>
-														)}
-														{(
-															collaboration.postId as PropertyDetails
-														)?.clientInfo
-															?.commercialDetails
-															?.weaknesses && (
-															<div>
-																<span className="font-medium text-gray-700">
-																	Points
-																	faibles:
-																</span>
-																<p className="text-gray-600 mt-1">
-																	{
-																		(
-																			collaboration.postId as PropertyDetails
-																		)
-																			?.clientInfo
-																			?.commercialDetails
-																			?.weaknesses
-																	}
-																</p>
-															</div>
-														)}
-														{(
-															collaboration.postId as PropertyDetails
-														)?.clientInfo
-															?.commercialDetails
-															?.occupancyStatus && (
-															<div>
-																<span className="font-medium text-gray-700">
-																	Occupation:
-																</span>
-																<span className="ml-2 text-gray-600">
-																	{(
-																		collaboration.postId as PropertyDetails
-																	)
-																		?.clientInfo
-																		?.commercialDetails
-																		?.occupancyStatus ===
-																	'occupied'
-																		? 'Occupé'
-																		: 'Vide'}
-																</span>
-															</div>
-														)}
-														{(
-															collaboration.postId as PropertyDetails
-														)?.clientInfo
-															?.commercialDetails
-															?.openToLowerOffers && (
-															<div className="text-green-600">
-																✓ Ouvert aux
-																offres
-																&quot;coup de
-																coeur&quot;
-															</div>
-														)}
-													</div>
-												</div>
-											)}
-
-											{/* Property History */}
-											{(
-												collaboration.postId as PropertyDetails
-											)?.clientInfo?.propertyHistory && (
-												<div className="mb-6 p-4 bg-white rounded-lg">
-													<h4 className="font-medium text-gray-900 mb-3 flex items-center">
-														<span className="mr-2">
-															📅
-														</span>
-														Historique du bien
-													</h4>
-													<div className="space-y-3 text-sm">
-														{(
-															collaboration.postId as PropertyDetails
-														)?.clientInfo
-															?.propertyHistory
-															?.listingDate && (
-															<div>
-																<span className="font-medium text-gray-700">
-																	Mise en
-																	vente:
-																</span>
-																<span className="ml-2 text-gray-600">
-																	{
-																		(
-																			collaboration.postId as PropertyDetails
-																		)
-																			?.clientInfo
-																			?.propertyHistory
-																			?.listingDate
-																	}
-																</span>
-															</div>
-														)}
-														{(
-															collaboration.postId as PropertyDetails
-														)?.clientInfo
-															?.propertyHistory
-															?.lastVisitDate && (
-															<div>
-																<span className="font-medium text-gray-700">
-																	Dernière
-																	visite:
-																</span>
-																<span className="ml-2 text-gray-600">
-																	{
-																		(
-																			collaboration.postId as PropertyDetails
-																		)
-																			?.clientInfo
-																			?.propertyHistory
-																			?.lastVisitDate
-																	}
-																</span>
-															</div>
-														)}
-														{typeof (
-															collaboration.postId as PropertyDetails
-														)?.clientInfo
-															?.propertyHistory
-															?.totalVisits ===
-															'number' && (
-															<div>
-																<span className="font-medium text-gray-700">
-																	Nombre de
-																	visites:
-																</span>
-																<span className="ml-2 text-gray-600">
-																	{
-																		(
-																			collaboration.postId as PropertyDetails
-																		)
-																			?.clientInfo
-																			?.propertyHistory
-																			?.totalVisits
-																	}
-																</span>
-															</div>
-														)}
-														{(
-															collaboration.postId as PropertyDetails
-														)?.clientInfo
-															?.propertyHistory
-															?.visitorFeedback && (
-															<div>
-																<span className="font-medium text-gray-700">
-																	Retours
-																	visiteurs:
-																</span>
-																<p className="text-gray-600 mt-1">
-																	{
-																		(
-																			collaboration.postId as PropertyDetails
-																		)
-																			?.clientInfo
-																			?.propertyHistory
-																			?.visitorFeedback
-																	}
-																</p>
-															</div>
-														)}
-														{(
-															collaboration.postId as PropertyDetails
-														)?.clientInfo
-															?.propertyHistory
-															?.priceReductions && (
-															<div>
-																<span className="font-medium text-gray-700">
-																	Historique
-																	prix:
-																</span>
-																<p className="text-gray-600 mt-1">
-																	{
-																		(
-																			collaboration.postId as PropertyDetails
-																		)
-																			?.clientInfo
-																			?.propertyHistory
-																			?.priceReductions
-																	}
-																</p>
-															</div>
-														)}
-													</div>
-												</div>
-											)}
-
-											{/* Owner Information */}
-											{(
-												collaboration.postId as PropertyDetails
-											)?.clientInfo?.ownerInfo && (
-												<div className="p-4 bg-white rounded-lg">
-													<h4 className="font-medium text-gray-900 mb-3 flex items-center">
-														<span className="mr-2">
-															🤝
-														</span>
-														Informations
-														propriétaire
-													</h4>
-													<div className="space-y-3 text-sm">
-														{(
-															collaboration.postId as PropertyDetails
-														)?.clientInfo?.ownerInfo
-															?.urgentToSell && (
-															<div className="text-orange-600">
-																⚡ Pressés de
-																vendre
-															</div>
-														)}
-														{(
-															collaboration.postId as PropertyDetails
-														)?.clientInfo?.ownerInfo
-															?.openToNegotiation && (
-															<div className="text-green-600">
-																💬 Ouverts à la
-																négociation
-															</div>
-														)}
-														{(
-															collaboration.postId as PropertyDetails
-														)?.clientInfo?.ownerInfo
-															?.mandateType && (
-															<div>
-																<span className="font-medium text-gray-700">
-																	Mandat:
-																</span>
-																<span className="ml-2 text-gray-600 capitalize">
-																	{
-																		(
-																			collaboration.postId as PropertyDetails
-																		)
-																			?.clientInfo
-																			?.ownerInfo
-																			?.mandateType
-																	}
-																</span>
-															</div>
-														)}
-														{(
-															collaboration.postId as PropertyDetails
-														)?.clientInfo?.ownerInfo
-															?.saleReasons && (
-															<div>
-																<span className="font-medium text-gray-700">
-																	Raisons de
-																	la vente:
-																</span>
-																<p className="text-gray-600 mt-1">
-																	{
-																		(
-																			collaboration.postId as PropertyDetails
-																		)
-																			?.clientInfo
-																			?.ownerInfo
-																			?.saleReasons
-																	}
-																</p>
-															</div>
-														)}
-														{(
-															collaboration.postId as PropertyDetails
-														)?.clientInfo?.ownerInfo
-															?.presentDuringVisits && (
-															<div className="text-blue-600">
-																👤 Présents
-																pendant visites
-															</div>
-														)}
-														{(
-															collaboration.postId as PropertyDetails
-														)?.clientInfo?.ownerInfo
-															?.flexibleSchedule && (
-															<div className="text-blue-600">
-																🕐 Horaires
-																flexibles
-															</div>
-														)}
-														{(
-															collaboration.postId as PropertyDetails
-														)?.clientInfo?.ownerInfo
-															?.acceptConditionalOffers && (
-															<div className="text-green-600">
-																✓ Acceptent
-																offres
-																conditionnelles
-															</div>
-														)}
-													</div>
-												</div>
-											)}
-										</Card>
-									)}
+								<CollaborationClientInfo
+									collaboration={collaboration}
+									property={property}
+								/>
 								{/* Agents Information */}
-								<Card className="p-6">
-									<h3 className="text-lg font-medium text-gray-900 mb-4">
-										👥 Intervenants
-									</h3>
-									<div className="space-y-4">
-										<div>
-											<h4 className="text-sm font-medium text-gray-900 mb-2">
-												Propriétaire du bien
-											</h4>
-											<div className="flex items-center space-x-3">
-												<ProfileAvatar
-													user={{
-														...collaboration.postOwnerId,
-														profileImage:
-															collaboration
-																.postOwnerId
-																.profileImage ||
-															undefined,
-													}}
-													size="sm"
-												/>
-												<div>
-													<p className="font-medium text-sm">
-														{
-															collaboration
-																.postOwnerId
-																.firstName
-														}{' '}
-														{
-															collaboration
-																.postOwnerId
-																.lastName
-														}
-													</p>
-													<p className="text-xs text-gray-600">
-														Agent propriétaire
-													</p>
-												</div>
-											</div>
-										</div>
-
-										<div>
-											<h4 className="text-sm font-medium text-gray-900 mb-2">
-												Collaborateur
-											</h4>
-											<div className="flex items-center space-x-3">
-												<ProfileAvatar
-													user={{
-														...collaboration.collaboratorId,
-														profileImage:
-															collaboration
-																.collaboratorId
-																.profileImage ||
-															undefined,
-													}}
-													size="sm"
-												/>
-												<div>
-													<p className="font-medium text-sm">
-														{
-															collaboration
-																.collaboratorId
-																.firstName
-														}{' '}
-														{
-															collaboration
-																.collaboratorId
-																.lastName
-														}
-													</p>
-													<p className="text-xs text-gray-600">
-														Agent apporteur
-													</p>
-												</div>
-											</div>
-										</div>
-									</div>
-								</Card>
+								<CollaborationParticipants
+									collaboration={collaboration}
+								/>
 								{/* Prix et frais - Show if agency fees exist */}
 								{typeof collaboration.postId === 'object' &&
 									(collaboration.postId as PropertyDetails)
@@ -1487,238 +754,35 @@ export default function CollaborationPage() {
 									</div>
 								</Card>{' '}
 								{/* Contract Status */}
-								<Card className="p-6">
-									<div className="flex items-center justify-between mb-4">
-										<h3 className="text-lg font-medium text-gray-900">
-											📋 Statut du contrat
-										</h3>
-										<Button
-											onClick={() =>
-												setShowContractViewModal(true)
-											}
-											variant="outline"
-											className="text-sm"
-										>
-											<svg
-												className="w-4 h-4 mr-2"
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24"
-											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth={2}
-													d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-												/>
-											</svg>
-											Voir le contrat
-										</Button>
-									</div>
-									<div className="space-y-3">
-										<div className="flex items-center justify-between">
-											<span className="text-gray-600">
-												Propriétaire:
-											</span>
-											<span
-												className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-													collaboration.ownerSigned
-														? 'bg-green-100 text-green-800'
-														: 'bg-yellow-100 text-yellow-800'
-												}`}
-											>
-												{collaboration.ownerSigned
-													? '✓ Signé'
-													: '⏳ En attente'}
-											</span>
-										</div>
-										<div className="flex items-center justify-between">
-											<span className="text-gray-600">
-												Collaborateur:
-											</span>
-											<span
-												className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-													collaboration.collaboratorSigned
-														? 'bg-green-100 text-green-800'
-														: 'bg-yellow-100 text-yellow-800'
-												}`}
-											>
-												{collaboration.collaboratorSigned
-													? '✓ Signé'
-													: '⏳ En attente'}
-											</span>
-										</div>
-										{collaboration.ownerSignedAt && (
-											<div className="text-xs text-gray-500">
-												Signé le:{' '}
-												{new Date(
-													collaboration.ownerSignedAt,
-												).toLocaleDateString('fr-FR')}
-											</div>
-										)}
-									</div>
-								</Card>
+								<CollaborationContract
+									collaboration={collaboration}
+									onViewContract={() =>
+										setShowContractViewModal(true)
+									}
+								/>
 								{/* Collaboration Timeline */}
-								<Card className="p-6">
-									<h3 className="text-lg font-medium text-gray-900 mb-4">
-										⏰ Chronologie
-									</h3>
-									<div className="space-y-3">
-										<div>
-											<span className="text-sm text-gray-600">
-												Créée le:
-											</span>
-											<p className="font-medium">
-												{new Date(
-													collaboration.createdAt,
-												).toLocaleDateString('fr-FR', {
-													day: 'numeric',
-													month: 'long',
-													year: 'numeric',
-													hour: '2-digit',
-													minute: '2-digit',
-												})}
-											</p>
-										</div>
-										<div>
-											<span className="text-sm text-gray-600">
-												Dernière mise à jour:
-											</span>
-											<p className="font-medium">
-												{new Date(
-													collaboration.updatedAt,
-												).toLocaleDateString('fr-FR', {
-													day: 'numeric',
-													month: 'long',
-													year: 'numeric',
-													hour: '2-digit',
-													minute: '2-digit',
-												})}
-											</p>
-										</div>
-										<div>
-											<span className="text-sm text-gray-600">
-												Étape actuelle:
-											</span>
-											<p className="font-medium capitalize">
-												{collaboration.currentProgressStep.replace(
-													'_',
-													' ',
-												)}
-											</p>
-										</div>
-									</div>
-								</Card>
+								<CollaborationTimeline
+									collaboration={collaboration}
+								/>
 							</div>
 						</div>
 					</div>
 				</div>
 			)}
-
 			{/* Floating Chat Button */}
 			{!isChatOpen && collaboration && (
-				<button
+				<CollaborationChatButton
+					unreadCount={unreadCount}
 					onClick={openChat}
-					className="fixed bottom-6 right-6 z-30 bg-[#00b4d8] hover:bg-[#0094b3] text-white p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
-					aria-label="Ouvrir le chat"
-					title={`Chat with collaboration partner${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
-				>
-					{unreadCount > 0 && (
-						<span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] h-5 flex items-center justify-center font-bold">
-							{unreadCount}
-						</span>
-					)}
-					<svg
-						className="w-6 h-6"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-					>
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							strokeWidth="2"
-							d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8-1.295 0-2.522-.21-3.634-.595L3 20l1.595-4.366C4.21 14.522 4 13.295 4 12c0-4.418 4.03-8 9-8s8 3.582 8 8z"
-						/>
-					</svg>
-				</button>
+				/>
 			)}
-
 			{/* Right-hand chat panel */}
-			{isChatOpen && (
-				<>
-					{/* Overlay */}
-					<div
-						className="fixed inset-0 bg-black/30 z-40"
-						onClick={closeChat}
-					/>
-					{/* Panel */}
-					<div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[420px] bg-white shadow-xl flex flex-col">
-						{/* Panel header with peer info */}
-						<div className="flex items-center gap-3 p-4 border-b">
-							{selectedUser && (
-								<>
-									<ProfileAvatar
-										user={selectedUser}
-										size="sm"
-										showOnlineStatus={true}
-										isOnline={onlineUsers.includes(
-											selectedUser._id,
-										)}
-									/>
-									<div className="min-w-0">
-										<div className="font-medium truncate">
-											{selectedUser.firstName &&
-											selectedUser.lastName
-												? `${selectedUser.firstName} ${selectedUser.lastName}`
-												: selectedUser.name ||
-													selectedUser.email}
-										</div>
-										<div className="text-xs text-gray-500 truncate">
-											{getDetailedUserPresenceText(
-												selectedUser,
-												onlineUsers,
-												{},
-												[selectedUser],
-											)}
-										</div>
-									</div>
-								</>
-							)}
-							<button
-								onClick={closeChat}
-								className="ml-auto p-2 hover:bg-gray-100 rounded"
-								aria-label="Fermer"
-							>
-								<svg
-									className="w-5 h-5"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth="2"
-										d="M6 18L18 6M6 6l12 12"
-									/>
-								</svg>
-							</button>
-						</div>
-
-						{/* Chat body */}
-						<div className="flex-1 min-h-0 flex flex-col">
-							<div className="flex-1 min-h-0 overflow-hidden">
-								<ChatMessages />
-							</div>
-							<div className="flex-shrink-0 border-t">
-								<MessageInput />
-							</div>
-						</div>
-					</div>
-				</>
-			)}
-
+			<CollaborationChat
+				isOpen={isChatOpen}
+				selectedUser={selectedUser}
+				onlineUsers={onlineUsers}
+				onClose={closeChat}
+			/>
 			{/* Contract View Modal */}
 			{collaboration && (
 				<ContractViewModal

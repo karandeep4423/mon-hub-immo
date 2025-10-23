@@ -46,8 +46,7 @@ export const useCollaborationData = (
 				foundCollaboration.progressSteps.length > 0
 			) {
 				const transformedSteps = foundCollaboration.progressSteps.map(
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					(step: any) => {
+					(step: ProgressStepData) => {
 						const config =
 							PROGRESS_STEPS_CONFIG[step.id as ProgressStep];
 						return {

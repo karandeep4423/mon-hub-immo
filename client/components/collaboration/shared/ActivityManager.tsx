@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Button } from '../../ui/Button';
-import { Card } from '../../ui/Card';
-import { ProfileAvatar } from '../../ui/ProfileAvatar';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 import { logger } from '@/lib/utils/logger';
+import { formatDateTimeShort } from '@/lib/utils/date';
 
 export interface Activity {
 	id: string;
@@ -56,17 +57,6 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 		} finally {
 			setIsAdding(false);
 		}
-	};
-
-	const formatActivityTime = (dateString: string) => {
-		const date = new Date(dateString);
-		return date.toLocaleDateString('fr-FR', {
-			day: '2-digit',
-			month: '2-digit',
-			year: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit',
-		});
 	};
 
 	const getActivityIcon = (type: Activity['type']) => {
@@ -183,7 +173,9 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 										{getActivityTitle(activity)}
 									</h4>
 									<time className="text-xs text-gray-500">
-										{formatActivityTime(activity.createdAt)}
+										{formatDateTimeShort(
+											activity.createdAt,
+										)}
 									</time>
 								</div>
 								{activity.content && (

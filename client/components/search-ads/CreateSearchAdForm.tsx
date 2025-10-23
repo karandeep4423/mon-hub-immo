@@ -6,8 +6,16 @@ import searchAdApi from '@/lib/api/searchAdApi';
 import { useAuth } from '@/hooks/useAuth';
 import { useForm } from '@/hooks/useForm';
 import { SearchAdClientInfoForm } from './SearchAdClientInfoForm';
-import { BaseLocationAutocomplete, type LocationItem } from '@/components/ui';
 import type { SearchAd } from '@/types/searchAd';
+import {
+	BasicInfoSection,
+	PropertyCriteriaSection,
+	LocationSection,
+	BudgetSection,
+	PropertyDetailsSection,
+	PrioritiesSection,
+	BadgesSection,
+} from './form-sections';
 
 interface FormData extends Record<string, unknown> {
 	title: string;
@@ -131,85 +139,6 @@ export const CreateSearchAdForm = () => {
 			},
 		});
 
-	const propertyTypes = [
-		'house',
-		'apartment',
-		'land',
-		'building',
-		'commercial',
-	];
-	const propertyStates = ['new', 'old'];
-	const projectTypes = ['primary', 'secondary', 'investment'];
-	const financingTypes = ['loan', 'cash', 'pending'];
-	const floorOptions = ['any', 'not_ground_floor', 'ground_floor_only'];
-	const stateOptions = ['new', 'good', 'refresh', 'renovate'];
-	const priorityOptions = [
-		'Jardin/Extérieur',
-		'Garage/Parking',
-		'Proche des transports',
-		'Proche des écoles',
-		'Quartier calme',
-		'Lumineux',
-		'Sans travaux',
-		'Piscine',
-		'Balcon/Terrasse',
-		'Ascenseur',
-		'Vue dégagée',
-		'Calme',
-	];
-
-	const badgeOptions = [
-		'Vente urgente',
-		'Bien rare',
-		'Secteur recherché',
-		'Bonne affaire',
-		'Fort potentiel',
-		'Mandat possible rapidement',
-		'Signature imminente',
-		'Contact direct propriétaire',
-		'Contact ami / famille',
-		'Contact pro (collègue, artisan, notaire…)',
-		'Vendeur joignable',
-		'Maison individuelle',
-		'Appartement',
-		'Terrain constructible',
-		'Commerce',
-		'Immeuble',
-		'Bâtiment',
-		'Atypique',
-		'Bien à rénover',
-		'Jeune couple primo-accédant',
-		'Famille agrandissement',
-		'Retraité / résidence secondaire',
-		'Investisseur locatif',
-		'Projet rénovation / construction',
-		'Recherche résidence principale',
-		'À rappeler rapidement',
-		'Disponible cette semaine',
-		'Projet à court terme (<3 mois)',
-		'Projet à moyen terme (6-12 mois)',
-		'Projet en réflexion',
-	];
-
-	const handleInputChange = (
-		e: React.ChangeEvent<
-			HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-		>,
-	) => {
-		const { name, value, type } = e.target;
-		if (type === 'checkbox') {
-			const checked = (e.target as HTMLInputElement).checked;
-			setFieldValue((prev) => ({ ...prev, [name]: checked }));
-		} else if (type === 'number') {
-			setFieldValue((prev) => ({
-				...prev,
-				[name]: value ? parseInt(value) : undefined,
-			}));
-		} else {
-			setFieldValue((prev) => ({ ...prev, [name]: value }));
-		}
-	};
-
 	const handleArrayChange = (
 		value: string,
 		checked: boolean,
@@ -224,12 +153,11 @@ export const CreateSearchAdForm = () => {
 			| 'badges'
 		>,
 	) => {
-		setFieldValue((prev) => ({
-			...prev,
-			[field]: checked
-				? [...prev[field], value]
-				: prev[field].filter((item) => item !== value),
-		}));
+		const currentArray = values[field] as string[];
+		const newArray = checked
+			? [...currentArray, value]
+			: currentArray.filter((item) => item !== value);
+		setFieldValue(field, newArray);
 	};
 
 	const validateForm = (): string | null => {
@@ -266,661 +194,126 @@ export const CreateSearchAdForm = () => {
 			<form onSubmit={handleSubmit} className="w-full space-y-6">
 				<div className="grid grid-cols-1 lg:grid-cols-2  gap-6">
 					{/* Basic Information */}
-					<div className="bg-white p-6 rounded-lg shadow-sm border">
-						<h3 className="text-lg font-semibold text-gray-900 mb-4">
-							📋 Informations générales
-						</h3>
-
-						<div className="space-y-4">
-							<div>
-								<label
-									htmlFor="title"
-									className="block text-sm font-medium text-gray-700"
-								>
-									Titre de l&apos;annonce *
-								</label>
-								<input
-									id="title"
-									name="title"
-									type="text"
-									value={values.title}
-									onChange={handleInputChange}
-									className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-600 focus:border-brand-600"
-									placeholder="Recherche appartement familial à Paris"
-								/>
-							</div>
-
-							<div>
-								<label
-									htmlFor="description"
-									className="block text-sm font-medium text-gray-700"
-								>
-									Description de la recherche *
-								</label>
-								<textarea
-									id="description"
-									name="description"
-									rows={4}
-									value={values.description}
-									onChange={handleInputChange}
-									className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-600 focus:border-brand-600"
-									placeholder="Décrivez les besoins spécifiques de votre client..."
-								/>
-							</div>
-						</div>
-					</div>
+					<BasicInfoSection
+						title={values.title}
+						description={values.description}
+						onTitleChange={(value) => setFieldValue('title', value)}
+						onDescriptionChange={(value) =>
+							setFieldValue('description', value)
+						}
+					/>
 
 					{/* Property Search Criteria */}
-					<div className="bg-white p-6 rounded-lg shadow-sm border">
-						<h3 className="text-lg font-semibold text-gray-900 mb-4">
-							🏠 Critères de recherche du bien
-						</h3>
-
-						<div className="space-y-6">
-							{/* Property Types */}
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									Type de bien recherché *
-								</label>
-								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-									{propertyTypes.map((type) => (
-										<label
-											key={type}
-											className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer min-h-[3rem]"
-										>
-											<input
-												type="checkbox"
-												value={type}
-												checked={values.propertyTypes.includes(
-													type,
-												)}
-												onChange={(e) =>
-													handleArrayChange(
-														type,
-														e.target.checked,
-														'propertyTypes',
-													)
-												}
-												className="rounded border-gray-300 text-blue-600 mt-1 flex-shrink-0"
-											/>
-											<span className="text-sm capitalize leading-tight break-words">
-												{type === 'house'
-													? 'Maison'
-													: type === 'apartment'
-														? 'Appartement'
-														: type === 'land'
-															? 'Terrain'
-															: type ===
-																  'building'
-																? 'Immeuble'
-																: 'Local commercial'}
-											</span>
-										</label>
-									))}
-								</div>
-							</div>
-
-							{/* Property State */}
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									Neuf ou ancien ?
-								</label>
-								<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-									{propertyStates.map((state) => (
-										<label
-											key={state}
-											className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer min-h-[3rem]"
-										>
-											<input
-												type="checkbox"
-												value={state}
-												checked={values.propertyState.includes(
-													state,
-												)}
-												onChange={(e) =>
-													handleArrayChange(
-														state,
-														e.target.checked,
-														'propertyState',
-													)
-												}
-												className="rounded border-gray-300 text-blue-600 mt-1 flex-shrink-0"
-											/>
-											<span className="text-sm leading-tight break-words">
-												{state === 'new'
-													? 'Neuf'
-													: 'Ancien'}
-											</span>
-										</label>
-									))}
-								</div>
-							</div>
-
-							{/* Project Type */}
-							<div>
-								<label
-									htmlFor="projectType"
-									className="block text-sm font-medium text-gray-700"
-								>
-									Type de projet
-								</label>
-								<select
-									id="projectType"
-									name="projectType"
-									value={values.projectType}
-									onChange={handleInputChange}
-									className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-								>
-									<option value="">Sélectionner...</option>
-									{projectTypes.map((type) => (
-										<option key={type} value={type}>
-											{type === 'primary'
-												? 'Résidence principale'
-												: type === 'secondary'
-													? 'Résidence secondaire'
-													: 'Investissement locatif'}
-										</option>
-									))}
-								</select>
-							</div>
-						</div>
-					</div>
+					<PropertyCriteriaSection
+						propertyTypes={values.propertyTypes}
+						propertyState={values.propertyState}
+						projectType={values.projectType}
+						onPropertyTypesChange={(type, checked) =>
+							handleArrayChange(type, checked, 'propertyTypes')
+						}
+						onPropertyStateChange={(state, checked) =>
+							handleArrayChange(state, checked, 'propertyState')
+						}
+						onProjectTypeChange={(value) =>
+							setFieldValue('projectType', value)
+						}
+					/>
 
 					{/* Location */}
-					<div className="bg-white p-6 rounded-lg shadow-sm border">
-						<h3 className="text-lg font-semibold text-gray-900 mb-4">
-							📍 Localisation
-						</h3>
-
-						<div className="space-y-4">
-							<BaseLocationAutocomplete
-								mode="multi"
-								value={
-									values.cities
-										? values.cities
-												.split(',')
-												.map((c) => c.trim())
-										: []
-								}
-								onMultiSelect={(locations: LocationItem[]) =>
-									setFieldValue((prev) => ({
-										...prev,
-										cities: locations
-											.map((loc) => loc.name)
-											.join(', '),
-									}))
-								}
-								label="Ville(s), quartier(s) ciblé(s)"
-								placeholder="Tapez pour rechercher des villes..."
-								required
-							/>
-
-							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-								<div>
-									<label
-										htmlFor="maxDistance"
-										className="block text-sm font-medium text-gray-700"
-									>
-										Distance max avec le travail / écoles
-										(km)
-									</label>
-									<input
-										id="maxDistance"
-										name="maxDistance"
-										type="number"
-										value={values.maxDistance || ''}
-										onChange={handleInputChange}
-										className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-									/>
-								</div>
-
-								<div className="flex items-center pt-6">
-									<label className="flex items-center space-x-2">
-										<input
-											type="checkbox"
-											name="openToOtherAreas"
-											checked={values.openToOtherAreas}
-											onChange={handleInputChange}
-											className="rounded border-gray-300 text-blue-600"
-										/>
-										<span className="text-sm text-gray-700">
-											Êtes-vous ouvert à d&apos;autres
-											zones ?
-										</span>
-									</label>
-								</div>
-							</div>
-						</div>
-					</div>
+					<LocationSection
+						cities={values.cities}
+						maxDistance={values.maxDistance}
+						openToOtherAreas={values.openToOtherAreas}
+						onCitiesChange={(value) =>
+							setFieldValue('cities', value)
+						}
+						onMaxDistanceChange={(value) =>
+							setFieldValue('maxDistance', value)
+						}
+						onOpenToOtherAreasChange={(checked) =>
+							setFieldValue('openToOtherAreas', checked)
+						}
+					/>
 
 					{/* Budget & Financing */}
-					<div className="bg-white p-6 rounded-lg shadow-sm border">
-						<h3 className="text-lg font-semibold text-gray-900 mb-4">
-							💰 Budget & financement
-						</h3>
-
-						<div className="space-y-4">
-							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-								<div>
-									<label
-										htmlFor="budgetMax"
-										className="block text-sm font-medium text-gray-700"
-									>
-										Budget total maximum ? *
-									</label>
-									<input
-										id="budgetMax"
-										name="budgetMax"
-										type="number"
-										value={values.budgetMax || ''}
-										onChange={handleInputChange}
-										className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-									/>
-								</div>
-
-								<div>
-									<label
-										htmlFor="budgetIdeal"
-										className="block text-sm font-medium text-gray-700"
-									>
-										Budget idéal ?
-									</label>
-									<input
-										id="budgetIdeal"
-										name="budgetIdeal"
-										type="number"
-										value={values.budgetIdeal || ''}
-										onChange={handleInputChange}
-										className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-									/>
-								</div>
-							</div>
-
-							<div>
-								<label
-									htmlFor="financingType"
-									className="block text-sm font-medium text-gray-700"
-								>
-									Financement : prêt bancaire / cash / en
-									attente d&apos;accord ?
-								</label>
-								<select
-									id="financingType"
-									name="financingType"
-									value={values.financingType}
-									onChange={handleInputChange}
-									className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-								>
-									<option value="">Sélectionner...</option>
-									{financingTypes.map((type) => (
-										<option key={type} value={type}>
-											{type === 'loan'
-												? 'Prêt bancaire'
-												: type === 'cash'
-													? 'Cash'
-													: "En attente d'accord"}
-										</option>
-									))}
-								</select>
-							</div>
-
-							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-								<label className="flex items-center space-x-2">
-									<input
-										type="checkbox"
-										name="isSaleInProgress"
-										checked={values.isSaleInProgress}
-										onChange={handleInputChange}
-										className="rounded border-gray-300 text-blue-600"
-									/>
-									<span className="text-sm text-gray-700">
-										Vente d&apos;un autre bien en cours ?
-										(vente en cascade)
-									</span>
-								</label>
-
-								<label className="flex items-center space-x-2">
-									<input
-										type="checkbox"
-										name="hasBankApproval"
-										checked={values.hasBankApproval}
-										onChange={handleInputChange}
-										className="rounded border-gray-300 text-blue-600"
-									/>
-									<span className="text-sm text-gray-700">
-										Avez-vous un accord de principe ou une
-										simulation bancaire ?
-									</span>
-								</label>
-							</div>
-						</div>
-					</div>
+					<BudgetSection
+						budgetMax={values.budgetMax}
+						budgetIdeal={values.budgetIdeal}
+						financingType={values.financingType}
+						isSaleInProgress={values.isSaleInProgress}
+						hasBankApproval={values.hasBankApproval}
+						onBudgetMaxChange={(value) =>
+							setFieldValue('budgetMax', value)
+						}
+						onBudgetIdealChange={(value) =>
+							setFieldValue('budgetIdeal', value)
+						}
+						onFinancingTypeChange={(value) =>
+							setFieldValue('financingType', value)
+						}
+						onSaleInProgressChange={(value) =>
+							setFieldValue('isSaleInProgress', value)
+						}
+						onBankApprovalChange={(value) =>
+							setFieldValue('hasBankApproval', value)
+						}
+					/>
 
 					{/* Property Characteristics */}
-					<div className="bg-white p-6 rounded-lg shadow-sm border">
-						<h3 className="text-lg font-semibold text-gray-900 mb-4">
-							🏠 Caractéristiques
-						</h3>
-
-						<div className="space-y-4">
-							<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-								<div>
-									<label
-										htmlFor="minRooms"
-										className="block text-sm font-medium text-gray-700"
-									>
-										Nombre de pièces / chambres minimum
-									</label>
-									<input
-										id="minRooms"
-										name="minRooms"
-										type="number"
-										value={values.minRooms || ''}
-										onChange={handleInputChange}
-										className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-									/>
-								</div>
-
-								<div>
-									<label
-										htmlFor="minBedrooms"
-										className="block text-sm font-medium text-gray-700"
-									>
-										Nombre de chambres minimum
-									</label>
-									<input
-										id="minBedrooms"
-										name="minBedrooms"
-										type="number"
-										value={values.minBedrooms || ''}
-										onChange={handleInputChange}
-										className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-									/>
-								</div>
-
-								<div>
-									<label
-										htmlFor="minSurface"
-										className="block text-sm font-medium text-gray-700"
-									>
-										Surface habitable minimum (m²)
-									</label>
-									<input
-										id="minSurface"
-										name="minSurface"
-										type="number"
-										value={values.minSurface || ''}
-										onChange={handleInputChange}
-										className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-									/>
-								</div>
-							</div>
-
-							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-								<label className="flex items-center space-x-2">
-									<input
-										type="checkbox"
-										name="hasExterior"
-										checked={values.hasExterior}
-										onChange={handleInputChange}
-										className="rounded border-gray-300 text-blue-600"
-									/>
-									<span className="text-sm text-gray-700">
-										Extérieur nécessaire ? (jardin,
-										terrasse, balcon)
-									</span>
-								</label>
-
-								<label className="flex items-center space-x-2">
-									<input
-										type="checkbox"
-										name="hasParking"
-										checked={values.hasParking}
-										onChange={handleInputChange}
-										className="rounded border-gray-300 text-blue-600"
-									/>
-									<span className="text-sm text-gray-700">
-										Parking / garage obligatoire ?
-									</span>
-								</label>
-							</div>
-
-							<div>
-								<label
-									htmlFor="acceptedFloors"
-									className="block text-sm font-medium text-gray-700"
-								>
-									Étages acceptés (si appartement) ?
-								</label>
-								<select
-									id="acceptedFloors"
-									name="acceptedFloors"
-									value={values.acceptedFloors || ''}
-									onChange={handleInputChange}
-									className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-								>
-									<option value="">Sélectionner...</option>
-									{floorOptions.map((option) => (
-										<option key={option} value={option}>
-											{option === 'any'
-												? 'Tous étages'
-												: option === 'not_ground_floor'
-													? 'Pas de rez-de-chaussée'
-													: 'Rez-de-chaussée uniquement'}
-										</option>
-									))}
-								</select>
-							</div>
-
-							{/* Property State */}
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									État général souhaité : neuf / à rafraîchir
-									/ à rénover ?
-								</label>
-								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-									{stateOptions.map((state) => (
-										<label
-											key={state}
-											className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer min-h-[3rem]"
-										>
-											<input
-												type="checkbox"
-												value={state}
-												checked={values.desiredState.includes(
-													state,
-												)}
-												onChange={(e) =>
-													handleArrayChange(
-														state,
-														e.target.checked,
-														'desiredState',
-													)
-												}
-												className="rounded border-gray-300 text-blue-600 mt-1 flex-shrink-0"
-											/>
-											<span className="text-sm leading-tight break-words">
-												{state === 'new'
-													? 'Neuf'
-													: state === 'good'
-														? 'Bon état'
-														: state === 'refresh'
-															? 'À rafraîchir'
-															: 'À rénover'}
-											</span>
-										</label>
-									))}
-								</div>
-							</div>
-						</div>
-					</div>
+					<PropertyDetailsSection
+						minRooms={values.minRooms}
+						minBedrooms={values.minBedrooms}
+						minSurface={values.minSurface}
+						hasExterior={values.hasExterior}
+						hasParking={values.hasParking}
+						acceptedFloors={values.acceptedFloors}
+						desiredState={values.desiredState}
+						onMinRoomsChange={(value) =>
+							setFieldValue('minRooms', value)
+						}
+						onMinBedroomsChange={(value) =>
+							setFieldValue('minBedrooms', value)
+						}
+						onMinSurfaceChange={(value) =>
+							setFieldValue('minSurface', value)
+						}
+						onHasExteriorChange={(value) =>
+							setFieldValue('hasExterior', value)
+						}
+						onHasParkingChange={(value) =>
+							setFieldValue('hasParking', value)
+						}
+						onAcceptedFloorsChange={(value) =>
+							setFieldValue('acceptedFloors', value)
+						}
+						onDesiredStateChange={(state, checked) =>
+							handleArrayChange(state, checked, 'desiredState')
+						}
+					/>
 
 					{/* Personal Priorities */}
-					<div className="bg-white p-6 rounded-lg shadow-sm border">
-						<h3 className="text-lg font-semibold text-gray-900 mb-4">
-							❤️ Priorités personnelles
-						</h3>
-
-						<div className="space-y-6">
-							{/* Must Haves */}
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									3 critères indispensables :
-								</label>
-								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-									{priorityOptions.map((priority) => (
-										<label
-											key={priority}
-											className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer min-h-[3rem]"
-										>
-											<input
-												type="checkbox"
-												value={priority}
-												checked={values.mustHaves.includes(
-													priority,
-												)}
-												onChange={(e) =>
-													handleArrayChange(
-														priority,
-														e.target.checked,
-														'mustHaves',
-													)
-												}
-												className="rounded border-gray-300 text-red-600 mt-1 flex-shrink-0"
-												disabled={
-													!values.mustHaves.includes(
-														priority,
-													) &&
-													values.mustHaves.length >= 3
-												}
-											/>
-											<span className="text-sm leading-tight break-words">
-												{priority}
-											</span>
-										</label>
-									))}
-								</div>
-								<p className="text-xs text-gray-500 mt-1">
-									Maximum 3 critères
-								</p>
-							</div>
-
-							{/* Nice to Haves */}
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									3 critères secondaires :
-								</label>
-								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-									{priorityOptions.map((priority) => (
-										<label
-											key={priority}
-											className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer min-h-[3rem]"
-										>
-											<input
-												type="checkbox"
-												value={priority}
-												checked={values.niceToHaves.includes(
-													priority,
-												)}
-												onChange={(e) =>
-													handleArrayChange(
-														priority,
-														e.target.checked,
-														'niceToHaves',
-													)
-												}
-												className="rounded border-gray-300 text-yellow-600 mt-1 flex-shrink-0"
-												disabled={
-													!values.niceToHaves.includes(
-														priority,
-													) &&
-													values.niceToHaves.length >=
-														3
-												}
-											/>
-											<span className="text-sm leading-tight break-words">
-												{priority}
-											</span>
-										</label>
-									))}
-								</div>
-								<p className="text-xs text-gray-500 mt-1">
-									Maximum 3 critères
-								</p>
-							</div>
-
-							{/* Deal Breakers */}
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">
-									Points de blocage absolus :
-								</label>
-								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-									{priorityOptions.map((priority) => (
-										<label
-											key={priority}
-											className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer min-h-[3rem]"
-										>
-											<input
-												type="checkbox"
-												value={priority}
-												checked={values.dealBreakers.includes(
-													priority,
-												)}
-												onChange={(e) =>
-													handleArrayChange(
-														priority,
-														e.target.checked,
-														'dealBreakers',
-													)
-												}
-												className="rounded border-gray-300 text-red-600 mt-1 flex-shrink-0"
-											/>
-											<span className="text-sm leading-tight break-words">
-												{priority}
-											</span>
-										</label>
-									))}
-								</div>
-							</div>
-						</div>
-					</div>
+					<PrioritiesSection
+						mustHaves={values.mustHaves}
+						niceToHaves={values.niceToHaves}
+						dealBreakers={values.dealBreakers}
+						onMustHavesChange={(priority, checked) =>
+							handleArrayChange(priority, checked, 'mustHaves')
+						}
+						onNiceToHavesChange={(priority, checked) =>
+							handleArrayChange(priority, checked, 'niceToHaves')
+						}
+						onDealBreakersChange={(priority, checked) =>
+							handleArrayChange(priority, checked, 'dealBreakers')
+						}
+					/>
 				</div>
 				{/* Badges Section - Full width */}
-				<div className="bg-white p-6 rounded-lg shadow-sm border">
-					<h3 className="text-lg font-semibold text-gray-900 mb-4">
-						🏷️ Badges pour l&apos;annonce
-					</h3>
-					<p className="text-sm text-gray-600 mb-4">
-						Ajoutez des badges pour mettre en avant les
-						caractéristiques importantes de cette recherche
-						(optionnel)
-					</p>
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-						{badgeOptions.map((badge) => (
-							<label
-								key={badge}
-								className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer min-h-[3rem]"
-							>
-								<input
-									type="checkbox"
-									value={badge}
-									checked={values.badges.includes(badge)}
-									onChange={(e) =>
-										handleArrayChange(
-											badge,
-											e.target.checked,
-											'badges',
-										)
-									}
-									className="rounded border-gray-300 text-brand-600 mt-1 flex-shrink-0"
-								/>
-								<span className="text-sm leading-tight break-words">
-									{badge}
-								</span>
-							</label>
-						))}
-					</div>
-				</div>
+				<BadgesSection
+					badges={values.badges}
+					onBadgesChange={(badge, checked) =>
+						handleArrayChange(badge, checked, 'badges')
+					}
+				/>
 				{/* Client Information - Full width */}
 				<div className="bg-white p-6 rounded-lg shadow-sm border">
 					<div className="mb-4">
@@ -936,7 +329,7 @@ export const CreateSearchAdForm = () => {
 					<SearchAdClientInfoForm
 						clientInfo={values.clientInfo || {}}
 						onChange={(clientInfo) =>
-							setFieldValue((prev) => ({ ...prev, clientInfo }))
+							setFieldValue('clientInfo', clientInfo)
 						}
 					/>
 				</div>{' '}
@@ -955,11 +348,11 @@ export const CreateSearchAdForm = () => {
 								<select
 									value={values.status}
 									onChange={(e) =>
-										setFieldValue((prev) => ({
-											...prev,
-											status: e.target
+										setFieldValue(
+											'status',
+											e.target
 												.value as FormData['status'],
-										}))
+										)
 									}
 									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
 								>
@@ -988,10 +381,12 @@ export const CreateSearchAdForm = () => {
 							</button>
 							<button
 								type="submit"
-								disabled={isLoading}
+								disabled={isSubmitting}
 								className="px-8 py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 disabled:opacity-50 transition-colors text-sm font-medium order-1 sm:order-2"
 							>
-								{isLoading ? 'Création...' : "Créer l'annonce"}
+								{isSubmitting
+									? 'Création...'
+									: "Créer l'annonce"}
 							</button>
 						</div>
 					</div>

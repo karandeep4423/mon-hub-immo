@@ -1,0 +1,169 @@
+import Image from 'next/image';
+import { BaseLocationAutocomplete } from '@/components/ui';
+
+interface HeroSearchSectionProps {
+	searchCity: string;
+	searchPostalCode: string;
+	searching: boolean;
+	searchPerformed: boolean;
+	onCitySelect: (location: { name: string; postcode: string }) => void;
+	onSearch: () => void;
+}
+
+export const HeroSearchSection = ({
+	searchCity,
+	searchPostalCode,
+	searching,
+	searchPerformed,
+	onCitySelect,
+	onSearch,
+}: HeroSearchSectionProps) => {
+	return (
+		<div className="bg-brand-gradient relative overflow-hidden">
+			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 relative z-10">
+				<div className="grid lg:grid-cols-2 gap-6 lg:gap-8 items-center">
+					<div className="text-white">
+						<p className="text-xs sm:text-sm mb-2 opacity-90">
+							<span className="font-semibold">MonAgentImmo</span>,
+							un service proposé par{' '}
+							<span className="font-semibold">MonHubImmo</span>
+						</p>
+						<p className="text-xs mb-4 sm:mb-6 opacity-75">
+							La 1ère plateforme qui met en relation vos
+							particuliers et agents immobiliers.
+						</p>
+						<h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 leading-tight">
+							Prenez rendez-vous en ligne avec un agent
+							<br className="hidden sm:block" />
+							immobilier de votre secteur en 1 clic
+						</h1>
+						<p className="text-sm sm:text-base mb-6 sm:mb-8 opacity-90">
+							Estimation, mise en vente, recherche de biens, tout
+							commence ici, simplement.
+						</p>
+
+						{/* Search Bar */}
+						<div className="bg-white rounded-full shadow-lg p-2 flex items-center gap-2 max-w-2xl relative z-50">
+							<div className="flex-1 flex items-center gap-2 pl-2 relative">
+								<svg
+									className="w-5 h-5 text-gray-400 flex-shrink-0 absolute left-4 top-1/2 -translate-y-1/2 z-10 pointer-events-none"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+									/>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+									/>
+								</svg>
+								<BaseLocationAutocomplete
+									mode="single"
+									value={searchCity}
+									onSelect={onCitySelect}
+									placeholder="Entrez votre ville ou code postal"
+									className="border-0 shadow-none focus:ring-0 pl-8 py-2.5 text-gray-900"
+									showPostalCode={false}
+								/>
+							</div>
+							<button
+								onClick={onSearch}
+								disabled={
+									searching ||
+									(!searchCity.trim() &&
+										!searchPostalCode.trim())
+								}
+								className="bg-gradient-to-r from-pink-400 via-pink-500 to-pink-600 text-white px-6 sm:px-8 py-3 rounded-full font-semibold text-sm sm:text-base hover:from-pink-500 hover:via-pink-600 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0"
+							>
+								{searching ? (
+									<>
+										<svg
+											className="animate-spin h-5 w-5"
+											xmlns="http://www.w3.org/2000/svg"
+											fill="none"
+											viewBox="0 0 24 24"
+										>
+											<circle
+												className="opacity-25"
+												cx="12"
+												cy="12"
+												r="10"
+												stroke="currentColor"
+												strokeWidth="4"
+											></circle>
+											<path
+												className="opacity-75"
+												fill="currentColor"
+												d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+											></path>
+										</svg>
+										<span className="hidden sm:inline">
+											Recherche...
+										</span>
+									</>
+								) : (
+									<>
+										<svg
+											className="w-5 h-5"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth={2}
+												d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+											/>
+										</svg>
+										<span>Rechercher</span>
+									</>
+								)}
+							</button>
+						</div>
+						<p className="text-xs mt-2 sm:mt-3 opacity-75">
+							*Réservez vos rendez-vous en ligne, notre
+							rendez-vous avec un agent immobilier n&apos;aura
+							jamais été aussi simple.
+						</p>
+					</div>
+
+					{/* Show illustration only when no search performed */}
+					{!searchPerformed && (
+						<div className="hidden lg:flex justify-center items-center mt-6 lg:mt-0">
+							<div className="relative w-full max-w-md">
+								<Image
+									src="/illustrations/calendar-booking.png"
+									alt="Appointment scheduling illustration"
+									width={400}
+									height={400}
+									className="w-full h-auto"
+								/>
+							</div>
+						</div>
+					)}
+				</div>
+			</div>
+			{/* Decorative wave at bottom */}
+			<div className="wave-separator" aria-hidden="true">
+				<svg
+					viewBox="0 0 1440 120"
+					preserveAspectRatio="none"
+					className="w-full h-[60px] sm:h-[80px] text-gray-50"
+				>
+					<path
+						d="M0,64L48,58.7C96,53,192,43,288,53.3C384,64,480,96,576,112C672,128,768,128,864,117.3C960,107,1056,85,1152,69.3C1248,53,1344,43,1392,37.3L1440,32L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"
+						fill="currentColor"
+					/>
+				</svg>
+			</div>
+		</div>
+	);
+};

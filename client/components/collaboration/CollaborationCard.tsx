@@ -1,16 +1,17 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card } from '../ui/Card';
-import { Button } from '../ui/Button';
-import { CollaborationStatusBadge } from './CollaborationStatusBadge';
-import { ProfileAvatar } from '../ui/ProfileAvatar';
-import { Collaboration } from '../../types/collaboration';
-import { Property, propertyService } from '../../lib/api/propertyApi';
-import type { SearchAd } from '../../types/searchAd';
-import searchAdApi from '../../lib/api/searchAdApi';
-import { PROGRESS_STEPS_CONFIG } from './progress-tracking/types';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { CollaborationStatusBadge } from '@/components/collaboration/CollaborationStatusBadge';
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
+import { Collaboration } from '@/types/collaboration';
+import { Property, propertyService } from '@/lib/api/propertyApi';
+import type { SearchAd } from '@/types/searchAd';
+import searchAdApi from '@/lib/api/searchAdApi';
+import { PROGRESS_STEPS_CONFIG } from '@/components/collaboration/progress-tracking/types';
 import { logger } from '@/lib/utils/logger';
+import { formatDateShort } from '@/lib/utils/date';
 
 interface CollaborationCardProps {
 	collaboration: Collaboration;
@@ -20,14 +21,6 @@ interface CollaborationCardProps {
 	showChatButton?: boolean;
 	showCancelButton?: boolean;
 }
-
-const formatDate = (dateString: string) => {
-	return new Date(dateString).toLocaleDateString('fr-FR', {
-		day: '2-digit',
-		month: '2-digit',
-		year: 'numeric',
-	});
-};
 
 export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 	collaboration,
@@ -508,7 +501,7 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 								Dernière activité
 							</p>
 							<span className="text-xs text-gray-500">
-								{formatDate(latestActivity.createdAt)}
+								{formatDateShort(latestActivity.createdAt)}
 							</span>
 						</div>
 						<div className="flex items-start space-x-2">
@@ -544,12 +537,13 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 				<div className="flex justify-between items-center text-xs text-gray-500">
 					<div>
 						<span>
-							📅 Créée le {formatDate(collaboration.createdAt)}
+							📅 Créée le{' '}
+							{formatDateShort(collaboration.createdAt)}
 						</span>
 						{collaboration.status !== 'pending' && (
 							<span className="ml-4">
 								📝 Mise à jour le{' '}
-								{formatDate(collaboration.updatedAt)}
+								{formatDateShort(collaboration.updatedAt)}
 							</span>
 						)}
 					</div>

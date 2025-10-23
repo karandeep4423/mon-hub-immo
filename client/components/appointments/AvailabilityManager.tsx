@@ -4,11 +4,17 @@ import React, { useEffect, useState } from 'react';
 import { appointmentApi } from '@/lib/api/appointmentApi';
 import { AgentAvailability } from '@/types/appointment';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
-import { Button } from '../ui/Button';
 import { useNotification } from '@/hooks/useNotification';
 import { useAuth } from '@/hooks/useAuth';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { logger } from '@/lib/utils/logger';
+import {
+	AutoSaveIndicator,
+	GeneralSettings,
+	WeeklyScheduleTab,
+	BlockedDatesTab,
+	InfoBox,
+} from './availability-manager';
 
 const DAYS_OF_WEEK = [
 	{ value: 1, label: 'Lundi' },
@@ -474,136 +480,19 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 						</p>
 					</div>
 				</div>
-				{/* Auto-save indicator */}
-				<div className="flex items-center gap-2">
-					{saving ? (
-						<div className="flex items-center gap-2 text-cyan-600 text-sm">
-							<LoadingSpinner size="sm" />
-							<span>Enregistrement...</span>
-						</div>
-					) : hasUnsavedChanges ? (
-						<div className="flex items-center gap-2 text-amber-600 text-sm">
-							<svg
-								className="w-4 h-4 animate-pulse"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-								/>
-							</svg>
-							<span>Modification en attente...</span>
-						</div>
-					) : (
-						<div className="flex items-center gap-2 text-green-600 text-sm">
-							<svg
-								className="w-4 h-4"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M5 13l4 4L19 7"
-								/>
-							</svg>
-							<span>Tout est enregistré</span>
-						</div>
-					)}
-				</div>
+				<AutoSaveIndicator
+					saving={saving}
+					hasUnsavedChanges={hasUnsavedChanges}
+				/>
 			</div>
 
-			{/* General Settings */}
-			<div className="bg-white rounded-lg shadow p-6">
-				<h3 className="text-lg font-semibold text-gray-900 mb-4">
-					Paramètres généraux
-				</h3>
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-					<div>
-						<label className="block text-sm font-medium text-gray-700 mb-2">
-							Durée par défaut (min)
-						</label>
-						<input
-							type="number"
-							min="15"
-							max="180"
-							step="15"
-							value={availability.defaultDuration}
-							onChange={(e) =>
-								updateSettings(
-									'defaultDuration',
-									parseInt(e.target.value),
-								)
-							}
-							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-						/>
-					</div>
-
-					<div>
-						<label className="block text-sm font-medium text-gray-700 mb-2">
-							Temps de pause (min)
-						</label>
-						<input
-							type="number"
-							min="0"
-							max="60"
-							step="5"
-							value={availability.bufferTime}
-							onChange={(e) =>
-								updateSettings(
-									'bufferTime',
-									parseInt(e.target.value),
-								)
-							}
-							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-						/>
-					</div>
-
-					<div>
-						<label className="block text-sm font-medium text-gray-700 mb-2">
-							Max RDV par jour
-						</label>
-						<input
-							type="number"
-							min="1"
-							max="20"
-							value={availability.maxAppointmentsPerDay || 8}
-							onChange={(e) =>
-								updateSettings(
-									'maxAppointmentsPerDay',
-									parseInt(e.target.value),
-								)
-							}
-							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-						/>
-					</div>
-
-					<div>
-						<label className="block text-sm font-medium text-gray-700 mb-2">
-							Réservation à l&apos;avance (jours)
-						</label>
-						<input
-							type="number"
-							min="1"
-							max="90"
-							value={availability.advanceBookingDays || 30}
-							onChange={(e) =>
-								updateSettings(
-									'advanceBookingDays',
-									parseInt(e.target.value),
-								)
-							}
-							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-						/>
-					</div>
-				</div>
-			</div>
+			<GeneralSettings
+				defaultDuration={availability.defaultDuration}
+				bufferTime={availability.bufferTime}
+				maxAppointmentsPerDay={availability.maxAppointmentsPerDay || 8}
+				advanceBookingDays={availability.advanceBookingDays || 30}
+				onSettingChange={updateSettings}
+			/>
 
 			{/* Tabs */}
 			<div className="bg-white rounded-lg shadow">
@@ -660,435 +549,29 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 
 				<div className="p-6">
 					{activeTab === 'weekly' ? (
-						<div className="space-y-4">
-							{DAYS_OF_WEEK.map((day) => {
-								const daySchedule =
-									availability.weeklySchedule.find(
-										(d) => d.dayOfWeek === day.value,
-									);
-
-								return (
-									<div
-										key={day.value}
-										className={`border rounded-lg p-4 ${
-											daySchedule?.isAvailable
-												? 'border-cyan-200 bg-cyan-50/30'
-												: 'border-gray-200 bg-gray-50'
-										}`}
-									>
-										<div className="flex items-center justify-between mb-3">
-											<div className="flex items-center gap-3">
-												<label className="relative inline-flex items-center cursor-pointer">
-													<input
-														type="checkbox"
-														checked={
-															daySchedule?.isAvailable ||
-															false
-														}
-														onChange={() =>
-															toggleDayAvailability(
-																day.value,
-															)
-														}
-														className="sr-only peer"
-													/>
-													<div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-cyan-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600"></div>
-												</label>
-												<span className="text-lg font-medium text-gray-900">
-													{day.label}
-												</span>
-											</div>
-
-											{daySchedule?.isAvailable && (
-												<Button
-													onClick={() =>
-														addSlotToDay(day.value)
-													}
-													variant="outline"
-													size="sm"
-													className="text-cyan-600 border-cyan-300 hover:bg-cyan-50"
-												>
-													<svg
-														className="w-4 h-4 mr-1"
-														fill="none"
-														stroke="currentColor"
-														viewBox="0 0 24 24"
-													>
-														<path
-															strokeLinecap="round"
-															strokeLinejoin="round"
-															strokeWidth={2}
-															d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-														/>
-													</svg>
-													Ajouter un créneau
-												</Button>
-											)}
-										</div>
-
-										{daySchedule?.isAvailable && (
-											<div className="space-y-3 ml-14">
-												{daySchedule.slots.map(
-													(slot, slotIndex) => (
-														<div
-															key={slotIndex}
-															className="flex items-center gap-3 bg-gradient-to-r from-cyan-50/50 to-blue-50/50 p-3 rounded-lg border border-cyan-100"
-														>
-															<div className="flex items-center gap-2 flex-1">
-																<div className="flex-1">
-																	<label className="block text-xs font-medium text-gray-600 mb-1">
-																		Début
-																	</label>
-																	<input
-																		type="time"
-																		value={
-																			slot.startTime
-																		}
-																		onChange={(
-																			e,
-																		) =>
-																			updateDaySlot(
-																				day.value,
-																				slotIndex,
-																				'startTime',
-																				e
-																					.target
-																					.value,
-																			)
-																		}
-																		className="w-full px-3 py-2.5 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all text-base font-medium text-gray-700"
-																		style={{
-																			colorScheme:
-																				'light',
-																		}}
-																	/>
-																</div>
-																<div className="flex items-center justify-center pt-6">
-																	<svg
-																		className="w-5 h-5 text-cyan-600"
-																		fill="none"
-																		stroke="currentColor"
-																		viewBox="0 0 24 24"
-																	>
-																		<path
-																			strokeLinecap="round"
-																			strokeLinejoin="round"
-																			strokeWidth={
-																				2
-																			}
-																			d="M14 5l7 7m0 0l-7 7m7-7H3"
-																		/>
-																	</svg>
-																</div>
-																<div className="flex-1">
-																	<label className="block text-xs font-medium text-gray-600 mb-1">
-																		Fin
-																	</label>
-																	<input
-																		type="time"
-																		value={
-																			slot.endTime
-																		}
-																		onChange={(
-																			e,
-																		) =>
-																			updateDaySlot(
-																				day.value,
-																				slotIndex,
-																				'endTime',
-																				e
-																					.target
-																					.value,
-																			)
-																		}
-																		className="w-full px-3 py-2.5 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all text-base font-medium text-gray-700"
-																		style={{
-																			colorScheme:
-																				'light',
-																		}}
-																	/>
-																</div>
-															</div>
-
-															{daySchedule.slots
-																.length > 1 && (
-																<button
-																	onClick={() =>
-																		removeSlotFromDay(
-																			day.value,
-																			slotIndex,
-																		)
-																	}
-																	className="p-2.5 text-red-600 hover:bg-red-100 rounded-lg transition-colors flex-shrink-0"
-																	title="Supprimer ce créneau"
-																>
-																	<svg
-																		className="w-5 h-5"
-																		fill="none"
-																		stroke="currentColor"
-																		viewBox="0 0 24 24"
-																	>
-																		<path
-																			strokeLinecap="round"
-																			strokeLinejoin="round"
-																			strokeWidth={
-																				2
-																			}
-																			d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-																		/>
-																	</svg>
-																</button>
-															)}
-														</div>
-													),
-												)}
-											</div>
-										)}
-									</div>
-								);
-							})}
-						</div>
+						<WeeklyScheduleTab
+							weeklySchedule={availability.weeklySchedule}
+							onToggleDayAvailability={toggleDayAvailability}
+							onAddSlotToDay={addSlotToDay}
+							onUpdateDaySlot={updateDaySlot}
+							onRemoveSlotFromDay={removeSlotFromDay}
+						/>
 					) : (
-						<div className="space-y-6">
-							{/* Add blocked date or date range */}
-							<div className="bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-200 rounded-lg p-4">
-								<h4 className="font-semibold text-gray-900 mb-3 flex items-center">
-									<svg
-										className="w-5 h-5 mr-2 text-cyan-600"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path
-											strokeLinecap="round"
-											strokeLinejoin="round"
-											strokeWidth={2}
-											d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-										/>
-									</svg>
-									Bloquer une date ou une période
-								</h4>
-								<div className="space-y-3">
-									<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-										<div>
-											<label className="block text-xs font-medium text-gray-700 mb-1">
-												Date de début *
-											</label>
-											<input
-												type="date"
-												value={newBlockedDate}
-												onChange={(e) => {
-													setNewBlockedDate(
-														e.target.value,
-													);
-													// Reset end date if it's before start date
-													if (
-														newBlockedDateEnd &&
-														e.target.value >
-															newBlockedDateEnd
-													) {
-														setNewBlockedDateEnd(
-															'',
-														);
-													}
-												}}
-												min={
-													new Date()
-														.toISOString()
-														.split('T')[0]
-												}
-												className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-											/>
-										</div>
-										<div>
-											<label className="block text-xs font-medium text-gray-700 mb-1">
-												Date de fin (optionnel)
-											</label>
-											<input
-												type="date"
-												value={newBlockedDateEnd}
-												onChange={(e) =>
-													setNewBlockedDateEnd(
-														e.target.value,
-													)
-												}
-												min={
-													newBlockedDate ||
-													new Date()
-														.toISOString()
-														.split('T')[0]
-												}
-												disabled={!newBlockedDate}
-												className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-											/>
-										</div>
-									</div>
-									<p className="text-xs text-gray-600">
-										💡 Laissez la date de fin vide pour
-										bloquer une seule journée, ou
-										remplissez-la pour bloquer une période
-										complète.
-									</p>
-									<Button
-										onClick={addBlockedDate}
-										disabled={!newBlockedDate || saving}
-										className="w-full bg-cyan-600 hover:bg-cyan-700 text-white"
-									>
-										{saving ? (
-											<>
-												<LoadingSpinner size="sm" />
-												<span className="ml-2">
-													Enregistrement...
-												</span>
-											</>
-										) : (
-											<>
-												<svg
-													className="w-4 h-4 mr-2"
-													fill="none"
-													stroke="currentColor"
-													viewBox="0 0 24 24"
-												>
-													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														strokeWidth={2}
-														d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-													/>
-												</svg>
-												Bloquer{' '}
-												{newBlockedDateEnd
-													? 'cette période'
-													: 'cette date'}
-											</>
-										)}
-									</Button>
-								</div>
-							</div>
-
-							{/* List of blocked dates */}
-							{availability.dateOverrides.length === 0 ? (
-								<div className="text-center py-8 text-gray-500">
-									<svg
-										className="w-12 h-12 mx-auto mb-3 text-gray-300"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path
-											strokeLinecap="round"
-											strokeLinejoin="round"
-											strokeWidth={2}
-											d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-										/>
-									</svg>
-									<p>Aucune date bloquée</p>
-									<p className="text-sm mt-1">
-										Ajoutez des dates pour bloquer les
-										réservations (vacances, jours fériés,
-										etc.)
-									</p>
-								</div>
-							) : (
-								<div className="space-y-2">
-									{availability.dateOverrides.map(
-										(override) => (
-											<div
-												key={override.date}
-												className="flex items-center justify-between p-4 bg-red-50 border border-red-200 rounded-lg"
-											>
-												<div className="flex items-center gap-3">
-													<svg
-														className="w-5 h-5 text-red-600"
-														fill="none"
-														stroke="currentColor"
-														viewBox="0 0 24 24"
-													>
-														<path
-															strokeLinecap="round"
-															strokeLinejoin="round"
-															strokeWidth={2}
-															d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
-														/>
-													</svg>
-													<span className="font-medium text-gray-900">
-														{new Date(
-															override.date,
-														).toLocaleDateString(
-															'fr-FR',
-															{
-																weekday: 'long',
-																day: 'numeric',
-																month: 'long',
-																year: 'numeric',
-															},
-														)}
-													</span>
-												</div>
-												<button
-													onClick={() =>
-														setDateToUnblock(
-															override.date,
-														)
-													}
-													disabled={saving}
-													className="text-red-600 hover:bg-red-100 px-3 py-1 rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-												>
-													{saving
-														? '...'
-														: 'Débloquer'}
-												</button>
-											</div>
-										),
-									)}
-								</div>
-							)}
-						</div>
+						<BlockedDatesTab
+							dateOverrides={availability.dateOverrides}
+							newBlockedDate={newBlockedDate}
+							newBlockedDateEnd={newBlockedDateEnd}
+							saving={saving}
+							onNewBlockedDateChange={setNewBlockedDate}
+							onNewBlockedDateEndChange={setNewBlockedDateEnd}
+							onAddBlockedDate={addBlockedDate}
+							onRequestUnblock={setDateToUnblock}
+						/>
 					)}
 				</div>
 			</div>
 
-			{/* Info Box */}
-			<div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-				<div className="flex items-start gap-3">
-					<svg
-						className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-					>
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							strokeWidth={2}
-							d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-						/>
-					</svg>
-					<div className="text-sm text-blue-800">
-						<p className="font-medium mb-1">
-							💡 Enregistrement automatique activé
-						</p>
-						<ul className="space-y-1 list-disc list-inside">
-							<li>
-								Toutes vos modifications sont sauvegardées
-								automatiquement après 2 secondes
-							</li>
-							<li>
-								Ajoutez plusieurs créneaux par jour si besoin
-								(matin/après-midi)
-							</li>
-							<li>
-								Bloquez des dates spécifiques - une seule date
-								ou une période complète
-							</li>
-							<li>
-								Les créneaux disponibles sont calculés selon la
-								durée et le temps de pause
-							</li>
-						</ul>
-					</div>
-				</div>
-			</div>
+			<InfoBox />
 
 			{/* Confirmation Dialog for Unblocking */}
 			<ConfirmDialog
