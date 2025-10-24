@@ -14,7 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFetch } from '@/hooks/useFetch';
 import { usePropertyFilters } from '@/hooks/usePropertyFilters';
 import { usePropertyActions } from '@/hooks/usePropertyActions';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { PageLoader } from '@/components/ui/LoadingSpinner';
 import { PropertyService, Property } from '@/lib/api/propertyApi';
 
 export const PropertyManager: React.FC = () => {
@@ -130,12 +130,7 @@ export const PropertyManager: React.FC = () => {
 				/>
 			)}
 			{loading ? (
-				<div className="text-center py-12">
-					<LoadingSpinner size="xl" />
-					<p className="text-gray-600 mt-4">
-						Chargement de vos biens...
-					</p>
-				</div>
+				<PageLoader message="Chargement de vos biens..." />
 			) : properties.length === 0 ? (
 				<PropertyEmptyState onCreateClick={() => setShowForm(true)} />
 			) : filteredProperties.length === 0 && hasActiveFilters ? (

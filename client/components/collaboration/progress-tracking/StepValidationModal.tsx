@@ -95,10 +95,10 @@ export const StepValidationModal: React.FC<StepValidationModalProps> = ({
 					</Button>
 					<Button
 						onClick={handleConfirm}
-						disabled={isSubmitting}
+						loading={isSubmitting}
 						className="min-w-24"
 					>
-						{isSubmitting ? 'Validation...' : 'Confirmer'}
+						Confirmer
 					</Button>
 				</div>
 			</div>

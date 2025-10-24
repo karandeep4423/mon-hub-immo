@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { contractApi, ContractData } from '@/lib/api/contractApi';
 import { useAuth } from '@/hooks/useAuth';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -125,7 +126,7 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 	if (isLoading) {
 		return (
 			<div className="flex items-center justify-center p-8">
-				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+				<LoadingSpinner size="lg" />
 			</div>
 		);
 	}
@@ -332,7 +333,7 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 						<Button
 							onClick={handleEdit}
 							variant="outline"
-							disabled={isSubmitting}
+							loading={isSubmitting}
 						>
 							Modifier le contrat
 						</Button>
@@ -378,10 +379,10 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 						<div className="flex space-x-3">
 							<Button
 								onClick={handleUpdateContract}
-								disabled={isSubmitting}
+								loading={isSubmitting}
 								className="bg-blue-600 hover:bg-blue-700"
 							>
-								{isSubmitting ? 'Sauvegarde...' : 'Sauvegarder'}
+								Sauvegarder
 							</Button>
 							<Button
 								onClick={handleCancelEdit}
@@ -470,12 +471,10 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 						</div>
 						<Button
 							onClick={handleSignContract}
-							disabled={isSubmitting}
+							loading={isSubmitting}
 							className="bg-green-600 hover:bg-green-700 w-full"
 						>
-							{isSubmitting
-								? 'Signature...'
-								: '✍️ Signer le contrat'}
+							✍️ Signer le contrat
 						</Button>
 					</div>
 				</Card>

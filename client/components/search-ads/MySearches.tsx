@@ -5,6 +5,7 @@ import { SearchAdCard } from './SearchAdCard';
 import { Button } from '../ui/Button';
 import { useRouter } from 'next/navigation';
 import { useFetch } from '@/hooks/useFetch';
+import { PageLoader } from '../ui/LoadingSpinner';
 
 export const MySearches = () => {
 	const router = useRouter();
@@ -22,7 +23,7 @@ export const MySearches = () => {
 	});
 
 	if (loading) {
-		return <div>Chargement de vos recherches...</div>;
+		return <PageLoader message="Chargement de vos recherches..." />;
 	}
 
 	if (error) {

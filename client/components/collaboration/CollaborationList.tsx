@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { CollaborationCard } from '@/components/collaboration/CollaborationCard';
 import { Collaboration } from '@/types/collaboration';
 import { collaborationApi } from '@/lib/api/collaborationApi';
@@ -170,7 +171,7 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 	if (isLoading) {
 		return (
 			<div className="flex items-center justify-center py-8">
-				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+				<LoadingSpinner size="lg" />
 			</div>
 		);
 	}

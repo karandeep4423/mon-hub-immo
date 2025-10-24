@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { getUserDisplayName } from '../utils/userUtils';
 import { CHAT_TEXT } from '@/lib/constants/text';
 
@@ -149,10 +150,7 @@ export const LoadingMessages: React.FC<{ className?: string }> = React.memo(
 		<div
 			className={`flex-1 flex items-center justify-center bg-gray-50 ${className}`}
 		>
-			<div className="text-center">
-				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto mb-2"></div>
-				<p className="text-gray-500">{CHAT_TEXT.loadingMessages}</p>
-			</div>
+			<LoadingSpinner size="lg" message={CHAT_TEXT.loadingMessages} />
 		</div>
 	),
 );
@@ -169,10 +167,7 @@ export const LoadingUsers: React.FC<{ className?: string }> = React.memo(
 		<div
 			className={`h-full bg-white border-r border-gray-200 flex items-center justify-center ${className}`}
 		>
-			<div className="text-center">
-				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto"></div>
-				<p className="text-gray-500 mt-2">{CHAT_TEXT.loadingUsers}</p>
-			</div>
+			<LoadingSpinner size="lg" message={CHAT_TEXT.loadingUsers} />
 		</div>
 	),
 );

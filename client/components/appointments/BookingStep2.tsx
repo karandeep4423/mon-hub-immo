@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from '../ui/Button';
+import { LoadingSpinner } from '../ui/LoadingSpinner';
 
 interface BookingStep2Props {
 	availableSlots: string[];
@@ -39,10 +40,10 @@ export const BookingStep2: React.FC<BookingStep2Props> = ({
 				</label>
 				{loadingSlots ? (
 					<div className="text-center py-12">
-						<div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-brand border-t-transparent mb-3"></div>
-						<p className="text-sm text-gray-600 font-medium">
-							Chargement des créneaux...
-						</p>
+						<LoadingSpinner
+							size="lg"
+							message="Chargement des créneaux..."
+						/>
 					</div>
 				) : availableSlots.length === 0 ? (
 					<div className="text-center py-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border-2 border-dashed border-gray-300">

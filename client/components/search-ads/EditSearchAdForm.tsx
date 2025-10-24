@@ -18,6 +18,8 @@ import {
 	PrioritiesSection,
 	BadgesSection,
 } from './form-sections';
+import { PageLoader } from '../ui/LoadingSpinner';
+import { Button } from '../ui/Button';
 
 interface EditSearchAdFormProps {
 	id: string;
@@ -78,7 +80,7 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 	}, [searchAd, setValues]);
 
 	if (isLoadingAd) {
-		return <div>Chargement de l&apos;annonce...</div>;
+		return <PageLoader message="Chargement de l'annonce..." />;
 	}
 
 	if (!searchAd) {
@@ -281,22 +283,21 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 
 						{/* Action Buttons */}
 						<div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-end">
-							<button
+							<Button
 								type="button"
 								onClick={() => router.push('/dashboard')}
-								className="px-6 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors text-sm font-medium order-2 sm:order-1"
+								variant="outline"
+								className="order-2 sm:order-1"
 							>
 								Annuler
-							</button>
-							<button
+							</Button>
+							<Button
 								type="submit"
-								disabled={isSubmitting}
-								className="px-8 py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 disabled:opacity-50 transition-colors text-sm font-medium order-1 sm:order-2"
+								loading={isSubmitting}
+								className="order-1 sm:order-2"
 							>
-								{isSubmitting
-									? 'Modification...'
-									: 'Modifier la recherche'}
-							</button>
+								Modifier la recherche
+							</Button>
 						</div>
 					</div>
 				</div>

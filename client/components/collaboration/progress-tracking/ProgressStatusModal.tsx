@@ -186,14 +186,14 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 					</Button>
 					<Button
 						onClick={handleSubmit}
+						loading={isUpdating}
 						disabled={
-							isUpdating ||
 							!selectedStep ||
 							steps?.find((s) => s.id === selectedStep)?.completed
 						}
 						className="min-w-24"
 					>
-						{isUpdating ? 'Mise à jour...' : 'Mettre à jour'}
+						Mettre à jour
 					</Button>
 				</div>
 			</div>

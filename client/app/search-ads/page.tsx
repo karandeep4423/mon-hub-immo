@@ -4,6 +4,7 @@ import { useState } from 'react';
 import searchAdApi from '@/lib/api/searchAdApi';
 import { SearchAd } from '@/types/searchAd';
 import { SearchAdCard } from '@/components/search-ads/SearchAdCard';
+import { PageLoader } from '@/components/ui/LoadingSpinner';
 import Link from 'next/link';
 import { LocationSearchWithRadius } from '@/components/ui';
 import type { LocationItem } from '@/components/ui/LocationSearchWithRadius';
@@ -73,11 +74,7 @@ export default function SearchAdsPage() {
 			: searchAds;
 
 	if (loading) {
-		return (
-			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-				<div className="text-center">Chargement des recherches...</div>
-			</div>
-		);
+		return <PageLoader message="Chargement des recherches..." />;
 	}
 
 	return (

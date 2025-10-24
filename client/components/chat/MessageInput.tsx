@@ -5,7 +5,7 @@ import { useChat } from '../../hooks/useChat';
 import { isValidMessageContent } from './utils/messageUtils';
 import { isEnterKeyPress } from './utils/keyboardUtils';
 import TypingIndicator from './TypingIndicator';
-import { ButtonLoader } from '@/components/ui/LoadingSpinner';
+import { Button } from '@/components/ui/Button';
 import { ChatApi } from '@/lib/api/chatApi';
 import { CHAT_TEXT } from '@/lib/constants/text';
 import { logger } from '@/lib/utils/logger';
@@ -69,17 +69,18 @@ const SendButton: React.FC<{
 	isSending: boolean;
 	onClick: () => void;
 }> = React.memo(({ isDisabled, isSending, onClick }) => (
-	<button
+	<Button
 		type="submit"
 		disabled={isDisabled}
 		onClick={onClick}
-		className="px-6 py-3 bg-brand text-white rounded-lg hover:bg-brand-dark disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
+		loading={isSending}
+		className="px-6 py-3"
 		aria-label={
 			isSending ? CHAT_TEXT.sendingMessage : CHAT_TEXT.sendMessageButton
 		}
 	>
-		{isSending ? <ButtonLoader /> : CHAT_TEXT.send}
-	</button>
+		{CHAT_TEXT.send}
+	</Button>
 ));
 
 SendButton.displayName = 'SendButton';
@@ -342,31 +343,29 @@ const MessageInput: React.FC<MessageInputProps> = React.memo(
 							onChange={handleFileChange}
 							disabled={isDisabled}
 						/>
-						<button
+						<Button
 							type="button"
 							onClick={onPickFile}
 							disabled={isDisabled}
-							className="px-3 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 text-gray-600 hover:text-brand"
+							loading={isUploading}
+							variant="outline"
+							className="px-3 py-3"
 							aria-label="Add attachment"
 						>
-							{isUploading ? (
-								<ButtonLoader />
-							) : (
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									strokeWidth="2"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									className="w-5 h-5"
-									aria-hidden
-								>
-									<path d="M21.44 11.05L12 20.5a6.5 6.5 0 01-9.19-9.19l9.43-9.43a4.5 4.5 0 116.36 6.36L9.41 17.32a2.5 2.5 0 11-3.54-3.54l7.78-7.78" />
-								</svg>
-							)}
-						</button>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								className="w-5 h-5"
+								aria-hidden
+							>
+								<path d="M21.44 11.05L12 20.5a6.5 6.5 0 01-9.19-9.19l9.43-9.43a4.5 4.5 0 116.36 6.36L9.41 17.32a2.5 2.5 0 11-3.54-3.54l7.78-7.78" />
+							</svg>
+						</Button>
 						<MessageInputField
 							value={message}
 							onChange={handleInputChange}

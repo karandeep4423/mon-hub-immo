@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { useMutation } from '@/hooks/useMutation';
+import { LoadingSpinner } from './LoadingSpinner';
 
 interface FavoriteButtonProps {
 	itemId: string;
@@ -131,16 +132,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
 			}
 		>
 			{isLoading ? (
-				<div className={`animate-spin ${iconSizeClasses[size]}`}>
-					<svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							strokeWidth="2"
-							d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-						/>
-					</svg>
-				</div>
+				<LoadingSpinner size="sm" />
 			) : (
 				<svg
 					className={iconSizeClasses[size]}

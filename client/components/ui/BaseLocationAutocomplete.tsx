@@ -22,6 +22,7 @@ import React, {
 } from 'react';
 import { searchMunicipalities } from '@/lib/services/frenchAddressApi';
 import { useClickOutside, useDebouncedSearch } from '@/hooks';
+import { LoadingSpinner } from './LoadingSpinner';
 
 export interface LocationItem {
 	name: string;
@@ -281,7 +282,7 @@ export const BaseLocationAutocomplete: React.FC<
 				{/* Loading indicator */}
 				{loading && (
 					<div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-						<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+						<LoadingSpinner size="sm" />
 					</div>
 				)}
 			</div>

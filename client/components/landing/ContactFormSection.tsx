@@ -1,5 +1,6 @@
 import { RefObject } from 'react';
 import { LANDING_TEXT } from '@/lib/constants/text';
+import { Button } from '@/components/ui/Button';
 
 interface ContactFormSectionProps {
 	formRef: RefObject<HTMLFormElement | null>;
@@ -59,15 +60,13 @@ export const ContactFormSection = ({
 							className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--brand-focus)] focus:border-transparent"
 							disabled={loading}
 						/>
-						<button
+						<Button
 							type="submit"
-							disabled={loading}
-							className="bg-brand text-white w-full py-2 rounded font-semibold hover:bg-brand-dark transition disabled:opacity-50 disabled:cursor-not-allowed"
+							loading={loading}
+							className="bg-brand text-white w-full py-2 rounded font-semibold hover:bg-brand-dark transition"
 						>
-							{loading
-								? LANDING_TEXT.submitting
-								: LANDING_TEXT.signUpNow}
-						</button>
+							{LANDING_TEXT.signUpNow}
+						</Button>
 					</form>
 
 					{message && (

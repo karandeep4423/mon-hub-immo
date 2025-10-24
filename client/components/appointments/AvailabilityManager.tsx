@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { appointmentApi } from '@/lib/api/appointmentApi';
 import { AgentAvailability } from '@/types/appointment';
-import { LoadingSpinner } from '../ui/LoadingSpinner';
+import { PageLoader } from '../ui/LoadingSpinner';
 import { useNotification } from '@/hooks/useNotification';
 import { useAuth } from '@/hooks/useAuth';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
@@ -421,11 +421,7 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 	};
 
 	if (loading) {
-		return (
-			<div className="flex justify-center items-center py-12">
-				<LoadingSpinner size="lg" />
-			</div>
-		);
+		return <PageLoader message="Chargement des disponibilités..." />;
 	}
 
 	if (!availability) {

@@ -4,12 +4,15 @@ interface LoadingSpinnerProps {
 	size?: 'sm' | 'md' | 'lg' | 'xl';
 	color?: 'blue' | 'white' | 'gray';
 	className?: string;
+	message?: string;
 }
 
+// Universal base spinner component
 export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 	size = 'md',
 	color = 'blue',
 	className = '',
+	message,
 }) => {
 	const sizeClasses = {
 		sm: 'h-4 w-4',
@@ -25,7 +28,9 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 	};
 
 	return (
-		<div className={`inline-block ${className}`}>
+		<div
+			className={`inline-flex flex-col items-center justify-center ${className}`}
+		>
 			<svg
 				className={`animate-spin ${sizeClasses[size]} ${colorClasses[color]}`}
 				xmlns="http://www.w3.org/2000/svg"
@@ -46,39 +51,28 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 					d="M4 12a8 8 0 018-8v8H4z"
 				/>
 			</svg>
+			{message && <p className="mt-3 text-sm text-gray-600">{message}</p>}
 		</div>
 	);
 };
 
-// Full screen loading component
-export const FullScreenLoader: React.FC<{ message?: string }> = ({
-	message = 'Loading...',
-}) => {
+// Universal page/section loader - use for all loading states
+export const PageLoader: React.FC<{
+	message?: string;
+	fullScreen?: boolean;
+}> = ({ message = 'Chargement...', fullScreen = false }) => {
+	const containerClass = fullScreen
+		? 'min-h-screen bg-gray-50 flex items-center justify-center'
+		: 'flex items-center justify-center py-12';
+
 	return (
-		<div className="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
-			<div className="text-center">
-				<LoadingSpinner size="xl" />
-				<p className="mt-4 text-gray-600 font-medium">{message}</p>
-			</div>
+		<div className={containerClass}>
+			<LoadingSpinner size="lg" message={message} />
 		</div>
 	);
 };
 
-// Page loading component
-export const PageLoader: React.FC<{ message?: string }> = ({
-	message = 'Loading...',
-}) => {
-	return (
-		<div className="min-h-screen bg-gray-50 flex items-center justify-center">
-			<div className="text-center">
-				<LoadingSpinner size="lg" />
-				<p className="mt-4 text-gray-600">{message}</p>
-			</div>
-		</div>
-	);
-};
-
-// Button loading component (for inline use)
+// Universal button loader - use for all button loading states
 export const ButtonLoader: React.FC = () => {
 	return <LoadingSpinner size="sm" color="white" className="mr-2" />;
 };

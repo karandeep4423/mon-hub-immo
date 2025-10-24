@@ -6,6 +6,7 @@ import {
 	type AddressSuggestion,
 } from '@/hooks/useAddressSearch';
 import { useClickOutside } from '@/hooks/useClickOutside';
+import { LoadingSpinner } from './LoadingSpinner';
 
 interface AddressAutocompleteProps {
 	label?: string;
@@ -98,7 +99,7 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
 
 				{isLoading && (
 					<div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-						<div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+						<LoadingSpinner size="sm" />
 					</div>
 				)}
 			</div>

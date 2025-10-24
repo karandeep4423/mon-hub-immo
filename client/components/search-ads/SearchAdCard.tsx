@@ -311,11 +311,9 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 									onClick={() => setShowDeleteConfirm(true)}
 									variant="secondary"
 									className="flex-1 bg-red-600 hover:bg-red-700"
-									disabled={isDeleting}
+									loading={isDeleting}
 								>
-									{isDeleting
-										? 'Suppression...'
-										: 'Supprimer'}
+									Supprimer
 								</Button>
 							</div>
 						</>

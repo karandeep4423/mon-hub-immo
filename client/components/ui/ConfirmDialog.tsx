@@ -49,10 +49,10 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 					</Button>
 					<Button
 						onClick={onConfirm}
-						disabled={loading}
+						loading={loading}
 						className={variantClasses[variant]}
 					>
-						{loading ? 'Veuillez patienter...' : confirmText}
+						{confirmText}
 					</Button>
 				</div>
 			</div>

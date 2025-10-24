@@ -15,6 +15,7 @@ import {
 	PrioritiesSection,
 	BadgesSection,
 } from './form-sections';
+import { Button } from '../ui/Button';
 
 export const CreateSearchAdForm = () => {
 	const router = useRouter();
@@ -219,22 +220,21 @@ export const CreateSearchAdForm = () => {
 
 						{/* Action Buttons */}
 						<div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-end">
-							<button
+							<Button
 								type="button"
 								onClick={() => router.push('/dashboard')}
-								className="px-6 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors text-sm font-medium order-2 sm:order-1"
+								variant="outline"
+								className="order-2 sm:order-1"
 							>
 								Annuler
-							</button>
-							<button
+							</Button>
+							<Button
 								type="submit"
-								disabled={isSubmitting}
-								className="px-8 py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 disabled:opacity-50 transition-colors text-sm font-medium order-1 sm:order-2"
+								loading={isSubmitting}
+								className="order-1 sm:order-2"
 							>
-								{isSubmitting
-									? 'Création...'
-									: "Créer l'annonce"}
-							</button>
+								Créer l&apos;annonce
+							</Button>
 						</div>
 					</div>
 				</div>

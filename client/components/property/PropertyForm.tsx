@@ -328,21 +328,12 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({
 						) : (
 							<Button
 								type="submit"
-								disabled={isLoading || isUploading}
+								loading={isLoading || isUploading}
 								className="bg-brand-600 hover:bg-brand-700"
 							>
-								{isUploading ? (
-									<>
-										<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-										Upload des images...
-									</>
-								) : isLoading ? (
-									'Enregistrement...'
-								) : isEditing ? (
-									'Mettre à jour'
-								) : (
-									"Créer l'annonce"
-								)}
+								{isEditing
+									? 'Mettre à jour'
+									: "Créer l'annonce"}
 							</Button>
 						)}
 					</div>

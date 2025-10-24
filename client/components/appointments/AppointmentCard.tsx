@@ -2,7 +2,6 @@ import React from 'react';
 import { Appointment } from '@/types/appointment';
 import { ProfileAvatar } from '../ui/ProfileAvatar';
 import { Button } from '../ui/Button';
-import { LoadingSpinner } from '../ui/LoadingSpinner';
 import { formatDate, formatTime } from '@/lib/utils/date';
 import Link from 'next/link';
 
@@ -198,25 +197,17 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
 									variant="primary"
 									size="sm"
 									onClick={() => onConfirm(appointment._id)}
-									disabled={actionLoading === appointment._id}
+									loading={actionLoading === appointment._id}
 								>
-									{actionLoading === appointment._id ? (
-										<LoadingSpinner size="sm" />
-									) : (
-										'Accepter'
-									)}
+									Accepter
 								</Button>
 								<Button
 									variant="outline"
 									size="sm"
 									onClick={() => onReject(appointment._id)}
-									disabled={actionLoading === appointment._id}
+									loading={actionLoading === appointment._id}
 								>
-									{actionLoading === appointment._id ? (
-										<LoadingSpinner size="sm" />
-									) : (
-										'Refuser'
-									)}
+									Refuser
 								</Button>
 							</>
 						)}
@@ -249,29 +240,23 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
 									variant="outline"
 									size="sm"
 									onClick={() => onCancel(appointment._id)}
-									disabled={actionLoading === appointment._id}
+									loading={actionLoading === appointment._id}
 									className="text-red-600 border-red-300 hover:bg-red-50"
 								>
-									{actionLoading === appointment._id ? (
-										<LoadingSpinner size="sm" />
-									) : (
-										<>
-											<svg
-												className="w-4 h-4 mr-2"
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24"
-											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth={2}
-													d="M6 18L18 6M6 6l12 12"
-												/>
-											</svg>
-											Annuler
-										</>
-									)}
+									<svg
+										className="w-4 h-4 mr-2"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth={2}
+											d="M6 18L18 6M6 6l12 12"
+										/>
+									</svg>
+									Annuler
 								</Button>
 							</>
 						)}

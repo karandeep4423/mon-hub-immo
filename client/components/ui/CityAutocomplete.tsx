@@ -9,6 +9,7 @@
 import React, { useEffect, useCallback } from 'react';
 import { searchMunicipalities } from '@/lib/services/frenchAddressApi';
 import { useAutocomplete } from '@/hooks/useAutocomplete';
+import { LoadingSpinner } from './LoadingSpinner';
 
 interface CityAutocompleteSuggestion {
 	name: string;
@@ -92,7 +93,7 @@ export const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
 
 				{loading && (
 					<div className="absolute right-3 top-1/2 -translate-y-1/2">
-						<div className="animate-spin h-4 w-4 border-2 border-brand border-t-transparent rounded-full"></div>
+						<LoadingSpinner size="sm" />
 					</div>
 				)}
 

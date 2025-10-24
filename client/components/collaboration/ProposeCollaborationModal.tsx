@@ -452,8 +452,8 @@ export const ProposeCollaborationModal: React.FC<
 						</Button>
 						<Button
 							type="submit"
+							loading={isSubmitting}
 							disabled={
-								isSubmitting ||
 								!values.agreeToTerms ||
 								(isApporteurPost &&
 								values.compensationType !== 'percentage'
@@ -461,9 +461,7 @@ export const ProposeCollaborationModal: React.FC<
 									: !values.commissionPercentage)
 							}
 						>
-							{isSubmitting
-								? 'Envoi...'
-								: 'Proposer la collaboration'}
+							Proposer la collaboration
 						</Button>
 					</div>
 				</form>

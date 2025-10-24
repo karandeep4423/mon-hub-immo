@@ -180,7 +180,7 @@ export const VerifyEmailForm: React.FC = () => {
 							size="lg"
 							disabled={values.code.length !== 6}
 						>
-							{isSubmitting ? 'Vérification...' : 'Vérifier'}
+							Vérifier
 						</Button>
 					</form>
 

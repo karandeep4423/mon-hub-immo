@@ -137,9 +137,10 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 									type="submit"
 									variant="primary"
 									size="sm"
-									disabled={isAdding || !newNote.trim()}
+									loading={isAdding}
+									disabled={!newNote.trim()}
 								>
-									{isAdding ? 'Ajout...' : 'Ajouter'}
+									Ajouter
 								</Button>
 							</div>
 						</form>

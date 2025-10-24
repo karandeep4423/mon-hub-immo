@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ImageUploader } from './ImageUploader';
+import { LoadingSpinner } from './LoadingSpinner';
 import Image from 'next/image';
 import { api } from '@/lib/api';
 import { logger } from '@/lib/utils/logger';
@@ -216,12 +217,7 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 			{/* Upload Status */}
 			{isUploading && (
 				<div className="text-center">
-					<div className="inline-flex items-center space-x-2">
-						<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-cyan-600"></div>
-						<span className="text-sm text-gray-600">
-							{uploadingText}
-						</span>
-					</div>
+					<LoadingSpinner size="sm" message={uploadingText} />
 				</div>
 			)}
 			{/* Upload Error */}

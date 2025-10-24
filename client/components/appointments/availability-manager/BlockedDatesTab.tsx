@@ -1,4 +1,4 @@
-import { Button, LoadingSpinner } from '@/components/ui';
+import { Button } from '@/components/ui';
 
 interface BlockedDatesTabProps {
 	dateOverrides: Array<{
@@ -93,35 +93,25 @@ export const BlockedDatesTab = ({
 					</p>
 					<Button
 						onClick={onAddBlockedDate}
-						disabled={!newBlockedDate || saving}
+						loading={saving}
+						disabled={!newBlockedDate}
 						className="w-full bg-cyan-600 hover:bg-cyan-700 text-white"
 					>
-						{saving ? (
-							<>
-								<LoadingSpinner size="sm" />
-								<span className="ml-2">Enregistrement...</span>
-							</>
-						) : (
-							<>
-								<svg
-									className="w-4 h-4 mr-2"
-									fill="none"
-									stroke="currentColor"
-									viewBox="0 0 24 24"
-								>
-									<path
-										strokeLinecap="round"
-										strokeLinejoin="round"
-										strokeWidth={2}
-										d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-									/>
-								</svg>
-								Bloquer{' '}
-								{newBlockedDateEnd
-									? 'cette période'
-									: 'cette date'}
-							</>
-						)}
+						<svg
+							className="w-4 h-4 mr-2"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								strokeWidth={2}
+								d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+							/>
+						</svg>
+						Bloquer{' '}
+						{newBlockedDateEnd ? 'cette période' : 'cette date'}
 					</Button>
 				</div>
 			</div>
@@ -181,13 +171,15 @@ export const BlockedDatesTab = ({
 									)}
 								</span>
 							</div>
-							<button
+							<Button
 								onClick={() => onRequestUnblock(override.date)}
-								disabled={saving}
-								className="text-red-600 hover:bg-red-100 px-3 py-1 rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+								loading={saving}
+								variant="outline"
+								size="sm"
+								className="text-red-600 hover:bg-red-100"
 							>
-								{saving ? '...' : 'Débloquer'}
-							</button>
+								Débloquer
+							</Button>
 						</div>
 					))}
 				</div>

@@ -189,7 +189,7 @@ export const OverallStatusManager: React.FC<OverallStatusManagerProps> = ({
 										onClick={() =>
 											handleStatusChange(action.status)
 										}
-										disabled={isUpdating}
+										loading={isUpdating}
 										variant={
 											action.variant === 'primary'
 												? 'primary'
