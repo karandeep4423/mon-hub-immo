@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { SearchAd } from '@/types/searchAd';
-import { ProfileAvatar } from '../ui/ProfileAvatar';
+import { ProfileAvatar, FavoriteButton } from '../ui';
 import { collaborationApi } from '@/lib/api/collaborationApi';
 import { useAuth } from '@/hooks/useAuth';
 import { useFetch } from '@/hooks/useFetch';
@@ -80,6 +80,14 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 									</span>
 								);
 							})}
+					</div>
+					{/* Favorite Button */}
+					<div className="absolute top-2 right-2">
+						<FavoriteButton
+							itemId={searchAd._id}
+							itemType="searchAd"
+							size="md"
+						/>
 					</div>
 				</div>
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Button, ConfirmDialog } from '@/components/ui';
+import { Button, ConfirmDialog, Pagination } from '@/components/ui';
 import { PropertyForm } from './PropertyForm';
 import {
 	PropertyFilters,
@@ -23,6 +23,8 @@ export const PropertyManager: React.FC = () => {
 	const [editingProperty, setEditingProperty] = useState<Property | null>(
 		null,
 	);
+	const [currentPage, setCurrentPage] = useState(1);
+	const itemsPerPage = 6;
 
 	// Fetch properties using useFetch hook
 	const {
@@ -50,6 +52,23 @@ export const PropertyManager: React.FC = () => {
 		resetFilters,
 		hasActiveFilters,
 	} = usePropertyFilters({ properties });
+
+	// Paginated properties
+	const paginatedProperties = useMemo(() => {
+		const startIndex = (currentPage - 1) * itemsPerPage;
+		return filteredProperties.slice(startIndex, startIndex + itemsPerPage);
+	}, [filteredProperties, currentPage, itemsPerPage]);
+
+	// Reset to page 1 when filters change
+	const handleFiltersChange = (newFilters: typeof filters) => {
+		setFilters(newFilters);
+		setCurrentPage(1);
+	};
+
+	const handleResetFilters = () => {
+		resetFilters();
+		setCurrentPage(1);
+	};
 
 	// Property actions hook
 	const {
@@ -108,7 +127,7 @@ export const PropertyManager: React.FC = () => {
 	}
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-6" id="properties-section">
 			<PropertyHeader
 				propertiesCount={properties.length}
 				onCreateClick={() => setShowForm(true)}
@@ -122,8 +141,8 @@ export const PropertyManager: React.FC = () => {
 			{!loading && properties.length > 0 && (
 				<PropertyFilters
 					filters={filters}
-					onFiltersChange={setFilters}
-					onReset={resetFilters}
+					onFiltersChange={handleFiltersChange}
+					onReset={handleResetFilters}
 					hasActiveFilters={hasActiveFilters}
 					resultsCount={filteredProperties.length}
 					totalCount={properties.length}
@@ -134,23 +153,32 @@ export const PropertyManager: React.FC = () => {
 			) : properties.length === 0 ? (
 				<PropertyEmptyState onCreateClick={() => setShowForm(true)} />
 			) : filteredProperties.length === 0 && hasActiveFilters ? (
-				<NoResultsState onResetFilters={resetFilters} />
+				<NoResultsState onResetFilters={handleResetFilters} />
 			) : (
-				<div className="space-y-4">
-					{filteredProperties.map((property) => (
-						<PropertyListItem
-							key={property._id}
-							property={property}
-							onEdit={(property) => {
-								setEditingProperty(property);
-								setShowForm(true);
-							}}
-							onDelete={openDeleteDialog}
-							onStatusChange={updateStatus}
-						/>
-					))}
-				</div>
-			)}{' '}
+				<>
+					<div className="space-y-4">
+						{paginatedProperties.map((property) => (
+							<PropertyListItem
+								key={property._id}
+								property={property}
+								onEdit={(property) => {
+									setEditingProperty(property);
+									setShowForm(true);
+								}}
+								onDelete={openDeleteDialog}
+								onStatusChange={updateStatus}
+							/>
+						))}
+					</div>
+					<Pagination
+						currentPage={currentPage}
+						totalItems={filteredProperties.length}
+						pageSize={itemsPerPage}
+						onPageChange={setCurrentPage}
+						scrollTargetId="properties-section"
+					/>
+				</>
+			)}
 			{/* Confirm Delete Dialog */}
 			<ConfirmDialog
 				isOpen={showConfirmDialog}

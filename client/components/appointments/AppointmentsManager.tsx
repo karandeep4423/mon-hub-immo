@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { appointmentApi } from '@/lib/api/appointmentApi';
 import { Appointment } from '@/types/appointment';
-import { PageLoader } from '../ui/LoadingSpinner';
+import { PageLoader, Pagination } from '../ui';
 import { Button } from '../ui/Button';
 import { AvailabilityManager } from './AvailabilityManager';
 import { useAppointmentNotifications } from '@/hooks/useAppointmentNotifications';
@@ -50,6 +50,8 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 	const [filter, setFilter] = useState<AppointmentStatus | 'all'>('all');
 	const [actionLoading, setActionLoading] = useState<string | null>(null);
 	const [viewMode, setViewMode] = useState<ViewMode>('appointments');
+	const [currentPage, setCurrentPage] = useState(1);
+	const itemsPerPage = 6;
 	const [rescheduleModalOpen, setRescheduleModalOpen] = useState(false);
 	const [selectedAppointment, setSelectedAppointment] =
 		useState<Appointment | null>(null);
@@ -129,6 +131,21 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 			? appointments
 			: appointments.filter((apt) => apt.status === filter);
 
+	// Paginated appointments
+	const paginatedAppointments = useMemo(() => {
+		const startIndex = (currentPage - 1) * itemsPerPage;
+		return filteredAppointments.slice(
+			startIndex,
+			startIndex + itemsPerPage,
+		);
+	}, [filteredAppointments, currentPage, itemsPerPage]);
+
+	// Reset to page 1 when filter changes
+	const handleFilterChange = (newFilter: AppointmentStatus | 'all') => {
+		setFilter(newFilter);
+		setCurrentPage(1);
+	};
+
 	const stats = {
 		all: appointments.length,
 		pending: appointments.filter(
@@ -158,7 +175,7 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 	}
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-6" id="appointments-section">
 			{/* Header */}
 			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 				<div>
@@ -285,7 +302,7 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 			{/* Filters */}
 			<AppointmentFilters
 				filter={filter}
-				onFilterChange={setFilter}
+				onFilterChange={handleFilterChange}
 				counts={stats}
 				userType={isAgent ? 'agent' : 'apporteur'}
 			/>
@@ -323,44 +340,53 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 					)}
 				</div>
 			) : (
-				<div className="space-y-4">
-					{filteredAppointments.map((appointment) => (
-						<AppointmentCard
-							key={appointment._id}
-							appointment={appointment}
-							isAgent={isAgent}
-							actionLoading={actionLoading}
-							onConfirm={(id) =>
-								openConfirmDialog(
-									id,
-									'confirmed',
-									appointment.appointmentType,
-									`${(isAgent ? appointment.clientId : appointment.agentId).firstName} ${(isAgent ? appointment.clientId : appointment.agentId).lastName}`,
-								)
-							}
-							onReject={(id) =>
-								openConfirmDialog(
-									id,
-									'cancelled',
-									appointment.appointmentType,
-									`${(isAgent ? appointment.clientId : appointment.agentId).firstName} ${(isAgent ? appointment.clientId : appointment.agentId).lastName}`,
-								)
-							}
-							onCancel={(id) =>
-								openConfirmDialog(
-									id,
-									'cancelled',
-									appointment.appointmentType,
-									`${(isAgent ? appointment.clientId : appointment.agentId).firstName} ${(isAgent ? appointment.clientId : appointment.agentId).lastName}`,
-								)
-							}
-							onReschedule={(apt) => {
-								setSelectedAppointment(apt);
-								setRescheduleModalOpen(true);
-							}}
-						/>
-					))}
-				</div>
+				<>
+					<div className="space-y-4">
+						{paginatedAppointments.map((appointment) => (
+							<AppointmentCard
+								key={appointment._id}
+								appointment={appointment}
+								isAgent={isAgent}
+								actionLoading={actionLoading}
+								onConfirm={(id) =>
+									openConfirmDialog(
+										id,
+										'confirmed',
+										appointment.appointmentType,
+										`${(isAgent ? appointment.clientId : appointment.agentId).firstName} ${(isAgent ? appointment.clientId : appointment.agentId).lastName}`,
+									)
+								}
+								onReject={(id) =>
+									openConfirmDialog(
+										id,
+										'cancelled',
+										appointment.appointmentType,
+										`${(isAgent ? appointment.clientId : appointment.agentId).firstName} ${(isAgent ? appointment.clientId : appointment.agentId).lastName}`,
+									)
+								}
+								onCancel={(id) =>
+									openConfirmDialog(
+										id,
+										'cancelled',
+										appointment.appointmentType,
+										`${(isAgent ? appointment.clientId : appointment.agentId).firstName} ${(isAgent ? appointment.clientId : appointment.agentId).lastName}`,
+									)
+								}
+								onReschedule={(apt) => {
+									setSelectedAppointment(apt);
+									setRescheduleModalOpen(true);
+								}}
+							/>
+						))}
+					</div>
+					<Pagination
+						currentPage={currentPage}
+						totalItems={filteredAppointments.length}
+						pageSize={itemsPerPage}
+						onPageChange={setCurrentPage}
+						scrollTargetId="appointments-section"
+					/>
+				</>
 			)}
 
 			{/* Reschedule Modal */}

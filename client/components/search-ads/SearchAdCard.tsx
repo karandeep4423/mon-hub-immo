@@ -4,7 +4,7 @@ import { SearchAd } from '@/types/searchAd';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
-import { ProfileAvatar } from '../ui';
+import { ProfileAvatar, FavoriteButton } from '../ui';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import searchAdApi from '@/lib/api/searchAdApi';
@@ -149,6 +149,14 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 								</span>
 							);
 						})}
+				</div>
+				{/* Favorite Button */}
+				<div className="absolute top-2 right-2">
+					<FavoriteButton
+						itemId={searchAd._id}
+						itemType="searchAd"
+						size="md"
+					/>
 				</div>
 			</div>
 

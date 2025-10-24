@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { LoadingSpinner, Pagination } from '@/components/ui';
 import { CollaborationCard } from '@/components/collaboration/CollaborationCard';
 import { Collaboration } from '@/types/collaboration';
 import { collaborationApi } from '@/lib/api/collaborationApi';
@@ -24,6 +24,8 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 	const [searchTerm, setSearchTerm] = useState('');
 	const [statusFilter, setStatusFilter] = useState<string>('all');
 	const [roleFilter, setRoleFilter] = useState<string>('all');
+	const [currentPage, setCurrentPage] = useState(1);
+	const itemsPerPage = 6;
 	const [confirmOpen, setConfirmOpen] = useState(false);
 	const [confirmMode, setConfirmMode] = useState<'cancel' | 'terminate'>(
 		'cancel',
@@ -132,6 +134,26 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 		});
 	}, [collaborations, statusFilter, roleFilter, searchTerm, currentUserId]);
 
+	// Paginated collaborations
+	const paginatedCollaborations = useMemo(() => {
+		const startIndex = (currentPage - 1) * itemsPerPage;
+		return filteredCollaborations.slice(
+			startIndex,
+			startIndex + itemsPerPage,
+		);
+	}, [filteredCollaborations, currentPage, itemsPerPage]);
+
+	// Reset to page 1 when filters change
+	const handleFilterChange = (
+		filterType: 'status' | 'role' | 'search',
+		value: string,
+	) => {
+		setCurrentPage(1);
+		if (filterType === 'status') setStatusFilter(value);
+		else if (filterType === 'role') setRoleFilter(value);
+		else if (filterType === 'search') setSearchTerm(value);
+	};
+
 	// Statistics
 	const stats = useMemo(() => {
 		// Filter out collaborations with missing data
@@ -216,7 +238,7 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 	}
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-6" id="collaborations-section">
 			<ConfirmDialog
 				isOpen={confirmOpen}
 				title={
@@ -330,7 +352,9 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 							type="text"
 							placeholder="Nom du partenaire ou ID..."
 							value={searchTerm}
-							onChange={(e) => setSearchTerm(e.target.value)}
+							onChange={(e) =>
+								handleFilterChange('search', e.target.value)
+							}
 						/>
 					</div>
 					<div>
@@ -339,7 +363,9 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 						</label>
 						<select
 							value={statusFilter}
-							onChange={(e) => setStatusFilter(e.target.value)}
+							onChange={(e) =>
+								handleFilterChange('status', e.target.value)
+							}
 							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
 						>
 							<option value="all">Tous les statuts</option>
@@ -356,7 +382,9 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 						</label>
 						<select
 							value={roleFilter}
-							onChange={(e) => setRoleFilter(e.target.value)}
+							onChange={(e) =>
+								handleFilterChange('role', e.target.value)
+							}
 							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
 						>
 							<option value="all">Tous les rôles</option>
@@ -371,6 +399,7 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 								setSearchTerm('');
 								setStatusFilter('all');
 								setRoleFilter('all');
+								setCurrentPage(1);
 							}}
 							className="w-full"
 						>
@@ -399,7 +428,7 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 						</p>
 					</div>
 				) : (
-					filteredCollaborations.map((collaboration) => (
+					paginatedCollaborations.map((collaboration) => (
 						<CollaborationCard
 							key={collaboration._id}
 							collaboration={collaboration}
@@ -416,6 +445,17 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 					))
 				)}
 			</div>
+
+			{/* Pagination */}
+			{filteredCollaborations.length > 0 && (
+				<Pagination
+					currentPage={currentPage}
+					totalItems={filteredCollaborations.length}
+					pageSize={itemsPerPage}
+					onPageChange={setCurrentPage}
+					scrollTargetId="collaborations-section"
+				/>
+			)}
 		</div>
 	);
 };

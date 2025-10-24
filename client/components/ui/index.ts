@@ -27,6 +27,7 @@ export { EnergyRatingSelector } from './EnergyRatingSelector';
 export { PropertyTypeSelector } from './PropertyTypeSelector';
 export { NumberInput } from './NumberInput';
 export { Select } from './Select';
+export { Pagination } from './Pagination';
 // Location search components (consolidated)
 export {
 	LocationSearch,
