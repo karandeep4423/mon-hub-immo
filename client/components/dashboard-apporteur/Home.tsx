@@ -12,8 +12,7 @@ import { User } from '@/types/auth';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { formatNumber } from '@/lib/utils/format';
 import { AppointmentsManager } from '../appointments/AppointmentsManager';
-import { appointmentApi } from '@/lib/api/appointmentApi';
-import { useFetch } from '@/hooks/useFetch';
+import { useAppointments } from '@/hooks/useAppointments';
 
 const Home = () => {
 	const { user } = useAuth();
@@ -28,15 +27,8 @@ const Home = () => {
 
 	const { kpis, loading: statsLoading } = useDashboardStats(user?._id);
 
-	// Use useFetch for appointment stats
-	const { data: appointments } = useFetch(
-		() => appointmentApi.getMyAppointments(),
-		{
-			deps: [user?._id],
-			skip: !user,
-			showErrorToast: false,
-		},
-	);
+	// Use SWR for appointment stats with automatic cache management
+	const { data: appointments } = useAppointments(user?._id);
 
 	const appointmentStats = React.useMemo(() => {
 		if (!appointments) {

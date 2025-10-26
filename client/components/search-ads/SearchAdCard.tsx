@@ -7,9 +7,8 @@ import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { ProfileAvatar, FavoriteButton } from '../ui';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import searchAdApi from '@/lib/api/searchAdApi';
 import { getSearchAdBadgeConfig } from '@/lib/constants/badges';
-import { useMutation } from '@/hooks/useMutation';
+import { useSearchAdMutations } from '@/hooks/useSearchAds';
 import { formatDateShort } from '@/lib/utils/date';
 
 interface SearchAdCardProps {
@@ -28,34 +27,12 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 	const router = useRouter();
 	const { user } = useAuth();
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+	const [isDeleting, setIsDeleting] = useState(false);
+	const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
-	// Delete mutation
-	const { mutate: deleteAd, loading: isDeleting } = useMutation<void, void>(
-		async () => await searchAdApi.deleteSearchAd(searchAd._id),
-		{
-			onSuccess: () => {
-				setShowDeleteConfirm(false);
-				onUpdate?.();
-			},
-			successMessage: 'Recherche supprimée avec succès',
-			errorMessage: 'Erreur lors de la suppression',
-			context: 'SearchAdCard',
-		},
-	);
-
-	// Status update mutation
-	const { mutate: updateStatus, loading: isUpdatingStatus } = useMutation<
-		SearchAd,
-		SearchAd['status']
-	>(
-		async (newStatus) =>
-			await searchAdApi.updateSearchAdStatus(searchAd._id, newStatus),
-		{
-			onSuccess: () => onUpdate?.(),
-			successMessage: 'Statut mis à jour avec succès',
-			errorMessage: 'Erreur lors de la mise à jour du statut',
-			context: 'SearchAdCard',
-		},
+	// SWR mutations
+	const { deleteSearchAd, updateSearchAdStatus } = useSearchAdMutations(
+		user?._id,
 	);
 
 	const handleContact = () => {
@@ -73,12 +50,26 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 	};
 
 	const handleDelete = async () => {
-		await deleteAd();
+		setIsDeleting(true);
+		const result = await deleteSearchAd(searchAd._id);
+		setIsDeleting(false);
+
+		if (result.success) {
+			setShowDeleteConfirm(false);
+			onUpdate?.();
+		}
 	};
 
 	const handleStatusChange = async (newStatus: SearchAd['status']) => {
 		if (newStatus === searchAd.status) return;
-		await updateStatus(newStatus);
+
+		setIsUpdatingStatus(true);
+		const result = await updateSearchAdStatus(searchAd._id, newStatus);
+		setIsUpdatingStatus(false);
+
+		if (result.success) {
+			onUpdate?.();
+		}
 	};
 
 	// Check if current user is the owner

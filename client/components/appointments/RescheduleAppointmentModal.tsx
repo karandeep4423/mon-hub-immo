@@ -4,12 +4,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { appointmentApi } from '@/lib/api/appointmentApi';
 import type { Appointment } from '@/types/appointment';
-import { useFetch, useMutation } from '@/hooks';
 import { toast } from 'react-toastify';
 import { TOAST_MESSAGES } from '@/lib/constants';
 import { formatDateShort } from '@/lib/utils/date';
+import {
+	useAvailableSlots,
+	useAppointmentMutations,
+} from '@/hooks/useAppointments';
+import { useAuth } from '@/hooks/useAuth';
 
 interface RescheduleAppointmentModalProps {
 	isOpen: boolean;
@@ -23,6 +26,7 @@ export const RescheduleAppointmentModal: React.FC<
 > = ({ isOpen, onClose, appointment, onSuccess }) => {
 	const [newDate, setNewDate] = useState('');
 	const [newTime, setNewTime] = useState('');
+	const [loading, setLoading] = useState(false);
 
 	const agentId =
 		typeof appointment.agentId === 'object'
@@ -33,6 +37,20 @@ export const RescheduleAppointmentModal: React.FC<
 		typeof appointment.agentId === 'object'
 			? `${appointment.agentId.firstName} ${appointment.agentId.lastName}`
 			: 'Agent';
+
+	const { user } = useAuth();
+
+	// Use SWR to fetch available slots
+	const { data: slotsData, isLoading: loadingSlots } = useAvailableSlots(
+		agentId,
+		newDate || undefined,
+	);
+
+	// Extract slots array from API response - slotsData is already { slots, isAvailable, duration }
+	const availableSlots = slotsData?.slots || [];
+
+	// Get mutation function
+	const { rescheduleAppointment } = useAppointmentMutations(user?._id);
 
 	const resetForm = useCallback(() => {
 		setNewDate('');
@@ -45,37 +63,6 @@ export const RescheduleAppointmentModal: React.FC<
 		}
 	}, [isOpen, resetForm]);
 
-	// Fetch available slots using useFetch
-	const { data: slotsData, loading: loadingSlots } = useFetch(
-		() => appointmentApi.getAvailableSlots(agentId, newDate),
-		{
-			skip: !newDate,
-			deps: [newDate, agentId],
-			initialData: { slots: [], isAvailable: false, duration: 60 },
-			showErrorToast: true,
-			errorMessage: TOAST_MESSAGES.APPOINTMENTS.LOAD_SLOTS_ERROR,
-		},
-	);
-
-	const availableSlots = slotsData?.slots || [];
-
-	// Reschedule mutation
-	const { mutate: reschedule, loading } = useMutation(
-		async () =>
-			await appointmentApi.rescheduleAppointment(appointment._id, {
-				scheduledDate: newDate,
-				scheduledTime: newTime,
-			}),
-		{
-			successMessage: TOAST_MESSAGES.APPOINTMENTS.RESCHEDULE_SUCCESS,
-			errorMessage: TOAST_MESSAGES.APPOINTMENTS.RESCHEDULE_ERROR,
-			onSuccess: () => {
-				onSuccess();
-				onClose();
-			},
-		},
-	);
-
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
@@ -84,7 +71,17 @@ export const RescheduleAppointmentModal: React.FC<
 			return;
 		}
 
-		await reschedule({});
+		setLoading(true);
+		const result = await rescheduleAppointment(appointment._id, {
+			scheduledDate: newDate,
+			scheduledTime: newTime,
+		});
+		setLoading(false);
+
+		if (result.success) {
+			onSuccess();
+			onClose();
+		}
 	};
 
 	const getMinDate = () => {

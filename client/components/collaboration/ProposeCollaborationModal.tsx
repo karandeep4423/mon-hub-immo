@@ -3,7 +3,7 @@ import React from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { collaborationApi } from '../../lib/api/collaborationApi';
+import { useCollaborationMutations } from '@/hooks/useCollaborations';
 import { toast } from 'react-toastify';
 import type { Property } from '@/lib/api/propertyApi';
 import type { SearchAd } from '@/types/searchAd';
@@ -63,6 +63,7 @@ export const ProposeCollaborationModal: React.FC<
 	ProposeCollaborationModalProps
 > = ({ isOpen, onClose, post, onSuccess }) => {
 	const isApporteurPost = post.ownerUserType === 'apporteur';
+	const { proposeCollaboration } = useCollaborationMutations();
 
 	const { values, isSubmitting, setFieldValue, handleSubmit, resetForm } =
 		useForm<CollaborationFormData>({
@@ -132,7 +133,8 @@ export const ProposeCollaborationModal: React.FC<
 					}
 				}
 
-				await collaborationApi.propose(payload);
+				const res = await proposeCollaboration(payload);
+				if (!res.success) return;
 				toast.success(TOAST_MESSAGES.COLLABORATION.PROPOSE_SUCCESS);
 				onSuccess?.();
 				onClose();

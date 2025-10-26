@@ -3,9 +3,8 @@
 import { useParams, useRouter } from 'next/navigation';
 import { SearchAdDetails } from '@/components/search-ads/SearchAdDetails';
 import { useAuth } from '@/hooks/useAuth';
-import searchAdApi from '@/lib/api/searchAdApi';
 import type { SearchAd } from '@/types/searchAd';
-import { useFetch } from '@/hooks';
+import { useSearchAd } from '@/hooks/useSearchAds';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
 
 export default function SearchAdDetailsPage() {
@@ -14,16 +13,12 @@ export default function SearchAdDetailsPage() {
 	const { user } = useAuth();
 	const searchAdId = params?.id as string;
 
-	// Fetch search ad details using useFetch hook
+	// Fetch search ad details using SWR
 	const {
 		data: searchAd,
-		loading,
+		isLoading: loading,
 		error,
-	} = useFetch<SearchAd>(() => searchAdApi.getSearchAdById(searchAdId), {
-		skip: !searchAdId,
-		showErrorToast: true,
-		errorMessage: 'Impossible de charger les détails de la recherche',
-	});
+	} = useSearchAd(searchAdId);
 
 	if (loading) {
 		return <PageLoader message="Chargement des détails..." />;

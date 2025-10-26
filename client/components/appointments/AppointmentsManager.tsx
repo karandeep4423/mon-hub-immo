@@ -1,13 +1,16 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { appointmentApi } from '@/lib/api/appointmentApi';
 import { Appointment } from '@/types/appointment';
 import { PageLoader, Pagination } from '../ui';
 import { Button } from '../ui/Button';
 import { AvailabilityManager } from './AvailabilityManager';
 import { useAppointmentNotifications } from '@/hooks/useAppointmentNotifications';
-import { useFetch } from '@/hooks';
+import {
+	useAppointments,
+	useAppointmentMutations,
+} from '@/hooks/useAppointments';
+import { useAuth } from '@/hooks/useAuth';
 import { logger } from '@/lib/utils/logger';
 import { RescheduleAppointmentModal } from './RescheduleAppointmentModal';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
@@ -47,6 +50,7 @@ interface AppointmentsManagerProps {
 export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 	userType,
 }) => {
+	const { user } = useAuth();
 	const [filter, setFilter] = useState<AppointmentStatus | 'all'>('all');
 	const [actionLoading, setActionLoading] = useState<string | null>(null);
 	const [viewMode, setViewMode] = useState<ViewMode>('appointments');
@@ -59,18 +63,17 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 
 	const isAgent = userType === 'agent';
 
-	// Use useFetch hook for consistent data fetching
-	const {
-		data: appointments = [],
-		loading,
-		refetch: fetchAppointments,
-	} = useFetch<Appointment[]>(() => appointmentApi.getMyAppointments(), {
-		showErrorToast: true,
-		errorMessage: 'Échec du chargement des rendez-vous',
-	});
+	// Use SWR for appointments data fetching
+	const { data: appointments = [], isLoading: loading } = useAppointments(
+		user?._id,
+	);
+
+	// Get mutation functions
+	const { updateAppointmentStatus, invalidateAppointmentCaches } =
+		useAppointmentMutations(user?._id);
 
 	// Enable real-time notifications with auto-refresh
-	useAppointmentNotifications({ onUpdate: fetchAppointments });
+	useAppointmentNotifications({ onUpdate: invalidateAppointmentCaches });
 
 	const handleStatusUpdate = async (
 		appointmentId: string,
@@ -78,10 +81,8 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 	) => {
 		try {
 			setActionLoading(appointmentId);
-			await appointmentApi.updateAppointmentStatus(appointmentId, {
-				status,
-			});
-			await fetchAppointments();
+			await updateAppointmentStatus(appointmentId, status);
+			// Cache automatically invalidated by mutation
 		} catch (error) {
 			logger.error('Error updating appointment:', error);
 		} finally {
@@ -211,7 +212,6 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 					</Button>
 				)}
 			</div>
-
 			{/* Stats Cards */}
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 				<div className="bg-white rounded-lg shadow p-6">
@@ -298,7 +298,6 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 					</div>
 				</div>
 			</div>
-
 			{/* Filters */}
 			<AppointmentFilters
 				filter={filter}
@@ -306,7 +305,6 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 				counts={stats}
 				userType={isAgent ? 'agent' : 'apporteur'}
 			/>
-
 			{/* Appointments List */}
 			{filteredAppointments.length === 0 ? (
 				<div className="bg-white rounded-lg shadow p-12 text-center">
@@ -388,7 +386,6 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 					/>
 				</>
 			)}
-
 			{/* Reschedule Modal */}
 			{selectedAppointment && (
 				<RescheduleAppointmentModal
@@ -398,10 +395,9 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 						setSelectedAppointment(null);
 					}}
 					appointment={selectedAppointment}
-					onSuccess={fetchAppointments}
+					onSuccess={invalidateAppointmentCaches}
 				/>
-			)}
-
+			)}{' '}
 			{/* Confirm Dialog */}
 			<ConfirmDialog
 				isOpen={!!confirmAction}

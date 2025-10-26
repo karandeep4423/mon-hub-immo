@@ -1,16 +1,12 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import {
-	PropertyService,
-	Property,
-	PropertyFilters,
-} from '@/lib/api/propertyApi';
-import searchAdApi from '@/lib/api/searchAdApi';
+import { Property, PropertyFilters } from '@/lib/api/propertyApi';
 import { SearchAd } from '@/types/searchAd';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { useAuth } from '@/hooks/useAuth';
-import { useFetch } from '@/hooks/useFetch';
+import { useProperties } from '@/hooks/useProperties';
+import { useSearchAds } from '@/hooks/useSearchAds';
 import { GeolocationPrompt } from '@/components/ui';
 import type { LocationItem } from '@/components/ui/LocationSearchWithRadius';
 import { authService } from '@/lib/api/authApi';
@@ -499,32 +495,20 @@ export default function Home() {
 		surfaceFilter,
 	]);
 
-	// Fetch properties using useFetch hook
+	// Fetch properties using SWR
 	const {
-		data: properties = [],
-		loading: loadingProperties,
+		data: swrProperties,
+		isLoading: loadingProperties,
 		error: propertiesError,
-	} = useFetch<Property[]>(
-		() => PropertyService.getAllProperties(propertyFilters),
-		{
-			initialData: [],
-			showErrorToast: true,
-			errorMessage: 'Erreur lors du chargement des propriétés',
-			deps: [propertyFilters, contentFilter, selectedLocations.length],
-		},
-	);
+	} = useProperties(propertyFilters);
+	const properties: Property[] = swrProperties || [];
 
-	// Fetch search ads using useFetch hook
+	// Fetch search ads using SWR
 	const {
 		data: searchAds = [],
-		loading: loadingSearchAds,
+		isLoading: loadingSearchAds,
 		error: searchAdsError,
-	} = useFetch<SearchAd[]>(() => searchAdApi.getAllSearchAds(), {
-		initialData: [],
-		showErrorToast: true,
-		errorMessage: 'Erreur lors du chargement des annonces de recherche',
-		deps: [],
-	});
+	} = useSearchAds();
 
 	// Combined loading and error states
 	const loading = loadingProperties || loadingSearchAds;

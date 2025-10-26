@@ -3,15 +3,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
-import { appointmentApi } from '@/lib/api/appointmentApi';
 import { useAuth } from '@/hooks/useAuth';
-import { useFetch } from '@/hooks/useFetch';
 import { useRouter } from 'next/navigation';
 import type { CreateAppointmentData } from '@/types/appointment';
 import { useForm } from '@/hooks/useForm';
 import { BookingStep1 } from './BookingStep1';
 import { BookingStep2 } from './BookingStep2';
 import { BookingStep3 } from './BookingStep3';
+import {
+	useAvailableSlots,
+	useAppointmentMutations,
+} from '@/hooks/useAppointments';
 
 interface BookAppointmentModalProps {
 	isOpen: boolean;
@@ -37,7 +39,6 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 	const { user } = useAuth();
 	const router = useRouter();
 	const [step, setStep] = useState(1);
-	const [availableSlots, setAvailableSlots] = useState<string[]>([]);
 
 	const {
 		values,
@@ -64,32 +65,27 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 				router.push('/auth/login?redirect=/monagentimmo');
 				return;
 			}
-			await appointmentApi.createAppointment(values);
+			await createAppointment(values);
 			alert('Demande de rendez-vous envoyée avec succès !');
 			onClose();
 		},
 	});
 
-	// Use useFetch to load available time slots
-	const { loading: loadingSlots } = useFetch(
-		() => appointmentApi.getAvailableSlots(agent._id, values.scheduledDate),
-		{
-			deps: [agent._id, values.scheduledDate, step],
-			skip: !values.scheduledDate || step !== 2,
-			showErrorToast: false,
-			onSuccess: (response) => {
-				setAvailableSlots(response.slots || []);
-			},
-			onError: () => {
-				setAvailableSlots([]);
-			},
-		},
+	// Use SWR to load available slots (only when date is selected and on step 2)
+	const { data: slotsData, isLoading: loadingSlots } = useAvailableSlots(
+		agent._id,
+		values.scheduledDate && step === 2 ? values.scheduledDate : undefined,
 	);
+
+	// Extract slots array from API response - slotsData is already { slots, isAvailable, duration }
+	const availableSlots = slotsData?.slots || [];
+
+	// Get mutation function for creating appointment
+	const { createAppointment } = useAppointmentMutations(user?._id);
 
 	const resetForm = useCallback(() => {
 		setStep(1);
 		resetFormValues();
-		setAvailableSlots([]);
 	}, [resetFormValues]);
 
 	useEffect(() => {

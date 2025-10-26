@@ -1,14 +1,12 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { appointmentApi } from '@/lib/api/appointmentApi';
 import { AgentAvailability } from '@/types/appointment';
 import { PageLoader } from '../ui/LoadingSpinner';
 import { useNotification } from '@/hooks/useNotification';
 import { useAuth } from '@/hooks/useAuth';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { logger } from '@/lib/utils/logger';
-import { useFetch } from '@/hooks/useFetch';
 import { DAYS_OF_WEEK } from '@/lib/constants';
 import {
 	AutoSaveIndicator,
@@ -17,6 +15,10 @@ import {
 	BlockedDatesTab,
 	InfoBox,
 } from './availability-manager';
+import {
+	useAgentAvailability,
+	useAppointmentMutations,
+} from '@/hooks/useAppointments';
 
 // Helper function to check if time slots overlap
 const hasOverlappingSlots = (
@@ -71,41 +73,43 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 	const { showNotification } = useNotification();
 	const { user } = useAuth();
 
-	// Fetch availability using useFetch hook
-	const { data: fetchedAvailability, loading } = useFetch(
-		() => appointmentApi.getAgentAvailability(user!._id),
-		{
-			deps: [user?._id],
-			skip: !user?._id,
-			showErrorToast: false,
-			onError: (error) => {
-				const responseStatus = (
-					error as { response?: { status?: number } }
-				).response?.status;
-				if (responseStatus === 404) {
-					// Initialize default availability (business hours)
-					setAvailability({
-						agentId: user!._id,
-						weeklySchedule: DAYS_OF_WEEK.map((day) => ({
-							dayOfWeek: day.value as 0 | 1 | 2 | 3 | 4 | 5 | 6,
-							isAvailable: day.value >= 1 && day.value <= 5, // Mon-Fri
-							slots:
-								day.value >= 1 && day.value <= 5
-									? [{ startTime: '09:00', endTime: '18:00' }]
-									: [],
-						})),
-						dateOverrides: [],
-						defaultDuration: 60,
-						bufferTime: 15,
-						maxAppointmentsPerDay: 8,
-						advanceBookingDays: 30,
-					});
-				} else {
-					logger.error('Error fetching availability:', error);
-				}
-			},
-		},
-	);
+	// Use SWR to fetch availability
+	const {
+		data: fetchedAvailability,
+		isLoading: loading,
+		error,
+	} = useAgentAvailability(user?._id || '');
+
+	// Get mutation function
+	const { updateAgentAvailability } = useAppointmentMutations(user?._id);
+
+	// Initialize default availability if 404 error
+	useEffect(() => {
+		if (
+			error &&
+			(error as { status?: number })?.status === 404 &&
+			!availability
+		) {
+			setAvailability({
+				agentId: user!._id,
+				weeklySchedule: DAYS_OF_WEEK.map((day) => ({
+					dayOfWeek: day.value as 0 | 1 | 2 | 3 | 4 | 5 | 6,
+					isAvailable: day.value >= 1 && day.value <= 5, // Mon-Fri
+					slots:
+						day.value >= 1 && day.value <= 5
+							? [{ startTime: '09:00', endTime: '18:00' }]
+							: [],
+				})),
+				dateOverrides: [],
+				defaultDuration: 60,
+				bufferTime: 15,
+				maxAppointmentsPerDay: 8,
+				advanceBookingDays: 30,
+			});
+		} else if (error) {
+			logger.error('Error fetching availability:', error);
+		}
+	}, [error, availability, user]);
 
 	// Update local state when data is fetched
 	useEffect(() => {
@@ -129,7 +133,7 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 
 			try {
 				setSaving(true);
-				await appointmentApi.updateAgentAvailability(availability);
+				await updateAgentAvailability(availability);
 				setHasUnsavedChanges(false);
 				showNotification(
 					'Modifications enregistrées automatiquement',
@@ -144,7 +148,12 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 		}, 2000); // 2 seconds delay
 
 		setAutoSaveTimer(timer);
-	}, [availability, autoSaveTimer, showNotification]);
+	}, [
+		availability,
+		autoSaveTimer,
+		showNotification,
+		updateAgentAvailability,
+	]);
 
 	// Cleanup timer on unmount
 	useEffect(() => {
@@ -360,7 +369,7 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 			};
 
 			// Save to backend immediately
-			await appointmentApi.updateAgentAvailability(updatedAvailability);
+			await updateAgentAvailability(updatedAvailability);
 
 			setAvailability(updatedAvailability);
 			setNewBlockedDate('');
@@ -377,7 +386,6 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 			setSaving(false);
 		}
 	};
-
 	const removeBlockedDate = async (date: string) => {
 		if (!availability) return;
 
@@ -392,7 +400,7 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 			};
 
 			// Save to backend immediately
-			await appointmentApi.updateAgentAvailability(updatedAvailability);
+			await updateAgentAvailability(updatedAvailability);
 
 			setAvailability(updatedAvailability);
 			showNotification('Date débloquée avec succès', 'success');
@@ -404,7 +412,6 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 			setDateToUnblock(null);
 		}
 	};
-
 	const handleConfirmUnblock = async () => {
 		if (!dateToUnblock) return;
 		await removeBlockedDate(dateToUnblock);

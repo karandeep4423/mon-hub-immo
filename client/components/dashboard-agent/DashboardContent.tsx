@@ -10,9 +10,8 @@ import { DASHBOARD_TEXT, APPOINTMENT_STATUSES } from '@/lib/constants';
 import { MySearches } from '../search-ads/MySearches';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { AppointmentsManager } from '../appointments/AppointmentsManager';
-import { appointmentApi } from '@/lib/api/appointmentApi';
 import { PageLoader } from '../ui/LoadingSpinner';
-import { useFetch } from '@/hooks/useFetch';
+import { useAppointments } from '@/hooks/useAppointments';
 import {
 	ProfileCompletionBanner,
 	DashboardStats,
@@ -27,15 +26,8 @@ export const DashboardContent: React.FC = () => {
 	const hasRefreshed = useRef(false);
 	const { kpis, loading: statsLoading } = useDashboardStats(user?._id);
 
-	// Use useFetch for appointment stats
-	const { data: appointments } = useFetch(
-		() => appointmentApi.getMyAppointments(),
-		{
-			deps: [user?._id],
-			skip: !user,
-			showErrorToast: false,
-		},
-	);
+	// Use SWR for appointment stats with automatic cache management
+	const { data: appointments } = useAppointments(user?._id);
 
 	const appointmentStats = useMemo(() => {
 		if (!appointments) {

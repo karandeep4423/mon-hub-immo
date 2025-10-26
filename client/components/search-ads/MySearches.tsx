@@ -1,29 +1,34 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import useSWR from 'swr';
 import searchAdApi from '@/lib/api/searchAdApi';
 import { SearchAdCard } from './SearchAdCard';
 import { Button, Pagination } from '../ui';
 import { useRouter } from 'next/navigation';
-import { useFetch } from '@/hooks/useFetch';
+import { swrKeys } from '@/lib/swrKeys';
+import { useAuth } from '@/hooks/useAuth';
 import { PageLoader } from '../ui/LoadingSpinner';
 
 export const MySearches = () => {
 	const router = useRouter();
+	const { user } = useAuth();
 	const [currentPage, setCurrentPage] = useState(1);
 	const itemsPerPage = 6;
 
-	// Fetch user's search ads using useFetch hook
+	// Fetch user's search ads using SWR
 	const {
 		data: myAds,
-		loading,
+		isLoading: loading,
 		error,
-		refetch: refreshAds,
-	} = useFetch(() => searchAdApi.getMySearchAds(), {
-		initialData: [],
-		showErrorToast: true,
-		errorMessage: 'Impossible de charger vos recherches.',
-	});
+		mutate: refreshAds,
+	} = useSWR(
+		swrKeys.searchAds.myAds(user?._id),
+		() => searchAdApi.getMySearchAds(),
+		{
+			fallbackData: [],
+		},
+	);
 
 	// Paginated search ads
 	const paginatedAds = useMemo(() => {

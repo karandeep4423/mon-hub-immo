@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import searchAdApi from '@/lib/api/searchAdApi';
 import { SearchAd } from '@/types/searchAd';
 import { SearchAdCard } from '@/components/search-ads/SearchAdCard';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
@@ -10,20 +9,14 @@ import { LocationSearchWithRadius } from '@/components/ui';
 import type { LocationItem } from '@/components/ui/LocationSearchWithRadius';
 import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/lib/api/authApi';
-import { useFetch } from '@/hooks';
+import { useSearchAds } from '@/hooks/useSearchAds';
 import { logger } from '@/lib/utils/logger';
 
 export default function SearchAdsPage() {
 	const { user } = useAuth();
 
-	// Fetch search ads using useFetch hook
-	const { data: searchAds = [], loading } = useFetch<SearchAd[]>(
-		() => searchAdApi.getAllSearchAds(),
-		{
-			showErrorToast: true,
-			errorMessage: 'Impossible de charger les recherches',
-		},
-	);
+	// Fetch search ads using SWR
+	const { data: searchAds = [], isLoading: loading } = useSearchAds();
 
 	const [selectedLocations, setSelectedLocations] = useState<LocationItem[]>(
 		[],

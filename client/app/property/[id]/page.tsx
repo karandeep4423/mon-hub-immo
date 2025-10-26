@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { ImageLightbox } from '@/components/ui/ImageLightbox';
@@ -8,12 +8,11 @@ import { ProposeCollaborationModal } from '@/components/collaboration/ProposeCol
 import { ProfileAvatar } from '@/components/ui';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { useAuth } from '@/hooks/useAuth';
-import { collaborationApi } from '@/lib/api/collaborationApi';
-import { PropertyService, type Property } from '@/lib/api/propertyApi';
-import { logger } from '@/lib/utils/logger';
+// import { type Property } from '@/lib/api/propertyApi';
 import { shareContent } from '@/lib/utils/share';
 import { formatDateShort } from '@/lib/utils/date';
-import { useFetch } from '@/hooks';
+import { useProperty } from '@/hooks/useProperties';
+import { useCollaborationsByProperty } from '@/hooks/useCollaborations';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
 
 // Import new detail components
@@ -29,16 +28,12 @@ function PropertyDetailsPageContent() {
 	const { user } = useAuth();
 	const propertyId = params?.id as string;
 
-	// Fetch property using useFetch hook
+	// Fetch property using SWR
 	const {
 		data: property,
-		loading,
+		isLoading: loading,
 		error,
-	} = useFetch<Property>(() => PropertyService.getPropertyById(propertyId), {
-		skip: !propertyId,
-		showErrorToast: true,
-		errorMessage: 'Erreur lors du chargement du bien',
-	});
+	} = useProperty(propertyId);
 
 	const [showCollaborationModal, setShowCollaborationModal] = useState(false);
 	const [hasBlockingCollab, setHasBlockingCollab] = useState<boolean>(false);
@@ -54,35 +49,31 @@ function PropertyDetailsPageContent() {
 		property &&
 		(user._id === property.owner._id || user.id === property.owner._id);
 
-	// Fetch collaborations for this property to determine if proposal should be disabled
-	const loadPropertyCollaborations = useCallback(async () => {
-		try {
-			if (!propertyId) return;
-			const { collaborations } =
-				await collaborationApi.getPropertyCollaborations(propertyId);
-			const blocking = collaborations.find((c) =>
-				['pending', 'accepted', 'active'].includes(c.status as string),
+	// Fetch collaborations for this property using SWR
+	const {
+		data: propertyCollaborations = [],
+		refetch: refetchPropertyCollaborations,
+	} = useCollaborationsByProperty(propertyId);
+
+	// Derive blocking collab state from SWR data
+	useEffect(() => {
+		const blocking = propertyCollaborations.find((c) =>
+			['pending', 'accepted', 'active'].includes(c.status as string),
+		);
+		if (blocking) {
+			setHasBlockingCollab(true);
+			setBlockingStatus(
+				blocking.status as 'pending' | 'accepted' | 'active',
 			);
-			if (blocking) {
-				setHasBlockingCollab(true);
-				setBlockingStatus(
-					blocking.status as 'pending' | 'accepted' | 'active',
-				);
-			} else {
-				setHasBlockingCollab(false);
-				setBlockingStatus(null);
-			}
-		} catch (e) {
-			logger.warn('Failed to load property collaborations', e);
+		} else {
+			setHasBlockingCollab(false);
+			setBlockingStatus(null);
 		}
-	}, [propertyId]);
+	}, [propertyCollaborations]);
 
 	useEffect(() => {
-		// Only check collaborations if user is NOT the property owner
-		if (!isPropertyOwner && user) {
-			loadPropertyCollaborations();
-		}
-	}, [loadPropertyCollaborations, isPropertyOwner, user]);
+		// Trigger initial fetch via hook (already handled by SWR key); no-op here
+	}, [isPropertyOwner, user, propertyId]);
 
 	const handleContactOwner = () => {
 		if (!user) {
@@ -473,10 +464,9 @@ function PropertyDetailsPageContent() {
 							mainImage: property.mainImage,
 						},
 					}}
-					onSuccess={() => {
-						// Close modal and refresh collaboration info to reflect new blocking state
+					onSuccess={async () => {
 						setShowCollaborationModal(false);
-						loadPropertyCollaborations();
+						await refetchPropertyCollaborations();
 					}}
 				/>
 			)}

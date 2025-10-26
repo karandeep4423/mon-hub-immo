@@ -11,11 +11,11 @@ import {
 	PropertyHeader,
 } from './index';
 import { useAuth } from '@/hooks/useAuth';
-import { useFetch } from '@/hooks/useFetch';
+import { useMyProperties, usePropertyMutations } from '@/hooks/useProperties';
 import { usePropertyFilters } from '@/hooks/usePropertyFilters';
 import { usePropertyActions } from '@/hooks/usePropertyActions';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
-import { PropertyService, Property } from '@/lib/api/propertyApi';
+import { Property } from '@/lib/api/propertyApi';
 
 export const PropertyManager: React.FC = () => {
 	const { user } = useAuth();
@@ -26,17 +26,15 @@ export const PropertyManager: React.FC = () => {
 	const [currentPage, setCurrentPage] = useState(1);
 	const itemsPerPage = 6;
 
-	// Fetch properties using useFetch hook
+	// Use SWR to fetch properties
 	const {
 		data: propertiesData,
-		loading,
+		isLoading: loading,
 		error: fetchError,
-		refetch: refetchProperties,
-	} = useFetch(() => PropertyService.getMyProperties(), {
-		initialData: { properties: [] },
-		showErrorToast: true,
-		errorMessage: 'Erreur lors de la récupération de vos biens',
-	});
+	} = useMyProperties(user?._id);
+
+	// Get mutation functions
+	const { invalidatePropertyCaches } = usePropertyMutations(user?._id);
 
 	const properties = useMemo(
 		() => propertiesData?.properties || [],
@@ -78,12 +76,12 @@ export const PropertyManager: React.FC = () => {
 		openDeleteDialog,
 		closeDeleteDialog,
 		confirmDelete,
-	} = usePropertyActions({ onSuccess: refetchProperties });
+	} = usePropertyActions({ onSuccess: invalidatePropertyCaches });
 
 	const handleFormSuccess = () => {
 		setShowForm(false);
 		setEditingProperty(null);
-		refetchProperties();
+		invalidatePropertyCaches();
 	};
 
 	const handleFormSubmit = async () => {

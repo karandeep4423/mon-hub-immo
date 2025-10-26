@@ -5,9 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { SearchAd } from '@/types/searchAd';
 import { ProfileAvatar, FavoriteButton } from '../ui';
-import { collaborationApi } from '@/lib/api/collaborationApi';
 import { useAuth } from '@/hooks/useAuth';
-import { useFetch } from '@/hooks/useFetch';
+import { useCollaborationsBySearchAd } from '@/hooks/useCollaborations';
 import { getSearchAdBadgeConfig } from '@/lib/constants/badges';
 import { formatDateShort } from '@/lib/utils/date';
 
@@ -20,20 +19,14 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 }) => {
 	const { user } = useAuth();
 
-	// Use useFetch to get collaboration status
-	const { data: collaborationsData } = useFetch(
-		() =>
-			user
-				? collaborationApi.getSearchAdCollaborations(searchAd._id)
-				: Promise.resolve({ collaborations: [] }),
-		{
-			deps: [searchAd._id, user?._id],
-			showErrorToast: false, // Silently fail - collaboration status is optional
-		},
+	// Use SWR to get collaboration status (optional)
+	const { data: collaborationsData } = useCollaborationsBySearchAd(
+		user ? searchAd._id : undefined,
+		{ skip: !user },
 	);
 
 	// Find blocking collaboration status
-	const collaborationStatus = collaborationsData?.collaborations.find((c) =>
+	const collaborationStatus = collaborationsData.find((c) =>
 		['pending', 'accepted', 'active'].includes(c.status as string),
 	)?.status as 'pending' | 'accepted' | 'active' | undefined;
 

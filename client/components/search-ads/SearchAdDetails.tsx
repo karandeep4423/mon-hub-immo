@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation';
 import { SearchAd } from '@/types/searchAd';
 import { User } from '@/types/auth';
 import { ProposeCollaborationModal } from '../collaboration/ProposeCollaborationModal';
-import { collaborationApi } from '@/lib/api/collaborationApi';
-import { useFetch } from '@/hooks/useFetch';
+import { useCollaborationsBySearchAd } from '@/hooks/useCollaborations';
 import {
 	SearchAdHeader,
 	SearchAdAuthorInfo,
@@ -32,19 +31,19 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 	const isOwner = currentUser?._id === searchAd.authorId._id;
 	const [showCollaborationModal, setShowCollaborationModal] = useState(false);
 
-	// Fetch collaborations using useFetch - skip if user is owner or not authenticated
+	// Fetch collaborations using SWR - skip if user is owner or not authenticated
 	const shouldFetchCollabs = !isOwner && !!currentUser;
-	const { data: collabData, refetch: refetchCollaborations } = useFetch(
-		() => collaborationApi.getSearchAdCollaborations(searchAd._id),
-		{
-			initialData: { collaborations: [] },
-			skip: !shouldFetchCollabs,
-		},
-	);
+	const { data: collaborations, refetch: refetchCollaborations } =
+		useCollaborationsBySearchAd(
+			shouldFetchCollabs ? searchAd._id : undefined,
+			{
+				skip: !shouldFetchCollabs,
+			},
+		);
 
 	// Check for blocking collaboration
 	const { hasBlockingCollab, blockingStatus } = useMemo(() => {
-		const blocking = collabData?.collaborations.find((c) =>
+		const blocking = collaborations.find((c) =>
 			['pending', 'accepted', 'active'].includes(c.status as string),
 		);
 		return {
@@ -53,7 +52,7 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 				? (blocking.status as 'pending' | 'accepted' | 'active')
 				: null,
 		};
-	}, [collabData]);
+	}, [collaborations]);
 
 	const handleContact = () => {
 		router.push(

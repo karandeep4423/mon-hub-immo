@@ -1,7 +1,8 @@
 // hooks/useCollaborationData.ts
 import { useState, useMemo, useCallback } from 'react';
-import { useFetch } from '@/hooks/useFetch';
+import useSWR from 'swr';
 import { collaborationApi } from '@/lib/api/collaborationApi';
+import { swrKeys } from '@/lib/swrKeys';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Collaboration } from '@/types/collaboration';
 import {
@@ -17,18 +18,22 @@ export const useCollaborationData = (
 ) => {
 	const [progressSteps, setProgressSteps] = useState<ProgressStepData[]>([]);
 
-	// Fetch collaborations using useFetch hook
+	// Fetch collaborations using SWR
 	const {
 		data: collaborationsData,
-		loading: isLoading,
+		isLoading,
 		error: fetchError,
-		refetch,
-	} = useFetch(() => collaborationApi.getUserCollaborations(), {
-		skip: !collaborationId || !user,
-		showErrorToast: true,
-		errorMessage: 'Erreur lors du chargement de la collaboration',
-		deps: [collaborationId, user?._id],
-	});
+		mutate: refetch,
+	} = useSWR(
+		collaborationId && user ? swrKeys.collaborations.list(user._id) : null,
+		() => collaborationApi.getUserCollaborations(),
+		{
+			revalidateOnFocus: false,
+			onError: () => {
+				// Error handled by global SWR config
+			},
+		},
+	);
 
 	// Find the specific collaboration
 	const collaboration = useMemo(() => {

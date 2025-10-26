@@ -5,11 +5,12 @@ import { Input } from '@/components/ui/Input';
 import { LoadingSpinner, Pagination } from '@/components/ui';
 import { CollaborationCard } from '@/components/collaboration/CollaborationCard';
 import { Collaboration } from '@/types/collaboration';
-import { collaborationApi } from '@/lib/api/collaborationApi';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { toast } from 'react-toastify';
-import { useFetch } from '@/hooks/useFetch';
-import { useMutation } from '@/hooks/useMutation';
+import {
+	useMyCollaborations,
+	useCollaborationMutations,
+} from '@/hooks/useCollaborations';
 import { TOAST_MESSAGES } from '@/lib/constants';
 
 interface CollaborationListProps {
@@ -34,47 +35,25 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 		null,
 	);
 
-	// Fetch collaborations using useFetch hook
+	// Fetch collaborations using SWR
 	const {
 		data: collabData,
-		loading: isLoading,
+		isLoading,
 		error: fetchError,
 		refetch: fetchCollaborations,
-	} = useFetch(() => collaborationApi.getUserCollaborations(), {
-		initialData: { collaborations: [] },
-		showErrorToast: true,
-		errorMessage: TOAST_MESSAGES.COLLABORATION.FETCH_ERROR,
-	});
+	} = useMyCollaborations(currentUserId);
 
-	// Mutation for cancel/terminate actions
-	const { mutate: updateCollabStatus, loading: confirmLoading } = useMutation(
-		async (data: { id: string; mode: 'cancel' | 'terminate' }) => {
-			if (data.mode === 'cancel') {
-				return await collaborationApi.cancel(data.id);
-			} else {
-				return await collaborationApi.complete(data.id);
-			}
-		},
-		{
-			onSuccess: async (_, variables) => {
-				toast.success(
-					variables.mode === 'cancel'
-						? TOAST_MESSAGES.COLLABORATION.CANCEL_SUCCESS
-						: TOAST_MESSAGES.COLLABORATION.COMPLETE_SUCCESS,
-				);
-				setConfirmOpen(false);
-				setTargetCollab(null);
-				await fetchCollaborations();
-			},
-			errorMessage: TOAST_MESSAGES.COLLABORATION.STATUS_UPDATE_ERROR,
-		},
-	);
+	// Mutations via SWR
+	const { cancelCollaboration, completeCollaboration } =
+		useCollaborationMutations(currentUserId);
+	const [confirmLoading, setConfirmLoading] = useState(false);
+
+	const error = fetchError?.message || null;
 
 	const collaborations = useMemo(
 		() => collabData?.collaborations || [],
 		[collabData],
 	);
-	const error = fetchError?.message || null;
 
 	const openConfirm = (
 		mode: 'cancel' | 'terminate',
@@ -87,7 +66,25 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 
 	const handleConfirmAction = async () => {
 		if (!targetCollab) return;
-		await updateCollabStatus({ id: targetCollab._id, mode: confirmMode });
+		setConfirmLoading(true);
+		const id = targetCollab._id;
+		const res =
+			confirmMode === 'cancel'
+				? await cancelCollaboration(id)
+				: await completeCollaboration(id);
+		setConfirmLoading(false);
+		if (res.success) {
+			toast.success(
+				confirmMode === 'cancel'
+					? TOAST_MESSAGES.COLLABORATION.CANCEL_SUCCESS
+					: TOAST_MESSAGES.COLLABORATION.COMPLETE_SUCCESS,
+			);
+			setConfirmOpen(false);
+			setTargetCollab(null);
+			await fetchCollaborations();
+		} else {
+			toast.error(TOAST_MESSAGES.COLLABORATION.STATUS_UPDATE_ERROR);
+		}
 	};
 
 	// Filter and search collaborations

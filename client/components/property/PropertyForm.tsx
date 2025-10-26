@@ -2,11 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
-import {
-	PropertyFormData,
-	PropertyService,
-	Property,
-} from '@/lib/api/propertyApi';
+import { PropertyFormData, Property } from '@/lib/api/propertyApi';
 import { usePropertyForm } from '@/hooks/usePropertyForm';
 import { PropertyFormStep1 } from './PropertyFormStep1';
 import { PropertyFormStep2 } from './PropertyFormStep2';
@@ -15,6 +11,8 @@ import { PropertyFormStep4 } from './PropertyFormStep4';
 import { PropertyFormStep5 } from './PropertyFormStep5';
 import { logger } from '@/lib/utils/logger';
 import { UI_TRANSITION_MS } from '@/lib/constants';
+import { usePropertyMutations } from '@/hooks/useProperties';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ExistingImage {
 	url: string;
@@ -34,6 +32,9 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({
 	isEditing = false,
 	isLoading = false,
 }) => {
+	const { user } = useAuth();
+	const { createProperty, updateProperty } = usePropertyMutations(user?._id);
+
 	const {
 		formData,
 		errors,
@@ -172,7 +173,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({
 
 			if (isEditing && initialData && '_id' in initialData) {
 				const propertyId = (initialData as Property)._id;
-				property = await PropertyService.updateProperty(
+				const result = await updateProperty(
 					propertyId,
 					cleanFormData,
 					mainImageFiles[0]?.file,
@@ -180,22 +181,33 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({
 					existingMainImage,
 					existingGalleryImages,
 				);
+
+				if (!result.success || !result.data) {
+					throw new Error(result.error?.message || 'Update failed');
+				}
+
+				property = result.data;
 				logger.info(
 					'[PropertyForm] Property updated successfully:',
 					property,
 				);
 			} else {
-				property = await PropertyService.createProperty(
+				const result = await createProperty(
 					cleanFormData,
 					mainImageFiles[0]?.file,
 					galleryImageFiles.map((img) => img.file),
 				);
+
+				if (!result.success || !result.data) {
+					throw new Error(result.error?.message || 'Create failed');
+				}
+
+				property = result.data;
 				logger.info(
 					'[PropertyForm] Property created successfully:',
 					property,
 				);
 			}
-
 			await onSubmit(property as unknown as PropertyFormData);
 		} catch (error) {
 			logger.error('[PropertyForm] Error submitting form:', error);

@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { PropertyService, Property } from '@/lib/api/propertyApi';
-import { toast } from 'react-toastify';
+import { Property } from '@/lib/api/propertyApi';
 import { logger } from '@/lib/utils/logger';
-import { TOAST_MESSAGES } from '@/lib/constants';
+import { usePropertyMutations } from './useProperties';
+import { useAuth } from './useAuth';
 
 interface UsePropertyActionsOptions {
 	onSuccess?: () => void;
@@ -25,25 +25,28 @@ interface UsePropertyActionsReturn {
 export const usePropertyActions = ({
 	onSuccess,
 }: UsePropertyActionsOptions = {}): UsePropertyActionsReturn => {
+	const { user } = useAuth();
 	const [deleteLoading, setDeleteLoading] = useState(false);
 	const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 	const [propertyToDelete, setPropertyToDelete] = useState<string | null>(
 		null,
 	);
 
+	// Get SWR mutation functions
+	const {
+		deleteProperty: deletePropertyMutation,
+		updatePropertyStatus: updateStatusMutation,
+	} = usePropertyMutations(user?._id);
+
 	const deleteProperty = async (propertyId: string) => {
 		try {
 			setDeleteLoading(true);
-			await PropertyService.deleteProperty(propertyId);
-			toast.success(TOAST_MESSAGES.PROPERTIES.DELETE_SUCCESS);
-			onSuccess?.();
+			const result = await deletePropertyMutation(propertyId);
+			if (result.success) {
+				onSuccess?.();
+			}
 		} catch (error: unknown) {
 			logger.error('Error deleting property:', error);
-			const errorMessage =
-				error instanceof Error
-					? error.message
-					: TOAST_MESSAGES.PROPERTIES.DELETE_ERROR;
-			toast.error(errorMessage);
 			throw error;
 		} finally {
 			setDeleteLoading(false);
@@ -55,16 +58,12 @@ export const usePropertyActions = ({
 		newStatus: Property['status'],
 	) => {
 		try {
-			await PropertyService.updatePropertyStatus(propertyId, newStatus);
-			toast.success(TOAST_MESSAGES.PROPERTIES.STATUS_UPDATE_SUCCESS);
-			onSuccess?.();
+			const result = await updateStatusMutation(propertyId, newStatus);
+			if (result.success) {
+				onSuccess?.();
+			}
 		} catch (error: unknown) {
 			logger.error('Error updating status:', error);
-			const errorMessage =
-				error instanceof Error
-					? error.message
-					: TOAST_MESSAGES.PROPERTIES.STATUS_UPDATE_ERROR;
-			toast.error(errorMessage);
 			throw error;
 		}
 	};

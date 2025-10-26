@@ -1,8 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFavoritesStore } from '@/store/favoritesStore';
-import { useMutation } from '@/hooks/useMutation';
+import { useSWRConfig } from 'swr';
+import { swrKeys } from '@/lib/swrKeys';
 import { LoadingSpinner } from './LoadingSpinner';
+import { logger } from '@/lib/utils/logger';
 
 interface FavoriteButtonProps {
 	itemId: string;
@@ -35,32 +37,11 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
 		initializeFavorites,
 		isInitialized,
 	} = useFavoritesStore();
+	const { mutate } = useSWRConfig();
+	const [isLoading, setIsLoading] = useState(false);
 
 	// Check if user is authenticated
 	const isAuthenticated = !!user;
-
-	// Toggle favorite mutation
-	const { mutate: toggleFavoriteMutation, loading: isLoading } = useMutation<
-		boolean,
-		void
-	>(
-		async () => {
-			return actualItemType === 'property'
-				? await toggleFavorite(actualItemId)
-				: await toggleSearchAdFavorite(actualItemId);
-		},
-		{
-			onSuccess: (newIsFavorite) => {
-				onToggle?.(newIsFavorite);
-			},
-			showSuccessToast: false, // Don't show toast for favorites (too noisy)
-			errorMessage:
-				actualItemType === 'property'
-					? 'Erreur lors de la modification des favoris'
-					: 'Erreur lors de la modification des recherches favorites',
-			context: 'FavoriteButton',
-		},
-	);
 
 	// Get favorite status from store or fallback to initial value
 	// For non-authenticated users, always show as not favorite
@@ -99,7 +80,45 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
 			return;
 		}
 
-		await toggleFavoriteMutation();
+		setIsLoading(true);
+
+		try {
+			// Toggle favorite via Zustand store (handles API call)
+			const newIsFavorite =
+				actualItemType === 'property'
+					? await toggleFavorite(actualItemId)
+					: await toggleSearchAdFavorite(actualItemId);
+
+			// Invalidate SWR caches for affected resources
+			if (user) {
+				// Invalidate favorites list
+				mutate(swrKeys.favorites.list(user._id));
+
+				// Invalidate the specific resource (property or search ad)
+				if (actualItemType === 'property') {
+					mutate(swrKeys.properties.detail(actualItemId));
+					mutate(
+						(key) => Array.isArray(key) && key[0] === 'properties',
+					);
+				} else {
+					mutate(swrKeys.searchAds.detail(actualItemId));
+					mutate(
+						(key) => Array.isArray(key) && key[0] === 'searchAds',
+					);
+				}
+
+				logger.debug(
+					`[FavoriteButton] Cache invalidated for ${actualItemType} ${actualItemId}`,
+				);
+			}
+
+			// Call onToggle callback if provided
+			onToggle?.(newIsFavorite);
+		} catch (error) {
+			logger.error('[FavoriteButton] Toggle failed:', error);
+		} finally {
+			setIsLoading(false);
+		}
 	};
 
 	// Always show the button, but handle authentication on click

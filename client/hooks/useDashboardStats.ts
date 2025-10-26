@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import useSWR from 'swr';
 import {
 	PropertyService,
 	MyPropertyStatsResponse,
@@ -9,7 +10,7 @@ import { collaborationApi } from '@/lib/api/collaborationApi';
 import searchAdApi from '@/lib/api/searchAdApi';
 import { Collaboration } from '@/types/collaboration';
 import { SearchAd } from '@/types/searchAd';
-import { useFetch } from '@/hooks/useFetch';
+import { swrKeys } from '@/lib/swrKeys';
 
 export interface DashboardKpis {
 	propertiesTotal: number;
@@ -22,35 +23,38 @@ export interface DashboardKpis {
 }
 
 export const useDashboardStats = (currentUserId?: string) => {
-	// Fetch property stats using useFetch
+	// Fetch property stats using SWR
 	const {
 		data: stats,
-		loading: loadingStats,
+		isLoading: loadingStats,
 		error: statsError,
-	} = useFetch<MyPropertyStatsResponse['data']>(
+	} = useSWR<MyPropertyStatsResponse['data']>(
+		swrKeys.properties.stats(currentUserId),
 		() => PropertyService.getMyPropertyStats(),
 		{
-			showErrorToast: false,
-			deps: [currentUserId],
+			revalidateOnFocus: false,
 		},
 	);
 
-	// Fetch collaborations using useFetch
-	const { data: collabsRes, loading: loadingCollabs } = useFetch<{
+	// Fetch collaborations using SWR
+	const { data: collabsRes, isLoading: loadingCollabs } = useSWR<{
 		collaborations: Collaboration[];
-	}>(() => collaborationApi.getUserCollaborations(), {
-		initialData: { collaborations: [] },
-		showErrorToast: false,
-		deps: [currentUserId],
-	});
+	}>(
+		swrKeys.collaborations.list(currentUserId),
+		() => collaborationApi.getUserCollaborations(),
+		{
+			fallbackData: { collaborations: [] },
+			revalidateOnFocus: false,
+		},
+	);
 
-	// Fetch search ads using useFetch
-	const { data: searchAds = [], loading: loadingAds } = useFetch<SearchAd[]>(
+	// Fetch search ads using SWR
+	const { data: searchAds, isLoading: loadingAds } = useSWR<SearchAd[]>(
+		swrKeys.searchAds.myAds(currentUserId),
 		() => searchAdApi.getMySearchAds().catch(() => []),
 		{
-			initialData: [],
-			showErrorToast: false,
-			deps: [currentUserId],
+			fallbackData: [],
+			revalidateOnFocus: false,
 		},
 	);
 
@@ -83,9 +87,9 @@ export const useDashboardStats = (currentUserId?: string) => {
 			requestsPending: pendingRequests,
 			collaborationsTotal: collaborations.length,
 			collaborationsActive: activeCollabs,
-			mySearches: searchAds.length,
+			mySearches: searchAds?.length ?? 0,
 		};
-	}, [stats, collaborations, searchAds.length, currentUserId]);
+	}, [stats, collaborations, searchAds, currentUserId]);
 
 	return { loading, error, stats, collaborations, searchAds, kpis };
 };

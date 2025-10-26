@@ -2,12 +2,11 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useFetch } from '@/hooks/useFetch';
+import { useSearchAd } from '@/hooks/useSearchAds';
 import {
 	useSearchAdForm,
 	type SearchAdFormData,
 } from '@/hooks/useSearchAdForm';
-import searchAdApi from '@/lib/api/searchAdApi';
 import { SearchAdClientInfoForm } from './SearchAdClientInfoForm';
 import {
 	BasicInfoSection,
@@ -27,14 +26,7 @@ interface EditSearchAdFormProps {
 
 export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 	const router = useRouter();
-	const { data: searchAd, loading: isLoadingAd } = useFetch(
-		() => searchAdApi.getSearchAdById(id),
-		{
-			deps: [id],
-			showErrorToast: true,
-			errorMessage: "Impossible de charger l'annonce",
-		},
-	);
+	const { data: searchAd, isLoading: isLoadingAd } = useSearchAd(id);
 
 	const {
 		values,
