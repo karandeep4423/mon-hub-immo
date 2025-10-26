@@ -6,6 +6,7 @@ import { SearchAd } from '@/types/searchAd';
 import { User } from '@/types/auth';
 import { ProposeCollaborationModal } from '../collaboration/ProposeCollaborationModal';
 import { useCollaborationsBySearchAd } from '@/hooks/useCollaborations';
+import { canViewFullAddress } from '@/lib/utils/addressPrivacy';
 import {
 	SearchAdHeader,
 	SearchAdAuthorInfo,
@@ -54,6 +55,13 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 		};
 	}, [collaborations]);
 
+	// Determine if user can view full location details
+	const canViewFullLocation = canViewFullAddress(
+		isOwner,
+		collaborations,
+		currentUser?._id,
+	);
+
 	const handleContact = () => {
 		router.push(
 			`/chat?userId=${searchAd.authorId._id}&searchAdId=${searchAd._id}&type=search-ad-contact`,
@@ -77,7 +85,10 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 				{/* Details Grid */}
 				<div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
 					<PropertyCriteriaCard searchAd={searchAd} />
-					<LocationCard searchAd={searchAd} />
+					<LocationCard
+						searchAd={searchAd}
+						canViewFullLocation={canViewFullLocation}
+					/>
 					<BudgetCard searchAd={searchAd} />
 
 					<PropertyCharacteristicsCard searchAd={searchAd} />

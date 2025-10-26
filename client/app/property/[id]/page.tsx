@@ -14,6 +14,10 @@ import { formatDateShort } from '@/lib/utils/date';
 import { useProperty } from '@/hooks/useProperties';
 import { useCollaborationsByProperty } from '@/hooks/useCollaborations';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
+import {
+	canViewFullAddress,
+	getDisplayAddress,
+} from '@/lib/utils/addressPrivacy';
 
 // Import new detail components
 import {
@@ -191,9 +195,27 @@ function PropertyDetailsPageContent() {
 									{property.title}
 								</p>
 								<p className="text-gray-600">
-									{property.address}, {property.city}{' '}
-									{property.postalCode}
+									{getDisplayAddress(
+										canViewFullAddress(
+											isPropertyOwner || false,
+											propertyCollaborations,
+											user?._id || user?.id,
+										),
+										property.address,
+										property.city,
+										property.postalCode,
+									)}
 								</p>
+								{!canViewFullAddress(
+									isPropertyOwner || false,
+									propertyCollaborations,
+									user?._id || user?.id,
+								) && (
+									<p className="text-xs text-amber-600 mt-1">
+										🔒 Adresse complète visible après
+										collaboration acceptée
+									</p>
+								)}
 							</div>
 
 							{/* Property Type and Transaction */}
