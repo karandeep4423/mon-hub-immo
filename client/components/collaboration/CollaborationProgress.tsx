@@ -1,5 +1,5 @@
 import React from 'react';
-import { StepIndicator } from '../ui/StepIndicator';
+import { StepStatusIndicator } from '../ui/StepStatusIndicator';
 
 interface CollaborationProgressProps {
 	currentStep: 'proposal' | 'contract_signing' | 'active' | 'completed';
@@ -105,7 +105,7 @@ export const CollaborationProgress: React.FC<CollaborationProgressProps> = ({
 
 								{/* Step */}
 								<div className="relative flex items-center justify-center">
-									<StepIndicator
+									<StepStatusIndicator
 										state={
 											stepStatus === 'completed'
 												? 'completed'

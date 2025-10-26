@@ -12,7 +12,7 @@ interface StepIndicatorProps {
 	className?: string;
 }
 
-export const StepIndicator: React.FC<StepIndicatorProps> = ({
+export const StepStatusIndicator: React.FC<StepIndicatorProps> = ({
 	state,
 	icon,
 	size = 'md',

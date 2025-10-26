@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '../ui/Button';
-import { StepIndicator } from '../ui/StepIndicator';
+import { StepStatusIndicator } from '../ui/StepStatusIndicator';
 import { ProgressStatusModal } from './progress-tracking/ProgressStatusModal';
 import {
 	PROGRESS_STEPS_CONFIG,
@@ -105,7 +105,7 @@ export const ProgressTrackingDisplay: React.FC<
 							className="flex items-start space-x-4"
 						>
 							{/* Step indicator */}
-							<StepIndicator
+							<StepStatusIndicator
 								state={stepState}
 								icon={config.icon}
 							/>

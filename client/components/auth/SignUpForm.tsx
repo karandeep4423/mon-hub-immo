@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/Button';
-import { StepIndicator } from '@/components/auth/StepIndicator';
+import { MultiStepProgress } from '@/components/auth/MultiStepProgress';
 import { useSignUpForm } from '@/hooks/useSignUpForm';
 import {
 	BasicInfoStep,
@@ -219,7 +219,10 @@ export const SignUpForm: React.FC = () => {
 
 				{/* Step Indicator */}
 				<div className="bg-gray-50 px-6 py-4">
-					<StepIndicator steps={steps} currentStep={currentStep} />
+					<MultiStepProgress
+						steps={steps}
+						currentStep={currentStep}
+					/>
 				</div>
 
 				{/* Form Container */}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../../ui/Button';
 import { Modal } from '../../ui/Modal';
-import { StepIndicator } from '../../ui/StepIndicator';
+import { StepStatusIndicator } from '../../ui/StepStatusIndicator';
 import {
 	PROGRESS_STEPS_CONFIG,
 	ProgressStep,
@@ -104,7 +104,7 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 										!isDisabled && setSelectedStep(step)
 									}
 								>
-									<StepIndicator
+									<StepStatusIndicator
 										state={stepState}
 										icon={config.icon}
 										size="sm"

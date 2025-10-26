@@ -20,7 +20,7 @@ export { Alert } from './Alert';
 export { ErrorBoundary } from './ErrorBoundary';
 export { GeolocationPrompt } from './GeolocationPrompt';
 export { CheckmarkIcon } from './CheckmarkIcon';
-export { StepIndicator } from './StepIndicator';
+export { StepStatusIndicator } from './StepStatusIndicator';
 export { FavoriteButton } from './FavoriteButton';
 export { StatusBadge, Badge } from './StatusBadge';
 export { EnergyRatingSelector } from './EnergyRatingSelector';

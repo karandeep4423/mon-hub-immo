@@ -12,7 +12,7 @@ interface StepIndicatorProps {
 	currentStep: number;
 }
 
-export const StepIndicator: React.FC<StepIndicatorProps> = ({
+export const MultiStepProgress: React.FC<StepIndicatorProps> = ({
 	steps,
 	currentStep,
 }) => {
