@@ -18,12 +18,14 @@ interface PropertyFormStep1Props {
 			| Property['clientInfo']
 			| undefined,
 	) => void;
+	userType?: 'agent' | 'apporteur' | '';
 }
 
 export const PropertyFormStep1: React.FC<PropertyFormStep1Props> = ({
 	formData,
 	errors,
 	handleInputChange,
+	userType,
 }) => {
 	return (
 		<div className="space-y-6">
@@ -81,19 +83,21 @@ export const PropertyFormStep1: React.FC<PropertyFormStep1Props> = ({
 					required
 				/>
 
-				<NumberInput
-					label="Surface habitable"
-					value={formData.surface}
-					onChange={(value) =>
-						handleInputChange('surface', value || 0)
-					}
-					name="surface"
-					unit="m²"
-					placeholder="100"
-					min={1}
-					max={10000}
-					required
-				/>
+				{formData.propertyType !== 'Terrain' && (
+					<NumberInput
+						label="Surface habitable"
+						value={formData.surface}
+						onChange={(value) =>
+							handleInputChange('surface', value || 0)
+						}
+						name="surface"
+						unit="m²"
+						placeholder="100"
+						min={1}
+						max={10000}
+						required
+					/>
+				)}
 			</div>
 
 			<PropertyTypeSelector
@@ -369,90 +373,95 @@ export const PropertyFormStep1: React.FC<PropertyFormStep1Props> = ({
 				</div>
 			)}
 
-			<div className="border-t pt-6 mt-6">
-				<h4 className="text-md font-semibold mb-4 text-gray-800">
-					💰 Frais d&apos;agence (optionnel)
-				</h4>
-				<p className="text-sm text-gray-600 mb-4">
-					Le prix saisi ci-dessus correspond au{' '}
-					<strong>prix net vendeur</strong>. Les informations
-					ci-dessous servent au calcul interne et à la transparence
-					entre agents.
-				</p>
+			{userType === 'agent' && (
+				<div className="border-t pt-6 mt-6">
+					<h4 className="text-md font-semibold mb-4 text-gray-800">
+						💰 Frais d&apos;agence (optionnel)
+					</h4>
+					<p className="text-sm text-gray-600 mb-4">
+						Le prix saisi ci-dessus correspond au{' '}
+						<strong>prix net vendeur</strong>. Les informations
+						ci-dessous servent au calcul interne et à la
+						transparence entre agents.
+					</p>
 
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<NumberInput
-						label="% frais d'agence"
-						value={formData.agencyFeesPercentage}
-						onChange={(value) => {
-							handleInputChange('agencyFeesPercentage', value);
-							if (value && formData.price) {
-								const feesAmount =
-									(formData.price * value) / 100;
-								const priceWithFees =
-									formData.price + feesAmount;
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<NumberInput
+							label="% frais d'agence"
+							value={formData.agencyFeesPercentage}
+							onChange={(value) => {
 								handleInputChange(
-									'agencyFeesAmount',
-									feesAmount,
+									'agencyFeesPercentage',
+									value,
 								);
-								handleInputChange(
-									'priceIncludingFees',
-									priceWithFees,
-								);
-							}
-						}}
-						name="agencyFeesPercentage"
-						unit="%"
-						placeholder="8"
-						min={0}
-						max={100}
-					/>
+								if (value && formData.price) {
+									const feesAmount =
+										(formData.price * value) / 100;
+									const priceWithFees =
+										formData.price + feesAmount;
+									handleInputChange(
+										'agencyFeesAmount',
+										feesAmount,
+									);
+									handleInputChange(
+										'priceIncludingFees',
+										priceWithFees,
+									);
+								}
+							}}
+							name="agencyFeesPercentage"
+							unit="%"
+							placeholder="8"
+							min={0}
+							max={100}
+						/>
 
-					<div>
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-2">
+								Frais d&apos;agence (montant)
+							</label>
+							<div className="relative">
+								<input
+									type="text"
+									value={
+										formData.agencyFeesAmount
+											? `${Math.round(formData.agencyFeesAmount).toLocaleString()} €`
+											: ''
+									}
+									disabled
+									className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
+									placeholder="Calculé automatiquement"
+								/>
+							</div>
+							<p className="text-xs text-gray-500 mt-1">
+								Calculé automatiquement
+							</p>
+						</div>
+					</div>
+
+					<div className="mt-4">
 						<label className="block text-sm font-medium text-gray-700 mb-2">
-							Frais d&apos;agence (montant)
+							Prix FAI (Frais d&apos;Acquéreur Inclus)
 						</label>
 						<div className="relative">
 							<input
 								type="text"
 								value={
-									formData.agencyFeesAmount
-										? `${Math.round(formData.agencyFeesAmount).toLocaleString()} €`
+									formData.priceIncludingFees
+										? `${Math.round(formData.priceIncludingFees).toLocaleString()} €`
 										: ''
 								}
 								disabled
 								className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
-								placeholder="Calculé automatiquement"
+								placeholder="Prix net vendeur + Frais d'agence"
 							/>
 						</div>
 						<p className="text-xs text-gray-500 mt-1">
-							Calculé automatiquement
+							Prix net vendeur + Frais d&apos;agence
 						</p>
 					</div>
 				</div>
-
-				<div className="mt-4">
-					<label className="block text-sm font-medium text-gray-700 mb-2">
-						Prix FAI (Frais d&apos;Acquéreur Inclus)
-					</label>
-					<div className="relative">
-						<input
-							type="text"
-							value={
-								formData.priceIncludingFees
-									? `${Math.round(formData.priceIncludingFees).toLocaleString()} €`
-									: ''
-							}
-							disabled
-							className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
-							placeholder="Prix net vendeur + Frais d'agence"
-						/>
-					</div>
-					<p className="text-xs text-gray-500 mt-1">
-						Prix net vendeur + Frais d&apos;agence
-					</p>
-				</div>
-			</div>
+			)}
 		</div>
 	);
 };

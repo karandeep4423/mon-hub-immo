@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { ImageLightbox } from '@/components/ui/ImageLightbox';
 import { ProposeCollaborationModal } from '@/components/collaboration/ProposeCollaborationModal';
-import { ProfileAvatar } from '@/components/ui';
+import { ProfileAvatar, PriceBreakdown } from '@/components/ui';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { useAuth } from '@/hooks/useAuth';
 // import { type Property } from '@/lib/api/propertyApi';
@@ -229,6 +229,15 @@ function PropertyDetailsPageContent() {
 									</span>
 								</div>
 							</div>
+
+							{/* Price Breakdown - Agency Fees */}
+							<PriceBreakdown
+								netPrice={property.price}
+								agencyFeesPercentage={
+									property.agencyFeesPercentage
+								}
+								className="mb-6"
+							/>
 
 							{/* Additional Details */}
 							<div className="mb-6 space-y-3">

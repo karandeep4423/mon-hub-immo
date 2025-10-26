@@ -276,6 +276,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({
 						formData={formData}
 						errors={errors}
 						handleInputChange={handleInputChange}
+						userType={user?.userType}
 					/>
 				)}
 				{currentStep === 2 && (

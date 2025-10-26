@@ -44,3 +44,4 @@ export { CityAutocomplete } from './CityAutocomplete';
 export { MultiCityAutocomplete } from './MultiCityAutocomplete';
 export { AddressAutocomplete } from './AddressAutocomplete';
 export { LocationSearchWithRadius } from './LocationSearchWithRadius';
+export { PriceBreakdown } from './PriceBreakdown';
