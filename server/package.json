@@ -9,7 +9,6 @@
 		"test": "jest --runInBand",
 		"build": "tsc",
 		"lint": "eslint .",
-		"prepare": "echo \"skipping husky (no .git)\"",
 		"migrate:progress-steps": "ts-node src/scripts/migrateProgressSteps.ts"
 	},
 	"lint-staged": {
