@@ -92,7 +92,8 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 		if (!isOpen) {
 			resetForm();
 		}
-	}, [isOpen, resetForm]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isOpen]);
 
 	const getMinDate = () => {
 		const tomorrow = new Date();

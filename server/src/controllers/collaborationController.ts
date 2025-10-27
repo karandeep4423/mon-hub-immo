@@ -898,13 +898,14 @@ export const completeCollaboration = async (
 			createdAt: new Date(),
 		});
 
+		// Save the collaboration to persist changes
+		await collaboration.save();
+
 		res.status(200).json({
 			success: true,
 			message: 'Collaboration completed successfully',
 			collaboration,
-		});
-
-		// Notify the other party about completion
+		}); // Notify the other party about completion
 		const completeRecipientId = isOwner
 			? collaboration.collaboratorId
 			: collaboration.postOwnerId;
