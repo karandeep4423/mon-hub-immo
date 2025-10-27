@@ -1,6 +1,7 @@
 import { Input } from '@/components/ui/Input';
 import { FileUpload } from '@/components/ui/FileUpload';
-import { AUTH_TEXT } from '@/lib/constants/text';
+import { Features } from '@/lib/constants';
+// Migrated: Features.Auth.AUTH_UI_TEXT;
 
 interface AgentProfessionalInfoStepProps {
 	agentType: string;
@@ -86,7 +87,7 @@ export const AgentProfessionalInfoStep: React.FC<
 						value={tCard}
 						onChange={onChange}
 						error={errors.tCard}
-						placeholder="Numéro de carte T"
+						placeholder={Features.Auth.AUTH_PLACEHOLDERS.CARTE_T}
 					/>
 					<Input
 						label="Numéro SIREN"
@@ -118,16 +119,16 @@ export const AgentProfessionalInfoStep: React.FC<
 						value={sirenNumber}
 						onChange={onChange}
 						error={errors.sirenNumber}
-						placeholder="Numéro SIREN"
+						placeholder={Features.Auth.AUTH_PLACEHOLDERS.SIREN}
 					/>
 					<Input
-						label={AUTH_TEXT.rsacNumber}
+						label={Features.Auth.AUTH_UI_TEXT.rsacNumber}
 						type="text"
 						name="rsacNumber"
 						value={rsacNumber}
 						onChange={onChange}
 						error={errors.rsacNumber}
-						placeholder="Numéro RSAC"
+						placeholder={Features.Auth.AUTH_PLACEHOLDERS.RSAC}
 					/>
 					<FileUpload
 						label="Carte d'identité"
@@ -150,7 +151,9 @@ export const AgentProfessionalInfoStep: React.FC<
 						value={collaboratorCertificate}
 						onChange={onChange}
 						error={errors.collaboratorCertificate}
-						placeholder="Référence du certificat"
+						placeholder={
+							Features.Auth.AUTH_PLACEHOLDERS.CERTIFICATE_REF
+						}
 					/>
 					<FileUpload
 						label="Carte d'identité"

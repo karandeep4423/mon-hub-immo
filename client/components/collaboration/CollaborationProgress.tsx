@@ -1,5 +1,6 @@
 import React from 'react';
 import { StepStatusIndicator } from '../ui/StepStatusIndicator';
+import { Features } from '@/lib/constants';
 
 interface CollaborationProgressProps {
 	currentStep: 'proposal' | 'contract_signing' | 'active' | 'completed';
@@ -44,8 +45,15 @@ export const CollaborationProgress: React.FC<CollaborationProgressProps> = ({
 			(step) => step.key === currentStep,
 		);
 
-		if (status === 'rejected' || status === 'cancelled') {
-			return index === 0 ? 'completed' : 'inactive';
+		if (
+			status ===
+				Features.Collaboration.COLLABORATION_STATUS_VALUES.REJECTED ||
+			status ===
+				Features.Collaboration.COLLABORATION_STATUS_VALUES.CANCELLED
+		) {
+			return index === 0
+				? Features.Collaboration.STEP_STATUS_VALUES.COMPLETED
+				: 'inactive';
 		}
 
 		if (index < currentIndex) return 'completed';

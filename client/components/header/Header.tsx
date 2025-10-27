@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { ProfileAvatar } from '../ui/ProfileAvatar';
 import NotificationBell from '../notifications/NotificationBell';
+import { Features } from '@/lib/constants';
 
 export default function Header() {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -53,13 +54,13 @@ export default function Header() {
 							) : (
 								<>
 									<Link
-										href="/auth/signup"
+										href={Features.Auth.AUTH_ROUTES.SIGNUP}
 										className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 text-sm hover:bg-gray-200"
 									>
 										Nous rejoindre
 									</Link>
 									<Link
-										href="/auth/login"
+										href={Features.Auth.AUTH_ROUTES.LOGIN}
 										className="px-4 py-2 rounded-md bg-[#6AD1E3] text-white text-sm hover:bg-[#59c4d8]"
 									>
 										Se connecter
@@ -74,7 +75,7 @@ export default function Header() {
 								<NotificationBell />
 							) : (
 								<Link
-									href="/auth/login"
+									href={Features.Auth.AUTH_ROUTES.LOGIN}
 									className="px-3 py-1.5 rounded-md bg-[#6AD1E3] text-white text-xs hover:bg-[#59c4d8]"
 								>
 									Se connecter
@@ -145,14 +146,14 @@ export default function Header() {
 						) : (
 							<div className="grid grid-cols-2 gap-2">
 								<Link
-									href="/auth/signup"
+									href={Features.Auth.AUTH_ROUTES.SIGNUP}
 									className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 text-sm text-center hover:bg-gray-200"
 									onClick={() => setIsMobileMenuOpen(false)}
 								>
 									Nous rejoindre
 								</Link>
 								<Link
-									href="/auth/login"
+									href={Features.Auth.AUTH_ROUTES.LOGIN}
 									className="px-4 py-2 rounded-md bg-[#6AD1E3] text-white text-sm text-center hover:bg-[#59c4d8]"
 									onClick={() => setIsMobileMenuOpen(false)}
 								>

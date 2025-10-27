@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, StatusBadge } from '@/components/ui';
 import { Property } from '@/lib/api/propertyApi';
 import { getImageUrl } from '@/lib/utils/imageUtils';
-import { getBadgeConfig } from '@/lib/constants/badges';
+import { Features, Components } from '@/lib/constants';
 
 interface PropertyListItemProps {
 	property: Property;
@@ -38,7 +38,9 @@ export const PropertyListItem: React.FC<PropertyListItemProps> = ({
 									property.badges.length > 0 &&
 									property.badges.map((badgeValue) => {
 										const config =
-											getBadgeConfig(badgeValue);
+											Features.Properties.getBadgeConfig(
+												badgeValue,
+											);
 										if (!config) return null;
 
 										return (
@@ -99,7 +101,7 @@ export const PropertyListItem: React.FC<PropertyListItemProps> = ({
 								size="sm"
 								onClick={() => onEdit(property)}
 							>
-								Modifier
+								{Components.UI.BUTTON_TEXT.edit}
 							</Button>
 							<Button
 								variant="outline"
@@ -107,7 +109,7 @@ export const PropertyListItem: React.FC<PropertyListItemProps> = ({
 								onClick={() => onDelete(property._id)}
 								className="text-red-600 border-red-300 hover:bg-red-50"
 							>
-								Supprimer
+								{Components.UI.BUTTON_TEXT.delete}
 							</Button>
 						</div>
 					</div>

@@ -6,5 +6,7 @@ export const OverallStatusBadge: React.FC<OverallStatusBadgeProps> = ({
 	status,
 	size = 'md',
 }) => {
-	return <StatusBadge status={status} size={size} />;
+	return (
+		<StatusBadge entityType="collaboration" status={status} size={size} />
+	);
 };

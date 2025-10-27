@@ -7,7 +7,7 @@ import {
 	ProgressStep,
 } from './types';
 import { StepValidationModal } from './StepValidationModal';
-import { STEP_ORDER } from '../../../lib/constants/stepOrder';
+import { Features } from '@/lib/constants';
 
 interface ExtendedProgressTrackingProps extends ProgressTrackingProps {
 	isOwner?: boolean;
@@ -80,7 +80,7 @@ export const ProgressTracker: React.FC<ExtendedProgressTrackingProps> = ({
 
 			{/* Steps display */}
 			<div className="space-y-8">
-				{STEP_ORDER.map((stepId) => {
+				{Features.Collaboration.STEP_ORDER.map((stepId) => {
 					const stepData = steps.find((step) => step.id === stepId);
 					const config = PROGRESS_STEPS_CONFIG[stepId];
 

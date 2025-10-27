@@ -4,6 +4,7 @@ import React from 'react';
 import { Input } from '@/components/ui/Input';
 import { NumberInput, Select, PropertyTypeSelector } from '@/components/ui';
 import { PropertyFormData, Property } from '@/lib/api/propertyApi';
+import { Features } from '@/lib/constants';
 
 interface PropertyFormStep1Props {
 	formData: PropertyFormData;

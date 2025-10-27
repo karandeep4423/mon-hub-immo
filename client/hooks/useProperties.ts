@@ -13,6 +13,7 @@ import { swrKeys } from '@/lib/swrKeys';
 import { toast } from 'react-toastify';
 import { handleApiError } from '@/lib/utils/errorHandler';
 import { logger } from '@/lib/utils/logger';
+import { Features } from '@/lib/constants';
 
 // ============ QUERIES ============
 
@@ -115,7 +116,9 @@ export function usePropertyMutations(userId?: string) {
 				galleryImageFiles,
 			);
 
-			toast.success('Bien créé avec succès');
+			toast.success(
+				Features.Properties.PROPERTY_TOAST_MESSAGES.CREATE_SUCCESS,
+			);
 			invalidatePropertyCaches();
 
 			logger.info('[useProperties] Property created:', result._id);
@@ -153,7 +156,9 @@ export function usePropertyMutations(userId?: string) {
 				existingGalleryImages,
 			);
 
-			toast.success('Bien mis à jour avec succès');
+			toast.success(
+				Features.Properties.PROPERTY_TOAST_MESSAGES.UPDATE_SUCCESS,
+			);
 			invalidatePropertyCaches();
 
 			logger.info('[useProperties] Property updated:', propertyId);
@@ -177,7 +182,9 @@ export function usePropertyMutations(userId?: string) {
 		try {
 			await PropertyService.deleteProperty(propertyId);
 
-			toast.success('Bien supprimé avec succès');
+			toast.success(
+				Features.Properties.PROPERTY_TOAST_MESSAGES.DELETE_SUCCESS,
+			);
 			invalidatePropertyCaches();
 
 			logger.info('[useProperties] Property deleted:', propertyId);

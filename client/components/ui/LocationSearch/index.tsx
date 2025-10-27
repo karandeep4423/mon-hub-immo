@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { searchCities } from '@/lib/utils/cityPostalCodeData';
 import { useLocationHistory } from '@/hooks/useLocationHistory';
+import { Components } from '@/lib/constants';
 import type {
 	LocationItem,
 	LocationSearchProps,
@@ -334,7 +335,10 @@ const LocationSearchBase: React.FC<
 									handleInputChange(e.target.value)
 								}
 								onFocus={handleInputFocus}
-								placeholder="Rechercher par ville ou code postal"
+								placeholder={
+									Components.UI.FORM_PLACEHOLDERS
+										.LOCATION_SEARCH
+								}
 								className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand"
 							/>
 						</div>

@@ -8,6 +8,7 @@ import { Input } from '../ui/Input';
 import { authService } from '@/lib/api/authApi';
 import { forgotPasswordSchema } from '@/lib/validation';
 import { useForm } from '@/hooks/useForm';
+import { Features } from '@/lib/constants';
 
 interface ForgotPasswordFormData extends Record<string, unknown> {
 	email: string;
@@ -88,7 +89,9 @@ export const ForgotPasswordForm: React.FC = () => {
 
 							<button
 								type="button"
-								onClick={() => router.push('/auth/login')}
+								onClick={() =>
+									router.push(Features.Auth.AUTH_ROUTES.LOGIN)
+								}
 								className="text-cyan-600 hover:text-cyan-500 text-sm font-medium"
 							>
 								Retour à la connexion
@@ -135,7 +138,9 @@ export const ForgotPasswordForm: React.FC = () => {
 								value={values.email}
 								onChange={handleInputChange}
 								error={errors.email}
-								placeholder="Votre adresse email"
+								placeholder={
+									Features.Auth.AUTH_PLACEHOLDERS.YOUR_EMAIL
+								}
 								required
 								className="text-center"
 							/>
@@ -174,7 +179,9 @@ export const ForgotPasswordForm: React.FC = () => {
 					<div className="text-center mt-8 sm:mt-10 pb-8">
 						<button
 							type="button"
-							onClick={() => router.push('/auth/login')}
+							onClick={() =>
+								router.push(Features.Auth.AUTH_ROUTES.LOGIN)
+							}
 							className="text-cyan-600 hover:text-cyan-500 text-sm font-medium transition-colors"
 						>
 							Retour à la connexion

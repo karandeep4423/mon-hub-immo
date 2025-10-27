@@ -1,4 +1,5 @@
 import { FormSection } from './FormSection';
+import { Features } from '@/lib/constants';
 
 interface BasicInfoSectionProps {
 	title: string;
@@ -14,7 +15,10 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
 	onDescriptionChange,
 }) => {
 	return (
-		<FormSection title="Informations générales" emoji="📋">
+		<FormSection
+			title={Features.SearchAds.SEARCH_AD_FORM_SECTIONS.BASIC_INFO}
+			emoji="📋"
+		>
 			<div className="space-y-4">
 				<div>
 					<label

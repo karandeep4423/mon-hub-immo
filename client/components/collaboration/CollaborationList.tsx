@@ -11,7 +11,7 @@ import {
 	useMyCollaborations,
 	useCollaborationMutations,
 } from '@/hooks/useCollaborations';
-import { TOAST_MESSAGES } from '@/lib/constants';
+import { Features } from '@/lib/constants';
 
 interface CollaborationListProps {
 	currentUserId: string;
@@ -76,18 +76,21 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 		if (res.success) {
 			toast.success(
 				confirmMode === 'cancel'
-					? TOAST_MESSAGES.COLLABORATION.CANCEL_SUCCESS
-					: TOAST_MESSAGES.COLLABORATION.COMPLETE_SUCCESS,
+					? Features.Collaboration.COLLABORATION_TOAST_MESSAGES
+							.CANCEL_SUCCESS
+					: Features.Collaboration.COLLABORATION_TOAST_MESSAGES
+							.COMPLETE_SUCCESS,
 			);
 			setConfirmOpen(false);
 			setTargetCollab(null);
 			await fetchCollaborations();
 		} else {
-			toast.error(TOAST_MESSAGES.COLLABORATION.STATUS_UPDATE_ERROR);
+			toast.error(
+				Features.Collaboration.COLLABORATION_TOAST_MESSAGES
+					.STATUS_UPDATE_ERROR,
+			);
 		}
-	};
-
-	// Filter and search collaborations
+	}; // Filter and search collaborations
 	const filteredCollaborations = useMemo(() => {
 		return collaborations.filter((collaboration) => {
 			// Skip collaborations with missing participant data
@@ -160,16 +163,24 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 
 		const total = validCollaborations.length;
 		const pending = validCollaborations.filter(
-			(c) => c.status === 'pending',
+			(c) =>
+				c.status ===
+				Features.Collaboration.COLLABORATION_STATUS_VALUES.PENDING,
 		).length;
 		const accepted = validCollaborations.filter(
-			(c) => c.status === 'accepted',
+			(c) =>
+				c.status ===
+				Features.Collaboration.COLLABORATION_STATUS_VALUES.ACCEPTED,
 		).length;
 		const active = validCollaborations.filter(
-			(c) => c.status === 'active',
+			(c) =>
+				c.status ===
+				Features.Collaboration.COLLABORATION_STATUS_VALUES.ACTIVE,
 		).length;
 		const completed = validCollaborations.filter(
-			(c) => c.status === 'completed',
+			(c) =>
+				c.status ===
+				Features.Collaboration.COLLABORATION_STATUS_VALUES.COMPLETED,
 		).length;
 		const asOwner = validCollaborations.filter(
 			(c) => c.postOwnerId?._id === currentUserId,
@@ -240,20 +251,36 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 				isOpen={confirmOpen}
 				title={
 					confirmMode === 'cancel'
-						? 'Annuler la collaboration ?'
-						: 'Terminer la collaboration ?'
+						? Features.Collaboration
+								.COLLABORATION_CONFIRMATION_DIALOGS.CANCEL_TITLE
+						: Features.Collaboration
+								.COLLABORATION_CONFIRMATION_DIALOGS
+								.COMPLETE_TITLE
 				}
 				description={
 					confirmMode === 'cancel'
-						? 'Cette action annulera la collaboration en attente. Voulez-vous continuer ?'
-						: 'Cette action marquera la collaboration comme terminée. Voulez-vous continuer ?'
+						? Features.Collaboration
+								.COLLABORATION_CONFIRMATION_DIALOGS
+								.CANCEL_PENDING_DESCRIPTION
+						: Features.Collaboration
+								.COLLABORATION_CONFIRMATION_DIALOGS
+								.COMPLETE_DESCRIPTION
 				}
 				onCancel={() => setConfirmOpen(false)}
 				onConfirm={handleConfirmAction}
 				confirmText={
-					confirmMode === 'cancel' ? 'Oui, annuler' : 'Oui, terminer'
+					confirmMode === 'cancel'
+						? Features.Collaboration
+								.COLLABORATION_CONFIRMATION_DIALOGS
+								.CANCEL_CONFIRM
+						: Features.Collaboration
+								.COLLABORATION_CONFIRMATION_DIALOGS
+								.COMPLETE_CONFIRM
 				}
-				cancelText="Non, revenir"
+				cancelText={
+					Features.Collaboration.COLLABORATION_CONFIRMATION_DIALOGS
+						.CANCEL_CANCEL
+				}
 				variant={confirmMode === 'cancel' ? 'warning' : 'danger'}
 				loading={confirmLoading}
 			/>
@@ -432,9 +459,17 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 							currentUserId={currentUserId}
 							onClose={onClose}
 							onCancel={() => {
-								if (collaboration.status === 'pending') {
+								if (
+									collaboration.status ===
+									Features.Collaboration
+										.COLLABORATION_STATUS_VALUES.PENDING
+								) {
 									openConfirm('cancel', collaboration);
-								} else if (collaboration.status === 'active') {
+								} else if (
+									collaboration.status ===
+									Features.Collaboration
+										.COLLABORATION_STATUS_VALUES.ACTIVE
+								) {
 									openConfirm('terminate', collaboration);
 								}
 							}}

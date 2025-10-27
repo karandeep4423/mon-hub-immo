@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/lib/api/authApi';
 import { useSearchAds } from '@/hooks/useSearchAds';
 import { logger } from '@/lib/utils/logger';
+import { Features } from '@/lib/constants';
 
 export default function SearchAdsPage() {
 	const { user } = useAuth();
@@ -67,7 +68,9 @@ export default function SearchAdsPage() {
 			: searchAds;
 
 	if (loading) {
-		return <PageLoader message="Chargement des recherches..." />;
+		return (
+			<PageLoader message={Features.SearchAds.SEARCH_AD_LOADING.PAGE} />
+		);
 	}
 
 	return (

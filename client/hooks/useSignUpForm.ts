@@ -16,6 +16,7 @@ import { authService } from '@/lib/api/authApi';
 import { signUpSchema, type SignUpFormData } from '@/lib/validation';
 import { ZodError } from 'zod';
 import { useMutation } from '@/hooks/useMutation';
+import { Features } from '@/lib/constants';
 import {
 	useFormValidation,
 	commonValidationRules,
@@ -107,7 +108,7 @@ export const useSignUpForm = () => {
 		{
 			successMessage: 'Inscription réussie! Vérifiez votre email.',
 			onSuccess: () => {
-				router.push('/auth/verify-email');
+				router.push(Features.Auth.AUTH_ROUTES.VERIFY_EMAIL);
 			},
 			onError: (error) => {
 				if (error instanceof ZodError && error.errors) {
@@ -217,7 +218,7 @@ export const useSignUpForm = () => {
 		if (validateStep(currentStep)) {
 			setCurrentStep((prev) => Math.min(prev + 1, 5));
 		} else {
-			toast.error('Veuillez corriger les erreurs avant de continuer');
+			toast.error(Features.Auth.AUTH_TOAST_MESSAGES.VALIDATION_ERROR);
 		}
 	};
 

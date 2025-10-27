@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useMemo, useCallback } from 'react';
+import { Features } from '@/lib/constants';
 import { useChat } from '../../hooks/useChat';
 import { useAuth } from '../../hooks/useAuth';
 import { useSocket } from '../../context/SocketContext';
@@ -25,9 +26,6 @@ import {
 } from './ui';
 import TypingIndicator from './TypingIndicator';
 import { logger } from '@/lib/utils/logger';
-import { SOCKET_EVENTS } from '@/lib/constants/socket';
-import { DEBOUNCE_SCROLL_MS } from '@/lib/constants';
-// import { CHAT_TEXT } from '@/lib/constants/text';
 
 // ============================================================================
 // HELPER COMPONENTS
@@ -186,7 +184,7 @@ const ChatMessages: React.FC = () => {
 
 	// Debounced version of scroll handler to prevent excessive calls
 	const debouncedHandleScroll = React.useMemo(
-		() => debounce(handleScroll, DEBOUNCE_SCROLL_MS),
+		() => debounce(handleScroll, Features.Common.DEBOUNCE.SCROLL),
 		[handleScroll],
 	);
 
@@ -297,10 +295,16 @@ const ChatMessages: React.FC = () => {
 			// You can update the UI to show read receipts here
 		};
 
-		socket.on(SOCKET_EVENTS.MESSAGES_READ, handleMessagesRead);
+		socket.on(
+			Features.Chat.SOCKET_EVENTS.MESSAGES_READ,
+			handleMessagesRead,
+		);
 
 		return () => {
-			socket.off(SOCKET_EVENTS.MESSAGES_READ, handleMessagesRead);
+			socket.off(
+				Features.Chat.SOCKET_EVENTS.MESSAGES_READ,
+				handleMessagesRead,
+			);
 		};
 	}, [socket]);
 

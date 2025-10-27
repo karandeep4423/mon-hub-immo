@@ -4,6 +4,7 @@ import { authService } from '@/lib/api/authApi';
 import { logger } from '@/lib/utils/logger';
 import { TokenManager } from '@/lib/utils/tokenManager';
 import { useFavoritesStore } from './favoritesStore';
+import { Features } from '@/lib/constants';
 
 interface AuthState {
 	user: User | null;
@@ -49,7 +50,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 		set({ user: null, loading: false });
 		// Reset favorites when user logs out
 		useFavoritesStore.getState().reset();
-		window.location.href = '/auth/login';
+		window.location.href = Features.Auth.AUTH_ROUTES.LOGIN;
 	},
 
 	updateUser: (userData: User) => {

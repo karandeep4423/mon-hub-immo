@@ -5,9 +5,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '../ui/Button';
 import { PropertyManager } from '../property/PropertyManager';
 import { CollaborationList } from '../collaboration/CollaborationList';
-import { DASHBOARD_TEXT } from '@/lib/constants/text';
+import { Features } from '@/lib/constants';
+// Migrated: Features.Dashboard.DASHBOARD_UI_TEXT;
 import { MySearches } from '../search-ads/MySearches';
-import { ProfileUpdateModal } from '../dashboard-agent';
+import { ProfileUpdateModal } from '../dashboard-agent/ProfileUpdateModal';
 import { User } from '@/types/auth';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { formatNumber } from '@/lib/utils/format';
@@ -35,10 +36,16 @@ const Home = () => {
 			return { pending: 0, confirmed: 0, total: 0 };
 		}
 		return {
-			pending: appointments.filter((apt) => apt.status === 'pending')
-				.length,
-			confirmed: appointments.filter((apt) => apt.status === 'confirmed')
-				.length,
+			pending: appointments.filter(
+				(apt) =>
+					apt.status ===
+					Features.Appointments.APPOINTMENT_STATUS_VALUES.PENDING,
+			).length,
+			confirmed: appointments.filter(
+				(apt) =>
+					apt.status ===
+					Features.Appointments.APPOINTMENT_STATUS_VALUES.CONFIRMED,
+			).length,
 			total: appointments.length,
 		};
 	}, [appointments]);
@@ -372,7 +379,10 @@ const Home = () => {
 						<div className="flex items-center justify-between h-16">
 							<div className="flex items-center space-x-8">
 								<h1 className="text-xl font-semibold text-gray-900">
-									{DASHBOARD_TEXT.apporteurDashboard}
+									{
+										Features.Dashboard.DASHBOARD_UI_TEXT
+											.apporteurDashboard
+									}
 								</h1>
 								<nav className="flex space-x-6">
 									<button
@@ -383,7 +393,10 @@ const Home = () => {
 												: 'text-gray-600 hover:text-gray-900'
 										}`}
 									>
-										{DASHBOARD_TEXT.overview}
+										{
+											Features.Dashboard.DASHBOARD_UI_TEXT
+												.overview
+										}
 									</button>
 									<button
 										onClick={() =>
@@ -395,7 +408,10 @@ const Home = () => {
 												: 'text-gray-600 hover:text-gray-900'
 										}`}
 									>
-										{DASHBOARD_TEXT.myProperties}
+										{
+											Features.Dashboard.DASHBOARD_UI_TEXT
+												.myProperties
+										}
 									</button>
 									<button
 										onClick={() =>
@@ -407,7 +423,10 @@ const Home = () => {
 												: 'text-gray-600 hover:text-gray-900'
 										}`}
 									>
-										{DASHBOARD_TEXT.myCollaborations}
+										{
+											Features.Dashboard.DASHBOARD_UI_TEXT
+												.myCollaborations
+										}
 									</button>
 									<button
 										onClick={() => setActiveTab('searches')}

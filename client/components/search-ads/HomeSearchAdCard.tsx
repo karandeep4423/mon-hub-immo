@@ -7,7 +7,7 @@ import { SearchAd } from '@/types/searchAd';
 import { ProfileAvatar, FavoriteButton } from '../ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useCollaborationsBySearchAd } from '@/hooks/useCollaborations';
-import { getSearchAdBadgeConfig } from '@/lib/constants/badges';
+import { Features, Components } from '@/lib/constants';
 import { formatDateShort } from '@/lib/utils/date';
 
 interface HomeSearchAdCardProps {
@@ -51,7 +51,7 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 				<div className="relative h-48 overflow-hidden">
 					<Image
 						src="/recherches-des-biens.png"
-						alt="Recherche de bien"
+						alt={Components.UI.IMAGE_ALT_TEXT.searchAdImage}
 						fill
 						className="object-cover"
 					/>
@@ -61,7 +61,9 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 							searchAd.badges.length > 0 &&
 							searchAd.badges.slice(0, 4).map((badgeValue) => {
 								const config =
-									getSearchAdBadgeConfig(badgeValue);
+									Features.Properties.getSearchAdBadgeConfig(
+										badgeValue,
+									);
 								if (!config) return null;
 
 								return (
@@ -100,11 +102,10 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 						{collaborationStatus && (
 							<span className="bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded">
 								ℹ️ En collaboration (
-								{collaborationStatus === 'pending'
-									? 'en attente'
-									: collaborationStatus === 'accepted'
-										? 'acceptée'
-										: 'active'}
+								{Features.Collaboration
+									.COLLABORATION_STATUS_CONFIG[
+									collaborationStatus
+								]?.label || collaborationStatus}
 								)
 							</span>
 						)}

@@ -1,5 +1,6 @@
 import { LuHandshake, LuMessageCircle } from 'react-icons/lu';
-import { LANDING_TEXT } from '@/lib/constants/text';
+import { Features } from '@/lib/constants';
+// Migrated: Features.Landing.LANDING_UI_TEXT;
 
 interface HeroSectionProps {
 	onScrollToForm: () => void;
@@ -9,15 +10,19 @@ export const HeroSection = ({ onScrollToForm }: HeroSectionProps) => {
 	return (
 		<section className="min-h-screen flex flex-col justify-center items-center text-center px-6 bg-brand text-white">
 			<p className="text-lg md:text-xl font-medium mb-2 max-w-2xl">
-				{LANDING_TEXT.heroIntro}
+				{Features.Landing.LANDING_UI_TEXT.heroIntro}
 				<br />
-				<span className="font-bold">{LANDING_TEXT.heroIntroMain}</span>
+				<span className="font-bold">
+					{Features.Landing.LANDING_UI_TEXT.heroIntroMain}
+				</span>
 			</p>
 
 			<h1 className="text-3xl md:text-6xl font-bold mb-4">
-				{LANDING_TEXT.heroMainTitle}
+				{Features.Landing.LANDING_UI_TEXT.heroMainTitle}
 				<br />
-				<span className="text-white">{LANDING_TEXT.heroBrandName}</span>
+				<span className="text-white">
+					{Features.Landing.LANDING_UI_TEXT.heroBrandName}
+				</span>
 			</h1>
 
 			{/* Feature items with icons */}
@@ -25,14 +30,14 @@ export const HeroSection = ({ onScrollToForm }: HeroSectionProps) => {
 				<div className="flex items-center justify-center gap-4">
 					<LuMessageCircle className="w-12 h-12 text-white " />
 					<p className="text-lg md:text-xl font-medium text-left">
-						{LANDING_TEXT.networkTitle}
+						{Features.Landing.LANDING_UI_TEXT.networkTitle}
 					</p>
 				</div>
 
 				<div className="flex mr-3 items-center justify-center gap-4">
 					<LuHandshake className="w-12 h-12 text-white" />
 					<p className="text-lg md:text-xl font-medium text-left">
-						{LANDING_TEXT.sharingTitle}
+						{Features.Landing.LANDING_UI_TEXT.sharingTitle}
 					</p>
 				</div>
 			</div>
@@ -41,7 +46,7 @@ export const HeroSection = ({ onScrollToForm }: HeroSectionProps) => {
 				onClick={onScrollToForm}
 				className="bg-white text-gray-900 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors duration-200 shadow-lg"
 			>
-				{LANDING_TEXT.wantToBeInformed}
+				{Features.Landing.LANDING_UI_TEXT.wantToBeInformed}
 			</button>
 		</section>
 	);

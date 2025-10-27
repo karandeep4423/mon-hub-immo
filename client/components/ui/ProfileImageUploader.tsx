@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { api } from '@/lib/api';
 import { logger } from '@/lib/utils/logger';
 import { useMutation } from '@/hooks/useMutation';
+import { UI } from '@/lib/constants/components';
 
 interface ImageFile {
 	file: File;
@@ -108,8 +109,8 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 			onError: (error) => {
 				setUploadError(error.message);
 			},
-			successMessage: 'Image téléchargée avec succès',
-			errorMessage: "Échec du téléchargement de l'image",
+			successMessage: UI.IMAGE_UPLOADER_MESSAGES.uploadSuccess,
+			errorMessage: UI.IMAGE_UPLOADER_MESSAGES.uploadError,
 			context: 'ProfileImageUploader',
 		},
 	);
@@ -145,12 +146,6 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 		}
 	};
 
-	const sizeClasses = {
-		small: 'w-16 h-16',
-		medium: 'w-20 h-20',
-		large: 'w-32 h-32',
-	};
-
 	const handleImageSelection = (images: ImageFile[]) => {
 		setUploadError('');
 
@@ -175,11 +170,11 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 							Current Profile Image:
 						</p>
 						<div
-							className={`${sizeClasses[size]} bg-gray-200 rounded-full overflow-hidden relative mx-auto`}
+							className={`${UI.IMAGE_UPLOADER_SIZE_CLASSES[size]} bg-gray-200 rounded-full overflow-hidden relative mx-auto`}
 						>
 							<Image
 								src={currentImageUrl}
-								alt="Current profile"
+								alt={UI.IMAGE_ALT_TEXT.profileImage}
 								width={
 									size === 'small'
 										? 64

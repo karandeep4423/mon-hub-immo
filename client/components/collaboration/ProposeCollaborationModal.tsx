@@ -8,7 +8,7 @@ import { toast } from 'react-toastify';
 import type { Property } from '@/lib/api/propertyApi';
 import type { SearchAd } from '@/types/searchAd';
 import { useForm } from '@/hooks/useForm';
-import { TOAST_MESSAGES } from '@/lib/constants';
+import { Features } from '@/lib/constants';
 
 type PostData =
 	| {
@@ -135,13 +135,15 @@ export const ProposeCollaborationModal: React.FC<
 
 				const res = await proposeCollaboration(payload);
 				if (!res.success) return;
-				toast.success(TOAST_MESSAGES.COLLABORATION.PROPOSE_SUCCESS);
+				toast.success(
+					Features.Collaboration.COLLABORATION_TOAST_MESSAGES
+						.PROPOSE_SUCCESS,
+				);
 				onSuccess?.();
 				onClose();
 				resetForm();
 			},
 		});
-
 	const renderPostDetails = () => {
 		if (post.type === 'property') {
 			const property = post.data;

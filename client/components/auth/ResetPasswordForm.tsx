@@ -10,6 +10,7 @@ import { authService } from '@/lib/api/authApi';
 import { resetPasswordSchema } from '@/lib/validation';
 import { ResetPasswordData } from '@/types/auth';
 import { useForm } from '@/hooks/useForm';
+import { Features } from '@/lib/constants';
 
 interface ResetPasswordFormData extends Record<string, unknown> {
 	code: string;
@@ -67,11 +68,11 @@ export const ResetPasswordForm: React.FC = () => {
 				if (response.token && response.user) {
 					login(response.token, response.user);
 					setTimeout(() => {
-						router.push('/dashboard');
+						router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
 					}, 2000);
 				} else {
 					setTimeout(() => {
-						router.push('/auth/login');
+						router.push(Features.Auth.AUTH_ROUTES.LOGIN);
 					}, 2000);
 				}
 			} else {
@@ -178,7 +179,10 @@ export const ResetPasswordForm: React.FC = () => {
 									} as React.ChangeEvent<HTMLInputElement>);
 								}}
 								error={errors.code}
-								placeholder="Code à 6 chiffres"
+								placeholder={
+									Features.Auth.AUTH_PLACEHOLDERS
+										.VERIFICATION_CODE
+								}
 								maxLength={6}
 								className="text-center text-xl tracking-[0.5em] font-mono"
 								required
@@ -194,7 +198,9 @@ export const ResetPasswordForm: React.FC = () => {
 								value={values.newPassword}
 								onChange={handleInputChange}
 								error={errors.newPassword}
-								placeholder="Nouveau mot de passe"
+								placeholder={
+									Features.Auth.AUTH_PLACEHOLDERS.NEW_PASSWORD
+								}
 								required
 							/>
 							<p className="text-xs text-gray-500 text-center">
@@ -211,7 +217,10 @@ export const ResetPasswordForm: React.FC = () => {
 								value={values.confirmPassword}
 								onChange={handleInputChange}
 								error={errors.confirmPassword}
-								placeholder="Confirmer le mot de passe"
+								placeholder={
+									Features.Auth.AUTH_PLACEHOLDERS
+										.CONFIRM_PASSWORD
+								}
 								required
 							/>
 							{values.newPassword && values.confirmPassword && (
@@ -289,7 +298,10 @@ export const ResetPasswordForm: React.FC = () => {
 							<button
 								type="button"
 								onClick={() =>
-									router.push('/auth/forgot-password')
+									router.push(
+										Features.Auth.AUTH_ROUTES
+											.FORGOT_PASSWORD,
+									)
 								}
 								className="text-cyan-600 hover:text-cyan-500 text-sm font-medium"
 							>
@@ -300,7 +312,9 @@ export const ResetPasswordForm: React.FC = () => {
 						<div>
 							<button
 								type="button"
-								onClick={() => router.push('/auth/login')}
+								onClick={() =>
+									router.push(Features.Auth.AUTH_ROUTES.LOGIN)
+								}
 								className="text-gray-600 hover:text-gray-500 text-sm"
 							>
 								Retour à la connexion

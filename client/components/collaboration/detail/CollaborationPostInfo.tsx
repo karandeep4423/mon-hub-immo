@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Collaboration } from '@/types/collaboration';
 import { Property } from '@/lib/api/propertyApi';
 import type { SearchAd } from '@/types/searchAd';
+import { Features } from '@/lib/constants';
 
 type PropertyDetails = Partial<Property> & { id?: string };
 
@@ -169,16 +170,24 @@ export const CollaborationPostInfo: React.FC<CollaborationPostInfoProps> = ({
 					<span className="text-sm text-gray-600">Statut:</span>
 					<span
 						className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ml-2 ${
-							collaboration.status === 'active'
+							collaboration.status ===
+							Features.Collaboration.COLLABORATION_STATUS_VALUES
+								.ACTIVE
 								? 'bg-green-100 text-green-800'
-								: collaboration.status === 'pending'
+								: collaboration.status ===
+									  Features.Collaboration
+											.COLLABORATION_STATUS_VALUES.PENDING
 									? 'bg-yellow-100 text-yellow-800'
 									: 'bg-gray-100 text-gray-800'
 						}`}
 					>
-						{collaboration.status === 'active'
+						{collaboration.status ===
+						Features.Collaboration.COLLABORATION_STATUS_VALUES
+							.ACTIVE
 							? 'Active'
-							: collaboration.status === 'pending'
+							: collaboration.status ===
+								  Features.Collaboration
+										.COLLABORATION_STATUS_VALUES.PENDING
 								? 'En attente'
 								: collaboration.status}
 					</span>

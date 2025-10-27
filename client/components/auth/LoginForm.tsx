@@ -1,4 +1,5 @@
 'use client';
+import { Features } from '@/lib/constants';
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-toastify';
@@ -8,7 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/lib/api/authApi';
 import { loginSchema } from '@/lib/validation';
 import { LoginData } from '@/types/auth';
-import { AUTH_TEXT } from '@/lib/constants/text';
+// Migrated: Features.Auth.AUTH_UI_TEXT;
 import Link from 'next/link';
 import { useForm } from '@/hooks/useForm';
 
@@ -37,14 +38,14 @@ export const LoginWithUserType: React.FC = () => {
 					toast.success(response.message);
 
 					if (response.requiresProfileCompletion) {
-						router.push('/auth/complete-profile');
+						router.push(Features.Auth.AUTH_ROUTES.COMPLETE_PROFILE);
 					} else {
-						router.push('/dashboard');
+						router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
 					}
 				} else if (response.requiresVerification) {
 					toast.warning(response.message);
 					router.push(
-						`/auth/verify-email?email=${encodeURIComponent(data.email)}`,
+						`${Features.Auth.AUTH_ROUTES.VERIFY_EMAIL}?email=${encodeURIComponent(data.email)}`,
 					);
 				} else {
 					toast.error(response.message);
@@ -60,8 +61,16 @@ export const LoginWithUserType: React.FC = () => {
 	}, [searchParams]);
 
 	const userTypes = [
-		{ id: 'agent', icon: '👤', title: AUTH_TEXT.agentTitle },
-		{ id: 'apporteur', icon: '🤝', title: AUTH_TEXT.providerTitle },
+		{
+			id: 'agent',
+			icon: '👤',
+			title: Features.Auth.AUTH_UI_TEXT.agentTitle,
+		},
+		{
+			id: 'apporteur',
+			icon: '🤝',
+			title: Features.Auth.AUTH_UI_TEXT.providerTitle,
+		},
 		{ id: 'partenaire', icon: '📋', title: 'Accès Partenaire' },
 	];
 
@@ -390,7 +399,10 @@ export const LoginWithUserType: React.FC = () => {
 										value={values.email}
 										onChange={handleInputChange}
 										error={errors.email}
-										placeholder={AUTH_TEXT.emailPlaceholder}
+										placeholder={
+											Features.Auth.AUTH_UI_TEXT
+												.emailPlaceholder
+										}
 										required
 									/>
 								</div>
@@ -404,7 +416,8 @@ export const LoginWithUserType: React.FC = () => {
 										onChange={handleInputChange}
 										error={errors.password}
 										placeholder={
-											AUTH_TEXT.passwordPlaceholder
+											Features.Auth.AUTH_UI_TEXT
+												.passwordPlaceholder
 										}
 										required
 									/>
@@ -413,9 +426,15 @@ export const LoginWithUserType: React.FC = () => {
 								<div className="flex items-center justify-end">
 									<Link
 										className="text-sm text-brand-600 hover:text-brand-700 font-medium transition-colors"
-										href="/auth/forgot-password"
+										href={
+											Features.Auth.AUTH_ROUTES
+												.FORGOT_PASSWORD
+										}
 									>
-										{AUTH_TEXT.forgotPassword}
+										{
+											Features.Auth.AUTH_UI_TEXT
+												.forgotPassword
+										}
 									</Link>
 								</div>
 
@@ -427,7 +446,7 @@ export const LoginWithUserType: React.FC = () => {
 								>
 									{selectedUserType === 'partenaire'
 										? 'Accès Partenaire'
-										: `${AUTH_TEXT.loginButton} ${selectedType?.title.split(' ')[0]}`}
+										: `${Features.Auth.AUTH_UI_TEXT.loginButton} ${selectedType?.title.split(' ')[0]}`}
 								</Button>
 							</form>
 
@@ -446,15 +465,18 @@ export const LoginWithUserType: React.FC = () => {
 							{/* Sign Up Link */}
 							<div className="text-center">
 								<p className="text-sm text-gray-600">
-									{AUTH_TEXT.noAccount}{' '}
+									{Features.Auth.AUTH_UI_TEXT.noAccount}{' '}
 									<button
 										type="button"
 										onClick={() =>
-											router.push('/auth/signup')
+											router.push(
+												Features.Auth.AUTH_ROUTES
+													.SIGNUP,
+											)
 										}
 										className="text-brand-600 hover:text-brand-700 font-semibold transition-colors"
 									>
-										{AUTH_TEXT.signUpHere}
+										{Features.Auth.AUTH_UI_TEXT.signUpHere}
 									</button>
 								</p>
 							</div>

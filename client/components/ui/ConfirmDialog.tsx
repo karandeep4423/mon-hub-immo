@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal } from './Modal';
 import { Button } from './Button';
+import { UI } from '@/lib/constants/components';
 
 type Variant = 'danger' | 'primary' | 'warning';
 
@@ -22,17 +23,11 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 	description,
 	onConfirm,
 	onCancel,
-	confirmText = 'Confirmer',
-	cancelText = 'Annuler',
+	confirmText = UI.DIALOG_TEXT.confirm,
+	cancelText = UI.DIALOG_TEXT.cancel,
 	variant = 'primary',
 	loading = false,
 }) => {
-	const variantClasses: Record<Variant, string> = {
-		danger: 'bg-red-600 hover:bg-red-700 text-white',
-		primary: 'bg-brand-600 hover:bg-brand-700 text-white',
-		warning: 'bg-yellow-600 hover:bg-yellow-700 text-white',
-	};
-
 	return (
 		<Modal isOpen={isOpen} onClose={onCancel} title={title} size="sm">
 			<div className="space-y-4">
@@ -50,7 +45,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 					<Button
 						onClick={onConfirm}
 						loading={loading}
-						className={variantClasses[variant]}
+						className={UI.DIALOG_VARIANT_CLASSES[variant]}
 					>
 						{confirmText}
 					</Button>

@@ -7,6 +7,7 @@ import { User } from '@/types/auth';
 import { ProposeCollaborationModal } from '../collaboration/ProposeCollaborationModal';
 import { useCollaborationsBySearchAd } from '@/hooks/useCollaborations';
 import { canViewFullAddress } from '@/lib/utils/addressPrivacy';
+import { Features } from '@/lib/constants';
 import {
 	SearchAdHeader,
 	SearchAdAuthorInfo,
@@ -70,7 +71,7 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 
 	const handleCollaborate = () => {
 		if (!currentUser) {
-			router.push('/auth/login');
+			router.push(Features.Auth.AUTH_ROUTES.LOGIN);
 			return;
 		}
 		setShowCollaborationModal(true);

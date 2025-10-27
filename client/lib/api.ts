@@ -2,6 +2,7 @@
 import axios from 'axios';
 import { logger } from './utils/logger';
 import { TokenManager } from './utils/tokenManager';
+import { Features } from './constants';
 
 const API_BASE_URL =
 	process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
@@ -33,7 +34,7 @@ api.interceptors.response.use(
 		if (error.response?.status === 401) {
 			logger.warn('[API] Unauthorized - redirecting to login');
 			TokenManager.remove();
-			window.location.href = '/auth/login';
+			window.location.href = Features.Auth.AUTH_ROUTES.LOGIN;
 		}
 		return Promise.reject(error);
 	},

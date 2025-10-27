@@ -1,4 +1,5 @@
 import { Input } from '@/components/ui/Input';
+import { Features } from '@/lib/constants';
 
 interface BasicInfoStepProps {
 	firstName: string;
@@ -42,7 +43,6 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
 					Commençons par vos informations de base
 				</p>
 			</div>
-
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 				<Input
 					label=""
@@ -51,10 +51,9 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
 					value={firstName}
 					onChange={onChange}
 					error={errors.firstName}
-					placeholder="Prénom *"
+					placeholder={Features.Auth.AUTH_PLACEHOLDERS.FIRST_NAME}
 					required
-				/>
-
+				/>{' '}
 				<Input
 					label=""
 					type="text"
@@ -66,7 +65,6 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
 					required
 				/>
 			</div>
-
 			<Input
 				label=""
 				type="email"
@@ -74,10 +72,9 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
 				value={email}
 				onChange={onChange}
 				error={errors.email}
-				placeholder="E-mail professionnel *"
+				placeholder={Features.Auth.AUTH_PLACEHOLDERS.EMAIL}
 				required
-			/>
-
+			/>{' '}
 			<Input
 				label=""
 				type="tel"

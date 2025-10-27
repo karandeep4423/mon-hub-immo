@@ -1,4 +1,4 @@
-import { PRIORITIES } from '@/lib/constants';
+import { Features } from '@/lib/constants';
 import { FormSection } from './FormSection';
 
 interface PrioritiesSectionProps {
@@ -19,7 +19,10 @@ export const PrioritiesSection: React.FC<PrioritiesSectionProps> = ({
 	onDealBreakersChange,
 }) => {
 	return (
-		<FormSection title="Priorités personnelles" emoji="❤️">
+		<FormSection
+			title={Features.SearchAds.SEARCH_AD_FORM_SECTIONS.PRIORITIES}
+			emoji="❤️"
+		>
 			<div className="space-y-6">
 				{/* Must Haves */}
 				<div>
@@ -27,7 +30,7 @@ export const PrioritiesSection: React.FC<PrioritiesSectionProps> = ({
 						3 critères indispensables :
 					</label>
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-						{PRIORITIES.map((priority) => (
+						{Features.Properties.PRIORITIES.map((priority) => (
 							<label
 								key={priority}
 								className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer min-h-[3rem]"
@@ -65,7 +68,7 @@ export const PrioritiesSection: React.FC<PrioritiesSectionProps> = ({
 						3 critères secondaires :
 					</label>
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-						{PRIORITIES.map((priority) => (
+						{Features.Properties.PRIORITIES.map((priority) => (
 							<label
 								key={priority}
 								className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer min-h-[3rem]"
@@ -103,7 +106,7 @@ export const PrioritiesSection: React.FC<PrioritiesSectionProps> = ({
 						Points de blocage absolus :
 					</label>
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-						{PRIORITIES.map((priority) => (
+						{Features.Properties.PRIORITIES.map((priority) => (
 							<label
 								key={priority}
 								className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer min-h-[3rem]"

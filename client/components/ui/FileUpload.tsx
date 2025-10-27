@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import Image from 'next/image';
+import { Components } from '@/lib/constants';
 
 interface FileUploadProps {
 	label: string;
@@ -108,7 +109,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 						<div className="relative w-16 h-16 rounded overflow-hidden">
 							<Image
 								src={preview}
-								alt="Preview"
+								alt={Components.UI.IMAGE_ALT_TEXT.preview}
 								fill
 								className="object-cover"
 							/>

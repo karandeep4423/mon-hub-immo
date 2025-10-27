@@ -1,7 +1,8 @@
 'use client';
 import { useRef, useState, useEffect } from 'react';
 import { ContactApi, type ContactFormData } from '@/lib/api/contactApi';
-import { LANDING_TEXT } from '@/lib/constants/text';
+import { Features } from '@/lib/constants';
+// Migrated: Features.Landing.LANDING_UI_TEXT;
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
@@ -56,7 +57,7 @@ export default function LandingPage() {
 				setMessageType('error');
 			}
 		} catch {
-			setMessage(LANDING_TEXT.sendError);
+			setMessage(Features.Landing.LANDING_UI_TEXT.sendError);
 			setMessageType('error');
 		} finally {
 			setLoading(false);
@@ -77,8 +78,8 @@ export default function LandingPage() {
 			<PageLoader
 				message={
 					isRedirecting
-						? LANDING_TEXT.redirecting
-						: LANDING_TEXT.loading
+						? Features.Landing.LANDING_UI_TEXT.redirecting
+						: Features.Landing.LANDING_UI_TEXT.loading
 				}
 			/>
 		);

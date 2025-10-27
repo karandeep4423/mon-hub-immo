@@ -16,6 +16,7 @@ import {
 	BadgesSection,
 } from './form-sections';
 import { Button } from '../ui/Button';
+import { Features, Components } from '@/lib/constants';
 
 export const CreateSearchAdForm = () => {
 	const router = useRouter();
@@ -222,11 +223,16 @@ export const CreateSearchAdForm = () => {
 						<div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-end">
 							<Button
 								type="button"
-								onClick={() => router.push('/dashboard')}
+								onClick={() =>
+									router.push(
+										Features.Dashboard.DASHBOARD_ROUTES
+											.BASE,
+									)
+								}
 								variant="outline"
 								className="order-2 sm:order-1"
 							>
-								Annuler
+								{Components.UI.BUTTON_TEXT.cancel}
 							</Button>
 							<Button
 								type="submit"

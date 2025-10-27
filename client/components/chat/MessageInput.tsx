@@ -7,7 +7,8 @@ import { isEnterKeyPress } from './utils/keyboardUtils';
 import TypingIndicator from './TypingIndicator';
 import { Button } from '@/components/ui/Button';
 import { ChatApi } from '@/lib/api/chatApi';
-import { CHAT_TEXT } from '@/lib/constants/text';
+import { Features } from '@/lib/constants';
+
 import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
@@ -47,7 +48,9 @@ const getPlaceholderText = (
 	customPlaceholder?: string,
 ): string => {
 	if (customPlaceholder) return customPlaceholder;
-	return selectedUser ? CHAT_TEXT.typeMessage : CHAT_TEXT.selectUserToChat;
+	return selectedUser
+		? Features.Chat.CHAT_UI_TEXT.typeMessage
+		: Features.Chat.CHAT_UI_TEXT.selectUserToChat;
 };
 
 /**
@@ -76,10 +79,12 @@ const SendButton: React.FC<{
 		loading={isSending}
 		className="px-6 py-3"
 		aria-label={
-			isSending ? CHAT_TEXT.sendingMessage : CHAT_TEXT.sendMessageButton
+			isSending
+				? Features.Chat.CHAT_UI_TEXT.sendingMessage
+				: Features.Chat.CHAT_UI_TEXT.sendMessageButton
 		}
 	>
-		{CHAT_TEXT.send}
+		{Features.Chat.CHAT_UI_TEXT.send}
 	</Button>
 ));
 
@@ -108,7 +113,7 @@ const MessageInputField: React.FC<{
 				disabled={disabled}
 				maxLength={maxLength}
 				autoComplete="off"
-				aria-label={CHAT_TEXT.messageInput}
+				aria-label={Features.Chat.CHAT_UI_TEXT.messageInput}
 			/>
 			{maxLength && (
 				<div className="absolute -bottom-5 right-0 text-xs text-gray-400">

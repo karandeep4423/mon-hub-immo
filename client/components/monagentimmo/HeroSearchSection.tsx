@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import { BaseLocationAutocomplete, Button } from '@/components/ui';
+import { Components } from '@/lib/constants';
 
 interface HeroSearchSectionProps {
 	searchCity: string;
@@ -68,7 +69,10 @@ export const HeroSearchSection = ({
 									mode="single"
 									value={searchCity}
 									onSelect={onCitySelect}
-									placeholder="Entrez votre ville ou code postal"
+									placeholder={
+										Components.UI.FORM_PLACEHOLDERS
+											.CITY_SEARCH
+									}
 									className="border-0 shadow-none focus:ring-0 pl-8 py-2.5 text-gray-900"
 									showPostalCode={false}
 								/>
@@ -111,7 +115,10 @@ export const HeroSearchSection = ({
 							<div className="relative w-full max-w-md">
 								<Image
 									src="/illustrations/calendar-booking.png"
-									alt="Appointment scheduling illustration"
+									alt={
+										Components.UI.IMAGE_ALT_TEXT
+											.appointmentIllustration
+									}
 									width={400}
 									height={400}
 									className="w-full h-auto"

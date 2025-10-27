@@ -8,11 +8,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { LoadingSpinner } from './LoadingSpinner';
 import { logger } from '@/lib/utils/logger';
+import { Features } from '@/lib/constants';
 import {
 	searchMunicipalities,
 	getMunicipalitiesByPostalPrefix,
 } from '@/lib/services/frenchAddressApi';
-import { DEBOUNCE_AUTOCOMPLETE_MS } from '@/lib/constants';
 import { useClickOutside } from '@/hooks/useClickOutside';
 
 export interface LocationItem {
@@ -108,7 +108,7 @@ export const LocationSearchWithRadius: React.FC<
 
 		const debounceTimer = setTimeout(
 			fetchSuggestions,
-			DEBOUNCE_AUTOCOMPLETE_MS,
+			Features.Common.DEBOUNCE.AUTOCOMPLETE,
 		);
 		return () => clearTimeout(debounceTimer);
 	}, [inputValue, selectedLocations]);

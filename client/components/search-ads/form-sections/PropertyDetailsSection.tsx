@@ -1,4 +1,5 @@
 import { FormSection } from './FormSection';
+import { Features } from '@/lib/constants';
 
 interface PropertyDetailsSectionProps {
 	minRooms?: number;
@@ -50,7 +51,10 @@ export const PropertyDetailsSection: React.FC<PropertyDetailsSectionProps> = ({
 	const stateOptions = ['new', 'good', 'refresh', 'renovate'];
 
 	return (
-		<FormSection title="Caractéristiques" emoji="🏠">
+		<FormSection
+			title={Features.SearchAds.SEARCH_AD_FORM_SECTIONS.CHARACTERISTICS}
+			emoji="🏠"
+		>
 			<div className="space-y-4">
 				<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 					<div>

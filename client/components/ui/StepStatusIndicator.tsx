@@ -1,9 +1,8 @@
 import React from 'react';
 import { CheckmarkIcon } from './CheckmarkIcon';
-import {
-	STEP_INDICATOR_COLORS,
-	StepIndicatorState,
-} from '../../lib/constants/statusColors';
+import { Features } from '@/lib/constants';
+
+type StepIndicatorState = keyof typeof Features.Common.STEP_INDICATOR_COLORS;
 
 interface StepIndicatorProps {
 	state: StepIndicatorState;
@@ -24,7 +23,7 @@ export const StepStatusIndicator: React.FC<StepIndicatorProps> = ({
 		lg: 'w-12 h-12 text-base',
 	};
 
-	const colorClass = STEP_INDICATOR_COLORS[state];
+	const colorClass = Features.Common.STEP_INDICATOR_COLORS[state];
 
 	return (
 		<div

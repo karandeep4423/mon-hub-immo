@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui';
-import { PROPERTY_TEXT, getPropertyCountText } from '@/lib/constants/text';
+import { Features } from '@/lib/constants';
+// Migrated: Features.Properties.PROPERTY_UI_TEXT;
 
 interface PropertyHeaderProps {
 	propertiesCount: number;
@@ -32,11 +33,13 @@ export const PropertyHeader: React.FC<PropertyHeaderProps> = ({
 					</div>
 					<div>
 						<h1 className="text-2xl font-bold text-gray-900">
-							{PROPERTY_TEXT.title}
+							{Features.Properties.PROPERTY_UI_TEXT.title}
 						</h1>
 						<p className="text-gray-600">
-							{PROPERTY_TEXT.subtitle} •{' '}
-							{getPropertyCountText(propertiesCount)}
+							{Features.Properties.PROPERTY_UI_TEXT.subtitle} •{' '}
+							{Features.Properties.getPropertyCountText(
+								propertiesCount,
+							)}
 						</p>
 					</div>
 				</div>
@@ -58,7 +61,7 @@ export const PropertyHeader: React.FC<PropertyHeaderProps> = ({
 								d="M12 6v6m0 0v6m0-6h6m-6 0H6"
 							/>
 						</svg>
-						{PROPERTY_TEXT.newProperty}
+						{Features.Properties.PROPERTY_UI_TEXT.newProperty}
 					</Button>
 				</div>
 			</div>

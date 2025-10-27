@@ -6,6 +6,7 @@ import type {
 import type { Property } from '@/lib/api/propertyApi';
 import { PROGRESS_STEPS_CONFIG } from './progress-tracking/types';
 import { formatDateShort } from '@/lib/utils/date';
+import { Features } from '@/lib/constants';
 
 interface CompensationInfo {
 	type: string;
@@ -38,7 +39,8 @@ export const CollaborationDetails: React.FC<CollaborationDetailsProps> = ({
 	return (
 		<>
 			{/* Progress Tracking */}
-			{collaboration.status === 'active' && (
+			{collaboration.status ===
+				Features.Collaboration.COLLABORATION_STATUS_VALUES.ACTIVE && (
 				<div className="px-4 pb-4">
 					<div className="bg-blue-50 rounded-lg p-3">
 						<div className="flex items-center justify-between mb-2">
@@ -127,32 +129,44 @@ export const CollaborationDetails: React.FC<CollaborationDetailsProps> = ({
 						</div>
 					</div>
 					<div className="mt-2">
-						{collaboration.status === 'pending' && (
+						{collaboration.status ===
+							Features.Collaboration.COLLABORATION_STATUS_VALUES
+								.PENDING && (
 							<span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
 								⏳ En attente
 							</span>
 						)}
-						{collaboration.status === 'accepted' && (
+						{collaboration.status ===
+							Features.Collaboration.COLLABORATION_STATUS_VALUES
+								.ACCEPTED && (
 							<span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
 								✅ Acceptée
 							</span>
 						)}
-						{collaboration.status === 'active' && (
+						{collaboration.status ===
+							Features.Collaboration.COLLABORATION_STATUS_VALUES
+								.ACTIVE && (
 							<span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
 								🔄 Active
 							</span>
 						)}
-						{collaboration.status === 'rejected' && (
+						{collaboration.status ===
+							Features.Collaboration.COLLABORATION_STATUS_VALUES
+								.REJECTED && (
 							<span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
 								❌ Refusée
 							</span>
 						)}
-						{collaboration.status === 'completed' && (
+						{collaboration.status ===
+							Features.Collaboration.COLLABORATION_STATUS_VALUES
+								.COMPLETED && (
 							<span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
 								🎯 Finalisée
 							</span>
 						)}
-						{collaboration.status === 'cancelled' && (
+						{collaboration.status ===
+							Features.Collaboration.COLLABORATION_STATUS_VALUES
+								.CANCELLED && (
 							<span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
 								🚫 Annulée
 							</span>

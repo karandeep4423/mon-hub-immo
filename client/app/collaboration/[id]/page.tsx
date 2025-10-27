@@ -11,7 +11,7 @@ import { useCollaborationMutations } from '@/hooks/useCollaborations';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
-import { TOAST_MESSAGES } from '@/lib/constants';
+import { Features } from '@/lib/constants';
 
 // New detail components
 import {
@@ -103,7 +103,9 @@ export default function CollaborationPage() {
 		(userId === collaboration.collaboratorId?._id ||
 			userId === (collaboration.collaboratorId as unknown as string));
 	const canUpdate = Boolean(isOwner || isCollaborator);
-	const isActive = collaboration?.status === 'active';
+	const isActive =
+		collaboration?.status ===
+		Features.Collaboration.COLLABORATION_STATUS_VALUES.ACTIVE;
 
 	// Chat integration
 	const { selectedUser, setSelectedUser, getUserById, users, getUsers } =
@@ -221,7 +223,11 @@ export default function CollaborationPage() {
 					return;
 				} else if (newStatus === 'active') {
 					// Open contract modal for signing flow when collaboration is accepted
-					if (collaboration.status === 'accepted') {
+					if (
+						collaboration.status ===
+						Features.Collaboration.COLLABORATION_STATUS_VALUES
+							.ACCEPTED
+					) {
 						setShowContractModal(true);
 						return;
 					}
@@ -235,7 +241,10 @@ export default function CollaborationPage() {
 				}
 				await refetchCollaboration();
 			} catch {
-				setError('Erreur lors de la mise à jour du statut');
+				setError(
+					Features.Collaboration.COLLABORATION_ERRORS
+						.STATUS_UPDATE_FAILED,
+				);
 			}
 		},
 		[
@@ -245,7 +254,6 @@ export default function CollaborationPage() {
 			refetchCollaboration,
 		],
 	);
-
 	const handleConfirmAction = useCallback(async () => {
 		if (!collaboration || !pendingAction) return;
 		setConfirmLoading(true);
@@ -258,14 +266,19 @@ export default function CollaborationPage() {
 		if (res.success) {
 			toast.success(
 				pendingAction === 'cancelled'
-					? TOAST_MESSAGES.COLLABORATION.CANCEL_SUCCESS
-					: TOAST_MESSAGES.COLLABORATION.COMPLETE_SUCCESS,
+					? Features.Collaboration.COLLABORATION_TOAST_MESSAGES
+							.CANCEL_SUCCESS
+					: Features.Collaboration.COLLABORATION_TOAST_MESSAGES
+							.COMPLETE_SUCCESS,
 			);
 			await refetchCollaboration();
 			setConfirmOpen(false);
 			setPendingAction(null);
 		} else {
-			toast.error(TOAST_MESSAGES.COLLABORATION.STATUS_UPDATE_ERROR);
+			toast.error(
+				Features.Collaboration.COLLABORATION_TOAST_MESSAGES
+					.STATUS_UPDATE_ERROR,
+			);
 		}
 	}, [
 		collaboration,
@@ -291,13 +304,14 @@ export default function CollaborationPage() {
 				});
 				await refetchCollaboration(); // Refresh data
 			} catch {
-				setError('Erreur lors de la mise à jour du progrès');
+				setError(
+					Features.Collaboration.COLLABORATION_ERRORS
+						.PROGRESS_UPDATE_FAILED,
+				);
 			}
 		},
 		[collaboration, addCollaborationNote, refetchCollaboration],
-	);
-
-	// Status modification handler (from modal) - NEW API
+	); // Status modification handler (from modal) - NEW API
 	const handleProgressStatusUpdate = useCallback(
 		async (update: {
 			targetStep: string;
@@ -321,13 +335,14 @@ export default function CollaborationPage() {
 				if (!res.success) return;
 				await refetchCollaboration(); // Refresh data
 			} catch {
-				setError('Erreur lors de la mise à jour du statut');
+				setError(
+					Features.Collaboration.COLLABORATION_ERRORS
+						.STATUS_UPDATE_FAILED,
+				);
 			}
 		},
 		[collaboration, updateCollaborationProgress, refetchCollaboration],
-	);
-
-	// Activity management handler
+	); // Activity management handler
 	const handleAddActivity = useCallback(
 		async (content: string) => {
 			if (!collaboration || collaboration.status !== 'active') {
@@ -353,13 +368,20 @@ export default function CollaborationPage() {
 				isOpen={confirmOpen}
 				title={
 					pendingAction === 'cancelled'
-						? 'Annuler la collaboration ?'
-						: 'Terminer la collaboration ?'
+						? Features.Collaboration
+								.COLLABORATION_CONFIRMATION_DIALOGS.CANCEL_TITLE
+						: Features.Collaboration
+								.COLLABORATION_CONFIRMATION_DIALOGS
+								.COMPLETE_TITLE
 				}
 				description={
 					pendingAction === 'cancelled'
-						? 'Cette action annulera la collaboration en cours. Voulez-vous continuer ?'
-						: 'Cette action marquera la collaboration comme terminée. Voulez-vous continuer ?'
+						? Features.Collaboration
+								.COLLABORATION_CONFIRMATION_DIALOGS
+								.CANCEL_DESCRIPTION
+						: Features.Collaboration
+								.COLLABORATION_CONFIRMATION_DIALOGS
+								.COMPLETE_DESCRIPTION
 				}
 				onCancel={() => {
 					setConfirmOpen(false);
@@ -368,10 +390,17 @@ export default function CollaborationPage() {
 				onConfirm={handleConfirmAction}
 				confirmText={
 					pendingAction === 'cancelled'
-						? 'Oui, annuler'
-						: 'Oui, terminer'
+						? Features.Collaboration
+								.COLLABORATION_CONFIRMATION_DIALOGS
+								.CANCEL_CONFIRM
+						: Features.Collaboration
+								.COLLABORATION_CONFIRMATION_DIALOGS
+								.COMPLETE_CONFIRM
 				}
-				cancelText="Non, revenir"
+				cancelText={
+					Features.Collaboration.COLLABORATION_CONFIRMATION_DIALOGS
+						.CANCEL_CANCEL
+				}
 				variant={pendingAction === 'completed' ? 'danger' : 'warning'}
 				loading={confirmLoading}
 			/>
@@ -387,7 +416,9 @@ export default function CollaborationPage() {
 			)}
 			{/* Loading state */}
 			{(loading || isCollabLoading) && (
-				<PageLoader message="Chargement..." />
+				<PageLoader
+					message={Features.Collaboration.COLLABORATION_LOADING.PAGE}
+				/>
 			)}{' '}
 			{/* Error state */}
 			{(error || collabError || !collaboration) &&
@@ -398,9 +429,17 @@ export default function CollaborationPage() {
 							<p className="text-red-600 mb-4">
 								{error ||
 									collabError ||
-									'Collaboration non trouvée'}
+									Features.Collaboration.COLLABORATION_ERRORS
+										.NOT_FOUND}
 							</p>
-							<Button onClick={() => router.push('/dashboard')}>
+							<Button
+								onClick={() =>
+									router.push(
+										Features.Dashboard.DASHBOARD_ROUTES
+											.BASE,
+									)
+								}
+							>
 								Retour au tableau de bord
 							</Button>
 						</div>
@@ -414,8 +453,9 @@ export default function CollaborationPage() {
 				!collabError && (
 					<div>
 						{/* Header */}
-						<CollaborationHeader onBack={() => router.back()} />
-
+						<CollaborationHeader
+							onBack={() => router.back()}
+						/>{' '}
 						{/* Workflow components */}
 						<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 							<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

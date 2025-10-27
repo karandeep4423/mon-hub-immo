@@ -1,9 +1,13 @@
-import { StatusType } from '../../../lib/constants/statusColors';
-
 // Overall Collaboration Status Types (Workflow 1)
 // Used for high-level collaboration state on dashboard and cards
 
-export type OverallCollaborationStatus = StatusType;
+export type OverallCollaborationStatus =
+	| 'pending'
+	| 'accepted'
+	| 'active'
+	| 'completed'
+	| 'cancelled'
+	| 'rejected';
 
 export interface OverallStatusUpdate {
 	status: OverallCollaborationStatus;

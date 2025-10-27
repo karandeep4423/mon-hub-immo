@@ -1,4 +1,5 @@
 import React from 'react';
+import { UI } from '@/lib/constants/components';
 
 interface ModalProps {
 	isOpen: boolean;
@@ -19,36 +20,27 @@ export const Modal: React.FC<ModalProps> = ({
 }) => {
 	if (!isOpen) return null;
 
-	const sizeClasses = {
-		sm: 'max-w-sm',
-		md: 'max-w-md',
-		lg: 'max-w-lg',
-		xl: 'max-w-xl',
-	};
-
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center">
+		<div className={UI.MODAL_CONTAINER.className}>
 			{/* Backdrop */}
-			<div
-				className="fixed inset-0  bg-[rgba(0,0,0,0.5)]  bg-opacity-10  transition-opacity"
-				onClick={onClose}
-			/>
+			<div className={UI.MODAL_BACKDROP.className} onClick={onClose} />
 
 			{/* Modal */}
 			<div
-				className={`relative bg-white rounded-2xl shadow-xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto m-4 ${className}`}
+				className={`${UI.MODAL_CONTENT.baseClassName} ${UI.MODAL_SIZE_CLASSES[size]} ${UI.MODAL_CONTAINER.maxHeight} ${UI.MODAL_CONTAINER.overflow} ${className}`}
 			>
 				{title && (
-					<div className="flex items-center justify-between p-6 border-b border-gray-200">
+					<div className={UI.MODAL_CONTENT.headerClassName}>
 						<h2 className="text-xl font-semibold text-gray-900">
 							{title}
 						</h2>
 						<button
 							onClick={onClose}
-							className="text-gray-400 hover:text-gray-600 transition-colors"
+							className={UI.MODAL_CLOSE_BUTTON.className}
+							aria-label={UI.MODAL_CLOSE_BUTTON.ariaLabel}
 						>
 							<svg
-								className="w-6 h-6"
+								className={UI.MODAL_CLOSE_BUTTON.iconClassName}
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -64,7 +56,15 @@ export const Modal: React.FC<ModalProps> = ({
 					</div>
 				)}
 
-				<div className={title ? 'p-6' : 'p-6'}>{children}</div>
+				<div
+					className={
+						title
+							? UI.MODAL_CONTENT.bodyClassName
+							: UI.MODAL_CONTENT.bodyClassName
+					}
+				>
+					{children}
+				</div>
 			</div>
 		</div>
 	);

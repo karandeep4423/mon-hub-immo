@@ -4,6 +4,7 @@ import { useForm } from '@/hooks/useForm';
 import { validateSearchAdForm } from '@/lib/validation/searchAd';
 import searchAdApi from '@/lib/api/searchAdApi';
 import type { SearchAd } from '@/types/searchAd';
+import { Features } from '@/lib/constants';
 
 export interface SearchAdFormData extends Record<string, unknown> {
 	title: string;
@@ -133,7 +134,7 @@ export const useSearchAdForm = (mode: 'create' | 'edit', editId?: string) => {
 							typeof searchAdApi.createSearchAd
 						>[0],
 					);
-					router.push('/mesannonces');
+					router.push(Features.SearchAds.SEARCH_AD_ROUTES.MY_ADS);
 				} else if (mode === 'edit' && editId) {
 					await searchAdApi.updateSearchAd(
 						editId,
@@ -141,7 +142,7 @@ export const useSearchAdForm = (mode: 'create' | 'edit', editId?: string) => {
 							typeof searchAdApi.updateSearchAd
 						>[1],
 					);
-					router.push('/dashboard');
+					router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
 				}
 			},
 		});

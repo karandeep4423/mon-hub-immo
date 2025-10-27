@@ -1,4 +1,5 @@
 import { Input } from '@/components/ui/Input';
+import { Features } from '@/lib/constants';
 
 interface PasswordStepProps {
 	password: string;
@@ -57,7 +58,7 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({
 					value={password}
 					onChange={onChange}
 					error={errors.password}
-					placeholder="Mot de passe *"
+					placeholder={Features.Auth.AUTH_PLACEHOLDERS.PASSWORD}
 					required
 				/>
 				<button
@@ -142,7 +143,9 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({
 					value={confirmPassword}
 					onChange={onChange}
 					error={errors.confirmPassword}
-					placeholder="Confirmer le mot de passe *"
+					placeholder={
+						Features.Auth.AUTH_PLACEHOLDERS.CONFIRM_PASSWORD
+					}
 					required
 				/>
 				<button

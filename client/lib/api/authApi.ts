@@ -2,6 +2,7 @@
 import { api } from '../api';
 import { TokenManager } from '../utils/tokenManager';
 import { handleApiError } from '../utils/errorHandler';
+import { Features } from '../constants';
 import {
 	SignUpData,
 	LoginData,
@@ -24,13 +25,16 @@ export class AuthApi {
 	 */
 	static async signUp(data: SignUpData): Promise<AuthResponse> {
 		try {
-			const response = await api.post('/auth/signup', data);
+			const response = await api.post(
+				Features.Auth.AUTH_ENDPOINTS.SIGNUP,
+				data,
+			);
 			return response.data;
 		} catch (error) {
 			throw handleApiError(
 				error,
 				'AuthApi.signUp',
-				"Erreur lors de l'inscription",
+				Features.Auth.AUTH_ERRORS.SIGNUP_FAILED,
 			);
 		}
 	}
@@ -43,13 +47,16 @@ export class AuthApi {
 	 */
 	static async login(data: LoginData): Promise<AuthResponse> {
 		try {
-			const response = await api.post('/auth/login', data);
+			const response = await api.post(
+				Features.Auth.AUTH_ENDPOINTS.LOGIN,
+				data,
+			);
 			return response.data;
 		} catch (error) {
 			throw handleApiError(
 				error,
 				'AuthApi.login',
-				'Erreur lors de la connexion',
+				Features.Auth.AUTH_ERRORS.LOGIN_FAILED,
 			);
 		}
 	}
@@ -62,13 +69,16 @@ export class AuthApi {
 	 */
 	static async verifyEmail(data: VerifyEmailData): Promise<AuthResponse> {
 		try {
-			const response = await api.post('/auth/verify-email', data);
+			const response = await api.post(
+				Features.Auth.AUTH_ENDPOINTS.VERIFY_EMAIL,
+				data,
+			);
 			return response.data;
 		} catch (error) {
 			throw handleApiError(
 				error,
 				'AuthApi.verifyEmail',
-				"Erreur lors de la vérification de l'email",
+				Features.Auth.AUTH_ERRORS.VERIFY_EMAIL_FAILED,
 			);
 		}
 	}
@@ -81,15 +91,18 @@ export class AuthApi {
 	 */
 	static async resendVerificationCode(email: string): Promise<AuthResponse> {
 		try {
-			const response = await api.post('/auth/resend-verification', {
-				email,
-			});
+			const response = await api.post(
+				Features.Auth.AUTH_ENDPOINTS.RESEND_VERIFICATION,
+				{
+					email,
+				},
+			);
 			return response.data;
 		} catch (error) {
 			throw handleApiError(
 				error,
 				'AuthApi.resendVerificationCode',
-				"Erreur lors de l'envoi du code",
+				Features.Auth.AUTH_ERRORS.RESEND_CODE_FAILED,
 			);
 		}
 	}
@@ -101,13 +114,16 @@ export class AuthApi {
 		data: ForgotPasswordData,
 	): Promise<AuthResponse> {
 		try {
-			const response = await api.post('/auth/forgot-password', data);
+			const response = await api.post(
+				Features.Auth.AUTH_ENDPOINTS.FORGOT_PASSWORD,
+				data,
+			);
 			return response.data;
 		} catch (error) {
 			throw handleApiError(
 				error,
 				'AuthApi.forgotPassword',
-				'Erreur lors de la réinitialisation du mot de passe',
+				Features.Auth.AUTH_ERRORS.FORGOT_PASSWORD_FAILED,
 			);
 		}
 	}
@@ -117,13 +133,16 @@ export class AuthApi {
 	 */
 	static async resetPassword(data: ResetPasswordData): Promise<AuthResponse> {
 		try {
-			const response = await api.post('/auth/reset-password', data);
+			const response = await api.post(
+				Features.Auth.AUTH_ENDPOINTS.RESET_PASSWORD,
+				data,
+			);
 			return response.data;
 		} catch (error) {
 			throw handleApiError(
 				error,
 				'AuthApi.resetPassword',
-				'Erreur lors de la réinitialisation du mot de passe',
+				Features.Auth.AUTH_ERRORS.RESET_PASSWORD_FAILED,
 			);
 		}
 	}
@@ -135,13 +154,15 @@ export class AuthApi {
 	 */
 	static async getProfile(): Promise<AuthResponse> {
 		try {
-			const response = await api.get('/auth/profile');
+			const response = await api.get(
+				Features.Auth.AUTH_ENDPOINTS.GET_PROFILE,
+			);
 			return response.data;
 		} catch (error) {
 			throw handleApiError(
 				error,
 				'AuthApi.getProfile',
-				'Erreur lors de la récupération du profil',
+				Features.Auth.AUTH_ERRORS.GET_PROFILE_FAILED,
 			);
 		}
 	}
@@ -159,13 +180,16 @@ export class AuthApi {
 		profileImage?: string;
 	}): Promise<AuthResponse> {
 		try {
-			const response = await api.put('/auth/profile', data);
+			const response = await api.put(
+				Features.Auth.AUTH_ENDPOINTS.UPDATE_PROFILE,
+				data,
+			);
 			return response.data;
 		} catch (error) {
 			throw handleApiError(
 				error,
 				'AuthApi.updateProfile',
-				'Erreur lors de la mise à jour du profil',
+				Features.Auth.AUTH_ERRORS.UPDATE_PROFILE_FAILED,
 			);
 		}
 	}
@@ -185,13 +209,16 @@ export class AuthApi {
 		profileImage?: string;
 	}): Promise<AuthResponse> {
 		try {
-			const response = await api.post('/auth/complete-profile', data);
+			const response = await api.post(
+				Features.Auth.AUTH_ENDPOINTS.COMPLETE_PROFILE,
+				data,
+			);
 			return response.data;
 		} catch (error) {
 			throw handleApiError(
 				error,
 				'AuthApi.completeProfile',
-				'Erreur lors de la complétion du profil',
+				Features.Auth.AUTH_ERRORS.COMPLETE_PROFILE_FAILED,
 			);
 		}
 	}
@@ -224,13 +251,16 @@ export class AuthApi {
 		};
 	}> {
 		try {
-			const response = await api.patch('/auth/search-preferences', data);
+			const response = await api.patch(
+				Features.Auth.AUTH_ENDPOINTS.UPDATE_PREFERENCES,
+				data,
+			);
 			return response.data;
 		} catch (error) {
 			throw handleApiError(
 				error,
 				'AuthApi.updateSearchPreferences',
-				'Erreur lors de la mise à jour des préférences',
+				Features.Auth.AUTH_ERRORS.UPDATE_PREFERENCES_FAILED,
 			);
 		}
 	}

@@ -13,7 +13,8 @@ import type {
 } from '@/types/chat';
 import type { User as AuthUser } from '@/types/auth';
 import type { Socket } from 'socket.io-client';
-import { SOCKET_EVENTS } from '@/lib/constants/socket';
+import { Features } from '@/lib/constants';
+
 import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
@@ -187,11 +188,16 @@ const useSocketEventListeners = (
 
 		// Use reusable socket listeners pattern
 		const chatListeners = {
-			[SOCKET_EVENTS.NEW_MESSAGE]: handlers.handleNewMessage,
-			[SOCKET_EVENTS.USER_TYPING]: handlers.handleUserTyping,
-			[SOCKET_EVENTS.USER_STATUS_UPDATE]: handlers.handleUserStatusUpdate,
-			[SOCKET_EVENTS.MESSAGES_READ]: handlers.handleMessagesRead,
-			[SOCKET_EVENTS.MESSAGE_DELETED]: handlers.handleMessageDeleted,
+			[Features.Chat.SOCKET_EVENTS.NEW_MESSAGE]:
+				handlers.handleNewMessage,
+			[Features.Chat.SOCKET_EVENTS.USER_TYPING]:
+				handlers.handleUserTyping,
+			[Features.Chat.SOCKET_EVENTS.USER_STATUS_UPDATE]:
+				handlers.handleUserStatusUpdate,
+			[Features.Chat.SOCKET_EVENTS.MESSAGES_READ]:
+				handlers.handleMessagesRead,
+			[Features.Chat.SOCKET_EVENTS.MESSAGE_DELETED]:
+				handlers.handleMessageDeleted,
 		};
 
 		Object.entries(chatListeners).forEach(([event, handler]) => {
@@ -228,7 +234,7 @@ const useTypingActions = (
 		(isTyping: boolean) => {
 			if (!socket || !selectedUser) return;
 
-			socket.emit(SOCKET_EVENTS.TYPING, {
+			socket.emit(Features.Chat.SOCKET_EVENTS.TYPING, {
 				receiverId: selectedUser._id,
 				isTyping,
 			});
@@ -336,13 +342,15 @@ export const useChat = () => {
 		const peerId = state.selectedUser?._id;
 		if (peerId) {
 			// Notify server that this client is actively viewing a thread with peerId
-			socket.emit(SOCKET_EVENTS.CHAT_ACTIVE_THREAD, { peerId });
+			socket.emit(Features.Chat.SOCKET_EVENTS.CHAT_ACTIVE_THREAD, {
+				peerId,
+			});
 		}
 
 		// On cleanup or when changing threads, mark inactive
 		return () => {
 			if (!socket || !isConnected) return;
-			socket.emit(SOCKET_EVENTS.CHAT_INACTIVE_THREAD);
+			socket.emit(Features.Chat.SOCKET_EVENTS.CHAT_INACTIVE_THREAD);
 		};
 	}, [socket, isConnected, state.selectedUser?._id]);
 

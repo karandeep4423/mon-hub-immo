@@ -11,6 +11,7 @@ import { swrKeys } from '@/lib/swrKeys';
 import { toast } from 'react-toastify';
 import { handleApiError } from '@/lib/utils/errorHandler';
 import { logger } from '@/lib/utils/logger';
+import { Features } from '@/lib/constants';
 
 // ============ QUERIES ============
 
@@ -87,7 +88,9 @@ export function useSearchAdMutations(userId?: string) {
 		try {
 			const result = await SearchAdApi.createSearchAd(adData);
 
-			toast.success('Annonce de recherche créée avec succès');
+			toast.success(
+				Features.SearchAds.SEARCH_AD_TOAST_MESSAGES.CREATE_SUCCESS,
+			);
 			invalidateSearchAdCaches();
 
 			logger.info('[useSearchAds] Search ad created:', result._id);
@@ -114,7 +117,9 @@ export function useSearchAdMutations(userId?: string) {
 		try {
 			const result = await SearchAdApi.updateSearchAd(id, adData);
 
-			toast.success('Annonce mise à jour avec succès');
+			toast.success(
+				Features.SearchAds.SEARCH_AD_TOAST_MESSAGES.UPDATE_SUCCESS,
+			);
 			invalidateSearchAdCaches();
 
 			logger.info('[useSearchAds] Search ad updated:', id);
@@ -138,7 +143,9 @@ export function useSearchAdMutations(userId?: string) {
 		try {
 			await SearchAdApi.deleteSearchAd(id);
 
-			toast.success('Annonce supprimée avec succès');
+			toast.success(
+				Features.SearchAds.SEARCH_AD_TOAST_MESSAGES.DELETE_SUCCESS,
+			);
 			invalidateSearchAdCaches();
 
 			logger.info('[useSearchAds] Search ad deleted:', id);

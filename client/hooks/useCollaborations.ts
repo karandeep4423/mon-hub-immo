@@ -1,6 +1,7 @@
 import useSWR, { useSWRConfig } from 'swr';
 import { swrKeys } from '@/lib/swrKeys';
 import { CollaborationApi } from '@/lib/api/collaborationApi';
+import { Features } from '@/lib/constants';
 import type {
 	ProposeCollaborationRequest,
 	RespondToCollaborationRequest,
@@ -89,7 +90,10 @@ export function useCollaborationMutations(userId?: string) {
 	) => {
 		try {
 			const res = await CollaborationApi.propose(payload);
-			toast.success('Collaboration proposée avec succès');
+			toast.success(
+				Features.Collaboration.COLLABORATION_TOAST_MESSAGES
+					.PROPOSE_SUCCESS,
+			);
 			invalidateCollabCaches();
 			return { success: true, data: res.collaboration };
 		} catch (error) {
@@ -132,7 +136,10 @@ export function useCollaborationMutations(userId?: string) {
 	const cancelCollaboration = async (collaborationId: string) => {
 		try {
 			const res = await CollaborationApi.cancel(collaborationId);
-			toast.success('Collaboration annulée');
+			toast.success(
+				Features.Collaboration.COLLABORATION_TOAST_MESSAGES
+					.CANCEL_SUCCESS,
+			);
 			invalidateCollabCaches();
 			return { success: true, data: res.collaboration };
 		} catch (error) {
@@ -150,7 +157,10 @@ export function useCollaborationMutations(userId?: string) {
 	const completeCollaboration = async (collaborationId: string) => {
 		try {
 			const res = await CollaborationApi.complete(collaborationId);
-			toast.success('Collaboration terminée');
+			toast.success(
+				Features.Collaboration.COLLABORATION_TOAST_MESSAGES
+					.COMPLETE_SUCCESS,
+			);
 			invalidateCollabCaches();
 			return { success: true, data: res.collaboration };
 		} catch (error) {
@@ -171,7 +181,9 @@ export function useCollaborationMutations(userId?: string) {
 	) => {
 		try {
 			const res = await CollaborationApi.addNote(collaborationId, data);
-			toast.success('Note ajoutée');
+			toast.success(
+				Features.Collaboration.COLLABORATION_TOAST_MESSAGES.NOTE_ADDED,
+			);
 			invalidateCollabCaches();
 			return { success: true, data: res.collaboration };
 		} catch (error) {
@@ -199,7 +211,10 @@ export function useCollaborationMutations(userId?: string) {
 				collaborationId,
 				data,
 			);
-			toast.success('Statut de progression mis à jour');
+			toast.success(
+				Features.Collaboration.COLLABORATION_TOAST_MESSAGES
+					.PROGRESS_UPDATED,
+			);
 			invalidateCollabCaches();
 			return { success: true, data: res.collaboration };
 		} catch (error) {
@@ -220,7 +235,10 @@ export function useCollaborationMutations(userId?: string) {
 	const signCollaboration = async (collaborationId: string) => {
 		try {
 			const res = await CollaborationApi.sign(collaborationId);
-			toast.success('Contrat signé');
+			toast.success(
+				Features.Collaboration.COLLABORATION_TOAST_MESSAGES
+					.CONTRACT_SIGNED,
+			);
 			invalidateCollabCaches();
 			return { success: true, data: res.collaboration };
 		} catch (error) {

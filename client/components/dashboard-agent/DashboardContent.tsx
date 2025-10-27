@@ -6,7 +6,8 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { AgentProfileCard } from './AgentProfileCard';
 import { PropertyManager } from '../property/PropertyManager';
 import { CollaborationList } from '../collaboration/CollaborationList';
-import { DASHBOARD_TEXT, APPOINTMENT_STATUSES } from '@/lib/constants';
+import { DASHBOARD_UI_TEXT } from '@/lib/constants/features/dashboard';
+import { APPOINTMENT_STATUS_VALUES } from '@/lib/constants/features/appointments';
 import { MySearches } from '../search-ads/MySearches';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { AppointmentsManager } from '../appointments/AppointmentsManager';
@@ -35,10 +36,10 @@ export const DashboardContent: React.FC = () => {
 		}
 		return {
 			pending: appointments.filter(
-				(apt) => apt.status === APPOINTMENT_STATUSES.PENDING,
+				(apt) => apt.status === APPOINTMENT_STATUS_VALUES.PENDING,
 			).length,
 			confirmed: appointments.filter(
-				(apt) => apt.status === APPOINTMENT_STATUSES.CONFIRMED,
+				(apt) => apt.status === APPOINTMENT_STATUS_VALUES.CONFIRMED,
 			).length,
 			total: appointments.length,
 		};
@@ -76,7 +77,7 @@ export const DashboardContent: React.FC = () => {
 						Bienvenue, {user.firstName} !
 					</h2>
 					<p className="text-gray-600">
-						{DASHBOARD_TEXT.welcomeAgent}
+						{DASHBOARD_UI_TEXT.welcomeAgent}
 					</p>
 				</div>
 

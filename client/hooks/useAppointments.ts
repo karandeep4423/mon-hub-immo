@@ -12,6 +12,7 @@ import { swrKeys } from '@/lib/swrKeys';
 import { toast } from 'react-toastify';
 import { handleApiError } from '@/lib/utils/errorHandler';
 import { logger } from '@/lib/utils/logger';
+import { Features } from '@/lib/constants';
 import type {
 	CreateAppointmentData,
 	AgentAvailability,
@@ -126,7 +127,9 @@ export function useAppointmentMutations(userId?: string) {
 		try {
 			const result = await appointmentApi.createAppointment(data);
 
-			toast.success('Rendez-vous créé avec succès');
+			toast.success(
+				Features.Appointments.APPOINTMENT_TOAST_MESSAGES.CREATE_SUCCESS,
+			);
 
 			// Invalidate all appointment caches
 			invalidateAppointmentCaches();
@@ -202,7 +205,10 @@ export function useAppointmentMutations(userId?: string) {
 		try {
 			const result = await appointmentApi.rescheduleAppointment(id, data);
 
-			toast.success('Rendez-vous reprogrammé avec succès');
+			toast.success(
+				Features.Appointments.APPOINTMENT_TOAST_MESSAGES
+					.RESCHEDULE_SUCCESS,
+			);
 
 			// Invalidate all appointment caches
 			invalidateAppointmentCaches();
@@ -232,7 +238,10 @@ export function useAppointmentMutations(userId?: string) {
 		try {
 			const result = await appointmentApi.updateAgentAvailability(data);
 
-			toast.success('Disponibilités mises à jour');
+			toast.success(
+				Features.Appointments.AVAILABILITY_TOAST_MESSAGES
+					.UPDATE_SUCCESS,
+			);
 
 			// Invalidate availability cache
 			if (userId) {

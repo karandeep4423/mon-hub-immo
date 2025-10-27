@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/Card';
 import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 import { logger } from '@/lib/utils/logger';
 import { formatDateTimeShort } from '@/lib/utils/date';
+import { Features, Components } from '@/lib/constants';
 
 export interface Activity {
 	id: string;
@@ -96,7 +97,7 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 							className="flex items-center space-x-2"
 						>
 							<span>➕</span>
-							<span>Ajouter une activité</span>
+							<span>{Components.UI.BUTTON_TEXT.addActivity}</span>
 						</Button>
 					)}
 				</div>
@@ -114,7 +115,11 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 								<textarea
 									value={newNote}
 									onChange={(e) => setNewNote(e.target.value)}
-									placeholder="Ajouter une note sur cette collaboration..."
+									placeholder={
+										Features.Collaboration
+											.COLLABORATION_FORM_PLACEHOLDERS
+											.ACTIVITY_NOTE
+									}
 									rows={3}
 									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-none"
 									required
@@ -131,7 +136,7 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 									size="sm"
 									disabled={isAdding}
 								>
-									Annuler
+									{Components.UI.BUTTON_TEXT.cancel}
 								</Button>
 								<Button
 									type="submit"
@@ -140,7 +145,7 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 									loading={isAdding}
 									disabled={!newNote.trim()}
 								>
-									Ajouter
+									{Components.UI.BUTTON_TEXT.add}
 								</Button>
 							</div>
 						</form>

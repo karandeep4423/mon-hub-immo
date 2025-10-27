@@ -2,7 +2,7 @@ import { ChatApi } from '@/lib/api/chatApi';
 import { toast } from 'react-toastify';
 import { chatLogger } from '@/lib/utils/logger';
 import { logger } from '@/lib/utils/logger';
-import { TOAST_MESSAGES } from '@/lib/constants';
+import { Features } from '@/lib/constants';
 import type {
 	ChatUser as User,
 	ChatMessage as Message,
@@ -530,14 +530,13 @@ export const createChatStore = (): ChatStore => {
 			const errorMessage =
 				error instanceof Error
 					? error.message
-					: TOAST_MESSAGES.CHAT.FETCH_ERROR;
+					: Features.Chat.CHAT_TOAST_MESSAGES.FETCH_ERROR;
 			chatLogger.error('Error fetching users:', error);
 			toast.error(errorMessage);
 		} finally {
 			setUsersLoading(false);
 		}
 	};
-
 	const getUserById = async (userId: string): Promise<User | null> => {
 		chatLogger.debug('Fetching user by ID:', userId);
 
@@ -560,12 +559,11 @@ export const createChatStore = (): ChatStore => {
 			const errorMessage =
 				error instanceof Error
 					? error.message
-					: TOAST_MESSAGES.CHAT.FETCH_ERROR;
+					: Features.Chat.CHAT_TOAST_MESSAGES.FETCH_ERROR;
 			toast.error(errorMessage);
 			return null;
 		}
 	};
-
 	const getMessages = async (userId: string): Promise<void> => {
 		chatLogger.debug('Fetching messages for user:', userId);
 
@@ -601,13 +599,12 @@ export const createChatStore = (): ChatStore => {
 			const errorMessage =
 				error instanceof Error
 					? error.message
-					: TOAST_MESSAGES.CHAT.FETCH_ERROR;
+					: Features.Chat.CHAT_TOAST_MESSAGES.FETCH_ERROR;
 			toast.error(errorMessage);
 		} finally {
 			setMessagesLoading(false);
 		}
 	};
-
 	const loadOlderMessages = async (): Promise<Message[]> => {
 		const peerId = state.selectedUser?._id;
 		if (!peerId) return [] as Message[];
@@ -735,7 +732,7 @@ export const createChatStore = (): ChatStore => {
 			const errorMessage =
 				error instanceof Error
 					? error.message
-					: TOAST_MESSAGES.CHAT.SEND_ERROR;
+					: Features.Chat.CHAT_TOAST_MESSAGES.SEND_ERROR;
 			toast.error(errorMessage);
 		} finally {
 			setSendingMessage(false);
@@ -747,12 +744,10 @@ export const createChatStore = (): ChatStore => {
 			await ChatApi.deleteMessage(messageId);
 			removeMessageById(messageId);
 		} catch (error) {
-			toast.error(TOAST_MESSAGES.CHAT.DELETE_ERROR);
+			toast.error(Features.Chat.CHAT_TOAST_MESSAGES.DELETE_ERROR);
 			throw error as Error;
 		}
-	};
-
-	// ============================================================================
+	}; // ============================================================================
 	// RETURN STORE API
 	// ============================================================================
 

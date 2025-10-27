@@ -13,6 +13,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useMyProperties, usePropertyMutations } from '@/hooks/useProperties';
 import { usePropertyFilters } from '@/hooks/usePropertyFilters';
+import { Features } from '@/lib/constants';
 import { usePropertyActions } from '@/hooks/usePropertyActions';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
 import { Property } from '@/lib/api/propertyApi';
@@ -147,7 +148,9 @@ export const PropertyManager: React.FC = () => {
 				/>
 			)}
 			{loading ? (
-				<PageLoader message="Chargement de vos biens..." />
+				<PageLoader
+					message={Features.Properties.PROPERTY_LOADING.PAGE}
+				/>
 			) : properties.length === 0 ? (
 				<PropertyEmptyState onCreateClick={() => setShowForm(true)} />
 			) : filteredProperties.length === 0 && hasActiveFilters ? (
@@ -180,12 +183,24 @@ export const PropertyManager: React.FC = () => {
 			{/* Confirm Delete Dialog */}
 			<ConfirmDialog
 				isOpen={showConfirmDialog}
-				title="Supprimer le bien"
-				description="Êtes-vous sûr de vouloir supprimer ce bien ? Cette action est irréversible."
+				title={
+					Features.Properties.PROPERTY_CONFIRMATION_DIALOGS
+						.DELETE_TITLE
+				}
+				description={
+					Features.Properties.PROPERTY_CONFIRMATION_DIALOGS
+						.DELETE_DESCRIPTION
+				}
 				onConfirm={confirmDelete}
 				onCancel={closeDeleteDialog}
-				confirmText="Supprimer"
-				cancelText="Annuler"
+				confirmText={
+					Features.Properties.PROPERTY_CONFIRMATION_DIALOGS
+						.DELETE_CONFIRM
+				}
+				cancelText={
+					Features.Properties.PROPERTY_CONFIRMATION_DIALOGS
+						.DELETE_CANCEL
+				}
 				variant="danger"
 				loading={deleteLoading}
 			/>

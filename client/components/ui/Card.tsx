@@ -1,4 +1,5 @@
 import React from 'react';
+import { UI } from '@/lib/constants/components';
 
 interface CardProps {
 	children: React.ReactNode;
@@ -17,33 +18,11 @@ export const Card: React.FC<CardProps> = ({
 	rounded = 'lg',
 	hover = false,
 }) => {
-	const paddingClasses = {
-		none: '',
-		sm: 'p-3',
-		md: 'p-6',
-		lg: 'p-8',
-	};
-
-	const shadowClasses = {
-		none: '',
-		sm: 'shadow-sm',
-		md: 'shadow-md',
-		lg: 'shadow-lg',
-	};
-
-	const roundedClasses = {
-		none: '',
-		sm: 'rounded-sm',
-		md: 'rounded-md',
-		lg: 'rounded-lg',
-		xl: 'rounded-xl',
-	};
-
-	const hoverClass = hover ? 'hover:shadow-md transition-shadow' : '';
+	const hoverClass = hover ? UI.CARD_HOVER.shadow : '';
 
 	return (
 		<div
-			className={`bg-white border border-gray-200 ${paddingClasses[padding]} ${shadowClasses[shadow]} ${roundedClasses[rounded]} ${hoverClass} ${className}`}
+			className={`${UI.CARD_BASE_CLASSES} ${UI.CARD_PADDING_CLASSES[padding]} ${UI.CARD_SHADOW_CLASSES[shadow]} ${UI.CARD_ROUNDED_CLASSES[rounded]} ${hoverClass} ${className}`}
 		>
 			{children}
 		</div>

@@ -5,6 +5,7 @@ import { useSWRConfig } from 'swr';
 import { swrKeys } from '@/lib/swrKeys';
 import { LoadingSpinner } from './LoadingSpinner';
 import { logger } from '@/lib/utils/logger';
+import { Features } from '@/lib/constants';
 
 interface FavoriteButtonProps {
 	itemId: string;
@@ -76,7 +77,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
 
 		if (!isAuthenticated) {
 			// Redirect to login or show auth modal
-			window.location.href = '/auth/login';
+			window.location.href = Features.Auth.AUTH_ROUTES.LOGIN;
 			return;
 		}
 

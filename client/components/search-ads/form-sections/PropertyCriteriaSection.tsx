@@ -1,4 +1,5 @@
 import { FormSection } from './FormSection';
+import { Features } from '@/lib/constants';
 
 interface PropertyCriteriaSectionProps {
 	propertyTypes: string[];
@@ -49,7 +50,10 @@ export const PropertyCriteriaSection: React.FC<
 	const projectTypesList = ['primary', 'secondary', 'investment'];
 
 	return (
-		<FormSection title="Critères de recherche du bien" emoji="🏠">
+		<FormSection
+			title={Features.SearchAds.SEARCH_AD_FORM_SECTIONS.SEARCH_CRITERIA}
+			emoji="🏠"
+		>
 			<div className="space-y-6">
 				{/* Property Types */}
 				<div>

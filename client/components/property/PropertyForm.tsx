@@ -10,7 +10,7 @@ import { PropertyFormStep3 } from './PropertyFormStep3';
 import { PropertyFormStep4 } from './PropertyFormStep4';
 import { PropertyFormStep5 } from './PropertyFormStep5';
 import { logger } from '@/lib/utils/logger';
-import { UI_TRANSITION_MS } from '@/lib/constants';
+import { Features, Components, UI_TRANSITION_MS } from '@/lib/constants';
 import { usePropertyMutations } from '@/hooks/useProperties';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -227,7 +227,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({
 			<div className="mb-8">
 				<h2 className="text-2xl font-bold text-gray-900 mb-4">
 					{isEditing
-						? 'Modifier le bien'
+						? Components.UI.BUTTON_TEXT.editProperty
 						: 'Créer une nouvelle annonce'}
 				</h2>
 

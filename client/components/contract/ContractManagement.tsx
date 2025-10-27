@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { toast } from 'react-toastify';
 import { useFetch, useMutation } from '@/hooks';
-import { TOAST_MESSAGES } from '@/lib/constants';
+import { Features } from '@/lib/constants';
 
 interface ContractManagementProps {
 	collaborationId: string;
@@ -73,13 +73,17 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 			onSuccess: (response) => {
 				setIsEditing(false);
 				if (response.requiresResigning) {
-					toast.info(TOAST_MESSAGES.CONTRACTS.UPDATE_REQUIRES_RESIGN);
+					toast.info(
+						Features.Collaboration.CONTRACT_TOAST_MESSAGES
+							.UPDATE_REQUIRES_RESIGN,
+					);
 				}
 				onContractUpdate?.(response.contract);
 				reloadContract();
 			},
 			showErrorToast: true,
-			errorMessage: TOAST_MESSAGES.CONTRACTS.UPDATE_ERROR,
+			errorMessage:
+				Features.Collaboration.CONTRACT_TOAST_MESSAGES.UPDATE_ERROR,
 		},
 	);
 
@@ -93,20 +97,24 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 					response.contract.ownerSigned &&
 					response.contract.collaboratorSigned
 				) {
-					toast.success(TOAST_MESSAGES.CONTRACTS.SIGN_SUCCESS_BOTH);
+					toast.success(
+						Features.Collaboration.CONTRACT_TOAST_MESSAGES
+							.SIGN_SUCCESS_BOTH,
+					);
 				} else {
 					toast.success(
-						TOAST_MESSAGES.CONTRACTS.SIGN_SUCCESS_WAITING,
+						Features.Collaboration.CONTRACT_TOAST_MESSAGES
+							.SIGN_SUCCESS_WAITING,
 					);
 				}
 				setConfirmOpen(false);
 				reloadContract();
 			},
 			showErrorToast: true,
-			errorMessage: TOAST_MESSAGES.CONTRACTS.SIGN_ERROR,
+			errorMessage:
+				Features.Collaboration.CONTRACT_TOAST_MESSAGES.SIGN_ERROR,
 		},
 	);
-
 	const isSubmitting = isUpdating || isSigning;
 
 	const handleUpdateContract = () => {
@@ -135,17 +143,19 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 		return (
 			<div className="text-center p-8">
 				<p className="text-red-600">
-					{error ? String(error) : TOAST_MESSAGES.CONTRACTS.NOT_FOUND}
+					{error
+						? String(error)
+						: Features.Collaboration.CONTRACT_TOAST_MESSAGES
+								.NOT_FOUND}
 				</p>
 				{onClose && (
 					<Button onClick={onClose} className="mt-4">
-						Fermer
+						{Features.Collaboration.CONTRACT_UI_TEXT.CLOSE_BUTTON}
 					</Button>
 				)}
 			</div>
 		);
 	}
-
 	const isOwner =
 		contract.propertyOwner.id === user?._id ||
 		contract.propertyOwner.id === user?.id;
@@ -160,19 +170,30 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 		<div className="space-y-6">
 			<ConfirmDialog
 				isOpen={confirmOpen}
-				title="Signer le contrat ?"
-				description="Êtes-vous sûr de vouloir signer ce contrat ? Cette action sera enregistrée."
+				title={
+					Features.Collaboration.CONTRACT_UI_TEXT.SIGN_DIALOG_TITLE
+				}
+				description={
+					Features.Collaboration.CONTRACT_UI_TEXT
+						.SIGN_DIALOG_DESCRIPTION
+				}
 				onCancel={() => setConfirmOpen(false)}
 				onConfirm={doSignContract}
-				confirmText="Oui, signer"
-				cancelText="Non, revenir"
+				confirmText={
+					Features.Collaboration.CONTRACT_UI_TEXT.SIGN_CONFIRM_TEXT
+				}
+				cancelText={
+					Features.Collaboration.CONTRACT_UI_TEXT.SIGN_CANCEL_TEXT
+				}
 				variant="primary"
 				loading={isSubmitting}
 			/>
 			{error && (
 				<div className="bg-red-50 border border-red-200 rounded-lg p-4">
 					<p className="text-red-600">
-						{error.message || 'Une erreur est survenue'}
+						{error.message ||
+							Features.Collaboration.CONTRACT_UI_TEXT
+								.DEFAULT_ERROR}
 					</p>
 				</div>
 			)}
@@ -181,17 +202,23 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 			<Card className="p-6">
 				<div className="flex items-center justify-between mb-4">
 					<h2 className="text-2xl font-bold text-gray-900">
-						Contrat de Collaboration
+						{Features.Collaboration.CONTRACT_UI_TEXT.TITLE}
 					</h2>
 					<div className="flex items-center space-x-2">
 						{currentUserSigned && (
 							<span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-								✓ Vous avez signé
+								{
+									Features.Collaboration.CONTRACT_UI_TEXT
+										.YOU_SIGNED
+								}
 							</span>
 						)}
 						{otherPartySigned && (
 							<span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-								✓ Partenaire a signé
+								{
+									Features.Collaboration.CONTRACT_UI_TEXT
+										.PARTNER_SIGNED
+								}
 							</span>
 						)}
 					</div>
@@ -217,11 +244,17 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 								</div>
 								<div className="ml-3">
 									<h3 className="text-sm font-medium text-orange-800">
-										Le contrat a été modifié
+										{
+											Features.Collaboration
+												.CONTRACT_UI_TEXT.MODIFIED_TITLE
+										}
 									</h3>
 									<p className="text-sm text-orange-700 mt-1">
-										Les deux parties doivent signer à
-										nouveau.
+										{
+											Features.Collaboration
+												.CONTRACT_UI_TEXT
+												.MODIFIED_DESCRIPTION
+										}
 									</p>
 								</div>
 							</div>
@@ -232,7 +265,10 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
 					<div>
 						<h3 className="font-semibold text-gray-900 mb-3">
-							Propriétaire
+							{
+								Features.Collaboration.CONTRACT_UI_TEXT
+									.OWNER_SECTION
+							}
 						</h3>
 						<div className="flex items-center space-x-3 mb-2">
 							<ProfileAvatar
@@ -277,7 +313,10 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 					</div>
 					<div>
 						<h3 className="font-semibold text-gray-900 mb-3">
-							Collaborateur
+							{
+								Features.Collaboration.CONTRACT_UI_TEXT
+									.COLLABORATOR_SECTION
+							}
 						</h3>
 						<div className="flex items-center space-x-3 mb-2">
 							<ProfileAvatar
@@ -325,9 +364,12 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 
 			{/* Contract Content */}
 			<Card className="p-6">
-				<div className="flex items-center justify-between mb-4">
-					<h3 className="text-lg font-semibold text-gray-900">
-						Termes du contrat
+				<div className="flex justify-between items-center mb-4">
+					<h3 className="text-xl font-semibold text-gray-900">
+						{
+							Features.Collaboration.CONTRACT_UI_TEXT
+								.CONTRACT_CONTENT_SECTION
+						}
 					</h3>
 					{!isEditing && contract.canEdit && (
 						<Button
@@ -335,7 +377,10 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 							variant="outline"
 							loading={isSubmitting}
 						>
-							Modifier le contrat
+							{
+								Features.Collaboration.CONTRACT_UI_TEXT
+									.EDIT_BUTTON
+							}
 						</Button>
 					)}
 				</div>
@@ -356,7 +401,11 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 								}
 								rows={12}
 								className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-								placeholder="Saisissez le contenu du contrat..."
+								placeholder={
+									Features.Collaboration
+										.COLLABORATION_FORM_PLACEHOLDERS
+										.CONTRACT_CONTENT
+								}
 							/>
 						</div>
 						<div>
@@ -373,7 +422,11 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 								}
 								rows={4}
 								className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-								placeholder="Conditions supplémentaires..."
+								placeholder={
+									Features.Collaboration
+										.COLLABORATION_FORM_PLACEHOLDERS
+										.CONTRACT_TERMS
+								}
 							/>
 						</div>
 						<div className="flex space-x-3">
@@ -382,14 +435,20 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 								loading={isSubmitting}
 								className="bg-blue-600 hover:bg-blue-700"
 							>
-								Sauvegarder
+								{
+									Features.Collaboration.CONTRACT_UI_TEXT
+										.SAVE_BUTTON
+								}
 							</Button>
 							<Button
 								onClick={handleCancelEdit}
 								variant="outline"
 								disabled={isSubmitting}
 							>
-								Annuler
+								{
+									Features.Collaboration.CONTRACT_UI_TEXT
+										.CANCEL_EDIT_BUTTON
+								}
 							</Button>
 						</div>
 					</div>
@@ -397,7 +456,10 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 					<div className="space-y-4">
 						<div>
 							<h4 className="font-medium text-gray-900 mb-2">
-								Contenu du contrat
+								{
+									Features.Collaboration.CONTRACT_UI_TEXT
+										.CONTRACT_CONTENT_SECTION
+								}
 							</h4>
 							<div className="bg-gray-50 rounded-lg p-4 whitespace-pre-wrap">
 								{contract.contractText ||
@@ -407,7 +469,10 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 						{contract.additionalTerms && (
 							<div>
 								<h4 className="font-medium text-gray-900 mb-2">
-									Conditions supplémentaires
+									{
+										Features.Collaboration.CONTRACT_UI_TEXT
+											.TERMS_SECTION
+									}
 								</h4>
 								<div className="bg-gray-50 rounded-lg p-4 whitespace-pre-wrap">
 									{contract.additionalTerms}
@@ -474,7 +539,10 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 							loading={isSubmitting}
 							className="bg-green-600 hover:bg-green-700 w-full"
 						>
-							✍️ Signer le contrat
+							{
+								Features.Collaboration.CONTRACT_UI_TEXT
+									.SIGN_BUTTON
+							}
 						</Button>
 					</div>
 				</Card>
@@ -484,7 +552,7 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 			{onClose && (
 				<div className="flex justify-end">
 					<Button onClick={onClose} variant="outline">
-						Fermer
+						{Features.Collaboration.CONTRACT_UI_TEXT.CLOSE_BUTTON}
 					</Button>
 				</div>
 			)}

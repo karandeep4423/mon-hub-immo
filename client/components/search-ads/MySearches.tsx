@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { swrKeys } from '@/lib/swrKeys';
 import { useAuth } from '@/hooks/useAuth';
 import { PageLoader } from '../ui/LoadingSpinner';
+import { Features } from '@/lib/constants';
 
 export const MySearches = () => {
 	const router = useRouter();
@@ -51,7 +52,11 @@ export const MySearches = () => {
 				<h2 className="text-2xl font-bold text-gray-900">
 					Mes Recherches
 				</h2>
-				<Button onClick={() => router.push('/search-ads/create')}>
+				<Button
+					onClick={() =>
+						router.push(Features.SearchAds.SEARCH_AD_ROUTES.CREATE)
+					}
+				>
 					Créer une recherche
 				</Button>
 			</div>
@@ -81,7 +86,11 @@ export const MySearches = () => {
 						Vous n&apos;avez aucune recherche active.
 					</p>
 					<Button
-						onClick={() => router.push('/search-ads/create')}
+						onClick={() =>
+							router.push(
+								Features.SearchAds.SEARCH_AD_ROUTES.CREATE,
+							)
+						}
 						className="mt-4"
 					>
 						Créer votre première recherche

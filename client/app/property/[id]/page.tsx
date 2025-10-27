@@ -14,6 +14,7 @@ import { formatDateShort } from '@/lib/utils/date';
 import { useProperty } from '@/hooks/useProperties';
 import { useCollaborationsByProperty } from '@/hooks/useCollaborations';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
+import { Features } from '@/lib/constants';
 import {
 	canViewFullAddress,
 	getDisplayAddress,
@@ -81,7 +82,7 @@ function PropertyDetailsPageContent() {
 
 	const handleContactOwner = () => {
 		if (!user) {
-			router.push('/auth/login');
+			router.push(Features.Auth.AUTH_ROUTES.LOGIN);
 			return;
 		}
 
@@ -95,7 +96,7 @@ function PropertyDetailsPageContent() {
 
 	const handleCollaborate = () => {
 		if (!user) {
-			router.push('/auth/login');
+			router.push(Features.Auth.AUTH_ROUTES.LOGIN);
 			return;
 		}
 
@@ -124,7 +125,11 @@ function PropertyDetailsPageContent() {
 	};
 
 	if (loading) {
-		return <PageLoader message="Chargement du bien..." />;
+		return (
+			<PageLoader
+				message={Features.Properties.PROPERTY_LOADING.DETAILS}
+			/>
+		);
 	}
 
 	if (error || !property) {
@@ -132,7 +137,7 @@ function PropertyDetailsPageContent() {
 			<div className="min-h-screen flex items-center justify-center">
 				<div className="text-center">
 					<h1 className="text-2xl font-bold text-gray-900 mb-4">
-						Bien non trouvé
+						{Features.Properties.PROPERTY_ERRORS.NOT_FOUND}
 					</h1>
 					<p className="text-gray-600 mb-6">
 						{error
@@ -520,7 +525,7 @@ export default function PropertyDetailsPage() {
 				<div className="min-h-screen flex items-center justify-center p-4">
 					<div className="text-center">
 						<h1 className="text-2xl font-bold text-gray-900 mb-4">
-							Erreur lors du chargement
+							{Features.Properties.PROPERTY_ERRORS.LOADING_FAILED}
 						</h1>
 						<p className="text-gray-600 mb-6">
 							Une erreur est survenue lors du chargement des

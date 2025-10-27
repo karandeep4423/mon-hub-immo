@@ -1,5 +1,6 @@
 import { FormSection } from './FormSection';
 import { BaseLocationAutocomplete, type LocationItem } from '../../ui';
+import { Features } from '@/lib/constants';
 
 interface LocationSectionProps {
 	cities: string;
@@ -19,7 +20,10 @@ export const LocationSection: React.FC<LocationSectionProps> = ({
 	onOpenToOtherAreasChange,
 }) => {
 	return (
-		<FormSection title="Localisation" emoji="📍">
+		<FormSection
+			title={Features.SearchAds.SEARCH_AD_FORM_SECTIONS.LOCATION}
+			emoji="📍"
+		>
 			<div className="space-y-4">
 				<BaseLocationAutocomplete
 					mode="multi"
@@ -30,7 +34,10 @@ export const LocationSection: React.FC<LocationSectionProps> = ({
 							locations.map((loc) => loc.name).join(', '),
 						)
 					}
-					placeholder="Rechercher et ajouter des villes..."
+					placeholder={
+						Features.SearchAds.SEARCH_AD_PLACEHOLDERS
+							.LOCATION_SEARCH
+					}
 				/>
 
 				<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

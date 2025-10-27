@@ -10,11 +10,10 @@
  *   async (data) => await PropertyService.createProperty(data),
  *   {
  *     onSuccess: () => {
- *       toast.success('Property created!');
  *       refetchProperties();
  *     },
- *     successMessage: 'Property created successfully!',
- *     errorMessage: 'Failed to create property',
+ *     successMessage: Features.Properties.PROPERTY_TOAST_MESSAGES.CREATE_SUCCESS,
+ *     errorMessage: Features.Properties.PROPERTY_TOAST_MESSAGES.CREATE_ERROR,
  *   }
  * );
  *

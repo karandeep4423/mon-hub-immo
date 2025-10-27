@@ -1,4 +1,5 @@
-import { LANDING_TEXT } from '@/lib/constants/text';
+import { Features } from '@/lib/constants';
+// Migrated: Features.Landing.LANDING_UI_TEXT;
 
 export const ProfessionalSection = () => {
 	return (
@@ -7,16 +8,23 @@ export const ProfessionalSection = () => {
 				<h2 className="text-xl md:text-2xl font-bold mb-6">
 					<span className="inline-flex items-center gap-2">
 						<span></span>
-						<span>{LANDING_TEXT.professionalTitle}</span>
+						<span>
+							{Features.Landing.LANDING_UI_TEXT.professionalTitle}
+						</span>
 					</span>
 				</h2>
 
 				<p className="mb-4 text-md md:text-lg">
-					{LANDING_TEXT.professionalSubtitle}
+					{Features.Landing.LANDING_UI_TEXT.professionalSubtitle}
 				</p>
 
 				<p className="text-md md:text-lg font-semibold">
-					<strong>{LANDING_TEXT.professionalDescription}</strong>
+					<strong>
+						{
+							Features.Landing.LANDING_UI_TEXT
+								.professionalDescription
+						}
+					</strong>
 				</p>
 			</div>
 		</section>

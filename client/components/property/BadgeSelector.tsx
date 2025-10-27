@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { PROPERTY_BADGES, getBadgeConfig } from '@/lib/constants/badges';
+import { Features } from '@/lib/constants';
 import { useClickOutside } from '@/hooks/useClickOutside';
 
 interface BadgeSelectorProps {
@@ -40,7 +40,8 @@ const BadgeSelector: React.FC<BadgeSelectorProps> = ({
 			{selectedBadges.length > 0 && (
 				<div className="flex flex-wrap gap-2 mb-2">
 					{selectedBadges.map((badgeValue) => {
-						const config = getBadgeConfig(badgeValue);
+						const config =
+							Features.Properties.getBadgeConfig(badgeValue);
 						if (!config) return null;
 
 						return (
@@ -84,7 +85,7 @@ const BadgeSelector: React.FC<BadgeSelectorProps> = ({
 				{/* Dropdown Menu */}
 				{isOpen && (
 					<div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-						{PROPERTY_BADGES.map((badge) => {
+						{Features.Properties.PROPERTY_BADGES.map((badge) => {
 							const isSelected = selectedBadges.includes(
 								badge.value,
 							);

@@ -5,6 +5,7 @@ import React from 'react';
 import { Button } from '@/components/ui/Button';
 import { MultiStepProgress } from '@/components/auth/MultiStepProgress';
 import { useSignUpForm } from '@/hooks/useSignUpForm';
+import { Features } from '@/lib/constants';
 import {
 	BasicInfoStep,
 	UserTypeStep,
@@ -240,7 +241,7 @@ export const SignUpForm: React.FC = () => {
 							<p className="text-sm text-gray-500 mt-4">
 								Vous avez déjà un compte ?{' '}
 								<a
-									href="/auth/login"
+									href={Features.Auth.AUTH_ROUTES.LOGIN}
 									className="text-brand-600 hover:text-brand-700 font-semibold"
 								>
 									Se connecter
@@ -432,7 +433,7 @@ export const SignUpForm: React.FC = () => {
 								<p className="text-sm text-gray-600">
 									Vous avez déjà un compte ?{' '}
 									<a
-										href="/auth/login"
+										href={Features.Auth.AUTH_ROUTES.LOGIN}
 										className="text-brand-600 hover:text-brand-700 font-semibold"
 									>
 										Se connecter

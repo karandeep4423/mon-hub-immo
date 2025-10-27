@@ -10,7 +10,7 @@ import { useMutation } from '@/hooks/useMutation';
 import { authService } from '@/lib/api/authApi';
 import { verifyEmailSchema } from '@/lib/validation';
 import { useForm } from '@/hooks/useForm';
-import { AUTH_ROUTES } from '@/lib/constants';
+import { Features } from '@/lib/constants';
 
 interface VerifyEmailFormData extends Record<string, unknown> {
 	code: string;
@@ -70,9 +70,9 @@ export const VerifyEmailForm: React.FC = () => {
 				toast.success(response.message);
 
 				if (response.requiresProfileCompletion) {
-					router.push(AUTH_ROUTES.COMPLETE_PROFILE);
+					router.push(Features.Auth.AUTH_ROUTES.COMPLETE_PROFILE);
 				} else {
-					router.push(AUTH_ROUTES.WELCOME);
+					router.push(Features.Auth.AUTH_ROUTES.WELCOME);
 				}
 			} else {
 				setErrors({ code: response.message });
@@ -149,7 +149,10 @@ export const VerifyEmailForm: React.FC = () => {
 									} as React.ChangeEvent<HTMLInputElement>);
 								}}
 								error={errors.code}
-								placeholder="Code à 6 chiffres"
+								placeholder={
+									Features.Auth.AUTH_PLACEHOLDERS
+										.VERIFICATION_CODE
+								}
 								maxLength={6}
 								className="text-center text-xl sm:text-2xl tracking-[0.5em] font-mono"
 								required
@@ -183,7 +186,6 @@ export const VerifyEmailForm: React.FC = () => {
 							Vérifier
 						</Button>
 					</form>
-
 					{/* Resend and Navigation */}
 					<div className="text-center mt-8 sm:mt-10 space-y-4">
 						{/* Resend Code */}
@@ -206,14 +208,15 @@ export const VerifyEmailForm: React.FC = () => {
 						<div>
 							<button
 								type="button"
-								onClick={() => router.push(AUTH_ROUTES.LOGIN)}
+								onClick={() =>
+									router.push(Features.Auth.AUTH_ROUTES.LOGIN)
+								}
 								className="text-gray-600 hover:text-gray-500 text-sm font-medium transition-colors"
 							>
 								Retour à la connexion
 							</button>
 						</div>
-					</div>
-
+					</div>{' '}
 					{/* Helper Text */}
 					<div className="text-center mt-6 sm:mt-8 pb-8">
 						<p className="text-xs text-gray-500">

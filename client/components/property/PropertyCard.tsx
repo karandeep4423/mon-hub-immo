@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Property } from '@/lib/api/propertyApi';
 import { getImageUrl } from '@/lib/utils/imageUtils';
 import { ProfileAvatar, FavoriteButton } from '../ui';
-import { getBadgeConfig } from '@/lib/constants/badges';
+import { Features } from '@/lib/constants';
 import { collaborationApi } from '@/lib/api/collaborationApi';
 import { useAuth } from '@/hooks/useAuth';
 import { formatDateShort } from '@/lib/utils/date';
@@ -70,18 +70,20 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 						{collaborationStatus && (
 							<span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
 								ℹ️ En collaboration (
-								{collaborationStatus === 'pending'
-									? 'en attente'
-									: collaborationStatus === 'accepted'
-										? 'acceptée'
-										: 'active'}
+								{Features.Collaboration
+									.COLLABORATION_STATUS_CONFIG[
+									collaborationStatus
+								]?.label || collaborationStatus}
 								)
 							</span>
 						)}
 						{property.badges &&
 							property.badges.length > 0 &&
 							property.badges.map((badgeValue) => {
-								const config = getBadgeConfig(badgeValue);
+								const config =
+									Features.Properties.getBadgeConfig(
+										badgeValue,
+									);
 								if (!config) return null;
 
 								return (

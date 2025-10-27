@@ -14,7 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { logger } from '@/lib/utils/logger';
 import { RescheduleAppointmentModal } from './RescheduleAppointmentModal';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
-import { APPOINTMENT_STATUSES } from '@/lib/constants';
+import { APPOINTMENT_STATUS_VALUES } from '@/lib/constants/features/appointments';
 import Link from 'next/link';
 import { AppointmentCard } from './AppointmentCard';
 import { AppointmentFilters } from './AppointmentFilters';
@@ -31,8 +31,8 @@ type UserType = 'agent' | 'apporteur';
 type ConfirmAction = {
 	appointmentId: string;
 	status:
-		| typeof APPOINTMENT_STATUSES.CONFIRMED
-		| typeof APPOINTMENT_STATUSES.CANCELLED;
+		| typeof APPOINTMENT_STATUS_VALUES.CONFIRMED
+		| typeof APPOINTMENT_STATUS_VALUES.CANCELLED;
 	title: string;
 	description: string;
 	variant: 'danger' | 'primary' | 'warning';
@@ -103,12 +103,12 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 	const openConfirmDialog = (
 		appointmentId: string,
 		status:
-			| typeof APPOINTMENT_STATUSES.CONFIRMED
-			| typeof APPOINTMENT_STATUSES.CANCELLED,
+			| typeof APPOINTMENT_STATUS_VALUES.CONFIRMED
+			| typeof APPOINTMENT_STATUS_VALUES.CANCELLED,
 		appointmentType: string,
 		otherUserName: string,
 	) => {
-		if (status === APPOINTMENT_STATUSES.CONFIRMED) {
+		if (status === APPOINTMENT_STATUS_VALUES.CONFIRMED) {
 			setConfirmAction({
 				appointmentId,
 				status,
@@ -150,16 +150,16 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 	const stats = {
 		all: appointments.length,
 		pending: appointments.filter(
-			(apt) => apt.status === APPOINTMENT_STATUSES.PENDING,
+			(apt) => apt.status === APPOINTMENT_STATUS_VALUES.PENDING,
 		).length,
 		confirmed: appointments.filter(
-			(apt) => apt.status === APPOINTMENT_STATUSES.CONFIRMED,
+			(apt) => apt.status === APPOINTMENT_STATUS_VALUES.CONFIRMED,
 		).length,
 		cancelled: appointments.filter(
-			(apt) => apt.status === APPOINTMENT_STATUSES.CANCELLED,
+			(apt) => apt.status === APPOINTMENT_STATUS_VALUES.CANCELLED,
 		).length,
 		completed: appointments.filter(
-			(apt) => apt.status === APPOINTMENT_STATUSES.COMPLETED,
+			(apt) => apt.status === APPOINTMENT_STATUS_VALUES.COMPLETED,
 		).length,
 		total: appointments.length,
 	};
@@ -407,7 +407,8 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 				onCancel={() => setConfirmAction(null)}
 				variant={confirmAction?.variant || 'primary'}
 				confirmText={
-					confirmAction?.status === APPOINTMENT_STATUSES.CONFIRMED
+					confirmAction?.status ===
+					APPOINTMENT_STATUS_VALUES.CONFIRMED
 						? 'Accepter'
 						: 'Refuser'
 				}

@@ -1,12 +1,54 @@
 import React from 'react';
-import { STATUS_COLORS, StatusType } from '../../lib/constants/statusColors';
-import {
-	getStatusConfig,
-	type EntityType,
-	BADGE_VARIANT_CLASSES,
-	type BadgeVariant,
-} from '@/lib/constants/statusConfigs';
 import { logger } from '@/lib/utils/logger';
+
+import { Features } from '@/lib/constants';
+
+// Badge variant type and classes (moved from statusConfigs.ts)
+type BadgeVariant =
+	| 'success'
+	| 'warning'
+	| 'error'
+	| 'info'
+	| 'default'
+	| 'primary';
+
+const BADGE_VARIANT_CLASSES: Record<BadgeVariant, string> = {
+	success: 'bg-green-100 text-green-800 border-green-200',
+	warning: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+	error: 'bg-red-100 text-red-800 border-red-200',
+	info: 'bg-blue-100 text-blue-800 border-blue-200',
+	default: 'bg-gray-100 text-gray-800 border-gray-200',
+	primary: 'bg-purple-100 text-purple-800 border-purple-200',
+};
+
+// Status config interface
+interface StatusConfig {
+	label: string;
+	variant: BadgeVariant;
+	className: string;
+}
+
+// Entity type for status badge
+type EntityType = 'property' | 'appointment' | 'collaboration' | 'searchAd';
+
+// Status type for legacy support
+type StatusType = keyof typeof Features.Common.STATUS_COLORS;
+
+// Helper to get status config from feature constants
+function getStatusConfig(
+	entityType: EntityType,
+	status: string,
+): StatusConfig | undefined {
+	const configs = {
+		property: Features.Properties.PROPERTY_STATUS_CONFIG,
+		appointment: Features.Appointments.APPOINTMENT_STATUS_CONFIG,
+		collaboration: Features.Collaboration.COLLABORATION_STATUS_CONFIG,
+		searchAd: Features.SearchAds.SEARCH_AD_STATUS_CONFIG,
+	};
+	return configs[entityType][
+		status as keyof (typeof configs)[typeof entityType]
+	];
+}
 
 // Legacy interface for backward compatibility
 interface LegacyStatusBadgeProps {
@@ -93,13 +135,20 @@ export const StatusBadge: React.FC<StatusBadgeProps> = (props) => {
 	}
 
 	// Legacy API - collaboration statuses only
-	const config = STATUS_COLORS[props.status];
+	const statusKey = props.status.toLowerCase();
+	const statusColorClass =
+		Features.Common.STATUS_COLORS[
+			statusKey as keyof typeof Features.Common.STATUS_COLORS
+		] || Features.Common.STATUS_COLORS.neutral;
+
+	// Extract label (capitalize first letter)
+	const label = props.status.charAt(0).toUpperCase() + props.status.slice(1);
 
 	return (
 		<span
-			className={`inline-flex items-center rounded-full font-medium border ${config.bg} ${config.text} ${config.border} ${SIZE_CLASSES[size]} ${className}`}
+			className={`inline-flex items-center rounded-full font-medium border ${statusColorClass} ${SIZE_CLASSES[size]} ${className}`}
 		>
-			{config.label}
+			{label}
 		</span>
 	);
 };

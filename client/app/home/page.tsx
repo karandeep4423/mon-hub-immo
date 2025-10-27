@@ -29,7 +29,7 @@ import {
 } from '@/lib/services/geolocationService';
 import { logger } from '@/lib/utils/logger';
 import { useDebounce } from '@/hooks/useDebounce';
-import { DEBOUNCE_SEARCH_MS } from '@/lib/constants';
+import { Features } from '@/lib/constants';
 
 type ContentFilter =
 	| 'all'
@@ -62,7 +62,10 @@ export default function Home() {
 	const [isInitialLoad, setIsInitialLoad] = useState(true);
 
 	// Debounce search term with standard delay
-	const debouncedSearchTerm = useDebounce(searchTerm, DEBOUNCE_SEARCH_MS);
+	const debouncedSearchTerm = useDebounce(
+		searchTerm,
+		Features.Common.DEBOUNCE.SEARCH,
+	);
 
 	const PAGE_SIZE = 6;
 	// Normalize city names for robust comparisons (remove accents, trim, lowercase)

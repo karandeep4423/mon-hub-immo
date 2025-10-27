@@ -1,4 +1,4 @@
-import { SEARCH_AD_BADGE_OPTIONS } from '@/lib/constants';
+import { Features } from '@/lib/constants';
 import { FormSection } from './FormSection';
 
 interface BadgesSectionProps {
@@ -11,13 +11,16 @@ export const BadgesSection: React.FC<BadgesSectionProps> = ({
 	onBadgesChange,
 }) => {
 	return (
-		<FormSection title="Badges pour l'annonce" emoji="🏷️">
+		<FormSection
+			title={Features.SearchAds.SEARCH_AD_FORM_SECTIONS.BADGES}
+			emoji="🏷️"
+		>
 			<p className="text-sm text-gray-600 mb-4">
 				Ajoutez des badges pour mettre en avant les caractéristiques
 				importantes de cette recherche (optionnel)
 			</p>
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-				{SEARCH_AD_BADGE_OPTIONS.map((badge) => (
+				{Features.SearchAds.SEARCH_AD_BADGE_OPTIONS.map((badge) => (
 					<label
 						key={badge}
 						className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer min-h-[3rem]"

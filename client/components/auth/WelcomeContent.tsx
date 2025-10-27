@@ -4,6 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useRequireAuth } from '@/hooks';
 import { Button } from '../ui/Button';
+import { Features } from '@/lib/constants';
 
 export const WelcomeContent: React.FC = () => {
 	const router = useRouter();
@@ -54,7 +55,9 @@ export const WelcomeContent: React.FC = () => {
 			</div>
 
 			<Button
-				onClick={() => router.push('/dashboard')}
+				onClick={() =>
+					router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE)
+				}
 				className="w-full"
 				size="lg"
 			>

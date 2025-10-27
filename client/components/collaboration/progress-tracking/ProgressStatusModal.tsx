@@ -8,7 +8,7 @@ import {
 	ProgressStatusUpdate,
 	ProgressStepData,
 } from './types';
-import { STEP_ORDER } from '../../../lib/constants/stepOrder';
+import { Features, Components } from '@/lib/constants';
 import { logger } from '@/lib/utils/logger';
 
 interface ProgressStatusModalProps {
@@ -32,7 +32,7 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 }) => {
 	// Find the next uncompleted step as default selection
 	const nextUncompletedStep =
-		STEP_ORDER.find((stepId) => {
+		Features.Collaboration.STEP_ORDER.find((stepId) => {
 			const stepData = steps?.find((s) => s.id === stepId);
 			return !stepData?.completed;
 		}) || currentStep;
@@ -70,7 +70,11 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 	};
 
 	return (
-		<Modal isOpen={isOpen} onClose={onClose} title="Modifier le statut">
+		<Modal
+			isOpen={isOpen}
+			onClose={onClose}
+			title={Components.UI.BUTTON_TEXT.editStatus}
+		>
 			<div className="space-y-6">
 				{/* Step Selection */}
 				<div>
@@ -78,7 +82,7 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 						Sélectionner l&apos;étape
 					</label>
 					<div className="space-y-2">
-						{STEP_ORDER.map((step) => {
+						{Features.Collaboration.STEP_ORDER.map((step) => {
 							const config = PROGRESS_STEPS_CONFIG[step];
 							const stepData = steps?.find((s) => s.id === step);
 							const isCompleted = stepData?.completed || false;
@@ -87,8 +91,8 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 							const stepState = isCompleted
 								? 'completed'
 								: selectedStep === step
-									? 'current'
-									: 'upcoming';
+									? 'active'
+									: 'pending';
 
 							return (
 								<div
@@ -165,7 +169,11 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 					<textarea
 						value={notes}
 						onChange={(e) => setNotes(e.target.value)}
-						placeholder="Ajouter une note sur cette mise à jour..."
+						placeholder={
+							Features.Collaboration
+								.COLLABORATION_FORM_PLACEHOLDERS
+								.STATUS_UPDATE_NOTE
+						}
 						rows={3}
 						maxLength={500}
 						className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"

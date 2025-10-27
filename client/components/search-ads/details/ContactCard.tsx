@@ -2,6 +2,7 @@ import React from 'react';
 import { SearchAd } from '@/types/searchAd';
 import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 import { shareContent } from '@/lib/utils/share';
+import { Features } from '@/lib/constants';
 
 interface ContactCardProps {
 	searchAd: SearchAd;
@@ -80,13 +81,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({
 						{hasBlockingCollab ? (
 							<div className="w-full p-3 rounded-md border bg-blue-50 text-blue-800 text-sm flex items-center justify-center mb-4">
 								<span className="mr-2">ℹ️</span>
-								{`Annonce déjà en collaboration (${
-									blockingStatus === 'pending'
-										? 'en attente'
-										: blockingStatus === 'accepted'
-											? 'acceptée'
-											: 'active'
-								})`}
+								{`Annonce déjà en collaboration (${blockingStatus ? Features.Collaboration.COLLABORATION_STATUS_CONFIG[blockingStatus]?.label || blockingStatus : ''})`}
 							</div>
 						) : (
 							<button

@@ -19,6 +19,7 @@ import {
 } from './form-sections';
 import { PageLoader } from '../ui/LoadingSpinner';
 import { Button } from '../ui/Button';
+import { Features, Components } from '@/lib/constants';
 
 interface EditSearchAdFormProps {
 	id: string;
@@ -277,18 +278,23 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 						<div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-end">
 							<Button
 								type="button"
-								onClick={() => router.push('/dashboard')}
+								onClick={() =>
+									router.push(
+										Features.Dashboard.DASHBOARD_ROUTES
+											.BASE,
+									)
+								}
 								variant="outline"
 								className="order-2 sm:order-1"
 							>
-								Annuler
+								{Components.UI.BUTTON_TEXT.cancel}
 							</Button>
 							<Button
 								type="submit"
 								loading={isSubmitting}
 								className="order-1 sm:order-2"
 							>
-								Modifier la recherche
+								{Components.UI.BUTTON_TEXT.editSearch}
 							</Button>
 						</div>
 					</div>

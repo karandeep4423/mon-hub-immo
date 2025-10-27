@@ -11,7 +11,7 @@ import React, {
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from '../hooks/useAuth';
 import { logger } from '@/lib/utils/logger';
-import { SOCKET_EVENTS } from '@/lib/constants/socket';
+import { Features } from '@/lib/constants';
 
 interface SocketContextType {
 	socket: Socket | null;
@@ -94,7 +94,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 				autoConnect: true,
 			});
 
-			newSocket.on(SOCKET_EVENTS.CONNECTION, () => {
+			newSocket.on(Features.Chat.SOCKET_EVENTS.CONNECTION, () => {
 				logger.debug('🚀 Socket connected successfully', {
 					socketId: newSocket.id,
 					baseUrl: BASE_URL,
@@ -102,7 +102,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 				setIsConnected(true);
 			});
 
-			newSocket.on(SOCKET_EVENTS.DISCONNECT, (reason) => {
+			newSocket.on(Features.Chat.SOCKET_EVENTS.DISCONNECT, (reason) => {
 				logger.warn('⚠️ Socket disconnected', { reason });
 				setIsConnected(false);
 			});
@@ -135,12 +135,15 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 				setIsConnected(false);
 			});
 
-			newSocket.on(SOCKET_EVENTS.GET_ONLINE_USERS, (users) => {
-				logger.debug('🟢 Online users updated', {
-					count: users.length,
-				});
-				setOnlineUsers(users);
-			});
+			newSocket.on(
+				Features.Chat.SOCKET_EVENTS.GET_ONLINE_USERS,
+				(users) => {
+					logger.debug('🟢 Online users updated', {
+						count: users.length,
+					});
+					setOnlineUsers(users);
+				},
+			);
 			socketRef.current = newSocket;
 		}
 

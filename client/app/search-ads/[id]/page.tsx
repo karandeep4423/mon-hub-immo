@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import type { SearchAd } from '@/types/searchAd';
 import { useSearchAd } from '@/hooks/useSearchAds';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
+import { Features } from '@/lib/constants';
 
 export default function SearchAdDetailsPage() {
 	const params = useParams();
@@ -21,7 +22,11 @@ export default function SearchAdDetailsPage() {
 	} = useSearchAd(searchAdId);
 
 	if (loading) {
-		return <PageLoader message="Chargement des détails..." />;
+		return (
+			<PageLoader
+				message={Features.SearchAds.SEARCH_AD_LOADING.DETAILS}
+			/>
+		);
 	}
 
 	if (error || !searchAd) {
@@ -30,7 +35,7 @@ export default function SearchAdDetailsPage() {
 				<div className="text-center">
 					<div className="text-red-500 text-xl mb-4">⚠️</div>
 					<h1 className="text-xl font-semibold text-gray-900 mb-2">
-						Recherche introuvable
+						{Features.SearchAds.SEARCH_AD_ERRORS.NOT_FOUND}
 					</h1>
 					<p className="text-gray-600 mb-4">
 						{error

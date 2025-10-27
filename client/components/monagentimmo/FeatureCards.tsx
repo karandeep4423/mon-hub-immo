@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { Components } from '@/lib/constants';
 
 interface FeatureCardsProps {
 	onBookingClick: () => void;
@@ -15,7 +16,10 @@ export const FeatureCards = ({ onBookingClick }: FeatureCardsProps) => {
 							<div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 mx-auto mb-4 sm:mb-6 relative">
 								<Image
 									src="/illustrations/house-property.png"
-									alt="Estimer ma maison"
+									alt={
+										Components.UI.IMAGE_ALT_TEXT
+											.estimateHouse
+									}
 									width={96}
 									height={96}
 									className="w-full h-full object-contain"
@@ -41,7 +45,10 @@ export const FeatureCards = ({ onBookingClick }: FeatureCardsProps) => {
 							<div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 mx-auto mb-4 sm:mb-6 relative">
 								<Image
 									src="/illustrations/handshake-agreement.png"
-									alt="Mettre en vente"
+									alt={
+										Components.UI.IMAGE_ALT_TEXT
+											.sellProperty
+									}
 									width={96}
 									height={96}
 									className="w-full h-full object-contain"
@@ -67,7 +74,10 @@ export const FeatureCards = ({ onBookingClick }: FeatureCardsProps) => {
 							<div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 mx-auto mb-4 sm:mb-6 relative">
 								<Image
 									src="/illustrations/search-properties.png"
-									alt="Chercher un bien"
+									alt={
+										Components.UI.IMAGE_ALT_TEXT
+											.searchProperty
+									}
 									width={96}
 									height={96}
 									className="w-full h-full object-contain"

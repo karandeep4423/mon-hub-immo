@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getBadgeConfig } from '@/lib/constants/badges';
+import { Features } from '@/lib/constants';
 import { getImageUrl } from '@/lib/utils/imageUtils';
 
 interface PropertyHeroProps {
@@ -44,7 +44,8 @@ export const PropertyHero = ({
 					{badges &&
 						badges.length > 0 &&
 						badges.map((badgeValue) => {
-							const config = getBadgeConfig(badgeValue);
+							const config =
+								Features.Properties.getBadgeConfig(badgeValue);
 							if (!config) return null;
 
 							return (

@@ -3,7 +3,7 @@
 import React from 'react';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { getUserDisplayName } from '../utils/userUtils';
-import { CHAT_TEXT } from '@/lib/constants/text';
+import { Features } from '@/lib/constants';
 
 // ============================================================================
 // EMPTY STATE COMPONENTS
@@ -150,7 +150,10 @@ export const LoadingMessages: React.FC<{ className?: string }> = React.memo(
 		<div
 			className={`flex-1 flex items-center justify-center bg-gray-50 ${className}`}
 		>
-			<LoadingSpinner size="lg" message={CHAT_TEXT.loadingMessages} />
+			<LoadingSpinner
+				size="lg"
+				message={Features.Chat.CHAT_UI_TEXT.loadingMessages}
+			/>
 		</div>
 	),
 );
@@ -167,7 +170,10 @@ export const LoadingUsers: React.FC<{ className?: string }> = React.memo(
 		<div
 			className={`h-full bg-white border-r border-gray-200 flex items-center justify-center ${className}`}
 		>
-			<LoadingSpinner size="lg" message={CHAT_TEXT.loadingUsers} />
+			<LoadingSpinner
+				size="lg"
+				message={Features.Chat.CHAT_UI_TEXT.loadingUsers}
+			/>
 		</div>
 	),
 );

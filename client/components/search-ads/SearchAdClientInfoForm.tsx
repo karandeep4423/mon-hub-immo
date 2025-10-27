@@ -3,6 +3,7 @@
 import React from 'react';
 import { Input, Select } from '@/components/ui';
 import type { SearchAd } from '@/types/searchAd';
+import { Features } from '@/lib/constants';
 
 interface SearchAdClientInfoFormProps {
 	clientInfo: SearchAd['clientInfo'];
@@ -53,10 +54,12 @@ export const SearchAdClientInfoForm: React.FC<SearchAdClientInfoFormProps> = ({
 							)
 						}
 						name="clientName"
-						placeholder="Nom et prénom du client"
+						placeholder={
+							Features.SearchAds.SEARCH_AD_PLACEHOLDERS
+								.CLIENT_NAME
+						}
 						disabled={disabled}
-					/>
-
+					/>{' '}
 					<Select
 						label="Statut (particulier, investisseur, entreprise)"
 						value={clientInfo.qualificationInfo?.clientStatus || ''}
@@ -76,7 +79,6 @@ export const SearchAdClientInfoForm: React.FC<SearchAdClientInfoFormProps> = ({
 						]}
 						disabled={disabled}
 					/>
-
 					<Input
 						label="Profession / Situation professionnelle"
 						type="text"
@@ -89,10 +91,11 @@ export const SearchAdClientInfoForm: React.FC<SearchAdClientInfoFormProps> = ({
 							)
 						}
 						name="profession"
-						placeholder="Profession du client"
+						placeholder={
+							Features.SearchAds.SEARCH_AD_PLACEHOLDERS.PROFESSION
+						}
 						disabled={disabled}
-					/>
-
+					/>{' '}
 					<div className="space-y-2">
 						<label className="block text-sm font-medium text-gray-700">
 							Projet réalisé en couple ou seul ?
@@ -146,7 +149,6 @@ export const SearchAdClientInfoForm: React.FC<SearchAdClientInfoFormProps> = ({
 							</label>
 						</div>
 					</div>
-
 					<div className="flex items-center space-x-2">
 						<input
 							type="checkbox"
@@ -172,7 +174,6 @@ export const SearchAdClientInfoForm: React.FC<SearchAdClientInfoFormProps> = ({
 							Avez-vous déjà un agent immobilier ?
 						</label>
 					</div>
-
 					<div className="flex items-center space-x-2">
 						<input
 							type="checkbox"
@@ -227,7 +228,6 @@ export const SearchAdClientInfoForm: React.FC<SearchAdClientInfoFormProps> = ({
 						]}
 						disabled={disabled}
 					/>
-
 					<div>
 						<label className="block text-sm font-medium text-gray-700 mb-1">
 							Disponibilités pour les visites ?
@@ -246,10 +246,12 @@ export const SearchAdClientInfoForm: React.FC<SearchAdClientInfoFormProps> = ({
 							disabled={disabled}
 							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
 							rows={3}
-							placeholder="Ex: En semaine après 18h, le samedi toute la journée..."
+							placeholder={
+								Features.SearchAds.SEARCH_AD_PLACEHOLDERS
+									.AVAILABILITY_PREFERENCE
+							}
 						/>
-					</div>
-
+					</div>{' '}
 					<Input
 						label="Date idéale d'emménagement ?"
 						type="text"

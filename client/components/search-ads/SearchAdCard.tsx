@@ -7,7 +7,7 @@ import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { ProfileAvatar, FavoriteButton } from '../ui';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { getSearchAdBadgeConfig } from '@/lib/constants/badges';
+import { Features, Components } from '@/lib/constants';
 import { useSearchAdMutations } from '@/hooks/useSearchAds';
 import { formatDateShort } from '@/lib/utils/date';
 
@@ -119,7 +119,7 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 			<div className="relative h-48 w-full">
 				<Image
 					src="/recherches-des-biens.png"
-					alt="Recherche de bien"
+					alt={Components.UI.IMAGE_ALT_TEXT.searchAdImage}
 					fill
 					className="object-cover"
 				/>
@@ -128,7 +128,10 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 					{searchAd.badges &&
 						searchAd.badges.length > 0 &&
 						searchAd.badges.slice(0, 5).map((badgeValue) => {
-							const config = getSearchAdBadgeConfig(badgeValue);
+							const config =
+								Features.Properties.getSearchAdBadgeConfig(
+									badgeValue,
+								);
 							if (!config) return null;
 
 							return (
@@ -179,7 +182,7 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 				<div className="grid grid-cols-2 gap-4 text-sm">
 					<div>
 						<p className="font-semibold text-gray-700 flex items-center gap-1">
-							📍 Localisation
+							📍 {Features.SearchAds.SEARCH_AD_UI_TEXT.location}
 						</p>
 						<p className="text-gray-600">
 							{searchAd.location.cities.slice(0, 2).join(', ')}
@@ -188,7 +191,8 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 					</div>
 					<div>
 						<p className="font-semibold text-gray-700 flex items-center gap-1">
-							💰 Budget Max
+							💰{' '}
+							{Features.SearchAds.SEARCH_AD_UI_TEXT.budgetLabel}
 						</p>
 						<p className="text-gray-600">
 							{searchAd.budget.max.toLocaleString('fr-FR')} €
@@ -217,7 +221,11 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 					{searchAd.minSurface && (
 						<div>
 							<p className="font-semibold text-gray-700 flex items-center gap-1">
-								📐 Surface min.
+								📐{' '}
+								{
+									Features.SearchAds.SEARCH_AD_UI_TEXT
+										.surfaceLabel
+								}
 							</p>
 							<p className="text-gray-600">
 								{searchAd.minSurface} m²
@@ -241,7 +249,8 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 					searchAd.priorities.mustHaves.length > 0 && (
 						<div>
 							<p className="text-xs font-semibold text-gray-700 mb-1">
-								Critères prioritaires :
+								{Features.SearchAds.SEARCH_AD_UI_TEXT.mustHaves}{' '}
+								:
 							</p>
 							<div className="flex flex-wrap gap-1">
 								{searchAd.priorities.mustHaves
@@ -304,7 +313,7 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 									variant="outline"
 									className="flex-1"
 								>
-									Modifier
+									{Components.UI.BUTTON_TEXT.edit}
 								</Button>
 								<Button
 									onClick={() => setShowDeleteConfirm(true)}
@@ -312,7 +321,7 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 									className="flex-1 bg-red-600 hover:bg-red-700"
 									loading={isDeleting}
 								>
-									Supprimer
+									{Components.UI.BUTTON_TEXT.delete}
 								</Button>
 							</div>
 						</>
@@ -370,12 +379,24 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 			{/* Delete Confirmation Dialog */}
 			<ConfirmDialog
 				isOpen={showDeleteConfirm}
-				title="Êtes-vous sûr de vouloir supprimer cette recherche ?"
-				description="Cette action est irréversible et supprimera définitivement cette recherche."
+				title={
+					Features.SearchAds.SEARCH_AD_CONFIRMATION_DIALOGS
+						.DELETE_TITLE
+				}
+				description={
+					Features.SearchAds.SEARCH_AD_CONFIRMATION_DIALOGS
+						.DELETE_DESCRIPTION
+				}
 				onConfirm={handleDelete}
 				onCancel={() => setShowDeleteConfirm(false)}
-				confirmText="Supprimer"
-				cancelText="Annuler"
+				confirmText={
+					Features.SearchAds.SEARCH_AD_CONFIRMATION_DIALOGS
+						.DELETE_CONFIRM
+				}
+				cancelText={
+					Features.SearchAds.SEARCH_AD_CONFIRMATION_DIALOGS
+						.DELETE_CANCEL
+				}
 				variant="danger"
 				loading={isDeleting}
 			/>

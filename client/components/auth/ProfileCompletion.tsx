@@ -12,7 +12,7 @@ import { useRequireAuth } from '@/hooks';
 import { authService } from '@/lib/api/authApi';
 import { useForm } from '@/hooks/useForm';
 import { PageLoader } from '../ui/LoadingSpinner';
-import { TOAST_MESSAGES } from '@/lib/constants';
+import { Features } from '@/lib/constants';
 
 interface ProfileCompletionFormData extends Record<string, unknown> {
 	firstName: string;
@@ -71,8 +71,10 @@ export const ProfileCompletion: React.FC = () => {
 				const response = await authService.completeProfile(data);
 				if (response.success && response.user) {
 					updateUser(response.user);
-					toast.success(TOAST_MESSAGES.AUTH.PROFILE_COMPLETED);
-					router.push('/auth/welcome');
+					toast.success(
+						Features.Auth.AUTH_TOAST_MESSAGES.PROFILE_COMPLETED,
+					);
+					router.push(Features.Auth.AUTH_ROUTES.WELCOME);
 				}
 			},
 		});
@@ -83,14 +85,12 @@ export const ProfileCompletion: React.FC = () => {
 
 		// Allow access if user is logged in and is an agent (regardless of profile completion status)
 		if (user.userType !== 'agent') {
-			toast.error(TOAST_MESSAGES.AUTH.AGENT_ONLY_ACCESS);
-			router.push('/dashboard');
+			toast.error(Features.Auth.AUTH_TOAST_MESSAGES.AGENT_ONLY_ACCESS);
+			router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
 			return;
-		}
-
-		// If profile is already completed, redirect to dashboard
+		} // If profile is already completed, redirect to dashboard
 		if (user.profileCompleted) {
-			router.push('/dashboard');
+			router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
 			return;
 		}
 	}, [user, isSubmitting, router]);
@@ -207,7 +207,9 @@ export const ProfileCompletion: React.FC = () => {
 								value={values.phone}
 								onChange={handleChange}
 								error={errors.phone}
-								placeholder="0123456789"
+								placeholder={
+									Features.Auth.AUTH_PLACEHOLDERS.PHONE
+								}
 							/>
 						</div>
 					</div>
@@ -236,7 +238,9 @@ export const ProfileCompletion: React.FC = () => {
 										},
 									} as React.ChangeEvent<HTMLInputElement>);
 								}}
-								placeholder="Rechercher une ville..."
+								placeholder={
+									Features.Auth.AUTH_PLACEHOLDERS.SEARCH_CITY
+								}
 								error={errors.city}
 							/>
 
@@ -246,7 +250,9 @@ export const ProfileCompletion: React.FC = () => {
 								value={values.postalCode}
 								onChange={handleChange}
 								error={errors.postalCode}
-								placeholder="22100"
+								placeholder={
+									Features.Auth.AUTH_PLACEHOLDERS.POSTAL_CODE
+								}
 								disabled
 							/>
 
@@ -279,7 +285,9 @@ export const ProfileCompletion: React.FC = () => {
 								onChange={handleChange}
 								rows={3}
 								className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-								placeholder="Dinan, Saint-Malo, Dinard..."
+								placeholder={
+									Features.Auth.AUTH_PLACEHOLDERS.CITIES
+								}
 							/>
 						</div>
 					</div>
@@ -318,7 +326,9 @@ export const ProfileCompletion: React.FC = () => {
 								value={values.siretNumber}
 								onChange={handleChange}
 								error={errors.siretNumber}
-								placeholder="12345678901234"
+								placeholder={
+									Features.Auth.AUTH_PLACEHOLDERS.SIRET
+								}
 							/>
 						</div>
 
@@ -362,7 +372,10 @@ export const ProfileCompletion: React.FC = () => {
 								value={values.yearsExperience}
 								onChange={handleChange}
 								error={errors.yearsExperience}
-								placeholder="5"
+								placeholder={
+									Features.Auth.AUTH_PLACEHOLDERS
+										.YEARS_EXPERIENCE
+								}
 							/>
 						</div>
 					</div>
@@ -379,7 +392,7 @@ export const ProfileCompletion: React.FC = () => {
 							onChange={handleChange}
 							rows={4}
 							className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-							placeholder="Présentez-vous en quelques mots..."
+							placeholder={Features.Auth.AUTH_PLACEHOLDERS.BIO}
 						/>
 
 						<div className="mt-4 space-y-3">

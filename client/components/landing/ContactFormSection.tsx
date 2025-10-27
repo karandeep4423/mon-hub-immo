@@ -1,5 +1,6 @@
 import { RefObject } from 'react';
-import { LANDING_TEXT } from '@/lib/constants/text';
+import { Features } from '@/lib/constants';
+// Migrated: Features.Landing.LANDING_UI_TEXT;
 import { Button } from '@/components/ui/Button';
 
 interface ContactFormSectionProps {
@@ -20,17 +21,17 @@ export const ContactFormSection = ({
 	return (
 		<section className="bg-brand py-16 px-6 flex flex-col items-center text-center">
 			<h2 className="text-xl font-semibold mb-2 text-white">
-				{LANDING_TEXT.launchOfferTitle}
+				{Features.Landing.LANDING_UI_TEXT.launchOfferTitle}
 				<br />
-				{LANDING_TEXT.launchOfferSubtitle}
+				{Features.Landing.LANDING_UI_TEXT.launchOfferSubtitle}
 			</h2>
 			<p className="mb-6 text-white max-w-xl">
-				{LANDING_TEXT.launchOfferDescription}
+				{Features.Landing.LANDING_UI_TEXT.launchOfferDescription}
 			</p>
 			<div className="flex  flex-col-reverse sm:flex-row items-center justify-center gap-14">
 				<div className="bg-white text-gray-900 w-full max-w-md p-6 rounded-lg shadow">
 					<h3 className="text-lg font-semibold mb-4">
-						{LANDING_TEXT.formTitle}
+						{Features.Landing.LANDING_UI_TEXT.formTitle}
 					</h3>
 					<form
 						className="space-y-4"
@@ -40,7 +41,9 @@ export const ContactFormSection = ({
 						<input
 							type="text"
 							name="name"
-							placeholder={LANDING_TEXT.namePlaceholder}
+							placeholder={
+								Features.Landing.LANDING_UI_TEXT.namePlaceholder
+							}
 							className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--brand-focus)] focus:border-transparent"
 							required
 							disabled={loading}
@@ -48,7 +51,10 @@ export const ContactFormSection = ({
 						<input
 							type="email"
 							name="email"
-							placeholder={LANDING_TEXT.emailPlaceholder}
+							placeholder={
+								Features.Landing.LANDING_UI_TEXT
+									.emailPlaceholder
+							}
 							className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--brand-focus)] focus:border-transparent"
 							required
 							disabled={loading}
@@ -56,7 +62,10 @@ export const ContactFormSection = ({
 						<input
 							type="tel"
 							name="phone"
-							placeholder={LANDING_TEXT.phonePlaceholder}
+							placeholder={
+								Features.Landing.LANDING_UI_TEXT
+									.phonePlaceholder
+							}
 							className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-[var(--brand-focus)] focus:border-transparent"
 							disabled={loading}
 						/>
@@ -65,7 +74,7 @@ export const ContactFormSection = ({
 							loading={loading}
 							className="bg-brand text-white w-full py-2 rounded font-semibold hover:bg-brand-dark transition"
 						>
-							{LANDING_TEXT.signUpNow}
+							{Features.Landing.LANDING_UI_TEXT.signUpNow}
 						</Button>
 					</form>
 

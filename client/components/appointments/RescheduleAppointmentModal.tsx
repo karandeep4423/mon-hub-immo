@@ -6,7 +6,7 @@ import { Modal } from '@/components/ui/Modal';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import type { Appointment } from '@/types/appointment';
 import { toast } from 'react-toastify';
-import { TOAST_MESSAGES } from '@/lib/constants';
+import { APPOINTMENT_TOAST_MESSAGES } from '@/lib/constants/features/appointments';
 import { formatDateShort } from '@/lib/utils/date';
 import {
 	useAvailableSlots,
@@ -67,7 +67,7 @@ export const RescheduleAppointmentModal: React.FC<
 		e.preventDefault();
 
 		if (!newDate || !newTime) {
-			toast.error(TOAST_MESSAGES.APPOINTMENTS.SELECT_DATE_TIME);
+			toast.error(APPOINTMENT_TOAST_MESSAGES.SELECT_DATE_TIME);
 			return;
 		}
 

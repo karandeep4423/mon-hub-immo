@@ -9,7 +9,7 @@ import searchAdApi from '@/lib/api/searchAdApi';
 import { PROGRESS_STEPS_CONFIG } from '@/components/collaboration/progress-tracking/types';
 import { logger } from '@/lib/utils/logger';
 import { useFetch } from '@/hooks';
-import { COLLABORATION_STATUSES } from '@/lib/constants';
+import { Features } from '@/lib/constants';
 import {
 	CollaborationPostHeader,
 	CollaborationParticipants,
@@ -223,7 +223,9 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 				</Button>
 
 				{showChatButton &&
-					collaboration.status === COLLABORATION_STATUSES.ACTIVE && (
+					collaboration.status ===
+						Features.Collaboration.COLLABORATION_STATUS_VALUES
+							.ACTIVE && (
 						<Button
 							size="sm"
 							onClick={handleOpenChat}
@@ -233,7 +235,9 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 						</Button>
 					)}
 
-				{collaboration.status === COLLABORATION_STATUSES.PENDING &&
+				{collaboration.status ===
+					Features.Collaboration.COLLABORATION_STATUS_VALUES
+						.PENDING &&
 					isOwner && (
 						<Button
 							size="sm"
@@ -248,7 +252,9 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 					)}
 
 				{showCancelButton &&
-					collaboration.status === COLLABORATION_STATUSES.PENDING &&
+					collaboration.status ===
+						Features.Collaboration.COLLABORATION_STATUS_VALUES
+							.PENDING &&
 					!isOwner && (
 						<Button
 							size="sm"
@@ -261,10 +267,13 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 					)}
 
 				{showCancelButton &&
-					collaboration.status === COLLABORATION_STATUSES.ACTIVE &&
+					collaboration.status ===
+						Features.Collaboration.COLLABORATION_STATUS_VALUES
+							.ACTIVE &&
 					(isOwner ||
 						collaboration.status ===
-							COLLABORATION_STATUSES.ACTIVE) && (
+							Features.Collaboration.COLLABORATION_STATUS_VALUES
+								.ACTIVE) && (
 						<Button
 							size="sm"
 							variant="outline"

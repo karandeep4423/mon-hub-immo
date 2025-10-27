@@ -8,7 +8,7 @@ import {
 	ProgressStatusUpdate,
 	ProgressStepData,
 } from './progress-tracking/types';
-import { STEP_ORDER } from '../../lib/constants/stepOrder';
+import { Features } from '@/lib/constants';
 
 interface ProgressTrackingDisplayProps {
 	collaborationId: string;
@@ -32,7 +32,8 @@ export const ProgressTrackingDisplay: React.FC<
 }) => {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
-	const currentStepIndex = STEP_ORDER.indexOf(currentProgressStep);
+	const currentStepIndex =
+		Features.Collaboration.STEP_ORDER.indexOf(currentProgressStep);
 
 	const getStepData = (stepId: ProgressStep): ProgressStepData => {
 		const foundStep = progressSteps.find((step) => step.id === stepId);
@@ -68,7 +69,8 @@ export const ProgressTrackingDisplay: React.FC<
 						Suivi de la collaboration
 					</h3>
 					<p className="text-sm text-gray-600 mt-1">
-						{currentStepIndex + 1} / {STEP_ORDER.length} étapes
+						{currentStepIndex + 1} /{' '}
+						{Features.Collaboration.STEP_ORDER.length} étapes
 					</p>
 				</div>
 				{canUpdate && (
@@ -87,7 +89,7 @@ export const ProgressTrackingDisplay: React.FC<
 					Progression de la collaboration entre agents
 				</div>
 
-				{STEP_ORDER.map((stepId, index) => {
+				{Features.Collaboration.STEP_ORDER.map((stepId, index) => {
 					const stepData = getStepData(stepId);
 					const config = PROGRESS_STEPS_CONFIG[stepId];
 					const status = getStepStatus(stepId, index);
@@ -96,8 +98,8 @@ export const ProgressTrackingDisplay: React.FC<
 						status === 'completed'
 							? 'completed'
 							: status === 'current'
-								? 'current'
-								: 'upcoming';
+								? 'active'
+								: 'pending';
 
 					return (
 						<div
@@ -111,7 +113,9 @@ export const ProgressTrackingDisplay: React.FC<
 							/>
 
 							{/* Connector line */}
-							{index < STEP_ORDER.length - 1 && (
+							{index <
+								Features.Collaboration.STEP_ORDER.length -
+									1 && (
 								<div className="absolute left-5 mt-10 w-0.5 h-8 bg-gray-300" />
 							)}
 
