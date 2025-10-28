@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateToken, optionalAuth } from '../middleware/auth';
 import {
 	createAppointment,
 	getMyAppointments,
@@ -15,7 +15,7 @@ import {
 const router = express.Router();
 
 // Appointment routes
-router.post('/', authenticateToken, createAppointment);
+router.post('/', optionalAuth, createAppointment); // Allow anonymous booking
 router.get('/my', authenticateToken, getMyAppointments);
 router.get('/my/stats', authenticateToken, getAppointmentStats);
 router.get('/:id', authenticateToken, getAppointment);

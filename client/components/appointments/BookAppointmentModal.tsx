@@ -4,7 +4,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from 'next/navigation';
 import type { CreateAppointmentData } from '@/types/appointment';
 import { useForm } from '@/hooks/useForm';
 import { BookingStep1 } from './BookingStep1';
@@ -37,7 +36,6 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 	agent,
 }) => {
 	const { user } = useAuth();
-	const router = useRouter();
 	const [step, setStep] = useState(1);
 
 	const {
@@ -61,12 +59,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 			notes: '',
 		},
 		onSubmit: async () => {
-			if (!user) {
-				router.push('/auth/login?redirect=/monagentimmo');
-				return;
-			}
 			await createAppointment(values);
-			alert('Demande de rendez-vous envoyée avec succès !');
 			onClose();
 		},
 	});
@@ -130,6 +123,25 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 								avec {agent.firstName} {agent.lastName}
 							</p>
 						</div>
+						<button
+							onClick={onClose}
+							className="ml-4 text-gray-400 hover:text-gray-600 transition-colors"
+							aria-label="Fermer"
+						>
+							<svg
+								className="w-6 h-6"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									strokeWidth={2}
+									d="M6 18L18 6M6 6l12 12"
+								/>
+							</svg>
+						</button>
 					</div>
 
 					{/* Professional Progress Stepper */}

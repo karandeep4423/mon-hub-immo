@@ -200,7 +200,11 @@ export function useAppointmentMutations(userId?: string) {
 	 */
 	const rescheduleAppointment = async (
 		id: string,
-		data: { scheduledDate: string; scheduledTime: string },
+		data: {
+			scheduledDate: string;
+			scheduledTime: string;
+			rescheduleReason?: string;
+		},
 	) => {
 		try {
 			const result = await appointmentApi.rescheduleAppointment(id, data);

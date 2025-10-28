@@ -175,77 +175,40 @@ export default function MonAgentImmoPage() {
 										de l&apos;immobilier.
 									</h2>
 									<p className="text-sm sm:text-base text-gray-700 mb-4 sm:mb-6 leading-relaxed">
-										Besoin d&apos;estimer, vendre ou
-										acquérir un bien. Prenez rendez-vous
-										avec l&apos;agent immobilier de votre
-										secteur.
+										Estimez votre bien, préparez une mise en
+										vente ou missionnez un agent pour votre
+										recherche.
 									</p>
 									<p className="text-sm sm:text-base text-gray-700 mb-3 sm:mb-4 leading-relaxed">
-										Et très vite rendez-vous, votre
-										bien-être partagé sur la plateforme
-										entre vous:
+										Avec MonHubimmo, réservez simplement en
+										ligne un rendez-vous avec un agent de
+										votre secteur.
+									</p>
+									<p className="text-sm sm:text-base text-gray-700 mb-3 sm:mb-4 leading-relaxed">
+										Et une fois mandaté, votre bien peut
+										être partagé sur la plateforme entre
+										pros :
 									</p>
 									<ul className="space-y-2 mb-6 sm:mb-8">
 										<li className="flex items-start gap-2 sm:gap-3">
-											<svg
-												className="w-4 h-4 sm:w-5 sm:h-5 text-brand mt-0.5 flex-shrink-0"
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24"
-											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth={2}
-													d="M5 13l4 4L19 7"
-												/>
-											</svg>
 											<span className="text-sm sm:text-base text-gray-700">
-												Une base de plus d&apos;agents
-												inscrits
+												- plus de visibilité
 											</span>
 										</li>
 										<li className="flex items-start gap-2 sm:gap-3">
-											<svg
-												className="w-4 h-4 sm:w-5 sm:h-5 text-brand mt-0.5 flex-shrink-0"
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24"
-											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth={2}
-													d="M5 13l4 4L19 7"
-												/>
-											</svg>
 											<span className="text-sm sm:text-base text-gray-700">
-												Une comparaison rapide et
-												objective
+												- plus d&apos;agents mobilisés
 											</span>
 										</li>
 										<li className="flex items-start gap-2 sm:gap-3">
-											<svg
-												className="w-4 h-4 sm:w-5 sm:h-5 text-brand mt-0.5 flex-shrink-0"
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24"
-											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth={2}
-													d="M5 13l4 4L19 7"
-												/>
-											</svg>
 											<span className="text-sm sm:text-base text-gray-700">
-												Pas d&apos;engagement avant le
-												contrat
+												- une vente plus rapide et
+												sécurisée
 											</span>
 										</li>
 									</ul>
-									<p className="text-xs sm:text-sm text-gray-600 italic mb-4 sm:mb-6">
-										Avancez avec un peu de confiance.
+									<p className="text-sm sm:text-base text-gray-900 font-semibold mb-4 sm:mb-6">
+										Avancez avec un pro de confiance.
 									</p>
 									<button
 										onClick={scrollToSearch}
@@ -283,74 +246,34 @@ export default function MonAgentImmoPage() {
 									</h2>
 									<ul className="space-y-2 sm:space-y-3">
 										<li className="flex items-start gap-2 sm:gap-3">
-											<svg
-												className="w-4 h-4 sm:w-5 sm:h-5 mt-0.5 flex-shrink-0"
-												fill="currentColor"
-												viewBox="0 0 20 20"
-											>
-												<path
-													fillRule="evenodd"
-													d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-													clipRule="evenodd"
-												/>
-											</svg>
 											<span className="text-sm sm:text-base">
-												La sécurité de faire toujours
-												avec des agents certifiés
+												• La réservation se fait en
+												quelques clics, de manière
+												sécurisée.
 											</span>
 										</li>
 										<li className="flex items-start gap-2 sm:gap-3">
-											<svg
-												className="w-4 h-4 sm:w-5 sm:h-5 mt-0.5 flex-shrink-0"
-												fill="currentColor"
-												viewBox="0 0 20 20"
-											>
-												<path
-													fillRule="evenodd"
-													d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-													clipRule="evenodd"
-												/>
-											</svg>
 											<span className="text-sm sm:text-base">
-												Tous les agents présents sont
+												• Tous les agents présents sont
 												certifiés et vérifiés pour vous
 												garantir un accompagnement de
-												qualité
+												qualité.
 											</span>
 										</li>
 										<li className="flex items-start gap-2 sm:gap-3">
-											<svg
-												className="w-4 h-4 sm:w-5 sm:h-5 mt-0.5 flex-shrink-0"
-												fill="currentColor"
-												viewBox="0 0 20 20"
-											>
-												<path
-													fillRule="evenodd"
-													d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-													clipRule="evenodd"
-												/>
-											</svg>
 											<span className="text-sm sm:text-base">
-												Vous pouvez comparer les profils
-												et choisir l&apos;agent qui
-												correspond le mieux à votre
-												projet sans prise de tête
+												• Vous gagnez du temps : tout se
+												fait en ligne, sans appels ni
+												déplacements inutiles.
 											</span>
 										</li>
 										<li className="flex items-start gap-2 sm:gap-3">
-											<svg
-												className="w-4 h-4 sm:w-5 sm:h-5 mt-0.5 flex-shrink-0"
-												fill="currentColor"
-												viewBox="0 0 20 20"
-											>
-												<path
-													fillRule="evenodd"
-													d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-													clipRule="evenodd"
-												/>
-											</svg>
 											<span className="text-sm sm:text-base">
-												Gestion sécurisée
+												• Et surtout, vous êtes en
+												contact direct avec un
+												professionnel de confiance qui
+												vous accompagne dans chaque
+												étape de votre projet.
 											</span>
 										</li>
 									</ul>
@@ -426,92 +349,47 @@ export default function MonAgentImmoPage() {
 											Vous êtes agent immobilier ?
 										</h3>
 										<p className="mb-4 sm:mb-6 text-sm sm:text-base text-white/90 leading-relaxed">
-											Rejoignez MonAgentImmo, la
-											plateforme qui rapproche les
-											professionnels et les particuliers.
+											Découvrez MonHubimmo, la plateforme
+											qui rapproche les professionnels et
+											les particuliers
 										</p>
 										<ul className="space-y-2 mb-6 sm:mb-8 text-xs sm:text-sm">
 											<li className="flex items-start gap-1.5 sm:gap-2">
-												<svg
-													className="w-3 h-3 sm:w-4 sm:h-4 mt-0.5 flex-shrink-0"
-													fill="currentColor"
-													viewBox="0 0 20 20"
-												>
-													<path
-														fillRule="evenodd"
-														d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-														clipRule="evenodd"
-													/>
-												</svg>
 												<span>
-													Visibilité maximale avec
+													• Collaborez facilement avec
 													d&apos;autres agents pour
-													proposer plus de biens et
+													proposer plus de biens et de
+													solutions
 												</span>
 											</li>
 											<li className="flex items-start gap-1.5 sm:gap-2">
-												<svg
-													className="w-3 h-3 sm:w-4 sm:h-4 mt-0.5 flex-shrink-0"
-													fill="currentColor"
-													viewBox="0 0 20 20"
-												>
-													<path
-														fillRule="evenodd"
-														d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-														clipRule="evenodd"
-													/>
-												</svg>
 												<span>
-													générer des opportunités
+													• Offrez à vos clients un
+													accompagnement plus complet
+													et réactif
 												</span>
 											</li>
 											<li className="flex items-start gap-1.5 sm:gap-2">
-												<svg
-													className="w-3 h-3 sm:w-4 sm:h-4 mt-0.5 flex-shrink-0"
-													fill="currentColor"
-													viewBox="0 0 20 20"
-												>
-													<path
-														fillRule="evenodd"
-														d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-														clipRule="evenodd"
-													/>
-												</svg>
 												<span>
-													Gestion en ligne de vos
-													rendez-vous
+													• Gagnez du temps grâce à un
+													espace unique pour partager
+													mandats et recherches
 												</span>
 											</li>
 											<li className="flex items-start gap-1.5 sm:gap-2">
-												<svg
-													className="w-3 h-3 sm:w-4 sm:h-4 mt-0.5 flex-shrink-0"
-													fill="currentColor"
-													viewBox="0 0 20 20"
-												>
-													<path
-														fillRule="evenodd"
-														d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-														clipRule="evenodd"
-													/>
-												</svg>
 												<span>
-													Outils pros : Espace privé à
-													gérer, votre visibilité,
-													consulter les
-												</span>
-											</li>
-											<li className="flex items-start gap-1.5 sm:gap-2 ml-4 sm:ml-6">
-												<span className="text-white/90">
-													projets immobiliers des
-													particuliers
+													• Donnez plus de visibilité
+													à vos annonces et répondez
+													rapidement aux besoins des
+													acheteurs et vendeurs
 												</span>
 											</li>
 										</ul>
 										<p className="mb-4 sm:mb-6 font-semibold text-xs sm:text-sm">
-											Nous attendons, les agents
-											immobiliers peuvent simplifier leur
-											quotidien, les particuliers les
-											trouvent en 1 clic !
+											Avec MonHubimmo, les agents
+											travaillent ensemble pour simplifier
+											les projets immobiliers des
+											particuliers.
 										</p>
 										<button className="bg-white text-brand hover:bg-gray-100 px-6 sm:px-8 py-2.5 sm:py-3 rounded-full font-medium text-sm sm:text-base transition-colors w-full sm:w-auto">
 											EN SAVOIR PLUS

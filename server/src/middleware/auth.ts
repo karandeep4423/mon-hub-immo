@@ -49,3 +49,40 @@ export const authenticateToken = async (
 		});
 	}
 };
+
+// Optional authentication - doesn't fail if no token provided
+export const optionalAuth = async (
+	req: AuthRequest,
+	res: Response,
+	next: NextFunction,
+): Promise<void> => {
+	const authHeader = req.headers.authorization;
+	const token = authHeader && authHeader.split(' ')[1];
+
+	// No token? Continue without auth
+	if (!token) {
+		next();
+		return;
+	}
+
+	try {
+		const decoded = verifyToken(token);
+
+		// Fetch user data from database
+		const user = await User.findById(decoded.userId);
+		if (user) {
+			// Attach user data to request if valid
+			req.userId = (user._id as mongoose.Types.ObjectId).toString();
+			req.user = {
+				id: (user._id as mongoose.Types.ObjectId).toString(),
+				userType: user.userType as 'agent' | 'apporteur',
+			};
+		}
+
+		next();
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	} catch (error) {
+		// Invalid token? Continue without auth (don't block)
+		next();
+	}
+};

@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import { AgentAvailability } from '@/types/appointment';
 import { PageLoader } from '../ui/LoadingSpinner';
-import { useNotification } from '@/hooks/useNotification';
 import { useAuth } from '@/hooks/useAuth';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { logger } from '@/lib/utils/logger';
@@ -70,7 +69,6 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 		null,
 	);
 	const [dateToUnblock, setDateToUnblock] = useState<string | null>(null);
-	const { showNotification } = useNotification();
 	const { user } = useAuth();
 
 	// Use SWR to fetch availability
@@ -135,25 +133,15 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 				setSaving(true);
 				await updateAgentAvailability(availability);
 				setHasUnsavedChanges(false);
-				showNotification(
-					'Modifications enregistrées automatiquement',
-					'success',
-				);
 			} catch (error) {
 				logger.error('Error auto-saving availability:', error);
-				showNotification('Erreur lors de la sauvegarde', 'error');
 			} finally {
 				setSaving(false);
 			}
 		}, 2000); // 2 seconds delay
 
 		setAutoSaveTimer(timer);
-	}, [
-		availability,
-		autoSaveTimer,
-		showNotification,
-		updateAgentAvailability,
-	]);
+	}, [availability, autoSaveTimer, updateAgentAvailability]);
 
 	// Cleanup timer on unmount
 	useEffect(() => {
@@ -233,19 +221,11 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 				toMinutes(updatedSlot.startTime) >=
 				toMinutes(updatedSlot.endTime)
 			) {
-				showNotification(
-					"L'heure de début doit être avant l'heure de fin",
-					'error',
-				);
 				return;
 			}
 
 			// Validate for overlaps
 			if (hasOverlappingSlots(targetDay.slots)) {
-				showNotification(
-					'Les créneaux horaires ne peuvent pas se chevaucher',
-					'error',
-				);
 				return;
 			}
 		}
@@ -277,10 +257,6 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 			(d) => d.dayOfWeek === dayOfWeek,
 		);
 		if (targetDay && hasOverlappingSlots(targetDay.slots)) {
-			showNotification(
-				'Ce créneau chevauche un créneau existant. Veuillez ajuster les horaires.',
-				'error',
-			);
 			return;
 		}
 
@@ -322,10 +298,6 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 
 			// Validate date range
 			if (endDate < startDate) {
-				showNotification(
-					'La date de fin doit être après la date de début',
-					'error',
-				);
 				setSaving(false);
 				return;
 			}
@@ -345,15 +317,9 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 			);
 
 			if (existingDates.length > 0) {
-				showNotification(
-					`${existingDates.length} date(s) déjà bloquée(s)`,
-					'error',
-				);
 				setSaving(false);
 				return;
-			}
-
-			// Add all dates to overrides
+			} // Add all dates to overrides
 			const newOverrides = dates.map((date) => ({
 				date,
 				isAvailable: false,
@@ -374,14 +340,8 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 			setAvailability(updatedAvailability);
 			setNewBlockedDate('');
 			setNewBlockedDateEnd('');
-
-			showNotification(
-				`${dates.length} date(s) bloquée(s) avec succès`,
-				'success',
-			);
 		} catch (error) {
 			logger.error('Error blocking date:', error);
-			showNotification('Erreur lors du blocage de la date', 'error');
 		} finally {
 			setSaving(false);
 		}
@@ -403,10 +363,8 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 			await updateAgentAvailability(updatedAvailability);
 
 			setAvailability(updatedAvailability);
-			showNotification('Date débloquée avec succès', 'success');
 		} catch (error) {
 			logger.error('Error removing blocked date:', error);
-			showNotification('Erreur lors du déblocage de la date', 'error');
 		} finally {
 			setSaving(false);
 			setDateToUnblock(null);

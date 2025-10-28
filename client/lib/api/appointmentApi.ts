@@ -101,6 +101,7 @@ export class AppointmentApi {
 		data: {
 			scheduledDate: string;
 			scheduledTime: string;
+			rescheduleReason?: string;
 		},
 	): Promise<Appointment> {
 		try {

@@ -12,43 +12,15 @@ import { ProfileUpdateModal } from '../dashboard-agent/ProfileUpdateModal';
 import { User } from '@/types/auth';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { formatNumber } from '@/lib/utils/format';
-import { AppointmentsManager } from '../appointments/AppointmentsManager';
-import { useAppointments } from '@/hooks/useAppointments';
 
 const Home = () => {
 	const { user } = useAuth();
 	const [activeTab, setActiveTab] = useState<
-		| 'overview'
-		| 'properties'
-		| 'collaborations'
-		| 'searches'
-		| 'appointments'
+		'overview' | 'properties' | 'collaborations' | 'searches'
 	>('overview');
 	const [showUpdateModal, setShowUpdateModal] = useState(false);
 
 	const { kpis, loading: statsLoading } = useDashboardStats(user?._id);
-
-	// Use SWR for appointment stats with automatic cache management
-	const { data: appointments } = useAppointments(user?._id);
-
-	const appointmentStats = React.useMemo(() => {
-		if (!appointments) {
-			return { pending: 0, confirmed: 0, total: 0 };
-		}
-		return {
-			pending: appointments.filter(
-				(apt) =>
-					apt.status ===
-					Features.Appointments.APPOINTMENT_STATUS_VALUES.PENDING,
-			).length,
-			confirmed: appointments.filter(
-				(apt) =>
-					apt.status ===
-					Features.Appointments.APPOINTMENT_STATUS_VALUES.CONFIRMED,
-			).length,
-			total: appointments.length,
-		};
-	}, [appointments]);
 
 	const renderOverview = () => (
 		<div className="space-y-6">
@@ -194,93 +166,6 @@ const Home = () => {
 								{statsLoading
 									? '—'
 									: formatNumber(kpis.mySearches)}
-							</p>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			{/* Appointment Stats */}
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-				<div className="bg-white rounded-lg shadow p-6">
-					<div className="flex items-center">
-						<div className="p-3 rounded-full bg-cyan-100 text-cyan-600">
-							<svg
-								className="w-6 h-6"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth="2"
-									d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-								/>
-							</svg>
-						</div>
-						<div className="ml-4">
-							<h3 className="text-sm font-medium text-gray-600">
-								Rendez-vous en attente
-							</h3>
-							<p className="text-2xl font-bold text-gray-900">
-								{appointmentStats.pending}
-							</p>
-						</div>
-					</div>
-				</div>
-
-				<div className="bg-white rounded-lg shadow p-6">
-					<div className="flex items-center">
-						<div className="p-3 rounded-full bg-emerald-100 text-emerald-600">
-							<svg
-								className="w-6 h-6"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth="2"
-									d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-								/>
-							</svg>
-						</div>
-						<div className="ml-4">
-							<h3 className="text-sm font-medium text-gray-600">
-								Rendez-vous confirmés
-							</h3>
-							<p className="text-2xl font-bold text-gray-900">
-								{appointmentStats.confirmed}
-							</p>
-						</div>
-					</div>
-				</div>
-
-				<div className="bg-white rounded-lg shadow p-6">
-					<div className="flex items-center">
-						<div className="p-3 rounded-full bg-indigo-100 text-indigo-600">
-							<svg
-								className="w-6 h-6"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth="2"
-									d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-								/>
-							</svg>
-						</div>
-						<div className="ml-4">
-							<h3 className="text-sm font-medium text-gray-600">
-								Total des rendez-vous
-							</h3>
-							<p className="text-2xl font-bold text-gray-900">
-								{appointmentStats.total}
 							</p>
 						</div>
 					</div>
@@ -438,18 +323,6 @@ const Home = () => {
 									>
 										Mes Recherches
 									</button>
-									<button
-										onClick={() =>
-											setActiveTab('appointments')
-										}
-										className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-											activeTab === 'appointments'
-												? 'bg-blue-100 text-blue-700'
-												: 'text-gray-600 hover:text-gray-900'
-										}`}
-									>
-										Rendez-vous
-									</button>
 								</nav>
 							</div>
 						</div>
@@ -473,9 +346,6 @@ const Home = () => {
 						</div>
 					)}
 					{activeTab === 'searches' && <MySearches />}
-					{activeTab === 'appointments' && (
-						<AppointmentsManager userType="apporteur" />
-					)}
 				</div>
 			</div>
 			{user && (

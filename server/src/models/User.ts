@@ -7,8 +7,9 @@ export interface IUser extends Document {
 	email: string;
 	password: string;
 	phone?: string;
-	userType: 'agent' | 'apporteur';
+	userType: 'agent' | 'apporteur' | 'guest';
 	isEmailVerified: boolean;
+	isGuest: boolean; // True for guest users created from anonymous bookings
 	profileImage?: string;
 	lastSeen?: Date;
 
@@ -85,10 +86,16 @@ const userSchema = new Schema<IUser>(
 		},
 		userType: {
 			type: String,
+			enum: ['agent', 'apporteur', 'guest'],
 		},
 		isEmailVerified: {
 			type: Boolean,
 			default: false,
+		},
+		isGuest: {
+			type: Boolean,
+			default: false,
+			index: true,
 		},
 		profileImage: {
 			type: String,
@@ -300,7 +307,10 @@ userSchema.index({
 
 // Pre-save middleware for password hashing
 userSchema.pre('save', async function (next) {
-	if (!this.isModified('password')) return next();
+	// Skip if password not modified or if it's a guest user with no password
+	if (!this.isModified('password') || !this.password || this.isGuest) {
+		return next();
+	}
 
 	try {
 		const salt = await bcrypt.genSalt(12);

@@ -32,10 +32,12 @@ type ConfirmAction = {
 	appointmentId: string;
 	status:
 		| typeof APPOINTMENT_STATUS_VALUES.CONFIRMED
-		| typeof APPOINTMENT_STATUS_VALUES.CANCELLED;
+		| typeof APPOINTMENT_STATUS_VALUES.CANCELLED
+		| 'completed';
 	title: string;
 	description: string;
 	variant: 'danger' | 'primary' | 'warning';
+	confirmText: string;
 } | null;
 
 interface AppointmentsManagerProps {
@@ -77,7 +79,7 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 
 	const handleStatusUpdate = async (
 		appointmentId: string,
-		status: 'confirmed' | 'cancelled',
+		status: 'confirmed' | 'cancelled' | 'completed',
 	) => {
 		try {
 			setActionLoading(appointmentId);
@@ -104,7 +106,8 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 		appointmentId: string,
 		status:
 			| typeof APPOINTMENT_STATUS_VALUES.CONFIRMED
-			| typeof APPOINTMENT_STATUS_VALUES.CANCELLED,
+			| typeof APPOINTMENT_STATUS_VALUES.CANCELLED
+			| 'completed',
 		appointmentType: string,
 		otherUserName: string,
 	) => {
@@ -115,14 +118,25 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 				title: 'Accepter le rendez-vous',
 				description: `Êtes-vous sûr de vouloir accepter ce rendez-vous de type "${appointmentType}" avec ${otherUserName} ?`,
 				variant: 'primary',
+				confirmText: 'Accepter',
+			});
+		} else if (status === 'completed') {
+			setConfirmAction({
+				appointmentId,
+				status,
+				title: 'Terminer le rendez-vous',
+				description: `Confirmez-vous que ce rendez-vous avec ${otherUserName} a été terminé avec succès ?`,
+				variant: 'primary',
+				confirmText: 'Terminer',
 			});
 		} else {
 			setConfirmAction({
 				appointmentId,
 				status,
-				title: 'Refuser le rendez-vous',
-				description: `Êtes-vous sûr de vouloir refuser ce rendez-vous avec ${otherUserName} ? Cette action est irréversible.`,
+				title: 'Annuler le rendez-vous',
+				description: `Êtes-vous sûr de vouloir annuler ce rendez-vous avec ${otherUserName} ? Cette action est irréversible.`,
 				variant: 'danger',
+				confirmText: 'Annuler',
 			});
 		}
 	};
@@ -370,6 +384,15 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 										`${(isAgent ? appointment.clientId : appointment.agentId).firstName} ${(isAgent ? appointment.clientId : appointment.agentId).lastName}`,
 									)
 								}
+								onComplete={(id) =>
+									openConfirmDialog(
+										id,
+										'completed',
+										appointment.appointmentType,
+										appointment.contactDetails.name ||
+											`${(isAgent ? appointment.clientId : appointment.agentId).firstName} ${(isAgent ? appointment.clientId : appointment.agentId).lastName}`,
+									)
+								}
 								onReschedule={(apt) => {
 									setSelectedAppointment(apt);
 									setRescheduleModalOpen(true);
@@ -406,13 +429,9 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 				onConfirm={handleConfirmAction}
 				onCancel={() => setConfirmAction(null)}
 				variant={confirmAction?.variant || 'primary'}
-				confirmText={
-					confirmAction?.status ===
-					APPOINTMENT_STATUS_VALUES.CONFIRMED
-						? 'Accepter'
-						: 'Refuser'
-				}
+				confirmText={confirmAction?.confirmText || 'Confirmer'}
 				cancelText="Annuler"
+				loading={!!actionLoading}
 			/>
 		</div>
 	);

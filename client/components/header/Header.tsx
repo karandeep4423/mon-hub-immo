@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { ProfileAvatar } from '../ui/ProfileAvatar';
 import NotificationBell from '../notifications/NotificationBell';
@@ -10,6 +11,7 @@ import { Features } from '@/lib/constants';
 export default function Header() {
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 	const { user, logout } = useAuth();
+	const pathname = usePathname();
 
 	return (
 		<header className="bg-white shadow-lg relative z-10">
@@ -53,12 +55,23 @@ export default function Header() {
 								</>
 							) : (
 								<>
-									<Link
-										href={Features.Auth.AUTH_ROUTES.SIGNUP}
-										className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 text-sm hover:bg-gray-200"
-									>
-										Nous rejoindre
-									</Link>
+									{pathname === '/monagentimmo' ? (
+										<Link
+											href="/"
+											className="px-4 py-2 rounded-md bg-[#6AD1E3] text-white text-sm hover:bg-[#59c4d8]"
+										>
+											Vous êtes agent immobilier ?
+										</Link>
+									) : (
+										<Link
+											href={
+												Features.Auth.AUTH_ROUTES.SIGNUP
+											}
+											className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 text-sm hover:bg-gray-200"
+										>
+											Nous rejoindre
+										</Link>
+									)}
 									<Link
 										href={Features.Auth.AUTH_ROUTES.LOGIN}
 										className="px-4 py-2 rounded-md bg-[#6AD1E3] text-white text-sm hover:bg-[#59c4d8]"
@@ -145,16 +158,30 @@ export default function Header() {
 							</>
 						) : (
 							<div className="grid grid-cols-2 gap-2">
-								<Link
-									href={Features.Auth.AUTH_ROUTES.SIGNUP}
-									className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 text-sm text-center hover:bg-gray-200"
-									onClick={() => setIsMobileMenuOpen(false)}
-								>
-									Nous rejoindre
-								</Link>
+								{pathname === '/monagentimmo' ? (
+									<Link
+										href="/"
+										className="col-span-2 px-4 py-2 rounded-md bg-[#6AD1E3] text-white text-sm text-center hover:bg-[#59c4d8]"
+										onClick={() =>
+											setIsMobileMenuOpen(false)
+										}
+									>
+										Vous êtes agent immobilier ?
+									</Link>
+								) : (
+									<Link
+										href={Features.Auth.AUTH_ROUTES.SIGNUP}
+										className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 text-sm text-center hover:bg-gray-200"
+										onClick={() =>
+											setIsMobileMenuOpen(false)
+										}
+									>
+										Nous rejoindre
+									</Link>
+								)}
 								<Link
 									href={Features.Auth.AUTH_ROUTES.LOGIN}
-									className="px-4 py-2 rounded-md bg-[#6AD1E3] text-white text-sm text-center hover:bg-[#59c4d8]"
+									className={`px-4 py-2 rounded-md bg-[#6AD1E3] text-white text-sm text-center hover:bg-[#59c4d8] ${pathname === '/monagentimmo' ? 'col-span-2' : ''}`}
 									onClick={() => setIsMobileMenuOpen(false)}
 								>
 									Se connecter

@@ -10,10 +10,16 @@ class EmailService {
 	private transporter: nodemailer.Transporter;
 
 	constructor() {
+		const port = parseInt(process.env.EMAIL_PORT || '587');
+		// Port 2525 is for Mailtrap and doesn't use SSL/TLS
+		// Port 587 uses STARTTLS (secure: false)
+		// Port 465 uses SSL/TLS (secure: true)
+		const secure = port === 465;
+
 		this.transporter = nodemailer.createTransport({
 			host: process.env.EMAIL_HOST,
-			port: parseInt(process.env.EMAIL_PORT || '465'),
-			secure: true,
+			port: port,
+			secure: secure,
 			auth: {
 				user: process.env.EMAIL_USER,
 				pass: process.env.EMAIL_PASS,

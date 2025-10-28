@@ -2,17 +2,18 @@ import { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import Appointment from '../models/Appointment';
 import AgentAvailability from '../models/AgentAvailability';
-import { User } from '../models/User';
+import { User, IUser } from '../models/User';
 import { getSocketService } from '../server';
 import { AuthRequest } from '../types/auth';
+import { appointmentEmailService } from '../services/appointmentEmailService';
 
-// Create a new appointment
+// Create a new appointment (supports both authenticated and anonymous bookings)
 export const createAppointment = async (
 	req: AuthRequest,
 	res: Response,
 ): Promise<void> => {
 	try {
-		const clientId = req.user?.id;
+		const loggedInUserId = req.user?.id; // May be undefined for guest bookings
 		const {
 			agentId,
 			appointmentType,
@@ -23,6 +24,21 @@ export const createAppointment = async (
 			contactDetails,
 			notes,
 		} = req.body;
+
+		// Validate required contact details
+		if (
+			!contactDetails ||
+			!contactDetails.name ||
+			!contactDetails.email ||
+			!contactDetails.phone
+		) {
+			res.status(400).json({
+				success: false,
+				message:
+					'Les informations de contact (nom, email, téléphone) sont requises',
+			});
+			return;
+		}
 
 		// Verify agent exists and is an agent
 		const agent = await User.findById(agentId);
@@ -51,10 +67,42 @@ export const createAppointment = async (
 			return;
 		}
 
+		let clientId = loggedInUserId;
+		const isGuestBooking = !loggedInUserId;
+
+		// For guest bookings, create or find a guest user
+		if (isGuestBooking) {
+			// Check if any user already exists with this email (guest or regular)
+			const existingUser = await User.findOne({
+				email: contactDetails.email.toLowerCase(),
+			});
+
+			if (existingUser) {
+				// Use the existing user's ID (whether guest or regular user)
+				clientId = (existingUser._id as Types.ObjectId).toString();
+			} else {
+				// Create a new guest user only if no user exists with this email
+				const guestUser = await User.create({
+					firstName: contactDetails.name.split(' ')[0] || 'Guest',
+					lastName:
+						contactDetails.name.split(' ').slice(1).join(' ') || '',
+					email: contactDetails.email.toLowerCase(),
+					phone: contactDetails.phone,
+					userType: 'guest',
+					isGuest: true,
+					isEmailVerified: false,
+					profileCompleted: false,
+					password: '', // No password for guest users
+				});
+				clientId = (guestUser._id as Types.ObjectId).toString();
+			}
+		}
+
 		// Create appointment
 		const appointment = await Appointment.create({
 			agentId,
 			clientId,
+			isGuestBooking,
 			appointmentType,
 			scheduledDate: scheduledDateTime,
 			scheduledTime,
@@ -76,12 +124,30 @@ export const createAppointment = async (
 				'firstName lastName email phone profileImage',
 			);
 
-		// Send real-time notification to agent
+		// Send real-time notification to agent (if online)
 		const socketService = getSocketService();
 		if (socketService) {
 			socketService.emitToUser(agentId, 'appointment:new', {
 				appointment: populatedAppointment,
 			});
+		}
+
+		// Send emails
+		try {
+			console.log('📧 Attempting to send appointment emails...');
+			console.log('Agent email:', agent.email);
+			console.log('Client email:', contactDetails.email);
+
+			await appointmentEmailService.sendNewAppointmentEmails(
+				appointment,
+				agent,
+				contactDetails.email,
+				contactDetails.name,
+			);
+			console.log('✅ All appointment emails sent successfully');
+		} catch (emailError) {
+			console.error('❌ Error sending appointment emails:', emailError);
+			// Don't fail the request if email fails
 		}
 
 		res.status(201).json({
@@ -143,9 +209,38 @@ export const getMyAppointments = async (
 			.populate('cancelledBy', 'firstName lastName')
 			.sort({ scheduledDate: 1, scheduledTime: 1 });
 
+		// Custom sort for agents: pending → confirmed → cancelled/rejected, then by date
+		let sortedAppointments = appointments;
+		if (user?.userType === 'agent') {
+			const statusOrder = {
+				pending: 1,
+				confirmed: 2,
+				completed: 3,
+				cancelled: 4,
+				rejected: 5,
+			};
+
+			sortedAppointments = appointments.sort((a, b) => {
+				const statusA =
+					statusOrder[a.status as keyof typeof statusOrder] || 999;
+				const statusB =
+					statusOrder[b.status as keyof typeof statusOrder] || 999;
+
+				if (statusA !== statusB) {
+					return statusA - statusB;
+				}
+
+				// If same status, sort by scheduled date
+				return (
+					new Date(a.scheduledDate).getTime() -
+					new Date(b.scheduledDate).getTime()
+				);
+			});
+		}
+
 		res.status(200).json({
 			success: true,
-			data: appointments,
+			data: sortedAppointments,
 		});
 	} catch (error) {
 		console.error('Error fetching appointments:', error);
@@ -182,10 +277,12 @@ export const getAppointment = async (
 		}
 
 		// Check authorization
-		if (
-			appointment.agentId._id.toString() !== userId &&
-			appointment.clientId._id.toString() !== userId
-		) {
+		const isAgent = appointment.agentId._id.toString() === userId;
+		const isClient = appointment.clientId
+			? appointment.clientId._id.toString() === userId
+			: false;
+
+		if (!isAgent && !isClient) {
 			res.status(403).json({
 				success: false,
 				message: 'Accès non autorisé',
@@ -228,7 +325,9 @@ export const updateAppointmentStatus = async (
 
 		// Check authorization
 		const isAgent = appointment.agentId.toString() === userId;
-		const isClient = appointment.clientId.toString() === userId;
+		const isClient = appointment.clientId
+			? appointment.clientId.toString() === userId
+			: false;
 
 		if (!isAgent && !isClient) {
 			res.status(403).json({
@@ -270,16 +369,53 @@ export const updateAppointmentStatus = async (
 			.populate('clientId', 'firstName lastName email phone profileImage')
 			.populate('cancelledBy', 'firstName lastName');
 
-		// Send notification to the other party
-		const socketService = getSocketService();
-		const notifyUserId = isAgent
-			? appointment.clientId.toString()
-			: appointment.agentId.toString();
+		// Send email notifications
+		if (populatedAppointment) {
+			const agent = populatedAppointment.agentId as unknown as IUser;
+			const client = populatedAppointment.clientId as unknown as
+				| IUser
+				| undefined;
 
-		if (socketService) {
-			socketService.emitToUser(notifyUserId, 'appointment:updated', {
-				appointment: populatedAppointment,
-			});
+			// Only send emails if we have client info (might be undefined for guest bookings)
+			if (client && client.email) {
+				const clientName = `${client.firstName} ${client.lastName}`;
+
+				if (status === 'confirmed') {
+					await appointmentEmailService.sendAppointmentConfirmedEmail(
+						populatedAppointment,
+						agent,
+						client.email,
+						clientName,
+					);
+				} else if (status === 'rejected') {
+					await appointmentEmailService.sendAppointmentRejectedEmail(
+						populatedAppointment,
+						agent,
+						client.email,
+						clientName,
+					);
+				} else if (status === 'cancelled') {
+					await appointmentEmailService.sendAppointmentCancelledEmail(
+						populatedAppointment,
+						agent,
+						client.email,
+						clientName,
+					);
+				}
+			}
+		}
+
+		// Send socket notification only to agent (client gets email)
+		const socketService = getSocketService();
+		if (socketService && !isAgent && appointment.clientId) {
+			// Only send socket notification to agent when client updates
+			socketService.emitToUser(
+				appointment.agentId.toString(),
+				'appointment:updated',
+				{
+					appointment: populatedAppointment,
+				},
+			);
 		}
 
 		res.status(200).json({
@@ -296,7 +432,7 @@ export const updateAppointmentStatus = async (
 	}
 };
 
-// Reschedule appointment
+// Reschedule appointment (agent only)
 export const rescheduleAppointment = async (
 	req: AuthRequest,
 	res: Response,
@@ -304,7 +440,7 @@ export const rescheduleAppointment = async (
 	try {
 		const { id } = req.params;
 		const userId = req.user?.id;
-		const { scheduledDate, scheduledTime } = req.body;
+		const { scheduledDate, scheduledTime, rescheduleReason } = req.body;
 
 		const appointment = await Appointment.findById(id);
 
@@ -316,14 +452,13 @@ export const rescheduleAppointment = async (
 			return;
 		}
 
-		// Check authorization
-		if (
-			appointment.agentId.toString() !== userId &&
-			appointment.clientId.toString() !== userId
-		) {
+		// Check authorization - ONLY AGENT can reschedule
+		const isAgent = appointment.agentId.toString() === userId;
+
+		if (!isAgent) {
 			res.status(403).json({
 				success: false,
-				message: 'Accès non autorisé',
+				message: "Seul l'agent peut reporter un rendez-vous",
 			});
 			return;
 		}
@@ -346,10 +481,17 @@ export const rescheduleAppointment = async (
 			return;
 		}
 
-		// Update appointment
+		// Store original date/time before updating
+		if (!appointment.isRescheduled) {
+			appointment.originalScheduledDate = appointment.scheduledDate;
+			appointment.originalScheduledTime = appointment.scheduledTime;
+		}
+
+		// Update appointment - keep status as confirmed, mark as rescheduled
 		appointment.scheduledDate = scheduledDateTime;
 		appointment.scheduledTime = scheduledTime;
-		appointment.status = 'pending'; // Reset to pending after rescheduling
+		appointment.isRescheduled = true;
+		appointment.rescheduleReason = rescheduleReason;
 		await appointment.save();
 
 		const populatedAppointment = await Appointment.findById(appointment._id)
@@ -362,17 +504,34 @@ export const rescheduleAppointment = async (
 				'firstName lastName email phone profileImage',
 			);
 
-		// Notify the other party
-		const socketService = getSocketService();
-		const notifyUserId =
-			appointment.agentId.toString() === userId
-				? appointment.clientId.toString()
-				: appointment.agentId.toString();
+		// Send email to client
+		if (populatedAppointment) {
+			const agent = populatedAppointment.agentId as unknown as IUser;
+			const client = populatedAppointment.clientId as unknown as
+				| IUser
+				| undefined;
 
-		if (socketService) {
-			socketService.emitToUser(notifyUserId, 'appointment:rescheduled', {
-				appointment: populatedAppointment,
-			});
+			if (client && client.email) {
+				const clientName = `${client.firstName} ${client.lastName}`;
+				await appointmentEmailService.sendAppointmentRescheduledEmail(
+					populatedAppointment,
+					agent,
+					client.email,
+					clientName,
+				);
+			}
+		}
+
+		// Notify client via socket (optional - they get email)
+		const socketService = getSocketService();
+		if (socketService && appointment.clientId) {
+			socketService.emitToUser(
+				appointment.clientId.toString(),
+				'appointment:rescheduled',
+				{
+					appointment: populatedAppointment,
+				},
+			);
 		}
 
 		res.status(200).json({

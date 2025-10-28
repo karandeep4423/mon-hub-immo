@@ -26,6 +26,7 @@ export const RescheduleAppointmentModal: React.FC<
 > = ({ isOpen, onClose, appointment, onSuccess }) => {
 	const [newDate, setNewDate] = useState('');
 	const [newTime, setNewTime] = useState('');
+	const [rescheduleReason, setRescheduleReason] = useState('');
 	const [loading, setLoading] = useState(false);
 
 	const agentId =
@@ -55,6 +56,7 @@ export const RescheduleAppointmentModal: React.FC<
 	const resetForm = useCallback(() => {
 		setNewDate('');
 		setNewTime('');
+		setRescheduleReason('');
 	}, []);
 
 	useEffect(() => {
@@ -75,6 +77,7 @@ export const RescheduleAppointmentModal: React.FC<
 		const result = await rescheduleAppointment(appointment._id, {
 			scheduledDate: newDate,
 			scheduledTime: newTime,
+			rescheduleReason: rescheduleReason || undefined,
 		});
 		setLoading(false);
 
@@ -117,6 +120,25 @@ export const RescheduleAppointmentModal: React.FC<
 								avec {agentName}
 							</p>
 						</div>
+						<button
+							onClick={onClose}
+							className="ml-4 text-gray-400 hover:text-gray-600 transition-colors"
+							aria-label="Fermer"
+						>
+							<svg
+								className="w-6 h-6"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									strokeWidth={2}
+									d="M6 18L18 6M6 6l12 12"
+								/>
+							</svg>
+						</button>
 					</div>
 
 					{/* Current Appointment Info */}
@@ -292,6 +314,44 @@ export const RescheduleAppointmentModal: React.FC<
 									</p>
 								</div>
 							)}
+						</div>
+					)}
+
+					{/* Reschedule Reason (Optional) */}
+					{newDate && newTime && (
+						<div>
+							<label className="block text-sm font-semibold text-gray-800 mb-2.5">
+								<div className="flex items-center">
+									<svg
+										className="w-4 h-4 mr-1.5 text-brand"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth="2"
+											d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+										/>
+									</svg>
+									Raison du report (optionnel)
+								</div>
+							</label>
+							<textarea
+								value={rescheduleReason}
+								onChange={(e) =>
+									setRescheduleReason(e.target.value)
+								}
+								maxLength={500}
+								rows={3}
+								placeholder="Ex: Conflit d'agenda, rendez-vous imprévu..."
+								className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-all text-sm md:text-base resize-none"
+							/>
+							<p className="text-xs text-gray-500 mt-1.5">
+								Cette raison sera communiquée au client par
+								email (500 caractères max)
+							</p>
 						</div>
 					)}
 				</form>
