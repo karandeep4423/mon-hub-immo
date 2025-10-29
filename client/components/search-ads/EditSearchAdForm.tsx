@@ -36,6 +36,7 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 		handleSubmit,
 		setValues,
 		handleArrayChange,
+		errors,
 	} = useSearchAdForm('edit', id);
 
 	// Populate form when search ad data is loaded
@@ -105,6 +106,7 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 						onDescriptionChange={(value) =>
 							setFieldValue('description', value)
 						}
+						errors={errors}
 					/>
 
 					{/* Property Search Criteria */}
@@ -121,6 +123,7 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 						onProjectTypeChange={(value) =>
 							setFieldValue('projectType', value)
 						}
+						errors={errors}
 					/>
 
 					{/* Location */}

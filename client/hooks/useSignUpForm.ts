@@ -216,14 +216,24 @@ export const useSignUpForm = () => {
 
 	const handleNext = () => {
 		if (validateStep(currentStep)) {
-			setCurrentStep((prev) => Math.min(prev + 1, 5));
+			// Skip step 3 (Agent Professional Info) for apporteurs
+			if (currentStep === 2 && formData.userType === 'apporteur') {
+				setCurrentStep(4); // Jump directly to password step
+			} else {
+				setCurrentStep((prev) => Math.min(prev + 1, 5));
+			}
 		} else {
 			toast.error(Features.Auth.AUTH_TOAST_MESSAGES.VALIDATION_ERROR);
 		}
 	};
 
 	const handlePrevious = () => {
-		setCurrentStep((prev) => Math.max(prev - 1, 1));
+		// Skip step 3 when going back from step 4 if user is apporteur
+		if (currentStep === 4 && formData.userType === 'apporteur') {
+			setCurrentStep(2); // Jump back to user type selection
+		} else {
+			setCurrentStep((prev) => Math.max(prev - 1, 1));
+		}
 	};
 
 	const handleSubmit = async (e: React.FormEvent) => {

@@ -32,13 +32,26 @@ export const SignUpForm: React.FC = () => {
 		handleSubmit,
 	} = useSignUpForm();
 
-	const steps = [
-		{ id: 1, label: 'Informations de base' },
-		{ id: 2, label: 'Rôle' },
-		{ id: 3, label: 'Informations professionnelles' },
-		{ id: 4, label: 'Mot de passe' },
-		{ id: 5, label: 'Révision' },
-	];
+	// Dynamic steps based on user type
+	const getSteps = () => {
+		if (formData.userType === 'apporteur') {
+			return [
+				{ id: 1, label: 'Informations de base' },
+				{ id: 2, label: 'Rôle' },
+				{ id: 4, label: 'Mot de passe' },
+				{ id: 5, label: 'Révision' },
+			];
+		}
+		return [
+			{ id: 1, label: 'Informations de base' },
+			{ id: 2, label: 'Rôle' },
+			{ id: 3, label: 'Informations professionnelles' },
+			{ id: 4, label: 'Mot de passe' },
+			{ id: 5, label: 'Révision' },
+		];
+	};
+
+	const steps = getSteps();
 
 	return (
 		<div className="min-h-screen bg-white flex">
@@ -272,7 +285,6 @@ export const SignUpForm: React.FC = () => {
 											onChange={handleChange}
 										/>
 									</div>
-
 									{/* Step 2: User Type Selection */}
 									<div
 										className={`transition-all duration-500 ease-in-out ${
@@ -289,37 +301,43 @@ export const SignUpForm: React.FC = () => {
 											onChange={handleChange}
 										/>
 									</div>
-
-									{/* Step 3: Agent Professional Info */}
-									<div
-										className={`transition-all duration-500 ease-in-out ${
-											currentStep === 3
-												? 'opacity-100 translate-x-0'
-												: currentStep > 3
-													? 'opacity-0 -translate-x-full absolute inset-0'
-													: 'opacity-0 translate-x-full absolute inset-0'
-										}`}
-									>
-										<AgentProfessionalInfoStep
-											agentType={formData.agentType || ''}
-											tCard={formData.tCard || ''}
-											sirenNumber={
-												formData.sirenNumber || ''
-											}
-											rsacNumber={
-												formData.rsacNumber || ''
-											}
-											collaboratorCertificate={
-												formData.collaboratorCertificate ||
-												''
-											}
-											identityCardFile={identityCardFile}
-											errors={errors}
-											onChange={handleChange}
-											onFileChange={setIdentityCardFile}
-										/>
-									</div>
-
+									{/* Step 3: Agent Professional Info (Only for agents) */}
+									{formData.userType === 'agent' && (
+										<div
+											className={`transition-all duration-500 ease-in-out ${
+												currentStep === 3
+													? 'opacity-100 translate-x-0'
+													: currentStep > 3
+														? 'opacity-0 -translate-x-full absolute inset-0'
+														: 'opacity-0 translate-x-full absolute inset-0'
+											}`}
+										>
+											<AgentProfessionalInfoStep
+												agentType={
+													formData.agentType || ''
+												}
+												tCard={formData.tCard || ''}
+												sirenNumber={
+													formData.sirenNumber || ''
+												}
+												rsacNumber={
+													formData.rsacNumber || ''
+												}
+												collaboratorCertificate={
+													formData.collaboratorCertificate ||
+													''
+												}
+												identityCardFile={
+													identityCardFile
+												}
+												errors={errors}
+												onChange={handleChange}
+												onFileChange={
+													setIdentityCardFile
+												}
+											/>
+										</div>
+									)}{' '}
 									{/* Step 4: Password */}
 									<div
 										className={`transition-all duration-500 ease-in-out ${
@@ -351,7 +369,6 @@ export const SignUpForm: React.FC = () => {
 											}
 										/>
 									</div>
-
 									{/* Step 5: Review & Confirm */}
 									<div
 										className={`transition-all duration-500 ease-in-out ${

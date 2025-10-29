@@ -26,6 +26,7 @@ export const CreateSearchAdForm = () => {
 		setFieldValue,
 		handleSubmit,
 		handleArrayChange,
+		errors,
 	} = useSearchAdForm('create');
 
 	return (
@@ -50,6 +51,7 @@ export const CreateSearchAdForm = () => {
 						onDescriptionChange={(value) =>
 							setFieldValue('description', value)
 						}
+						errors={errors}
 					/>
 
 					{/* Property Search Criteria */}
@@ -66,6 +68,7 @@ export const CreateSearchAdForm = () => {
 						onProjectTypeChange={(value) =>
 							setFieldValue('projectType', value)
 						}
+						errors={errors}
 					/>
 
 					{/* Location */}

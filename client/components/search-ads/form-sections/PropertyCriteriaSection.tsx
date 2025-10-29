@@ -8,6 +8,7 @@ interface PropertyCriteriaSectionProps {
 	onPropertyTypesChange: (type: string, checked: boolean) => void;
 	onPropertyStateChange: (state: string, checked: boolean) => void;
 	onProjectTypeChange: (value: string) => void;
+	errors?: Record<string, string>;
 }
 
 const PROPERTY_TYPE_LABELS: Record<string, string> = {
@@ -38,6 +39,7 @@ export const PropertyCriteriaSection: React.FC<
 	onPropertyTypesChange,
 	onPropertyStateChange,
 	onProjectTypeChange,
+	errors = {},
 }) => {
 	const propertyTypesList = [
 		'house',
@@ -64,7 +66,11 @@ export const PropertyCriteriaSection: React.FC<
 						{propertyTypesList.map((type) => (
 							<label
 								key={type}
-								className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer min-h-[3rem]"
+								className={`flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer min-h-[3rem] ${
+									errors.propertyTypes
+										? 'border-red-500 bg-red-50'
+										: ''
+								}`}
 							>
 								<input
 									type="checkbox"
@@ -84,6 +90,11 @@ export const PropertyCriteriaSection: React.FC<
 							</label>
 						))}
 					</div>
+					{errors.propertyTypes && (
+						<p className="mt-2 text-sm text-red-600">
+							{errors.propertyTypes}
+						</p>
+					)}
 				</div>
 
 				{/* Property State */}

@@ -1,7 +1,6 @@
 import { Input } from '@/components/ui/Input';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { Features } from '@/lib/constants';
-// Migrated: Features.Auth.AUTH_UI_TEXT;
 
 interface AgentProfessionalInfoStepProps {
 	agentType: string;
@@ -89,15 +88,6 @@ export const AgentProfessionalInfoStep: React.FC<
 						error={errors.tCard}
 						placeholder={Features.Auth.AUTH_PLACEHOLDERS.CARTE_T}
 					/>
-					<Input
-						label="Numéro SIREN"
-						type="text"
-						name="sirenNumber"
-						value={sirenNumber}
-						onChange={onChange}
-						error={errors.sirenNumber}
-						placeholder="Numéro SIREN"
-					/>
 					<FileUpload
 						label="Carte d'identité"
 						onChange={onFileChange}
@@ -105,7 +95,7 @@ export const AgentProfessionalInfoStep: React.FC<
 						helperText="Photo ou PDF de votre carte d'identité (optionnel)"
 					/>
 					<p className="text-xs text-gray-600">
-						* Au moins une carte T ou un numéro SIREN requis
+						* Carte T requise pour agent indépendant
 					</p>
 				</div>
 			)}
@@ -122,7 +112,7 @@ export const AgentProfessionalInfoStep: React.FC<
 						placeholder={Features.Auth.AUTH_PLACEHOLDERS.SIREN}
 					/>
 					<Input
-						label={Features.Auth.AUTH_UI_TEXT.rsacNumber}
+						label="Numéro RSAC"
 						type="text"
 						name="rsacNumber"
 						value={rsacNumber}

@@ -12,8 +12,7 @@ export const searchAdValidationSchema = z.object({
 	description: z
 		.string()
 		.min(10, 'La description doit contenir au moins 10 caractères.')
-		.max(2000, 'La description ne peut pas dépasser 2000 caractères.')
-		.optional(),
+		.max(2000, 'La description ne peut pas dépasser 2000 caractères.'),
 	propertyTypes: z
 		.array(z.string())
 		.min(1, 'Veuillez sélectionner au moins un type de bien.'),
@@ -32,15 +31,30 @@ export const searchAdValidationSchema = z.object({
  */
 export const validateSearchAdForm = (
 	data: unknown,
-): { success: true } | { success: false; error: string } => {
+):
+	| { success: true }
+	| { success: false; error: string; errors?: Record<string, string> } => {
 	try {
 		searchAdValidationSchema.parse(data);
 		return { success: true };
 	} catch (error) {
 		if (error instanceof z.ZodError) {
-			// Return first error message
+			// Build field-specific error map
+			const fieldErrors: Record<string, string> = {};
+			error.issues.forEach((issue) => {
+				const path = issue.path.join('.');
+				if (path && !fieldErrors[path]) {
+					fieldErrors[path] = issue.message;
+				}
+			});
+
+			// Return first error message as main error
 			const firstError = error.issues[0];
-			return { success: false, error: firstError.message };
+			return {
+				success: false,
+				error: firstError.message,
+				errors: fieldErrors,
+			};
 		}
 		return { success: false, error: 'Validation échouée' };
 	}

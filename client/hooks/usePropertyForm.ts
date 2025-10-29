@@ -31,11 +31,28 @@ const propertyValidationSchema: StepValidationSchema = {
 			},
 		},
 		surface: {
-			required: 'La surface est requise',
-			min: {
-				value: 1,
-				message: 'La surface doit être supérieure à 1 m²',
-			},
+			custom: [
+				{
+					validate: (value, formData) => {
+						// Surface is only required for property types other than Terrain/Parking
+						const propertyType = formData?.propertyType as string;
+						if (
+							propertyType === 'Terrain' ||
+							propertyType === 'Parking'
+						) {
+							return true; // Skip validation for land/parking
+						}
+						// For other types, surface is required and must be >= 1
+						return (
+							typeof value === 'number' &&
+							value !== null &&
+							value >= 1
+						);
+					},
+					message:
+						'La surface est requise et doit être supérieure à 1 m²',
+				},
+			],
 		},
 	},
 	2: {

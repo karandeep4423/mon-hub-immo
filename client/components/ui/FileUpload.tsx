@@ -21,6 +21,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 }) => {
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const [preview, setPreview] = useState<string | null>(null);
+	const [isDragging, setIsDragging] = useState(false);
 
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0] || null;
@@ -40,6 +41,57 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 		} else {
 			setPreview(null);
 			onChange(null);
+		}
+	};
+
+	const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsDragging(true);
+	};
+
+	const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsDragging(false);
+	};
+
+	const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+		e.preventDefault();
+		e.stopPropagation();
+	};
+
+	const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsDragging(false);
+
+		const files = e.dataTransfer.files;
+		if (files && files.length > 0) {
+			const file = files[0];
+
+			// Validate file type
+			const acceptedTypes = accept.split(',').map((type) => type.trim());
+			const isValidType = acceptedTypes.some((type) => {
+				if (type === 'image/*') return file.type.startsWith('image/');
+				if (type === 'application/pdf')
+					return file.type === 'application/pdf';
+				return file.type === type;
+			});
+
+			if (isValidType) {
+				// Create preview for images
+				if (file.type.startsWith('image/')) {
+					const reader = new FileReader();
+					reader.onloadend = () => {
+						setPreview(reader.result as string);
+					};
+					reader.readAsDataURL(file);
+				} else {
+					setPreview(null);
+				}
+				onChange(file);
+			}
 		}
 	};
 
@@ -81,7 +133,15 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 			{!value ? (
 				<div
 					onClick={() => fileInputRef.current?.click()}
-					className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-brand transition-colors"
+					onDragEnter={handleDragEnter}
+					onDragOver={handleDragOver}
+					onDragLeave={handleDragLeave}
+					onDrop={handleDrop}
+					className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
+						isDragging
+							? 'border-brand bg-brand/5'
+							: 'border-gray-300 hover:border-brand'
+					}`}
 				>
 					<svg
 						className="mx-auto h-8 w-8 text-gray-400"
@@ -97,7 +157,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 						/>
 					</svg>
 					<p className="mt-2 text-sm text-gray-600">
-						Cliquez pour télécharger
+						{isDragging
+							? 'Déposez le fichier ici'
+							: 'Cliquez pour télécharger ou glissez-déposez un fichier'}
 					</p>
 					<p className="text-xs text-gray-500 mt-1">
 						Images ou PDF (max 5MB)

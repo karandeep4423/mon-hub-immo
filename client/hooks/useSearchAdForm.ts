@@ -105,47 +105,65 @@ export const useSearchAdForm = (mode: 'create' | 'edit', editId?: string) => {
 	const router = useRouter();
 	const { user } = useAuth();
 
-	const { values, isSubmitting, setFieldValue, handleSubmit, setValues } =
-		useForm<SearchAdFormData>({
-			initialValues: INITIAL_FORM_VALUES,
-			onSubmit: async (data) => {
-				if (!user) {
-					throw new Error(
-						mode === 'create'
-							? 'Vous devez être connecté pour créer une annonce.'
-							: 'Vous devez être connecté pour modifier une annonce.',
-					);
-				}
-
-				const validation = validateSearchAdForm(data);
-				if (!validation.success) {
-					throw new Error(validation.error);
-				}
-
-				const adData = transformFormDataToAdData(
-					data,
-					user._id,
-					user.userType as 'agent' | 'apporteur',
+	const {
+		values,
+		isSubmitting,
+		setFieldValue,
+		handleSubmit: formHandleSubmit,
+		setValues,
+		errors,
+		setErrors,
+	} = useForm<SearchAdFormData>({
+		initialValues: INITIAL_FORM_VALUES,
+		onSubmit: async (data) => {
+			if (!user) {
+				throw new Error(
+					mode === 'create'
+						? 'Vous devez être connecté pour créer une annonce.'
+						: 'Vous devez être connecté pour modifier une annonce.',
 				);
+			}
 
-				if (mode === 'create') {
-					await searchAdApi.createSearchAd(
-						adData as Parameters<
-							typeof searchAdApi.createSearchAd
-						>[0],
-					);
-					router.push(Features.SearchAds.SEARCH_AD_ROUTES.MY_ADS);
-				} else if (mode === 'edit' && editId) {
-					await searchAdApi.updateSearchAd(
-						editId,
-						adData as Parameters<
-							typeof searchAdApi.updateSearchAd
-						>[1],
-					);
-					router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
-				}
-			},
-		});
+			const adData = transformFormDataToAdData(
+				data,
+				user._id,
+				user.userType as 'agent' | 'apporteur',
+			);
+
+			if (mode === 'create') {
+				await searchAdApi.createSearchAd(
+					adData as Parameters<typeof searchAdApi.createSearchAd>[0],
+				);
+				router.push(Features.SearchAds.SEARCH_AD_ROUTES.MY_ADS);
+			} else if (mode === 'edit' && editId) {
+				await searchAdApi.updateSearchAd(
+					editId,
+					adData as Parameters<typeof searchAdApi.updateSearchAd>[1],
+				);
+				router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
+			}
+		},
+	});
+
+	// Wrap handleSubmit to add validation
+	const handleSubmit = async (e?: React.FormEvent) => {
+		if (e) {
+			e.preventDefault();
+		}
+
+		// Validate before submitting
+		const validation = validateSearchAdForm(values);
+		if (!validation.success) {
+			if (validation.errors) {
+				setErrors(validation.errors);
+			}
+			return; // Don't submit if validation fails
+		}
+
+		// Clear any previous errors and submit
+		setErrors({});
+		await formHandleSubmit(e);
+	};
 
 	const handleArrayChange = (
 		value: string,
@@ -175,5 +193,6 @@ export const useSearchAdForm = (mode: 'create' | 'edit', editId?: string) => {
 		setValues,
 		handleSubmit,
 		handleArrayChange,
+		errors,
 	};
 };
