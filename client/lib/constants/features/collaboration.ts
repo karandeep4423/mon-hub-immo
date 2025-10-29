@@ -62,7 +62,7 @@ export const COLLABORATION_STATUS_CONFIG: Record<string, StatusConfig> = {
 		className: 'bg-green-100 text-green-800',
 	},
 	completed: {
-		label: 'Terminée',
+		label: 'Complétée',
 		variant: 'info',
 		className: 'bg-blue-100 text-blue-800',
 	},
@@ -160,7 +160,7 @@ export const COLLABORATION_UI_TEXT = {
 	accept: 'Accepter',
 	reject: 'Refuser',
 	cancel: 'Annuler',
-	complete: 'Terminer',
+	complete: 'Complété',
 	validateStep: "Valider l'étape",
 
 	// Status messages
@@ -192,7 +192,7 @@ export const COLLABORATION_TOAST_MESSAGES = {
 	// Cancel/Complete
 	CANCEL_SUCCESS: 'Collaboration annulée',
 	CANCEL_ERROR: "Erreur lors de l'annulation de la collaboration",
-	COMPLETE_SUCCESS: 'Collaboration terminée',
+	COMPLETE_SUCCESS: 'Collaboration complétée',
 	COMPLETE_ERROR: 'Erreur lors de la finalisation',
 
 	// Notes
@@ -352,10 +352,10 @@ export const COLLABORATION_CONFIRMATION_DIALOGS = {
 	CANCEL_CANCEL: 'Non, revenir',
 
 	// Complete Collaboration
-	COMPLETE_TITLE: 'Terminer la collaboration ?',
+	COMPLETE_TITLE: 'Marquer la collaboration comme complétée ?',
 	COMPLETE_DESCRIPTION:
-		'Cette action marquera la collaboration comme terminée. Voulez-vous continuer ?',
-	COMPLETE_CONFIRM: 'Oui, terminer',
+		'Cette action marquera la collaboration comme complétée. Voulez-vous continuer ?',
+	COMPLETE_CONFIRM: 'Oui, complété',
 	COMPLETE_CANCEL: 'Non, revenir',
 } as const;
 

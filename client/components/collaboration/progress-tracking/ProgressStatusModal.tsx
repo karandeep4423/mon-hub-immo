@@ -155,7 +155,7 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 								<p className="text-sm text-blue-800">
 									L&apos;étape &quot;
 									{PROGRESS_STEPS_CONFIG[selectedStep].title}
-									&quot; sera marquée comme terminée
+									&quot; sera marquée comme complétée
 								</p>
 							</div>
 						</div>

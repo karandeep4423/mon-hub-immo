@@ -43,6 +43,30 @@ export const ProgressTracker: React.FC<ExtendedProgressTrackingProps> = ({
 		'owner' | 'collaborator'
 	>('owner');
 
+	// Helper to check if a step can be validated
+	const canValidateStep = (stepId: ProgressStep): boolean => {
+		const stepIndex = Features.Collaboration.STEP_ORDER.indexOf(stepId);
+
+		// First step can always be validated
+		if (stepIndex === 0) return true;
+
+		// Check if all previous steps are completed (validated by BOTH users)
+		for (let i = 0; i < stepIndex; i++) {
+			const prevStepId = Features.Collaboration.STEP_ORDER[i];
+			const prevStep = steps.find((step) => step.id === prevStepId);
+
+			if (
+				!prevStep ||
+				!prevStep.ownerValidated ||
+				!prevStep.collaboratorValidated
+			) {
+				return false;
+			}
+		}
+
+		return true;
+	};
+
 	const handleCheckboxClick = (
 		stepId: ProgressStep,
 		role: 'owner' | 'collaborator',
@@ -52,6 +76,11 @@ export const ProgressTracker: React.FC<ExtendedProgressTrackingProps> = ({
 			return;
 		}
 		if (role === 'collaborator' && !isCollaborator) {
+			return;
+		}
+
+		// Check if step can be validated (sequential validation)
+		if (!canValidateStep(stepId)) {
 			return;
 		}
 
@@ -137,7 +166,10 @@ export const ProgressTracker: React.FC<ExtendedProgressTrackingProps> = ({
 													)
 												}
 												disabled={
-													!canUpdate || !isOwner
+													!canValidateStep(stepId) ||
+													stepData?.ownerValidated ||
+													!canUpdate ||
+													!isOwner
 												}
 												className="h-5 w-5 appearance-none rounded border-2 border-gray-300 bg-white checked:bg-cyan-600 checked:border-cyan-600 disabled:checked:bg-cyan-600 disabled:checked:border-cyan-600 bg-center bg-no-repeat focus:ring-2 focus:ring-cyan-500 focus:ring-offset-0 disabled:cursor-not-allowed cursor-pointer disabled:opacity-100 checked:bg-[url('data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M3.5%208.5l3%203%206-6%22%20stroke%3D%22white%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')]"
 											/>
@@ -210,6 +242,8 @@ export const ProgressTracker: React.FC<ExtendedProgressTrackingProps> = ({
 													)
 												}
 												disabled={
+													!canValidateStep(stepId) ||
+													stepData?.collaboratorValidated ||
 													!canUpdate ||
 													!isCollaborator
 												}

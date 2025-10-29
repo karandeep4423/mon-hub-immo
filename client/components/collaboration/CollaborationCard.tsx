@@ -280,7 +280,7 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 							onClick={handleCancel}
 							className="text-red-600 border-red-300 hover:bg-red-50"
 						>
-							🚫 Terminer
+							❌ Annuler
 						</Button>
 					)}
 			</div>

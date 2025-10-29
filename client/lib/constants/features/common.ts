@@ -217,7 +217,9 @@ export type ButtonVariant = keyof typeof BUTTON_VARIANTS;
 export const STEP_INDICATOR_COLORS = {
 	completed: 'bg-green-500 text-white',
 	active: 'bg-primary-600 text-white',
+	current: 'bg-primary-600 text-white', // Same as active
 	pending: 'bg-gray-200 text-gray-600',
+	upcoming: 'bg-gray-200 text-gray-600', // Same as pending
 	error: 'bg-red-500 text-white',
 } as const;
 

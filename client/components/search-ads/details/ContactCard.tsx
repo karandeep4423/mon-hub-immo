@@ -3,6 +3,7 @@ import { SearchAd } from '@/types/searchAd';
 import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 import { shareContent } from '@/lib/utils/share';
 import { Features } from '@/lib/constants';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ContactCardProps {
 	searchAd: SearchAd;
@@ -21,6 +22,9 @@ export const ContactCard: React.FC<ContactCardProps> = ({
 	onContact,
 	onCollaborate,
 }) => {
+	const { user } = useAuth();
+	const isAgent = user?.userType === 'agent';
+
 	return (
 		<div className="bg-gradient-to-br from-cyan-50 to-blue-50 p-6 rounded-xl shadow-md border-2 border-cyan-200">
 			<div className="flex items-center gap-3 mb-5">
@@ -83,7 +87,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({
 								<span className="mr-2">ℹ️</span>
 								{`Annonce déjà en collaboration (${blockingStatus ? Features.Collaboration.COLLABORATION_STATUS_CONFIG[blockingStatus]?.label || blockingStatus : ''})`}
 							</div>
-						) : (
+						) : isAgent ? (
 							<button
 								onClick={onCollaborate}
 								className="w-full px-4 py-3.5 rounded-xl transition-all duration-200 font-semibold flex items-center justify-center gap-2.5 mb-4 text-sm bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
@@ -103,6 +107,12 @@ export const ContactCard: React.FC<ContactCardProps> = ({
 								</svg>
 								<span>Proposer une collaboration</span>
 							</button>
+						) : (
+							<div className="w-full p-3 rounded-md border bg-amber-50 text-amber-800 text-sm flex items-center justify-center mb-4">
+								<span className="mr-2">🚫</span>
+								Seuls les agents peuvent proposer des
+								collaborations
+							</div>
 						)}
 					</>
 				)}

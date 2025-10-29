@@ -35,8 +35,8 @@ export const CollaborationProgress: React.FC<CollaborationProgressProps> = ({
 		},
 		{
 			key: 'completed',
-			title: 'Terminée',
-			description: 'Collaboration terminée',
+			title: 'Complétée',
+			description: 'Collaboration complétée',
 		},
 	];
 

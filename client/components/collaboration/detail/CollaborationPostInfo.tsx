@@ -28,6 +28,45 @@ export const CollaborationPostInfo: React.FC<CollaborationPostInfoProps> = ({
 			: collaboration.postId
 	}`;
 
+	// Get image source from property or collaboration.postId
+	const getPropertyImage = () => {
+		// Debug logging
+		console.log('🔍 Debug Image Data:', {
+			hasProperty: !!property,
+			propertyMainImage: property?.mainImage,
+			collaborationPostId: collaboration.postId,
+			postType: collaboration.postType,
+		});
+
+		// First try from property prop
+		if (property?.mainImage) {
+			const image =
+				typeof property.mainImage === 'object'
+					? property.mainImage.url
+					: property.mainImage;
+			console.log('✅ Using property image:', image);
+			return image;
+		}
+
+		// Fallback to collaboration.postId if it's populated
+		if (typeof collaboration.postId === 'object') {
+			const postData = collaboration.postId as PropertyDetails;
+			if (postData.mainImage) {
+				const image =
+					typeof postData.mainImage === 'object'
+						? postData.mainImage.url
+						: postData.mainImage;
+				console.log('✅ Using collaboration.postId image:', image);
+				return image;
+			}
+		}
+
+		console.log('❌ No image found');
+		return null;
+	};
+
+	const propertyImageSrc = getPropertyImage();
+
 	return (
 		<Card className="p-6">
 			<h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
@@ -36,23 +75,32 @@ export const CollaborationPostInfo: React.FC<CollaborationPostInfoProps> = ({
 					: '🔍 Recherche de bien'}
 			</h3>
 
-			{/* Property Main Image */}
-			{collaboration.postType === 'Property' && property?.mainImage && (
-				<div className="mb-4">
-					<div className="w-full h-32 rounded-lg overflow-hidden bg-gray-100 relative">
+			{/* Property or SearchAd Image */}
+			{collaboration.postType === 'Property' && propertyImageSrc && (
+				<div className="mb-4 w-full">
+					<div className="relative w-full h-48 sm:h-56 md:h-64 rounded-lg overflow-hidden bg-gray-100 shadow-md">
 						<Image
-							src={
-								typeof property.mainImage === 'object'
-									? property.mainImage.url
-									: property.mainImage
-							}
-							alt={property.title || 'Property image'}
+							src={propertyImageSrc}
+							alt={property?.title || 'Property image'}
 							fill
-							className="object-cover"
-							onError={(e) => {
-								const target = e.target as HTMLImageElement;
-								target.style.display = 'none';
-							}}
+							className="object-cover hover:scale-105 transition-transform duration-300"
+							sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+							priority
+						/>
+					</div>
+				</div>
+			)}
+
+			{collaboration.postType === 'SearchAd' && (
+				<div className="mb-4 w-full">
+					<div className="relative w-full h-48 sm:h-56 md:h-64 rounded-lg overflow-hidden bg-gradient-to-br from-cyan-50 to-blue-50 shadow-md flex items-center justify-center">
+						<Image
+							src="/recherches-des-biens.png"
+							alt="Recherche de bien"
+							width={200}
+							height={200}
+							className="opacity-80"
+							priority
 						/>
 					</div>
 				</div>

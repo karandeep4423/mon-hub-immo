@@ -437,6 +437,16 @@ function PropertyDetailsPageContent() {
 												)}
 											</>
 										)}
+										{user &&
+											user.userType === 'apporteur' && (
+												<div className="w-full p-3 rounded-md border bg-amber-50 text-amber-800 text-sm flex items-center justify-center">
+													<span className="mr-2">
+														🚫
+													</span>
+													Seuls les agents peuvent
+													proposer des collaborations
+												</div>
+											)}
 									</div>
 								)}
 							</div>

@@ -51,7 +51,7 @@ export const COLLABORATION_DETAIL_ACTIONS = {
 		icon: 'x-circle',
 	},
 	complete: {
-		label: 'Terminer',
+		label: 'Complété',
 		variant: 'success',
 		icon: 'check-circle',
 	},
@@ -123,10 +123,10 @@ export const COLLABORATION_DETAIL_CONFIRM = {
 		cancelButton: 'Retour',
 	},
 	complete: {
-		title: 'Terminer la collaboration',
+		title: 'Marquer comme complétée',
 		message:
-			'Êtes-vous sûr de vouloir marquer cette collaboration comme terminée ?',
-		confirmButton: 'Terminer',
+			'Veuillez sélectionner la raison de la complétion de cette collaboration. Cette action ne peut pas être annulée.',
+		confirmButton: 'Complété',
 		cancelButton: 'Annuler',
 	},
 } as const;
@@ -189,7 +189,7 @@ export const COLLABORATION_DETAIL_TIMELINE = {
 	accepted: 'Collaboration acceptée',
 	rejected: 'Collaboration refusée',
 	cancelled: 'Collaboration annulée',
-	completed: 'Collaboration terminée',
+	completed: 'Collaboration complétée',
 	contractGenerated: 'Contrat généré',
 	contractSigned: 'Contrat signé',
 	progressUpdated: 'Progression mise à jour',

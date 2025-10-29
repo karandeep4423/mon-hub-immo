@@ -27,4 +27,12 @@ export interface OverallStatusManagerProps {
 	isOwner?: boolean;
 	isCollaborator?: boolean;
 	onStatusUpdate?: (status: OverallCollaborationStatus) => void;
+	// Progress steps to check if "Affaire conclue" is validated by both parties
+	progressSteps?: Array<{
+		id: string;
+		ownerValidated: boolean;
+		collaboratorValidated: boolean;
+	}>;
+	// Completion reason for displaying why collaboration was completed
+	completionReason?: string;
 }

@@ -28,9 +28,20 @@ export const proposeCollaboration = async (
 			compensationAmount,
 		} = req.body;
 		const userId = req.user?.id;
+		const userType = req.user?.userType;
 
 		if (!userId) {
 			res.status(401).json({ success: false, message: 'Unauthorized' });
+			return;
+		}
+
+		// Only agents can propose collaborations
+		if (userType === 'apporteur') {
+			res.status(403).json({
+				success: false,
+				message:
+					'Apporteurs cannot propose collaborations. Only agents can propose collaborations.',
+			});
 			return;
 		}
 
@@ -832,10 +843,30 @@ export const completeCollaboration = async (
 ): Promise<void> => {
 	try {
 		const { id } = req.params;
+		const { completionReason } = req.body;
 		const userId = req.user?.id;
 
 		if (!userId) {
 			res.status(401).json({ success: false, message: 'Unauthorized' });
+			return;
+		}
+
+		// Validate completion reason
+		const validReasons = [
+			'vente_conclue_collaboration',
+			'vente_conclue_seul',
+			'bien_retire',
+			'mandat_expire',
+			'client_desiste',
+			'vendu_tiers',
+			'sans_suite',
+		];
+
+		if (!completionReason || !validReasons.includes(completionReason)) {
+			res.status(400).json({
+				success: false,
+				message: 'Invalid or missing completion reason',
+			});
 			return;
 		}
 
@@ -876,10 +907,31 @@ export const completeCollaboration = async (
 			return;
 		}
 
+		// Check if "Affaire conclue" is validated by BOTH users
+		const affaireConclueStep = collaboration.progressSteps.find(
+			(step) => step.id === 'affaire_conclue',
+		);
+
+		if (
+			!affaireConclueStep ||
+			!affaireConclueStep.ownerValidated ||
+			!affaireConclueStep.collaboratorValidated
+		) {
+			res.status(400).json({
+				success: false,
+				message:
+					'Cannot complete: "Affaire conclue" must be validated by both users',
+			});
+			return;
+		}
+
 		// Update status to completed
 		collaboration.status = 'completed';
 		collaboration.currentStep = 'completed';
 		collaboration.completedAt = new Date();
+		collaboration.completionReason = completionReason;
+		collaboration.completedBy = new Types.ObjectId(userId);
+		collaboration.completedByRole = isOwner ? 'owner' : 'collaborator';
 
 		// Mark all progress steps as completed
 		collaboration.progressSteps.forEach((step) => {

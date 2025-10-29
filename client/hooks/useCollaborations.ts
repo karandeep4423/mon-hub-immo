@@ -154,9 +154,14 @@ export function useCollaborationMutations(userId?: string) {
 		}
 	};
 
-	const completeCollaboration = async (collaborationId: string) => {
+	const completeCollaboration = async (
+		collaborationId: string,
+		completionReason?: string,
+	) => {
 		try {
-			const res = await CollaborationApi.complete(collaborationId);
+			const res = await CollaborationApi.complete(collaborationId, {
+				completionReason,
+			});
 			toast.success(
 				Features.Collaboration.COLLABORATION_TOAST_MESSAGES
 					.COMPLETE_SUCCESS,

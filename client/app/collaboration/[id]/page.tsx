@@ -32,6 +32,7 @@ import { ActivityManager } from '@/components/collaboration/shared';
 import { ContractModal } from '@/components/collaboration/ContractModal';
 import { ContractViewModal } from '@/components/contract';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { CompletionReasonModal } from '@/components/collaboration/CompletionReasonModal';
 import { toast } from 'react-toastify';
 
 // APIs
@@ -78,6 +79,8 @@ export default function CollaborationPage() {
 	const [pendingAction, setPendingAction] =
 		useState<OverallCollaborationStatus | null>(null);
 	const [isChatOpen, setIsChatOpen] = useState(false);
+	const [showCompletionReasonModal, setShowCompletionReasonModal] =
+		useState(false);
 
 	// Mutations via SWR
 	const {
@@ -213,11 +216,12 @@ export default function CollaborationPage() {
 						{ response: newStatus },
 					);
 					if (!res.success) return;
-				} else if (
-					newStatus === 'cancelled' ||
-					newStatus === 'completed'
-				) {
-					// Confirm before destructive actions
+				} else if (newStatus === 'completed') {
+					// Open completion reason modal instead of confirm dialog
+					setShowCompletionReasonModal(true);
+					return;
+				} else if (newStatus === 'cancelled') {
+					// Confirm before cancellation
 					setPendingAction(newStatus);
 					setConfirmOpen(true);
 					return;
@@ -287,6 +291,29 @@ export default function CollaborationPage() {
 		completeCollaboration,
 		refetchCollaboration,
 	]);
+
+	const handleCompletionReasonSubmit = useCallback(
+		async (reason: string) => {
+			if (!collaboration) return;
+			setConfirmLoading(true);
+			const res = await completeCollaboration(collaboration._id, reason);
+			setConfirmLoading(false);
+			if (res.success) {
+				toast.success(
+					Features.Collaboration.COLLABORATION_TOAST_MESSAGES
+						.COMPLETE_SUCCESS,
+				);
+				await refetchCollaboration();
+				setShowCompletionReasonModal(false);
+			} else {
+				toast.error(
+					Features.Collaboration.COLLABORATION_TOAST_MESSAGES
+						.STATUS_UPDATE_ERROR,
+				);
+			}
+		},
+		[collaboration, completeCollaboration, refetchCollaboration],
+	);
 
 	// Workflow 2: Progress step update handler
 	const handleProgressUpdate = useCallback(
@@ -468,6 +495,10 @@ export default function CollaborationPage() {
 										isCollaborator={Boolean(isCollaborator)}
 										onStatusUpdate={
 											handleOverallStatusUpdate
+										}
+										progressSteps={progressSteps}
+										completionReason={
+											collaboration.completionReason
 										}
 									/>
 
@@ -818,6 +849,13 @@ export default function CollaborationPage() {
 					collaboration={collaboration}
 				/>
 			)}
+			{/* Completion Reason Modal */}
+			<CompletionReasonModal
+				isOpen={showCompletionReasonModal}
+				onClose={() => setShowCompletionReasonModal(false)}
+				onConfirm={handleCompletionReasonSubmit}
+				isLoading={confirmLoading}
+			/>
 		</div>
 	);
 }

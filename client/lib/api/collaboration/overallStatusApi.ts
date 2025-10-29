@@ -60,10 +60,13 @@ export const overallStatusApi = {
 	},
 
 	// Complete collaboration (mark as finished)
-	complete: async (collaborationId: string, note?: string) => {
+	complete: async (
+		collaborationId: string,
+		params?: { note?: string; completionReason?: string },
+	) => {
 		const response = await api.post(
 			`/collaborations/${collaborationId}/complete`,
-			{ note },
+			params || {},
 		);
 		return response.data;
 	},

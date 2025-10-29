@@ -7,6 +7,7 @@ import type { Property } from '@/lib/api/propertyApi';
 import { PROGRESS_STEPS_CONFIG } from './progress-tracking/types';
 import { formatDateShort } from '@/lib/utils/date';
 import { Features } from '@/lib/constants';
+import { getCompletionReasonDetails } from './CompletionReasonModal';
 
 interface CompensationInfo {
 	type: string;
@@ -160,9 +161,80 @@ export const CollaborationDetails: React.FC<CollaborationDetailsProps> = ({
 						{collaboration.status ===
 							Features.Collaboration.COLLABORATION_STATUS_VALUES
 								.COMPLETED && (
-							<span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-								🎯 Finalisée
-							</span>
+							<>
+								<span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+									🎯 Finalisée
+								</span>
+								{/* Display completion reason if available */}
+								{collaboration.completionReason &&
+									(() => {
+										const reasonDetails =
+											getCompletionReasonDetails(
+												collaboration.completionReason,
+											);
+										if (!reasonDetails) return null;
+										return (
+											<div
+												className="mt-3 p-2 rounded-lg border"
+												style={{
+													backgroundColor:
+														reasonDetails.color.includes(
+															'green',
+														)
+															? '#f0fdf4'
+															: reasonDetails.color.includes(
+																		'red',
+																  )
+																? '#fef2f2'
+																: reasonDetails.color.includes(
+																			'blue',
+																	  )
+																	? '#eff6ff'
+																	: '#f9fafb',
+													borderColor:
+														reasonDetails.color.includes(
+															'green',
+														)
+															? '#bbf7d0'
+															: reasonDetails.color.includes(
+																		'red',
+																  )
+																? '#fecaca'
+																: reasonDetails.color.includes(
+																			'blue',
+																	  )
+																	? '#bfdbfe'
+																	: '#e5e7eb',
+												}}
+											>
+												<div className="flex items-center">
+													<span className="text-sm mr-2">
+														{reasonDetails.icon}
+													</span>
+													<span
+														className={`text-xs font-medium ${
+															reasonDetails.color.includes(
+																'green',
+															)
+																? 'text-green-700'
+																: reasonDetails.color.includes(
+																			'red',
+																	  )
+																	? 'text-red-700'
+																	: reasonDetails.color.includes(
+																				'blue',
+																		  )
+																		? 'text-blue-700'
+																		: 'text-gray-700'
+														}`}
+													>
+														{reasonDetails.label}
+													</span>
+												</div>
+											</div>
+										);
+									})()}
+							</>
 						)}
 						{collaboration.status ===
 							Features.Collaboration.COLLABORATION_STATUS_VALUES

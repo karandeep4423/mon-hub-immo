@@ -203,10 +203,12 @@ export class CollaborationApi {
 	 */
 	static async complete(
 		collaborationId: string,
+		params?: { note?: string; completionReason?: string },
 	): Promise<{ collaboration: Collaboration }> {
 		try {
 			const response = await api.post(
 				`/collaboration/${collaborationId}/complete`,
+				params || {},
 			);
 			return response.data;
 		} catch (error) {

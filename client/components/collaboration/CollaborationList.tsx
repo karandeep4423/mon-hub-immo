@@ -398,7 +398,7 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 					<div className="text-2xl font-bold text-gray-600">
 						{stats.completed}
 					</div>
-					<div className="text-sm text-gray-600">Terminées</div>
+					<div className="text-sm text-gray-600">Complétées</div>
 				</div>
 				<div className="bg-purple-50 p-4 rounded-lg text-center">
 					<div className="flex items-center justify-center mb-1">
@@ -455,7 +455,8 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 							<option value="pending">En attente</option>
 							<option value="accepted">Acceptée</option>
 							<option value="active">Active</option>
-							<option value="completed">Terminée</option>
+							<option value="completed">Complétée</option>
+							<option value="cancelled">Annulée</option>
 							<option value="rejected">Rejetée</option>
 						</select>
 					</div>
