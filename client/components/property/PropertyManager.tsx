@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Button, ConfirmDialog, Pagination } from '@/components/ui';
 import { PropertyForm } from './PropertyForm';
 import {
@@ -17,6 +17,8 @@ import { Features } from '@/lib/constants';
 import { usePropertyActions } from '@/hooks/usePropertyActions';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
 import { Property } from '@/lib/api/propertyApi';
+import { usePageState } from '@/hooks/usePageState';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 
 export const PropertyManager: React.FC = () => {
 	const { user } = useAuth();
@@ -52,6 +54,38 @@ export const PropertyManager: React.FC = () => {
 		hasActiveFilters,
 	} = usePropertyFilters({ properties });
 
+	// Page state (restore tabs/filters/pagination + scroll)
+	const {
+		key: pageKey,
+		savedState,
+		save,
+		urlOverrides,
+	} = usePageState({
+		hasFilters: true,
+		hasPagination: true,
+		getCurrentState: () => ({
+			filters: filters as unknown as Record<string, unknown>,
+			currentPage,
+		}),
+	});
+
+	// Apply restored state (URL params take priority over saved state)
+	useEffect(() => {
+		// Filters
+		if (urlOverrides.activeTab) {
+			// PropertyManager has no tabs; ignore here
+		}
+		if (savedState?.filters) {
+			setFilters(savedState.filters as unknown as typeof filters);
+		}
+		if (typeof urlOverrides.currentPage === 'number') {
+			setCurrentPage(urlOverrides.currentPage);
+		} else if (typeof savedState?.currentPage === 'number') {
+			setCurrentPage(savedState.currentPage);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	// Paginated properties
 	const paginatedProperties = useMemo(() => {
 		const startIndex = (currentPage - 1) * itemsPerPage;
@@ -62,11 +96,16 @@ export const PropertyManager: React.FC = () => {
 	const handleFiltersChange = (newFilters: typeof filters) => {
 		setFilters(newFilters);
 		setCurrentPage(1);
+		save({
+			filters: newFilters as unknown as Record<string, unknown>,
+			currentPage: 1,
+		});
 	};
 
 	const handleResetFilters = () => {
 		resetFilters();
 		setCurrentPage(1);
+		save({ filters: {}, currentPage: 1 });
 	};
 
 	// Property actions hook
@@ -89,6 +128,17 @@ export const PropertyManager: React.FC = () => {
 		// PropertyForm handles actual API call, just handle post-submit
 		handleFormSuccess();
 	};
+
+	// Persist pagination changes
+	useEffect(() => {
+		save({ currentPage });
+	}, [currentPage, save]);
+
+	// Scroll restoration (window scroll)
+	useScrollRestoration({
+		key: pageKey,
+		ready: !loading,
+	});
 
 	// Check if user has permission to manage properties (both agents and apporteurs)
 	if (!user || !['agent', 'apporteur'].includes(user.userType)) {

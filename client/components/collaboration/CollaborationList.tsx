@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -12,6 +12,8 @@ import {
 	useCollaborationMutations,
 } from '@/hooks/useCollaborations';
 import { Features } from '@/lib/constants';
+import { usePageState } from '@/hooks/usePageState';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 
 interface CollaborationListProps {
 	currentUserId: string;
@@ -54,6 +56,63 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 		() => collabData?.collaborations || [],
 		[collabData],
 	);
+
+	// Persist filters/search/pagination and scroll
+	const {
+		key: pageKey,
+		savedState,
+		save,
+		urlOverrides,
+	} = usePageState({
+		key: 'collaboration-list',
+		getCurrentState: () => ({
+			filters: {
+				searchTerm,
+				statusFilter,
+				roleFilter,
+			} as unknown as Record<string, unknown>,
+			currentPage,
+		}),
+	});
+
+	useEffect(() => {
+		const savedFilters =
+			(savedState?.filters as Record<string, unknown>) || undefined;
+		if (savedFilters) {
+			if (typeof savedFilters.searchTerm === 'string')
+				setSearchTerm(savedFilters.searchTerm);
+			if (typeof savedFilters.statusFilter === 'string')
+				setStatusFilter(savedFilters.statusFilter);
+			if (typeof savedFilters.roleFilter === 'string')
+				setRoleFilter(savedFilters.roleFilter);
+		}
+		if (typeof urlOverrides.currentPage === 'number') {
+			setCurrentPage(urlOverrides.currentPage);
+		} else if (typeof savedState?.currentPage === 'number') {
+			setCurrentPage(savedState.currentPage);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	useEffect(() => {
+		save({
+			filters: {
+				searchTerm,
+				statusFilter,
+				roleFilter,
+			} as unknown as Record<string, unknown>,
+		});
+	}, [searchTerm, statusFilter, roleFilter, save]);
+
+	useEffect(() => {
+		save({ currentPage });
+	}, [currentPage, save]);
+
+	// Scroll restoration (window scroll)
+	useScrollRestoration({
+		key: pageKey,
+		ready: !isLoading,
+	});
 
 	const openConfirm = (
 		mode: 'cancel' | 'terminate',

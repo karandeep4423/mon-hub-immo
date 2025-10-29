@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Appointment } from '@/types/appointment';
 import { PageLoader, Pagination } from '../ui';
 import { Button } from '../ui/Button';
@@ -18,6 +18,8 @@ import { APPOINTMENT_STATUS_VALUES } from '@/lib/constants/features/appointments
 import Link from 'next/link';
 import { AppointmentCard } from './AppointmentCard';
 import { AppointmentFilters } from './AppointmentFilters';
+import { usePageState } from '@/hooks/usePageState';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 
 type AppointmentStatus =
 	| 'pending'
@@ -145,6 +147,59 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 		filter === 'all'
 			? appointments
 			: appointments.filter((apt) => apt.status === filter);
+
+	// Persist filter/view mode/pagination and scroll
+	const {
+		key: pageKey,
+		savedState,
+		save,
+		urlOverrides,
+	} = usePageState({
+		key: 'appointments-manager',
+		getCurrentState: () => ({
+			filters: {
+				filter,
+				viewMode,
+			} as unknown as Record<string, unknown>,
+			currentPage,
+		}),
+	});
+
+	useEffect(() => {
+		const savedFilters =
+			(savedState?.filters as Record<string, unknown>) || undefined;
+		if (savedFilters) {
+			if (typeof savedFilters.filter === 'string')
+				setFilter(savedFilters.filter as AppointmentStatus | 'all');
+			if (typeof savedFilters.viewMode === 'string')
+				setViewMode(savedFilters.viewMode as ViewMode);
+		}
+		if (typeof urlOverrides.currentPage === 'number') {
+			setCurrentPage(urlOverrides.currentPage);
+		} else if (typeof savedState?.currentPage === 'number') {
+			setCurrentPage(savedState.currentPage);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	useEffect(() => {
+		save({
+			filters: {
+				filter,
+				viewMode,
+			} as unknown as Record<string, unknown>,
+		});
+	}, [filter, viewMode, save]);
+
+	useEffect(() => {
+		save({ currentPage });
+	}, [currentPage, save]);
+
+	// Scroll restoration (window scroll)
+	useScrollRestoration({
+		key: pageKey,
+		ready: !loading,
+	});
 
 	// Paginated appointments
 	const paginatedAppointments = useMemo(() => {

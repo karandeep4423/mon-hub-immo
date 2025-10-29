@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Property, PropertyFilters } from '@/lib/api/propertyApi';
 import { SearchAd } from '@/types/searchAd';
 import { useFavoritesStore } from '@/store/favoritesStore';
@@ -30,6 +30,8 @@ import {
 import { logger } from '@/lib/utils/logger';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Features } from '@/lib/constants';
+import { usePageState } from '@/hooks/usePageState';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 
 type ContentFilter =
 	| 'all'
@@ -60,6 +62,34 @@ export default function Home() {
 	);
 	const [myAreaLocations, setMyAreaLocations] = useState<LocationItem[]>([]);
 	const [isInitialLoad, setIsInitialLoad] = useState(true);
+	const restorationCompleteRef = useRef(false);
+	const restorationInProgressRef = useRef(false);
+	const skipNextFilterResetRef = useRef(true);
+	const lastFiltersSignatureRef = useRef<string | null>(null);
+	const restorationCompleteAtRef = useRef<number | null>(null);
+
+	// Persist filters and dual pagination for Home; restore window scroll
+	const {
+		key: pageKey,
+		savedState,
+		save,
+	} = usePageState({
+		key: 'home',
+		getCurrentState: () => ({
+			filters: {
+				searchTerm,
+				typeFilter,
+				selectedLocations,
+				radiusKm,
+				profileFilter,
+				priceFilter,
+				surfaceFilter,
+				contentFilter,
+				propPage,
+				adPage,
+			} as unknown as Record<string, unknown>,
+		}),
+	});
 
 	// Debounce search term with standard delay
 	const debouncedSearchTerm = useDebounce(
@@ -78,6 +108,79 @@ export default function Home() {
 			.toLowerCase();
 
 	const isAuthenticated = !!user;
+
+	// Restore saved filters/pages once on mount
+	useEffect(() => {
+		// Check what's in session storage directly
+		const rawSessionData = sessionStorage.getItem(`pageState:${pageKey}`);
+		logger.debug('[Home] Raw session storage:', {
+			key: pageKey,
+			rawData: rawSessionData,
+			parsed: rawSessionData ? JSON.parse(rawSessionData) : null,
+		});
+
+		const filters =
+			(savedState?.filters as Record<string, unknown>) || undefined;
+
+		logger.debug('[Home] Restoration attempt:', {
+			hasSavedState: !!savedState,
+			filters,
+			scrollY: savedState?.scrollY,
+			scrollX: savedState?.scrollX,
+			fullState: savedState,
+		});
+
+		if (!filters) {
+			// No saved state, mark restoration as complete to allow normal operation
+			restorationCompleteRef.current = true;
+			return;
+		}
+
+		// Mark that restoration is in progress to block reset effects
+		restorationInProgressRef.current = true;
+
+		if (typeof filters.searchTerm === 'string')
+			setSearchTerm(filters.searchTerm);
+		if (typeof filters.typeFilter === 'string')
+			setTypeFilter(filters.typeFilter);
+		if (typeof filters.radiusKm === 'number') setRadiusKm(filters.radiusKm);
+		if (typeof filters.profileFilter === 'string')
+			setProfileFilter(filters.profileFilter);
+		if (typeof filters.priceFilter === 'object' && filters.priceFilter)
+			setPriceFilter(filters.priceFilter as { min: number; max: number });
+		if (typeof filters.surfaceFilter === 'object' && filters.surfaceFilter)
+			setSurfaceFilter(
+				filters.surfaceFilter as { min: number; max: number },
+			);
+		if (typeof filters.contentFilter === 'string')
+			setContentFilter(filters.contentFilter as ContentFilter);
+		if (typeof filters.propPage === 'number') {
+			logger.debug('[Home] Restoring propPage:', filters.propPage);
+			setPropPage(filters.propPage);
+		}
+		if (typeof filters.adPage === 'number') {
+			logger.debug('[Home] Restoring adPage:', filters.adPage);
+			setAdPage(filters.adPage);
+		}
+		if (Array.isArray(filters.selectedLocations))
+			setSelectedLocations(filters.selectedLocations as LocationItem[]);
+
+		// prevent auto-activation overriding restored state
+		setIsInitialLoad(false);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	// Mark restoration complete AFTER all state updates have been processed
+	useEffect(() => {
+		if (restorationInProgressRef.current) {
+			logger.debug(
+				'[Home] Restoration complete - enabling normal operations',
+			);
+			restorationInProgressRef.current = false;
+			restorationCompleteRef.current = true;
+			restorationCompleteAtRef.current = Date.now();
+		}
+	}, [propPage, adPage, contentFilter]);
 
 	// Save radius preference when it changes
 	const handleRadiusChange = async (newRadius: number) => {
@@ -313,9 +416,10 @@ export default function Home() {
 		}
 	}, [isAuthenticated, initializeFavorites]);
 
-	// Auto-activate "Mon secteur" filter for agents on initial load
+	// Auto-activate "Mon secteur" filter for agents on initial load (skip if restored state exists)
 	useEffect(() => {
 		if (!user || !isInitialLoad) return;
+		if (savedState?.filters) return;
 		if (user.userType !== 'agent') return;
 
 		const city = user.professionalInfo?.city;
@@ -332,7 +436,7 @@ export default function Home() {
 			city,
 			postalCode,
 		);
-	}, [user, isInitialLoad]);
+	}, [user, isInitialLoad, savedState?.filters]);
 
 	// Load "Mon secteur" locations from user's registered city
 	useEffect(() => {
@@ -517,19 +621,104 @@ export default function Home() {
 	const loading = loadingProperties || loadingSearchAds;
 	const error = propertiesError || searchAdsError;
 
-	// Reset pagination when filters/content change
+	// Restore scroll only after data and restored state are settled
+	useScrollRestoration({
+		key: pageKey,
+		ready: () => restorationCompleteRef.current && !loading,
+		debug: true,
+	});
+
+	const filtersForSave = useMemo(
+		() => ({
+			searchTerm,
+			typeFilter,
+			selectedLocations,
+			radiusKm,
+			profileFilter,
+			priceFilter,
+			surfaceFilter,
+			contentFilter,
+		}),
+		[
+			searchTerm,
+			typeFilter,
+			selectedLocations,
+			radiusKm,
+			priceFilter,
+			surfaceFilter,
+			profileFilter,
+			contentFilter,
+		],
+	);
+
+	const filtersSignature = useMemo(
+		() => JSON.stringify(filtersForSave),
+		[filtersForSave],
+	);
+
+	// Reset pagination when filters/content change, but skip restoration-driven updates
 	useEffect(() => {
-		setPropPage(1);
-		setAdPage(1);
-	}, [
-		searchTerm,
-		typeFilter,
-		selectedLocations,
-		priceFilter,
-		surfaceFilter,
-		profileFilter,
-		contentFilter,
-	]);
+		if (!restorationCompleteRef.current) {
+			logger.debug(
+				'[Home] Skipping pagination reset - restoration not complete',
+			);
+			return;
+		}
+
+		if (skipNextFilterResetRef.current) {
+			skipNextFilterResetRef.current = false;
+			lastFiltersSignatureRef.current = filtersSignature;
+			logger.debug(
+				'[Home] Skipping pagination reset - flagged to skip once',
+				{ filtersSignature },
+			);
+			return;
+		}
+
+		// Short cooldown after restoration to allow dependent effects to settle
+		if (
+			restorationCompleteAtRef.current &&
+			Date.now() - restorationCompleteAtRef.current < 800
+		) {
+			if (lastFiltersSignatureRef.current !== filtersSignature) {
+				lastFiltersSignatureRef.current = filtersSignature;
+			}
+			logger.debug('[Home] Skipping pagination reset during cooldown');
+			return;
+		}
+
+		if (lastFiltersSignatureRef.current === filtersSignature) {
+			logger.debug('[Home] Filters unchanged; no pagination reset');
+			return;
+		}
+
+		lastFiltersSignatureRef.current = filtersSignature;
+		logger.debug('[Home] Resetting pagination due to filter change');
+		// Reset only the relevant pagination for current contentFilter
+		if (contentFilter === 'properties') {
+			setPropPage(1);
+		} else if (contentFilter === 'searchAds') {
+			setAdPage(1);
+		} else {
+			setPropPage(1);
+			setAdPage(1);
+		}
+		save({ filters: filtersForSave as unknown as Record<string, unknown> });
+	}, [filtersForSave, filtersSignature, save, contentFilter]);
+
+	// Persist page changes
+	useEffect(() => {
+		if (!restorationCompleteRef.current) {
+			logger.debug(
+				'[Home] Skipping pagination save - restoration not complete',
+			);
+			return;
+		}
+		logger.debug('[Home] Saving pagination:', { propPage, adPage });
+		save({
+			filters: { propPage, adPage } as unknown as Record<string, unknown>,
+		});
+	}, [propPage, adPage, save]);
 
 	// Count filtered items for display (respect current contentFilter including 'myArea')
 	const filteredSearchAdsCount = filterSearchAds(searchAds).length;

@@ -77,3 +77,7 @@ export { usePropertyActions } from './usePropertyActions';
 export { useDebounce } from './useDebounce';
 export { useClickOutside } from './useClickOutside';
 export { useDebouncedSearch } from './useDebouncedSearch';
+
+// Page/UI state persistence
+export { usePageState } from './usePageState';
+export { useScrollRestoration } from './useScrollRestoration';

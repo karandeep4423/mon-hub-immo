@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import useSWR from 'swr';
 import searchAdApi from '@/lib/api/searchAdApi';
 import { SearchAdCard } from './SearchAdCard';
@@ -10,12 +10,38 @@ import { swrKeys } from '@/lib/swrKeys';
 import { useAuth } from '@/hooks/useAuth';
 import { PageLoader } from '../ui/LoadingSpinner';
 import { Features } from '@/lib/constants';
+import { usePageState } from '@/hooks/usePageState';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 
 export const MySearches = () => {
 	const router = useRouter();
 	const { user } = useAuth();
 	const [currentPage, setCurrentPage] = useState(1);
 	const itemsPerPage = 6;
+
+	// Persist pagination and scroll
+	const {
+		key: pageKey,
+		savedState,
+		save,
+		urlOverrides,
+	} = usePageState({
+		key: 'my-searches',
+		getCurrentState: () => ({ currentPage }),
+	});
+
+	useEffect(() => {
+		if (typeof urlOverrides.currentPage === 'number') {
+			setCurrentPage(urlOverrides.currentPage);
+		} else if (typeof savedState?.currentPage === 'number') {
+			setCurrentPage(savedState.currentPage);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	useEffect(() => {
+		save({ currentPage });
+	}, [currentPage, save]);
 
 	// Fetch user's search ads using SWR
 	const {
@@ -30,6 +56,12 @@ export const MySearches = () => {
 			fallbackData: [],
 		},
 	);
+
+	// Scroll restoration (window scroll)
+	useScrollRestoration({
+		key: pageKey,
+		ready: !loading,
+	});
 
 	// Paginated search ads
 	const paginatedAds = useMemo(() => {

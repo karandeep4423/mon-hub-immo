@@ -5,6 +5,7 @@ import { logger } from '@/lib/utils/logger';
 import { TokenManager } from '@/lib/utils/tokenManager';
 import { useFavoritesStore } from './favoritesStore';
 import { Features } from '@/lib/constants';
+import { usePageStateStore } from './pageStateStore';
 
 interface AuthState {
 	user: User | null;
@@ -47,6 +48,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 	logout: () => {
 		logger.debug('[AuthStore] User logged out');
 		TokenManager.clearAll();
+		// Clear page-level UI state persisted in session
+		try {
+			usePageStateStore.getState().clearAll();
+		} catch (e) {
+			logger.warn('[AuthStore] Failed to clear page state on logout', e);
+		}
 		set({ user: null, loading: false });
 		// Reset favorites when user logs out
 		useFavoritesStore.getState().reset();

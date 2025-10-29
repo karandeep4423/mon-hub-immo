@@ -20,6 +20,8 @@ import {
 	DashboardTabs,
 	type DashboardTab,
 } from './index';
+import { usePageState } from '@/hooks/usePageState';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 
 export const DashboardContent: React.FC = () => {
 	const { user, loading, refreshUser } = useRequireAuth();
@@ -44,6 +46,45 @@ export const DashboardContent: React.FC = () => {
 			total: appointments.length,
 		};
 	}, [appointments]);
+
+	// Page state: persist activeTab and scroll restoration for dashboard
+	const {
+		key: pageKey,
+		savedState,
+		save,
+		urlOverrides,
+	} = usePageState({
+		hasTabs: true,
+		getCurrentState: () => ({ activeTab }),
+	});
+
+	useEffect(() => {
+		const validTabs: DashboardTab[] = [
+			'overview',
+			'properties',
+			'collaborations',
+			'searches',
+			'appointments',
+		];
+		const fromUrl = urlOverrides.activeTab as string | undefined;
+		const fromSaved =
+			(savedState?.activeTab as string | undefined) || undefined;
+		const candidate = fromUrl ?? fromSaved;
+		if (candidate && validTabs.includes(candidate as DashboardTab)) {
+			setActiveTab(candidate as DashboardTab);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	useEffect(() => {
+		save({ activeTab });
+	}, [activeTab, save]);
+
+	// Scroll restoration (window scroll)
+	useScrollRestoration({
+		key: pageKey,
+		ready: !loading && !statsLoading,
+	});
 
 	// Refresh user data once when component mounts to get latest profile status
 	useEffect(() => {
@@ -71,7 +112,10 @@ export const DashboardContent: React.FC = () => {
 			{showProfilePrompt && <ProfileCompletionBanner />}
 
 			{/* Main Content */}
-			<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-x-hidden">
+			<main
+				id="dashboard-main"
+				className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 overflow-x-hidden"
+			>
 				<div className="mb-8">
 					<h2 className="text-2xl font-bold text-gray-900 mb-2">
 						Bienvenue, {user.firstName} !
