@@ -8,6 +8,39 @@ import { ProfileAvatar } from '../ui';
 import { User } from '@/types/auth';
 import { storage, STORAGE_KEYS } from '@/lib/utils/storageManager';
 
+// TipTap JSON structure types
+interface TipTapMark {
+	type: 'bold' | 'italic' | 'underline';
+}
+
+interface TipTapTextNode {
+	type: 'text';
+	text: string;
+	marks?: TipTapMark[];
+}
+
+interface TipTapParagraphNode {
+	type: 'paragraph';
+	content?: TipTapTextNode[];
+}
+
+interface TipTapListItemNode {
+	type: 'listItem';
+	content?: TipTapParagraphNode[];
+}
+
+interface TipTapListNode {
+	type: 'orderedList' | 'bulletList';
+	content?: TipTapListItemNode[];
+}
+
+type TipTapNode = TipTapParagraphNode | TipTapListNode;
+
+interface TipTapDocument {
+	type: 'doc';
+	content?: TipTapNode[];
+}
+
 interface AgentProfileCardProps {
 	user: User;
 }
@@ -218,17 +251,188 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 											'Non renseigné'}
 									</p>
 								</div>
+								{user.professionalInfo?.coveredCities &&
+									user.professionalInfo.coveredCities.length >
+										0 && (
+										<div className="md:col-span-2">
+											<p className="text-sm font-medium text-gray-600">
+												Communes couvertes
+											</p>
+											<div className="flex flex-wrap gap-2 mt-2">
+												{user.professionalInfo.coveredCities.map(
+													(city, index) => (
+														<span
+															key={index}
+															className="inline-flex px-3 py-1 text-sm bg-cyan-50 text-cyan-700 rounded-full"
+														>
+															{city}
+														</span>
+													),
+												)}
+											</div>
+										</div>
+									)}
 								{user.professionalInfo?.personalPitch && (
 									<div className="md:col-span-2">
-										<p className="text-sm font-medium text-gray-600">
+										<p className="text-sm font-medium text-gray-600 mb-2">
 											Bio personnelle
 										</p>
-										<p className="text-base text-gray-900 mt-1">
-											{
-												user.professionalInfo
-													.personalPitch
-											}
-										</p>
+										<div
+											className="text-base text-gray-900 prose prose-sm max-w-none"
+											dangerouslySetInnerHTML={{
+												__html: (() => {
+													try {
+														// Try to parse as TipTap JSON
+														const json: TipTapDocument =
+															JSON.parse(
+																user
+																	.professionalInfo
+																	.personalPitch,
+															);
+														// Simple conversion of TipTap JSON to HTML
+														let html = '';
+														if (
+															json.content &&
+															Array.isArray(
+																json.content,
+															)
+														) {
+															json.content.forEach(
+																(
+																	node: TipTapNode,
+																) => {
+																	if (
+																		node.type ===
+																		'paragraph'
+																	) {
+																		html +=
+																			'<p>';
+																		if (
+																			node.content
+																		) {
+																			node.content.forEach(
+																				(
+																					child: TipTapTextNode,
+																				) => {
+																					if (
+																						child.type ===
+																						'text'
+																					) {
+																						let text =
+																							child.text;
+																						if (
+																							child.marks
+																						) {
+																							child.marks.forEach(
+																								(
+																									mark: TipTapMark,
+																								) => {
+																									if (
+																										mark.type ===
+																										'bold'
+																									)
+																										text = `<strong>${text}</strong>`;
+																									if (
+																										mark.type ===
+																										'italic'
+																									)
+																										text = `<em>${text}</em>`;
+																								},
+																							);
+																						}
+																						html +=
+																							text;
+																					}
+																				},
+																			);
+																		}
+																		html +=
+																			'</p>';
+																	} else if (
+																		node.type ===
+																		'orderedList'
+																	) {
+																		html +=
+																			'<ol class="list-decimal ml-4">';
+																		if (
+																			node.content
+																		) {
+																			node.content.forEach(
+																				(
+																					item: TipTapListItemNode,
+																				) => {
+																					html +=
+																						'<li>';
+																					if (
+																						item.content
+																					) {
+																						item.content.forEach(
+																							(
+																								para: TipTapParagraphNode,
+																							) => {
+																								if (
+																									para.content
+																								) {
+																									para.content.forEach(
+																										(
+																											child: TipTapTextNode,
+																										) => {
+																											if (
+																												child.type ===
+																												'text'
+																											) {
+																												let text =
+																													child.text;
+																												if (
+																													child.marks
+																												) {
+																													child.marks.forEach(
+																														(
+																															mark: TipTapMark,
+																														) => {
+																															if (
+																																mark.type ===
+																																'bold'
+																															)
+																																text = `<strong>${text}</strong>`;
+																															if (
+																																mark.type ===
+																																'italic'
+																															)
+																																text = `<em>${text}</em>`;
+																														},
+																													);
+																												}
+																												html +=
+																													text;
+																											}
+																										},
+																									);
+																								}
+																							},
+																						);
+																					}
+																					html +=
+																						'</li>';
+																				},
+																			);
+																		}
+																		html +=
+																			'</ol>';
+																	}
+																},
+															);
+														}
+														return html;
+													} catch {
+														// If not JSON, display as plain text
+														return user
+															.professionalInfo
+															.personalPitch;
+													}
+												})(),
+											}}
+										/>
 									</div>
 								)}
 							</div>

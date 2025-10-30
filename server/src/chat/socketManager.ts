@@ -1,6 +1,7 @@
 import { Server, Socket } from 'socket.io';
 import { User } from '../models/User';
 import { SOCKET_EVENTS } from './socketConfig';
+import { logger } from '../utils/logger';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -166,7 +167,10 @@ const handleStatusUpdate = async (
 				{ new: false },
 			);
 		} catch (e) {
-			console.error('Failed to persist lastSeen on updateStatus', e);
+			logger.error(
+				'[SocketManager] Failed to persist lastSeen on updateStatus',
+				e,
+			);
 		}
 	}
 
@@ -182,11 +186,11 @@ const handleDisconnection = async (
 	userId: string,
 	updateUserMap: (updater: (map: UserSocketMap) => UserSocketMap) => void,
 ): Promise<void> => {
-	console.log('❌ User disconnected');
+	logger.debug('[SocketManager] User disconnected');
 
 	if (userId && userId !== 'undefined') {
 		updateUserMap((map) => removeUserFromMap(map, userId));
-		console.log('🗑️ User unmapped:', userId);
+		logger.debug('[SocketManager] User unmapped:', userId);
 
 		// Update user's last seen when disconnecting
 		const lastSeen = new Date();
@@ -197,7 +201,10 @@ const handleDisconnection = async (
 				{ new: false },
 			);
 		} catch (e) {
-			console.error('Failed to persist lastSeen on disconnect', e);
+			logger.error(
+				'[SocketManager] Failed to persist lastSeen on disconnect',
+				e,
+			);
 		}
 
 		announceUserStatusUpdate(io, userId, 'offline', lastSeen);
@@ -263,16 +270,25 @@ const handleConnection = (
 	getActiveThreads: () => Record<string, string | undefined>,
 	setActiveThread: (userId: string, peerId?: string) => void,
 ): void => {
-	console.log('🔌 User connected:', socket.id);
-	const userId = socket.handshake.query.userId as string;
+	logger.debug('[SocketManager] User connected:', socket.id);
+	// Get userId from socket.data (set by auth middleware)
+	const userId = socket.data.userId;
 
-	if (userId && userId !== 'undefined') {
-		updateUserMap((map) => addUserToMap(map, userId, socket.id));
-		console.log('✅ User mapped:', userId, '->', socket.id);
-
-		// Announce user online
-		announceUserStatusUpdate(io, userId, 'online');
+	// Disconnect if no userId (auth middleware failed or missing)
+	if (!userId || userId === 'undefined') {
+		logger.error(
+			'[SocketManager] No userId found, disconnecting socket:',
+			socket.id,
+		);
+		socket.disconnect(true);
+		return;
 	}
+
+	updateUserMap((map) => addUserToMap(map, userId, socket.id));
+	logger.debug('[SocketManager] User mapped:', userId, '->', socket.id);
+
+	// Announce user online
+	announceUserStatusUpdate(io, userId, 'online');
 
 	// Send updated online users list to all clients
 	io.emit(SOCKET_EVENTS.GET_ONLINE_USERS, getOnlineUsers(getUserSocketMap()));

@@ -1,5 +1,6 @@
 import { FormSection } from './FormSection';
 import { Features } from '@/lib/constants';
+import { RichTextEditor } from '@/components/ui';
 
 interface BasicInfoSectionProps {
 	title: string;
@@ -49,32 +50,15 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
 					)}
 				</div>
 
-				<div>
-					<label
-						htmlFor="description"
-						className="block text-sm font-medium text-gray-700"
-					>
-						Description de la recherche *
-					</label>
-					<textarea
-						id="description"
-						name="description"
-						rows={4}
-						value={description}
-						onChange={(e) => onDescriptionChange(e.target.value)}
-						className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-brand-600 focus:border-brand-600 ${
-							errors.description
-								? 'border-red-500 focus:ring-red-500 focus:border-red-500'
-								: 'border-gray-300'
-						}`}
-						placeholder="Décrivez les besoins spécifiques de votre client..."
-					/>
-					{errors.description && (
-						<p className="mt-1 text-sm text-red-600">
-							{errors.description}
-						</p>
-					)}
-				</div>
+				<RichTextEditor
+					label="Description de la recherche *"
+					value={description}
+					onChange={onDescriptionChange}
+					placeholder="Décrivez les besoins spécifiques de votre client..."
+					error={errors.description}
+					minHeight="150px"
+					showCharCount
+				/>
 			</div>
 		</FormSection>
 	);

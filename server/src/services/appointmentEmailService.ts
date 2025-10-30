@@ -8,6 +8,7 @@ import {
 	getAppointmentRescheduledTemplate,
 	AppointmentEmailData,
 } from '../utils/appointmentEmailTemplates';
+import { logger } from '../utils/logger';
 import { IAppointment } from '../models/Appointment';
 import { IUser } from '../models/User';
 
@@ -53,15 +54,17 @@ export class AppointmentEmailService {
 			notes: appointment.notes,
 		};
 
-		console.log('📧 Sending email to agent:', agent.email);
+		logger.debug(
+			'[AppointmentEmailService] Sending email to agent:',
+			agent.email,
+		);
 		await emailService.sendEmail({
 			to: agent.email,
 			subject: 'Nouvelle demande de rendez-vous - MonHubImmo',
 			html: getNewAppointmentAgentTemplate(agentData),
 		});
-		console.log('✅ Agent email sent successfully');
+		logger.debug('[AppointmentEmailService] Agent email sent successfully');
 	}
-
 	async sendAppointmentConfirmedEmail(
 		appointment: IAppointment,
 		agent: IUser,

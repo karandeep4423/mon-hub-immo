@@ -90,3 +90,39 @@ const chatUpload = multer({ storage, fileFilter: chatFileFilter, limits });
 
 // Single file for chat attachments (field name: 'file')
 export const uploadChatSingle = chatUpload.single('file');
+
+// ========================
+// Identity documents (images + PDF)
+// ========================
+
+const identityDocFilter = (
+	req: MulterRequest,
+	file: Express.Multer.File,
+	cb: multer.FileFilterCallback,
+) => {
+	const allowedMimes = [
+		'image/jpeg',
+		'image/jpg',
+		'image/png',
+		'image/webp',
+		'application/pdf',
+	];
+
+	if (allowedMimes.includes(file.mimetype)) {
+		cb(null, true);
+	} else {
+		cb(
+			new Error(
+				'Type de fichier non supporté. Utilisez JPG, PNG, WebP ou PDF.',
+			),
+		);
+	}
+};
+
+const identityDocUpload = multer({
+	storage,
+	fileFilter: identityDocFilter,
+	limits,
+});
+
+export const uploadIdentityDoc = identityDocUpload.single('identityCard');

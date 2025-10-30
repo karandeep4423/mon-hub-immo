@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { toast } from 'react-toastify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,6 +10,11 @@ import { resetPasswordSchema } from '@/lib/validation';
 import { ResetPasswordData } from '@/types/auth';
 import { useForm } from '@/hooks/useForm';
 import { Features } from '@/lib/constants';
+import {
+	handleAuthError,
+	showPasswordResetSuccess,
+	authToastError,
+} from '@/lib/utils/authToast';
 
 interface ResetPasswordFormData extends Record<string, unknown> {
 	code: string;
@@ -39,44 +43,56 @@ export const ResetPasswordForm: React.FC = () => {
 			confirmPassword: '',
 		},
 		onSubmit: async (data) => {
-			if (data.newPassword !== data.confirmPassword) {
-				setErrors({
-					confirmPassword: 'Les mots de passe ne correspondent pas',
-				});
-				return;
-			}
-
-			if (!email) {
-				setErrors({ email: 'Email requis' });
-				return;
-			}
-
-			const resetData: ResetPasswordData = {
-				email,
-				code: data.code,
-				newPassword: data.newPassword,
-			};
-
-			resetPasswordSchema.parse(resetData);
-
-			const response = await authService.resetPassword(resetData);
-
-			if (response.success) {
-				setSuccess(true);
-				toast.success(response.message);
-
-				if (response.token && response.user) {
-					login(response.token, response.user);
-					setTimeout(() => {
-						router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
-					}, 2000);
-				} else {
-					setTimeout(() => {
-						router.push(Features.Auth.AUTH_ROUTES.LOGIN);
-					}, 2000);
+			try {
+				if (data.newPassword !== data.confirmPassword) {
+					setErrors({
+						confirmPassword:
+							Features.Auth.AUTH_TOAST_MESSAGES.PASSWORD_MISMATCH,
+					});
+					authToastError(
+						Features.Auth.AUTH_TOAST_MESSAGES.PASSWORD_MISMATCH,
+					);
+					return;
 				}
-			} else {
-				toast.error(response.message);
+
+				if (!email) {
+					setErrors({ email: 'Email requis' });
+					authToastError('❌ Email requis');
+					return;
+				}
+
+				const resetData: ResetPasswordData = {
+					email,
+					code: data.code,
+					newPassword: data.newPassword,
+				};
+
+				resetPasswordSchema.parse(resetData);
+
+				const response = await authService.resetPassword(resetData);
+
+				if (response.success) {
+					setSuccess(true);
+					showPasswordResetSuccess();
+
+					if (response.user) {
+						// Tokens are in httpOnly cookies
+						login(response.user);
+						setTimeout(() => {
+							router.push(
+								Features.Dashboard.DASHBOARD_ROUTES.BASE,
+							);
+						}, 2000);
+					} else {
+						setTimeout(() => {
+							router.push(Features.Auth.AUTH_ROUTES.LOGIN);
+						}, 2000);
+					}
+				} else {
+					handleAuthError(new Error(response.message));
+				}
+			} catch (error) {
+				handleAuthError(error);
 			}
 		},
 	});
@@ -139,7 +155,7 @@ export const ResetPasswordForm: React.FC = () => {
 			{/* Header */}
 			<div className="text-center pt-8 sm:pt-12 pb-6 sm:pb-8 px-4 sm:px-6">
 				<h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">
-					hub<span className="text-cyan-500">immo</span>
+					mon<span className="text-cyan-500">hubimmo</span>
 				</h1>
 
 				<div className="space-y-3 sm:space-y-4">
@@ -168,8 +184,9 @@ export const ResetPasswordForm: React.FC = () => {
 								value={values.code}
 								onChange={(e) => {
 									const value = e.target.value
-										.replace(/\D/g, '')
-										.slice(0, 6);
+										.replace(/[^0-9A-Z]/gi, '')
+										.toUpperCase()
+										.slice(0, 8);
 									handleInputChange({
 										target: {
 											name: 'code',
@@ -183,8 +200,8 @@ export const ResetPasswordForm: React.FC = () => {
 									Features.Auth.AUTH_PLACEHOLDERS
 										.VERIFICATION_CODE
 								}
-								maxLength={6}
-								className="text-center text-xl tracking-[0.5em] font-mono"
+								maxLength={8}
+								className="text-center text-xl tracking-[0.3em] font-mono uppercase"
 								required
 							/>
 						</div>
@@ -204,7 +221,8 @@ export const ResetPasswordForm: React.FC = () => {
 								required
 							/>
 							<p className="text-xs text-gray-500 text-center">
-								Doit contenir majuscule, minuscule et chiffre
+								Minimum 12 caractères avec majuscule, minuscule,
+								chiffre et caractère spécial
 							</p>
 						</div>
 

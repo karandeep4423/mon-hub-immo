@@ -1,6 +1,7 @@
 import { Server } from 'socket.io';
 import { SocketManagerAPI } from './socketManager';
 import { SOCKET_EVENTS } from './socketConfig';
+import { logger } from '../utils/logger';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -39,7 +40,7 @@ const emitNewMessage = (
 	// Emit to sender for confirmation and real-time sync
 	socketManager.emitToUser(senderId, SOCKET_EVENTS.NEW_MESSAGE, message);
 
-	console.log(
+	logger.debug(
 		`📤 Emitted newMessage to receiver ${receiverId} and sender ${senderId}`,
 	);
 };
@@ -62,7 +63,7 @@ const emitReadReceipt = (
 		SOCKET_EVENTS.MESSAGES_READ,
 		readReceipt,
 	);
-	console.log(
+	logger.debug(
 		`📤 Emitted read receipt to sender ${senderId} from reader ${readBy}`,
 	);
 };
@@ -84,7 +85,9 @@ const emitMessageDeleted = (
 		SOCKET_EVENTS.MESSAGE_DELETED,
 		payload,
 	);
-	console.log(`🗑️ Emitted messageDeleted for ${payload.messageId}`);
+	logger.debug(
+		`🗑️[MessageHandler] Emitted messageDeleted for ${payload.messageId}`,
+	);
 };
 
 // ============================================================================
@@ -102,7 +105,7 @@ export const createMessageHandler = (
 	socketManager: SocketManagerAPI,
 ): MessageHandlerAPI => {
 	// Log initialization
-	console.log('📨 Message handler initialized');
+	logger.debug('📨[MessageHandler] Message handler initialized');
 
 	// Return public API using partial application
 	return {

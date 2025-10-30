@@ -8,19 +8,19 @@ import { logger } from './logger';
 export interface ApiErrorResponse {
 	message: string;
 	error?: string;
-	errors?: Array<{ field: string; message: string }>;
+	errors?: Array<{ field?: string; path?: string; message: string }>;
 	statusCode?: number;
 }
 
 export class ApiError extends Error {
 	statusCode: number;
-	errors?: Array<{ field: string; message: string }>;
+	errors?: Array<{ field?: string; path?: string; message: string }>;
 	originalError?: unknown;
 
 	constructor(
 		message: string,
 		statusCode: number = 500,
-		errors?: Array<{ field: string; message: string }>,
+		errors?: Array<{ field?: string; path?: string; message: string }>,
 		originalError?: unknown,
 	) {
 		super(message);

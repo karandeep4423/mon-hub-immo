@@ -82,9 +82,9 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 				userId: user._id || user.id,
 			});
 
-			const userId = user._id || user.id;
+			// Auth token is automatically sent via httpOnly cookies
 			const newSocket = io(BASE_URL, {
-				query: { userId },
+				withCredentials: true, // Enable cookies to be sent
 				transports: ['polling', 'websocket'], // Try polling first, then websocket
 				reconnectionAttempts: 5,
 				reconnectionDelay: 1000,
@@ -111,7 +111,6 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 				logger.error('❌ Socket connection error', {
 					error: err.message,
 					baseUrl: BASE_URL,
-					userId,
 				});
 				setIsConnected(false);
 			});

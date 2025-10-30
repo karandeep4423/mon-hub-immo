@@ -171,9 +171,19 @@ export function useMutation<TData = unknown, TVariables = unknown>(
 					variables,
 				});
 
-				// Show error toast
+				// Show error toast with field-specific errors if available
 				if (showErrorToast) {
-					toast.error(apiError.message);
+					if (apiError.errors && apiError.errors.length > 0) {
+						// Show specific validation errors
+						apiError.errors.forEach((fieldError) => {
+							toast.error(
+								`${fieldError.field}: ${fieldError.message}`,
+							);
+						});
+					} else {
+						// Show generic error message
+						toast.error(apiError.message);
+					}
 				}
 
 				// Execute error callback

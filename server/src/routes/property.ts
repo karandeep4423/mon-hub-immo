@@ -12,12 +12,13 @@ import {
 import { authenticateToken } from '../middleware/auth';
 import { updatePropertyStatusValidation } from '../middleware/validation';
 import { uploadProperty } from '../middleware/uploadMiddleware';
+import { generalLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
-// Public routes
-router.get('/', getProperties);
-router.get('/:id', getPropertyById);
+// Public routes with rate limiting
+router.get('/', generalLimiter, getProperties);
+router.get('/:id', generalLimiter, getPropertyById);
 
 // Combined property creation with image upload
 router.post(

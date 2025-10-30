@@ -3,19 +3,31 @@ import mongoose from 'mongoose';
 import { verifyToken } from '../utils/jwt';
 import { AuthRequest } from '../types/auth';
 import { User } from '../models/User';
+import { getAccessTokenFromCookies } from '../utils/cookieHelper';
+import { isTokenBlacklisted } from '../utils/redisClient';
 
 export const authenticateToken = async (
 	req: AuthRequest,
 	res: Response,
 	next: NextFunction,
 ): Promise<void> => {
-	const authHeader = req.headers.authorization;
-	const token = authHeader && authHeader.split(' ')[1];
+	// Get token from httpOnly cookies only
+	const token = getAccessTokenFromCookies(req.cookies);
 
 	if (!token) {
 		res.status(401).json({
 			success: false,
 			message: 'Authentification requise',
+		});
+		return;
+	}
+
+	// Check if token is blacklisted (revoked during logout)
+	const isBlacklisted = await isTokenBlacklisted(token);
+	if (isBlacklisted) {
+		res.status(401).json({
+			success: false,
+			message: 'Token révoqué - veuillez vous reconnecter',
 		});
 		return;
 	}
@@ -56,8 +68,8 @@ export const optionalAuth = async (
 	res: Response,
 	next: NextFunction,
 ): Promise<void> => {
-	const authHeader = req.headers.authorization;
-	const token = authHeader && authHeader.split(' ')[1];
+	// Get token from httpOnly cookies only
+	const token = getAccessTokenFromCookies(req.cookies);
 
 	// No token? Continue without auth
 	if (!token) {

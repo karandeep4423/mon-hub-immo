@@ -7,8 +7,8 @@ import { useAuthStore } from '@/store/authStore';
  * AuthInitializer - Initializes Zustand auth state on app mount
  *
  * This component:
- * - Checks for existing token in localStorage via TokenManager
- * - Refreshes user session if token exists
+ * - Checks for existing auth via httpOnly cookies
+ * - Refreshes user session from server
  * - Initializes favorites store after successful auth
  *
  * Used in: app/layout.tsx (wraps entire app)

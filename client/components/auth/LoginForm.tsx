@@ -2,7 +2,6 @@
 import { Features } from '@/lib/constants';
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { toast } from 'react-toastify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useAuth } from '@/hooks/useAuth';
@@ -12,6 +11,11 @@ import { LoginData } from '@/types/auth';
 // Migrated: Features.Auth.AUTH_UI_TEXT;
 import Link from 'next/link';
 import { useForm } from '@/hooks/useForm';
+import {
+	handleAuthError,
+	showLoginSuccess,
+	authToastWarning,
+} from '@/lib/utils/authToast';
 
 interface LoginFormData extends LoginData, Record<string, unknown> {}
 
@@ -29,26 +33,39 @@ export const LoginWithUserType: React.FC = () => {
 				password: '',
 			},
 			onSubmit: async (data) => {
-				loginSchema.parse(data);
+				try {
+					loginSchema.parse(data);
 
-				const response = await authService.login(data);
+					const response = await authService.login(data);
 
-				if (response.success && response.token && response.user) {
-					login(response.token, response.user);
-					toast.success(response.message);
+					if (response.success && response.user) {
+						// Tokens are in httpOnly cookies, just update user state
+						login(response.user);
+						showLoginSuccess(response.requiresProfileCompletion);
 
-					if (response.requiresProfileCompletion) {
-						router.push(Features.Auth.AUTH_ROUTES.COMPLETE_PROFILE);
+						if (response.requiresProfileCompletion) {
+							router.push(
+								Features.Auth.AUTH_ROUTES.COMPLETE_PROFILE,
+							);
+						} else {
+							router.push(
+								Features.Dashboard.DASHBOARD_ROUTES.BASE,
+							);
+						}
+					} else if (response.requiresVerification) {
+						authToastWarning(
+							response.message ||
+								Features.Auth.AUTH_TOAST_MESSAGES
+									.EMAIL_NOT_VERIFIED,
+						);
+						router.push(
+							`${Features.Auth.AUTH_ROUTES.VERIFY_EMAIL}?email=${encodeURIComponent(data.email)}`,
+						);
 					} else {
-						router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
+						handleAuthError(new Error(response.message));
 					}
-				} else if (response.requiresVerification) {
-					toast.warning(response.message);
-					router.push(
-						`${Features.Auth.AUTH_ROUTES.VERIFY_EMAIL}?email=${encodeURIComponent(data.email)}`,
-					);
-				} else {
-					toast.error(response.message);
+				} catch (error) {
+					handleAuthError(error);
 				}
 			},
 		});

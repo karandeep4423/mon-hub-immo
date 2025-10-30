@@ -238,8 +238,8 @@ export const commonValidationRules = {
 	phone: {
 		required: 'Téléphone requis',
 		pattern: {
-			value: /^0[1-9]\d{8}$/,
-			message: 'Format: 0123456789',
+			value: /^(?:\+33|0)[1-9](?:\d{2}){4}$/,
+			message: 'Format: 06 12 34 56 78 ou +33 6 12 34 56 78',
 		},
 	},
 	postalCode: {
@@ -251,10 +251,11 @@ export const commonValidationRules = {
 	},
 	password: {
 		required: 'Mot de passe requis',
-		minLength: { value: 8, message: 'Minimum 8 caractères' },
+		minLength: { value: 12, message: 'Minimum 12 caractères' },
 		pattern: {
-			value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-			message: '1 majuscule, 1 minuscule, 1 chiffre',
+			value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&_\-+=])/,
+			message:
+				'1 majuscule, 1 minuscule, 1 chiffre, 1 caractère spécial (@$!%*?&_-+=)',
 		},
 	},
 };

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { SearchAd } from '@/types/searchAd';
+import { RichTextDisplay } from '@/components/ui';
 
 interface SearchAdHeaderProps {
 	searchAd: SearchAd;
@@ -68,9 +69,9 @@ export const SearchAdHeader: React.FC<SearchAdHeaderProps> = ({ searchAd }) => {
 				</h1>
 
 				{searchAd.description && (
-					<p className="text-base text-gray-600 leading-relaxed max-w-4xl">
-						{searchAd.description}
-					</p>
+					<div className="text-base text-gray-600 leading-relaxed max-w-4xl">
+						<RichTextDisplay content={searchAd.description} />
+					</div>
 				)}
 			</div>
 		</div>

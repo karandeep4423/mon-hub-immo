@@ -3,6 +3,7 @@ export interface AuthResponse {
 	message: string;
 	user?: User;
 	token?: string;
+	refreshToken?: string; // JWT refresh token for token renewal
 	requiresVerification?: boolean;
 	codeSent?: boolean;
 	requiresProfileCompletion?: boolean; // Add this
@@ -37,6 +38,11 @@ export interface User {
 		independentAgent?: boolean;
 		alertsEnabled?: boolean;
 		alertFrequency?: 'quotidien' | 'hebdomadaire';
+		identityCard?: {
+			url: string;
+			key: string;
+			uploadedAt: string;
+		};
 	};
 
 	searchPreferences?: {
@@ -53,15 +59,6 @@ export interface User {
 
 	createdAt?: string;
 	updatedAt?: string;
-}
-
-export interface AuthResponse {
-	success: boolean;
-	message: string;
-	user?: User;
-	token?: string;
-	requiresVerification?: boolean;
-	codeSent?: boolean;
 }
 
 export interface ValidationError {

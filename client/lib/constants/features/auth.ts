@@ -18,23 +18,6 @@ export const AUTH_ROUTES = {
 } as const;
 
 // ============================================================================
-// API ENDPOINTS
-// ============================================================================
-
-export const AUTH_ENDPOINTS = {
-	SIGNUP: '/auth/signup',
-	LOGIN: '/auth/login',
-	VERIFY_EMAIL: '/auth/verify-email',
-	RESEND_VERIFICATION: '/auth/resend-verification',
-	FORGOT_PASSWORD: '/auth/forgot-password',
-	RESET_PASSWORD: '/auth/reset-password',
-	GET_PROFILE: '/auth/profile',
-	UPDATE_PROFILE: '/auth/profile',
-	COMPLETE_PROFILE: '/auth/complete-profile',
-	UPDATE_PREFERENCES: '/auth/search-preferences',
-} as const;
-
-// ============================================================================
 // ERROR MESSAGES
 // ============================================================================
 
@@ -57,21 +40,75 @@ export const AUTH_ERRORS = {
 // ============================================================================
 
 export const AUTH_TOAST_MESSAGES = {
-	LOGIN_SUCCESS: 'Connexion réussie',
-	LOGIN_ERROR: 'Erreur lors de la connexion',
-	LOGOUT_SUCCESS: 'Déconnexion réussie',
-	SIGNUP_SUCCESS: 'Inscription réussie ! Vérifiez votre email.',
-	SIGNUP_ERROR: "Erreur lors de l'inscription",
-	EMAIL_VERIFIED: 'Email vérifié avec succès',
-	EMAIL_VERIFICATION_ERROR: "Erreur lors de la vérification de l'email",
-	PROFILE_UPDATED: 'Profil mis à jour avec succès',
-	PROFILE_UPDATE_ERROR: 'Erreur lors de la mise à jour du profil',
-	PROFILE_COMPLETED: 'Profil complété avec succès !',
-	PASSWORD_RESET_SUCCESS: 'Mot de passe réinitialisé avec succès',
-	PASSWORD_RESET_ERROR: 'Erreur lors de la réinitialisation du mot de passe',
-	NO_CHANGES_DETECTED: 'Aucune modification détectée',
-	AGENT_ONLY_ACCESS: 'Cette page est réservée aux agents',
-	VALIDATION_ERROR: 'Veuillez corriger les erreurs avant de continuer',
+	// Login & Logout
+	LOGIN_SUCCESS: '✅ Connexion réussie ! Bienvenue sur MonHubImmo',
+	LOGIN_ERROR: '❌ Erreur lors de la connexion',
+	LOGOUT_SUCCESS: '👋 Déconnexion réussie',
+
+	// Login-specific errors
+	INVALID_CREDENTIALS: '❌ Email ou mot de passe incorrect',
+	EMAIL_NOT_VERIFIED:
+		'📧 Veuillez vérifier votre email avant de vous connecter',
+	ACCOUNT_NOT_FOUND: '❌ Aucun compte trouvé avec cet email',
+	ACCOUNT_LOCKED:
+		'🔐 Compte verrouillé temporairement suite à plusieurs tentatives échouées',
+	ACCOUNT_LOCKED_WITH_TIME: (minutes: number) =>
+		`🔐 Compte verrouillé pour ${minutes} minute${minutes > 1 ? 's' : ''}. Réessayez plus tard.`,
+	TOO_MANY_ATTEMPTS:
+		'⚠️ Trop de tentatives échouées. Compte verrouillé pour 30 minutes.',
+
+	// Signup & Verification
+	SIGNUP_SUCCESS: '🎉 Inscription réussie ! Vérifiez votre email',
+	SIGNUP_ERROR: "❌ Erreur lors de l'inscription",
+	EMAIL_ALREADY_EXISTS: '❌ Un compte existe déjà avec cet email',
+	EMAIL_VERIFIED: '✅ Email vérifié avec succès ! Bienvenue',
+	EMAIL_VERIFICATION_ERROR: "❌ Erreur lors de la vérification de l'email",
+	INVALID_VERIFICATION_CODE: '❌ Code de vérification invalide ou expiré',
+	CODE_RESENT: '📧 Code de vérification renvoyé',
+	CODE_RESENT_ERROR: "❌ Erreur lors de l'envoi du code",
+	VERIFICATION_CODE_EXPIRED:
+		'⏱️ Code expiré. Un nouveau code vous a été envoyé',
+
+	// Profile
+	PROFILE_UPDATED: '✅ Profil mis à jour avec succès',
+	PROFILE_UPDATE_ERROR: '❌ Erreur lors de la mise à jour du profil',
+	PROFILE_COMPLETED: '🎉 Profil complété avec succès !',
+	PROFILE_COMPLETE_ERROR: '❌ Erreur lors de la complétion du profil',
+	PROFILE_IMAGE_UPLOAD_ERROR: "❌ Erreur lors du téléchargement de l'image",
+	IDENTITY_CARD_UPLOAD_ERROR:
+		"❌ Erreur lors du téléchargement de la carte d'identité",
+
+	// Password
+	FORGOT_PASSWORD_SUCCESS: '📧 Email de réinitialisation envoyé',
+	FORGOT_PASSWORD_ERROR: "❌ Erreur lors de l'envoi de l'email",
+	PASSWORD_RESET_SUCCESS: '✅ Mot de passe réinitialisé avec succès',
+	PASSWORD_RESET_ERROR: '❌ Erreur lors de la réinitialisation',
+	PASSWORD_CHANGED: '✅ Mot de passe changé avec succès',
+	PASSWORD_MISMATCH: '❌ Les mots de passe ne correspondent pas',
+	PASSWORD_TOO_WEAK:
+		'❌ Mot de passe trop faible. Minimum 8 caractères requis',
+	PASSWORD_SAME_AS_OLD:
+		"❌ Le nouveau mot de passe doit être différent de l'ancien",
+	INVALID_RESET_CODE: '❌ Code de réinitialisation invalide ou expiré',
+
+	// Validation & Errors
+	NO_CHANGES_DETECTED: 'ℹ️ Aucune modification détectée',
+	AGENT_ONLY_ACCESS: '⚠️ Cette page est réservée aux agents',
+	VALIDATION_ERROR: '⚠️ Veuillez corriger les erreurs',
+	MISSING_REQUIRED_FIELDS: '⚠️ Veuillez remplir tous les champs obligatoires',
+	INVALID_EMAIL_FORMAT: "❌ Format d'email invalide",
+	INVALID_PHONE_FORMAT: '❌ Format de téléphone invalide',
+	SESSION_EXPIRED: '⏱️ Session expirée, veuillez vous reconnecter',
+	UNAUTHORIZED: '� Accès non autorisé',
+	NETWORK_ERROR: '📡 Erreur de connexion. Vérifiez votre connexion internet',
+	SERVER_ERROR: '⚠️ Erreur serveur. Veuillez réessayer plus tard',
+
+	// Redirects & Loading
+	REDIRECTING: '🔄 Redirection en cours...',
+	LOADING: '⏳ Chargement...',
+	CHECKING_AUTH: '🔍 Vérification...',
+	PROCESSING: '⏳ Traitement en cours...',
+	UPLOADING: '📤 Téléchargement en cours...',
 } as const;
 
 // ============================================================================
@@ -155,8 +192,8 @@ export const AUTH_PLACEHOLDERS = {
 	FIRST_NAME: 'Prénom *',
 	LAST_NAME: 'Nom *',
 	EMAIL: 'E-mail professionnel *',
-	PHONE: 'Téléphone * (ex: 0123456789)',
-	PHONE_SIMPLE: '0123456789',
+	PHONE: 'Téléphone * (ex: 06 12 34 56 78)',
+	PHONE_SIMPLE: '06 12 34 56 78',
 
 	// Password
 	PASSWORD: 'Mot de passe *',
@@ -184,4 +221,42 @@ export const AUTH_PLACEHOLDERS = {
 
 	// Email forms
 	YOUR_EMAIL: 'Votre adresse email',
+} as const;
+
+// ============================================================================
+// FIELD NAME TRANSLATIONS (for validation error messages)
+// ============================================================================
+
+export const FIELD_TRANSLATIONS: Record<string, string> = {
+	// Basic fields
+	email: 'Email',
+	password: 'Mot de passe',
+	confirmPassword: 'Confirmation du mot de passe',
+	newPassword: 'Nouveau mot de passe',
+	currentPassword: 'Mot de passe actuel',
+	firstName: 'Prénom',
+	lastName: 'Nom',
+	phone: 'Téléphone',
+	userType: 'Type de compte',
+
+	// Professional fields
+	carteT: 'Carte T',
+	siren: 'SIREN',
+	rsac: 'RSAC',
+	certificateRef: 'Référence du certificat',
+	siret: 'SIRET',
+	yearsExperience: "Années d'expérience",
+
+	// Location fields
+	city: 'Ville',
+	postalCode: 'Code postal',
+	cities: 'Villes',
+
+	// Other fields
+	bio: 'Biographie',
+	verificationCode: 'Code de vérification',
+	resetCode: 'Code de réinitialisation',
+
+	// Fallback
+	Field: 'Champ',
 } as const;

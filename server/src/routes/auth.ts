@@ -11,42 +11,57 @@ import {
 	completeProfile,
 	getAllAgents,
 	updateSearchPreferences,
+	refreshAccessToken,
+	logout,
+	changePassword,
 } from '../controllers/authController';
 import { authenticateToken } from '../middleware/auth';
+import { validate } from '../validation/middleware';
 import {
-	loginValidation,
-	verifyEmailValidation,
-	resendVerificationValidation,
-	updateProfileValidation,
-	forgotPasswordValidation,
-	resetPasswordValidation,
-	completeProfileValidation,
-} from '../middleware/validation';
+	loginSchema,
+	verifyEmailSchema,
+	resendVerificationSchema,
+	forgotPasswordSchema,
+	resetPasswordSchema,
+	updateProfileSchema,
+	completeProfileSchema,
+} from '../validation/schemas';
+import { uploadIdentityDoc } from '../middleware/uploadMiddleware';
+import {
+	authLimiter,
+	passwordResetLimiter,
+	emailVerificationLimiter,
+} from '../middleware/rateLimiter';
 
 const router = Router();
 
-// Debug middleware for production issues
-router.use((req, res, next) => {
-	console.log(`Auth route ${req.method} ${req.path}:`, {
-		contentType: req.headers['content-type'],
-		contentLength: req.headers['content-length'],
-		hasBody: !!req.body,
-		bodyType: typeof req.body,
-	});
-	next();
-});
+// Auth routes with rate limiting
+router.post('/signup', authLimiter, uploadIdentityDoc, signup);
+router.post('/login', authLimiter, validate(loginSchema), login);
+router.post(
+	'/forgot-password',
+	passwordResetLimiter,
+	validate(forgotPasswordSchema),
+	forgotPassword,
+);
+router.post(
+	'/reset-password',
+	passwordResetLimiter,
+	validate(resetPasswordSchema),
+	resetPassword,
+);
 
-// Auth routes
-router.post('/signup', signup);
-router.post('/login', loginValidation, login);
-router.post('/forgot-password', forgotPasswordValidation, forgotPassword);
-router.post('/reset-password', resetPasswordValidation, resetPassword);
-
-// Email verification routes
-router.post('/verify-email', verifyEmailValidation, verifyEmail);
+// Email verification routes with rate limiting
+router.post(
+	'/verify-email',
+	emailVerificationLimiter,
+	validate(verifyEmailSchema),
+	verifyEmail,
+);
 router.post(
 	'/resend-verification',
-	resendVerificationValidation,
+	emailVerificationLimiter,
+	validate(resendVerificationSchema),
 	resendVerificationCode,
 );
 
@@ -55,20 +70,29 @@ router.get('/profile', authenticateToken, getProfile);
 router.put(
 	'/profile',
 	authenticateToken,
-	updateProfileValidation,
+	validate(updateProfileSchema),
 	updateProfile,
 );
 router.post(
 	'/complete-profile',
 	authenticateToken,
-	completeProfileValidation,
+	validate(completeProfileSchema),
 	completeProfile,
 );
+
+// Change password (protected)
+router.post('/change-password', authenticateToken, changePassword);
 
 // Public route to get all agents
 router.get('/agents', getAllAgents);
 
 // Update search preferences (protected)
 router.patch('/search-preferences', authenticateToken, updateSearchPreferences);
+
+// Refresh access token
+router.post('/refresh', refreshAccessToken);
+
+// Logout
+router.post('/logout', logout);
 
 export default router;

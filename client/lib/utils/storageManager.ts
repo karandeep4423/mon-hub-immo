@@ -155,9 +155,6 @@ export const session = new SessionStorageManager();
  * Specific storage keys (prevents typos and magic strings)
  */
 export const STORAGE_KEYS = {
-	// Auth
-	TOKEN: 'token',
-
 	// Geolocation
 	GEOLOCATION_PREFERENCE: 'geolocation_preference',
 

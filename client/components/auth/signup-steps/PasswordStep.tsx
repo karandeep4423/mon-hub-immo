@@ -24,18 +24,25 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({
 }) => {
 	const getPasswordStrengthColor = () => {
 		if (!password) return 'bg-gray-200';
-		if (password.length < 6) return 'bg-red-400';
-		if (password.length < 8) return 'bg-yellow-400';
-		if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password))
+		if (password.length < 12) return 'bg-red-400';
+		if (
+			!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&_\-+=])/.test(
+				password,
+			)
+		)
 			return 'bg-yellow-400';
 		return 'bg-green-400';
 	};
 
 	const getPasswordStrengthText = () => {
 		if (!password) return '';
-		if (password.length < 6) return 'Faible';
-		if (password.length < 8) return 'Moyen';
-		if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) return 'Moyen';
+		if (password.length < 12) return 'Faible';
+		if (
+			!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&_\-+=])/.test(
+				password,
+			)
+		)
+			return 'Moyen';
 		return 'Fort';
 	};
 
@@ -112,15 +119,13 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({
 								className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrengthColor()}`}
 								style={{
 									width:
-										password.length < 6
+										password.length < 12
 											? '33%'
-											: password.length < 8
+											: !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&_\-+=])/.test(
+														password,
+												  )
 												? '66%'
-												: !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(
-															password,
-													  )
-													? '66%'
-													: '100%',
+												: '100%',
 								}}
 							></div>
 						</div>
@@ -129,8 +134,8 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({
 						</span>
 					</div>
 					<p className="text-xs text-gray-500">
-						Minimum 8 caractères, 1 majuscule, 1 minuscule, 1
-						chiffre
+						Minimum 12 caractères, 1 majuscule, 1 minuscule, 1
+						chiffre, 1 caractère spécial (@$!%*?&_-+=)
 					</p>
 				</div>
 			)}

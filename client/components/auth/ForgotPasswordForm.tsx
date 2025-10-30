@@ -2,13 +2,13 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { authService } from '@/lib/api/authApi';
 import { forgotPasswordSchema } from '@/lib/validation';
 import { useForm } from '@/hooks/useForm';
 import { Features } from '@/lib/constants';
+import { handleAuthError, authToastSuccess } from '@/lib/utils/authToast';
 
 interface ForgotPasswordFormData extends Record<string, unknown> {
 	email: string;
@@ -22,11 +22,20 @@ export const ForgotPasswordForm: React.FC = () => {
 		useForm<ForgotPasswordFormData>({
 			initialValues: { email: '' },
 			onSubmit: async (data) => {
-				forgotPasswordSchema.parse(data);
-				const response = await authService.forgotPassword(data);
-				if (response.success) {
-					setSuccess(true);
-					toast.success(response.message);
+				try {
+					forgotPasswordSchema.parse(data);
+					const response = await authService.forgotPassword(data);
+					if (response.success) {
+						setSuccess(true);
+						authToastSuccess(
+							Features.Auth.AUTH_TOAST_MESSAGES
+								.FORGOT_PASSWORD_SUCCESS,
+						);
+					} else {
+						handleAuthError(new Error(response.message));
+					}
+				} catch (error) {
+					handleAuthError(error);
 				}
 			},
 		});

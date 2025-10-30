@@ -170,7 +170,7 @@ export const FILE_UPLOAD = {
 
 export const VALIDATION = {
 	EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-	PHONE_REGEX: /^(\+33|0)[1-9](\d{8})$/,
+	PHONE_REGEX: /^(?:\+33|0)[1-9](?:\d{2}){4}$/,
 	POSTAL_CODE_REGEX: /^\d{5}$/,
 	SIREN_REGEX: /^\d{9}$/,
 	SIRET_REGEX: /^\d{14}$/,

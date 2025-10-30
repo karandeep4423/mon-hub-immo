@@ -5,6 +5,7 @@ import { AuthRequest } from '../types/auth';
 import { UserFavoriteSearchAd } from '../models/UserFavoriteSearchAd';
 import { SearchAd } from '../models/SearchAd';
 import mongoose from 'mongoose';
+import { logger } from '../utils/logger';
 
 /**
  * Toggle favorite status for a property
@@ -84,7 +85,7 @@ export const toggleFavorite = async (
 			return;
 		}
 	} catch (error) {
-		console.error('Error toggling favorite:', error);
+		logger.error('[FavoritesController] Error toggling favorite', error);
 		res.status(500).json({
 			success: false,
 			message: 'Erreur serveur lors de la modification des favoris',
@@ -159,7 +160,10 @@ export const getUserFavorites = async (
 		});
 		return;
 	} catch (error) {
-		console.error('Error getting user favorites:', error);
+		logger.error(
+			'[FavoritesController] Error getting user favorites',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Erreur serveur lors de la récupération des favoris',
@@ -206,7 +210,10 @@ export const checkFavoriteStatus = async (
 		});
 		return;
 	} catch (error) {
-		console.error('Error checking favorite status:', error);
+		logger.error(
+			'[FavoritesController] Error checking favorite status',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Erreur serveur lors de la vérification du statut favori',
@@ -238,29 +245,38 @@ export const getUserFavoriteIds = async (
 			userId: new mongoose.Types.ObjectId(userId),
 		})
 			.select('propertyId')
-			.populate({ path: 'propertyId', select: '_id' });
+			.populate<{ propertyId: { _id: mongoose.Types.ObjectId } | null }>({
+				path: 'propertyId',
+				select: '_id',
+			});
 
 		// Keep only favorites where property still exists
 		const validFavorites = favorites.filter(
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			(fav: any) => !!fav.propertyId && !!fav.propertyId._id,
+			(fav) =>
+				!!fav.propertyId &&
+				!!(fav.propertyId as { _id: mongoose.Types.ObjectId })._id,
 		);
 
 		// Optionally clean up orphans in background (non-blocking)
 		const orphanIds = favorites
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			.filter((fav: any) => !fav.propertyId || !fav.propertyId._id)
+			.filter(
+				(fav) =>
+					!fav.propertyId ||
+					!(fav.propertyId as { _id: mongoose.Types.ObjectId })._id,
+			)
 			.map((f) => f._id);
 		if (orphanIds.length > 0) {
 			// Fire and forget
 			UserFavorite.deleteMany({ _id: { $in: orphanIds } }).catch((err) =>
-				console.error('Failed to clean orphan favorites', err),
+				logger.error(
+					'[FavoritesController] Failed to clean orphan favorites',
+					err,
+				),
 			);
 		}
 
 		const favoriteIds = validFavorites.map((fav) =>
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			(fav as any).propertyId._id.toString(),
+			(fav.propertyId as { _id: mongoose.Types.ObjectId })._id.toString(),
 		);
 
 		res.json({
@@ -269,7 +285,10 @@ export const getUserFavoriteIds = async (
 		});
 		return;
 	} catch (error) {
-		console.error('Error getting user favorite IDs:', error);
+		logger.error(
+			'[FavoritesController] Error getting user favorite IDs',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message:
@@ -343,7 +362,10 @@ export const toggleSearchAdFavorite = async (
 		});
 		return;
 	} catch (error) {
-		console.error('Error toggling search ad favorite:', error);
+		logger.error(
+			'[FavoritesController] Error toggling search ad favorite',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Erreur serveur lors de la modification des favoris',
@@ -379,7 +401,10 @@ export const getUserFavoriteSearchAdIds = async (
 		});
 		return;
 	} catch (error) {
-		console.error('Error getting user search ad favorite IDs:', error);
+		logger.error(
+			'[FavoritesController] Error getting user search ad favorite IDs',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message:
@@ -420,7 +445,10 @@ export const checkSearchAdFavoriteStatus = async (
 		res.json({ success: true, isFavorite: !!favorite });
 		return;
 	} catch (error) {
-		console.error('Error checking search ad favorite status:', error);
+		logger.error(
+			'[FavoritesController] Error checking search ad favorite status',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message:
@@ -546,7 +574,10 @@ export const getUserMixedFavorites = async (
 		});
 		return;
 	} catch (error) {
-		console.error('Error getting mixed favorites:', error);
+		logger.error(
+			'[FavoritesController] Error getting mixed favorites',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message:

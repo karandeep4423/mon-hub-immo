@@ -1,4 +1,5 @@
 import { useState, useCallback, ChangeEvent } from 'react';
+import { logger } from '@/lib/utils/logger';
 
 interface UseFormOptions<T> {
 	initialValues: T;
@@ -82,15 +83,14 @@ export const useForm = <T extends Record<string, unknown>>({
 			try {
 				await onSubmit(values);
 			} catch (error) {
-				// Error handling should be done in onSubmit
-				throw error;
+				// Error handling is done in onSubmit callback
+				logger.error('[useForm] Form submission error:', error);
 			} finally {
 				setIsSubmitting(false);
 			}
 		},
 		[onSubmit, values],
 	);
-
 	const resetForm = useCallback(() => {
 		setValues(initialValues);
 		setErrors({});

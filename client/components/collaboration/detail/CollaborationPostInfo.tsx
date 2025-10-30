@@ -7,6 +7,7 @@ import { Collaboration } from '@/types/collaboration';
 import { Property } from '@/lib/api/propertyApi';
 import type { SearchAd } from '@/types/searchAd';
 import { Features } from '@/lib/constants';
+import { logger } from '@/lib/utils/logger';
 
 type PropertyDetails = Partial<Property> & { id?: string };
 
@@ -31,7 +32,7 @@ export const CollaborationPostInfo: React.FC<CollaborationPostInfoProps> = ({
 	// Get image source from property or collaboration.postId
 	const getPropertyImage = () => {
 		// Debug logging
-		console.log('🔍 Debug Image Data:', {
+		logger.debug('[CollaborationPostInfo] Debug Image Data:', {
 			hasProperty: !!property,
 			propertyMainImage: property?.mainImage,
 			collaborationPostId: collaboration.postId,
@@ -44,7 +45,10 @@ export const CollaborationPostInfo: React.FC<CollaborationPostInfoProps> = ({
 				typeof property.mainImage === 'object'
 					? property.mainImage.url
 					: property.mainImage;
-			console.log('✅ Using property image:', image);
+			logger.debug(
+				'[CollaborationPostInfo] Using property image:',
+				image,
+			);
 			return image;
 		}
 
@@ -56,12 +60,15 @@ export const CollaborationPostInfo: React.FC<CollaborationPostInfoProps> = ({
 					typeof postData.mainImage === 'object'
 						? postData.mainImage.url
 						: postData.mainImage;
-				console.log('✅ Using collaboration.postId image:', image);
+				logger.debug(
+					'[CollaborationPostInfo] Using collaboration.postId image:',
+					image,
+				);
 				return image;
 			}
 		}
 
-		console.log('❌ No image found');
+		logger.debug('[CollaborationPostInfo] No image found');
 		return null;
 	};
 

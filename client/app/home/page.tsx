@@ -41,7 +41,7 @@ type ContentFilter =
 	| 'favorites';
 
 export default function Home() {
-	const { user } = useAuth();
+	const { user, refreshUser } = useAuth();
 	const { favoritePropertyIds, favoriteSearchAdIds, initializeFavorites } =
 		useFavoritesStore();
 	const [searchTerm, setSearchTerm] = useState('');
@@ -108,6 +108,13 @@ export default function Home() {
 			.toLowerCase();
 
 	const isAuthenticated = !!user;
+
+	// Fetch user profile when home page loads (if cookie exists)
+	useEffect(() => {
+		if (!user) {
+			refreshUser();
+		}
+	}, []); // eslint-disable-line react-hooks/exhaustive-deps
 
 	// Restore saved filters/pages once on mount
 	useEffect(() => {

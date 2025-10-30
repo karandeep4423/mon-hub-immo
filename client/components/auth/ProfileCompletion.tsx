@@ -1,18 +1,25 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { CityAutocomplete } from '../ui/CityAutocomplete';
 import { ProfileImageUploader } from '../ui/ProfileImageUploader';
+import { FileUpload } from '../ui/FileUpload';
+import { RichTextEditor } from '../ui/RichTextEditor';
 import { useAuth } from '@/hooks/useAuth';
 import { useRequireAuth } from '@/hooks';
 import { authService } from '@/lib/api/authApi';
 import { useForm } from '@/hooks/useForm';
 import { PageLoader } from '../ui/LoadingSpinner';
 import { Features } from '@/lib/constants';
+import {
+	handleAuthError,
+	showProfileCompletionSuccess,
+	authToastError,
+	authToastSuccess,
+} from '@/lib/utils/authToast';
 
 interface ProfileCompletionFormData extends Record<string, unknown> {
 	firstName: string;
@@ -37,9 +44,17 @@ interface ProfileCompletionFormData extends Record<string, unknown> {
 	acceptTerms: boolean;
 }
 
-export const ProfileCompletion: React.FC = () => {
+interface ProfileCompletionProps {
+	editMode?: boolean;
+}
+
+export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
+	editMode = false,
+}) => {
 	const router = useRouter();
 	const { user, updateUser } = useAuth();
+	const [identityCardFile, setIdentityCardFile] = useState<File | null>(null);
+	const [isUploadingFile, setIsUploadingFile] = useState(false);
 	// Ensure authenticated users only; redirects to login if not
 	useRequireAuth();
 
@@ -51,30 +66,118 @@ export const ProfileCompletion: React.FC = () => {
 				email: user?.email || '',
 				phone: user?.phone || '',
 				profileImage: user?.profileImage || '',
-				postalCode: '',
-				city: '',
-				interventionRadius: 20,
-				coveredCities: '',
-				network: 'IAD',
-				siretNumber: '',
-				mandateTypes: [],
-				yearsExperience: '',
-				personalPitch: '',
-				collaborateWithAgents: true,
-				shareCommission: false,
-				independentAgent: false,
-				alertsEnabled: false,
-				alertFrequency: 'quotidien',
-				acceptTerms: false,
+				postalCode: user?.professionalInfo?.postalCode || '',
+				city: user?.professionalInfo?.city || '',
+				interventionRadius:
+					user?.professionalInfo?.interventionRadius || 20,
+				coveredCities:
+					user?.professionalInfo?.coveredCities?.join(', ') || '',
+				network: user?.professionalInfo?.network || 'IAD',
+				siretNumber: user?.professionalInfo?.siretNumber || '',
+				mandateTypes: user?.professionalInfo?.mandateTypes || [],
+				yearsExperience:
+					user?.professionalInfo?.yearsExperience?.toString() || '',
+				personalPitch: user?.professionalInfo?.personalPitch || '',
+				collaborateWithAgents:
+					user?.professionalInfo?.collaborateWithAgents ?? true,
+				shareCommission:
+					user?.professionalInfo?.shareCommission ?? false,
+				independentAgent:
+					user?.professionalInfo?.independentAgent ?? false,
+				alertsEnabled: user?.professionalInfo?.alertsEnabled ?? false,
+				alertFrequency:
+					user?.professionalInfo?.alertFrequency || 'quotidien',
+				acceptTerms: editMode ? true : false,
 			},
 			onSubmit: async (data) => {
-				const response = await authService.completeProfile(data);
-				if (response.success && response.user) {
-					updateUser(response.user);
-					toast.success(
-						Features.Auth.AUTH_TOAST_MESSAGES.PROFILE_COMPLETED,
-					);
-					router.push(Features.Auth.AUTH_ROUTES.WELCOME);
+				try {
+					let identityCardData;
+
+					// Upload identity card file if provided (only in initial setup, not edit mode)
+					if (identityCardFile && !editMode) {
+						setIsUploadingFile(true);
+						const uploadResponse =
+							await authService.uploadIdentityCard(
+								identityCardFile,
+							);
+						if (uploadResponse.success) {
+							identityCardData = {
+								url: uploadResponse.data.url,
+								key: uploadResponse.data.key,
+							};
+						} else {
+							authToastError(
+								Features.Auth.AUTH_TOAST_MESSAGES
+									.IDENTITY_CARD_UPLOAD_ERROR,
+							);
+						}
+						setIsUploadingFile(false);
+					}
+
+					// Use updateProfile in edit mode, completeProfile in initial setup
+					const response = editMode
+						? await authService.updateProfile({
+								firstName: data.firstName,
+								lastName: data.lastName,
+								phone: data.phone,
+								profileImage: data.profileImage,
+								professionalInfo: {
+									postalCode: data.postalCode,
+									city: data.city,
+									interventionRadius:
+										typeof data.interventionRadius ===
+										'string'
+											? parseInt(
+													data.interventionRadius,
+													10,
+												)
+											: data.interventionRadius,
+									coveredCities: data.coveredCities
+										? data.coveredCities
+												.split(',')
+												.map((c: string) => c.trim())
+												.filter(Boolean)
+										: [],
+									network: data.network,
+									siretNumber: data.siretNumber,
+									mandateTypes: data.mandateTypes,
+									yearsExperience:
+										typeof data.yearsExperience === 'string'
+											? parseInt(data.yearsExperience, 10)
+											: data.yearsExperience,
+									personalPitch: data.personalPitch,
+									collaborateWithAgents:
+										data.collaborateWithAgents,
+									shareCommission: data.shareCommission,
+									independentAgent: data.independentAgent,
+									alertsEnabled: data.alertsEnabled,
+									alertFrequency: data.alertFrequency,
+								},
+							})
+						: await authService.completeProfile({
+								...data,
+								identityCard: identityCardData,
+							});
+
+					if (response.success && response.user) {
+						updateUser(response.user);
+						if (editMode) {
+							authToastSuccess(
+								'✅ Profil mis à jour avec succès',
+							);
+							router.push(
+								Features.Dashboard.DASHBOARD_ROUTES.BASE,
+							);
+						} else {
+							showProfileCompletionSuccess();
+							router.push(Features.Auth.AUTH_ROUTES.WELCOME);
+						}
+					} else {
+						handleAuthError(new Error(response.message));
+					}
+				} catch (error) {
+					setIsUploadingFile(false);
+					handleAuthError(error);
 				}
 			},
 		});
@@ -85,15 +188,17 @@ export const ProfileCompletion: React.FC = () => {
 
 		// Allow access if user is logged in and is an agent (regardless of profile completion status)
 		if (user.userType !== 'agent') {
-			toast.error(Features.Auth.AUTH_TOAST_MESSAGES.AGENT_ONLY_ACCESS);
-			router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
-			return;
-		} // If profile is already completed, redirect to dashboard
-		if (user.profileCompleted) {
+			authToastError(Features.Auth.AUTH_TOAST_MESSAGES.AGENT_ONLY_ACCESS);
 			router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
 			return;
 		}
-	}, [user, isSubmitting, router]);
+
+		// In edit mode, allow editing even if profile is completed
+		if (!editMode && user.profileCompleted) {
+			router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
+			return;
+		}
+	}, [user, isSubmitting, router, editMode]);
 
 	// Update the isSubmitting condition
 	if (isSubmitting) {
@@ -142,12 +247,11 @@ export const ProfileCompletion: React.FC = () => {
 			<div className="max-w-2xl mx-auto px-4 py-8">
 				{/* Header */}
 				<div className="text-center mb-8">
-					<h1 className="text-2xl font-bold text-gray-900 mb-2">
-						hub<span className="text-cyan-500">immo</span>
+					<h1 className="text-xl font-semibold text-gray-800 mb-4">
+						{editMode
+							? 'Modifier le profil Agent'
+							: 'Création du profil Agent'}
 					</h1>
-					<h2 className="text-xl font-semibold text-gray-800 mb-4">
-						Création du profil Agent
-					</h2>
 				</div>
 
 				<form
@@ -167,7 +271,7 @@ export const ProfileCompletion: React.FC = () => {
 								value={values.firstName}
 								onChange={handleChange}
 								error={errors.firstName}
-								disabled
+								disabled={!editMode}
 							/>
 
 							<div className="md:col-start-2 flex items-center justify-center">
@@ -187,7 +291,7 @@ export const ProfileCompletion: React.FC = () => {
 								value={values.lastName}
 								onChange={handleChange}
 								error={errors.lastName}
-								disabled
+								disabled={!editMode}
 							/>
 						</div>
 
@@ -332,6 +436,15 @@ export const ProfileCompletion: React.FC = () => {
 							/>
 						</div>
 
+						<div className="mt-4">
+							<FileUpload
+								label="Carte d'identité (optionnel)"
+								onChange={(file) => setIdentityCardFile(file)}
+								value={identityCardFile}
+								helperText="Photo ou PDF de votre carte d'identité pour vérification"
+							/>
+						</div>
+
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
 							<div>
 								<label className="block text-sm font-medium text-gray-700 mb-2">
@@ -381,48 +494,45 @@ export const ProfileCompletion: React.FC = () => {
 					</div>
 
 					{/* Personal Pitch */}
-					<div>
-						<h3 className="text-lg font-semibold text-gray-900 mb-4">
-							Petite bio (pitch personnel)
-						</h3>
+					<RichTextEditor
+						label="Petite bio (pitch personnel)"
+						value={values.personalPitch}
+						onChange={(value) =>
+							handleChange({
+								target: { name: 'personalPitch', value },
+							} as React.ChangeEvent<HTMLInputElement>)
+						}
+						placeholder={Features.Auth.AUTH_PLACEHOLDERS.BIO}
+						minHeight="120px"
+						showCharCount
+					/>
 
-						<textarea
-							name="personalPitch"
-							value={values.personalPitch}
-							onChange={handleChange}
-							rows={4}
-							className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-							placeholder={Features.Auth.AUTH_PLACEHOLDERS.BIO}
-						/>
+					<div className="mt-4 space-y-3">
+						<label className="flex items-center">
+							<input
+								type="checkbox"
+								name="collaborateWithAgents"
+								checked={values.collaborateWithAgents}
+								onChange={handleChange}
+								className="rounded border-gray-300 text-cyan-600 shadow-sm focus:border-cyan-300 focus:ring focus:ring-offset-0 focus:ring-cyan-200 focus:ring-opacity-50"
+							/>
+							<span className="ml-2 text-sm text-gray-700">
+								Je souhaite collaborer avec d&apos;autres agents
+							</span>
+						</label>
 
-						<div className="mt-4 space-y-3">
-							<label className="flex items-center">
-								<input
-									type="checkbox"
-									name="collaborateWithAgents"
-									checked={values.collaborateWithAgents}
-									onChange={handleChange}
-									className="rounded border-gray-300 text-cyan-600 shadow-sm focus:border-cyan-300 focus:ring focus:ring-offset-0 focus:ring-cyan-200 focus:ring-opacity-50"
-								/>
-								<span className="ml-2 text-sm text-gray-700">
-									Je souhaite collaborer avec d&apos;autres
-									agents
-								</span>
-							</label>
-
-							<label className="flex items-center">
-								<input
-									type="checkbox"
-									name="shareCommission"
-									checked={values.shareCommission}
-									onChange={handleChange}
-									className="rounded border-gray-300 text-cyan-600 shadow-sm focus:border-cyan-300 focus:ring focus:ring-offset-0 focus:ring-cyan-200 focus:ring-opacity-50"
-								/>
-								<span className="ml-2 text-sm text-gray-700">
-									Je suis ouvert à partager ma commission
-								</span>
-							</label>
-						</div>
+						<label className="flex items-center">
+							<input
+								type="checkbox"
+								name="shareCommission"
+								checked={values.shareCommission}
+								onChange={handleChange}
+								className="rounded border-gray-300 text-cyan-600 shadow-sm focus:border-cyan-300 focus:ring focus:ring-offset-0 focus:ring-cyan-200 focus:ring-opacity-50"
+							/>
+							<span className="ml-2 text-gray-700">
+								Je suis ouvert à partager ma commission
+							</span>
+						</label>
 					</div>
 
 					{/* Alerts */}
@@ -476,11 +586,15 @@ export const ProfileCompletion: React.FC = () => {
 					<div className="pt-6">
 						<Button
 							type="submit"
-							loading={isSubmitting}
+							loading={isSubmitting || isUploadingFile}
 							className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
 							size="lg"
 						>
-							Valider mon profil et accéder à Hubimmo
+							{isUploadingFile
+								? "Upload de la carte d'identité..."
+								: editMode
+									? 'Enregistrer les modifications'
+									: 'Valider mon profil et accéder à Hubimmo'}
 						</Button>
 					</div>
 				</form>

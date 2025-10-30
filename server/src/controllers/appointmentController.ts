@@ -6,6 +6,7 @@ import { User, IUser } from '../models/User';
 import { getSocketService } from '../server';
 import { AuthRequest } from '../types/auth';
 import { appointmentEmailService } from '../services/appointmentEmailService';
+import { logger } from '../utils/logger';
 
 // Create a new appointment (supports both authenticated and anonymous bookings)
 export const createAppointment = async (
@@ -134,9 +135,14 @@ export const createAppointment = async (
 
 		// Send emails
 		try {
-			console.log('📧 Attempting to send appointment emails...');
-			console.log('Agent email:', agent.email);
-			console.log('Client email:', contactDetails.email);
+			logger.debug(
+				'[AppointmentController] Attempting to send appointment emails',
+			);
+			logger.debug('[AppointmentController] Agent email', agent.email);
+			logger.debug(
+				'[AppointmentController] Client email',
+				contactDetails.email,
+			);
 
 			await appointmentEmailService.sendNewAppointmentEmails(
 				appointment,
@@ -144,9 +150,14 @@ export const createAppointment = async (
 				contactDetails.email,
 				contactDetails.name,
 			);
-			console.log('✅ All appointment emails sent successfully');
+			logger.debug(
+				'[AppointmentController] All appointment emails sent successfully',
+			);
 		} catch (emailError) {
-			console.error('❌ Error sending appointment emails:', emailError);
+			logger.error(
+				'[AppointmentController] Error sending appointment emails',
+				emailError,
+			);
 			// Don't fail the request if email fails
 		}
 
@@ -156,7 +167,10 @@ export const createAppointment = async (
 			message: 'Demande de rendez-vous envoyée avec succès',
 		});
 	} catch (error) {
-		console.error('Error creating appointment:', error);
+		logger.error(
+			'[AppointmentController] Error creating appointment',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Erreur lors de la création du rendez-vous',
@@ -174,8 +188,17 @@ export const getMyAppointments = async (
 		const user = await User.findById(userId);
 		const { status, startDate, endDate } = req.query;
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const filter: any = {};
+		interface AppointmentFilter {
+			agentId?: string;
+			clientId?: string;
+			status?: string;
+			scheduledDate?: {
+				$gte?: Date;
+				$lte?: Date;
+			};
+		}
+
+		const filter: AppointmentFilter = {};
 
 		// Filter by role
 		if (user?.userType === 'agent') {
@@ -186,7 +209,7 @@ export const getMyAppointments = async (
 
 		// Filter by status
 		if (status && status !== 'all') {
-			filter.status = status;
+			filter.status = status as string;
 		}
 
 		// Filter by date range
@@ -243,7 +266,10 @@ export const getMyAppointments = async (
 			data: sortedAppointments,
 		});
 	} catch (error) {
-		console.error('Error fetching appointments:', error);
+		logger.error(
+			'[AppointmentController] Error fetching appointments',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Erreur lors de la récupération des rendez-vous',
@@ -295,7 +321,10 @@ export const getAppointment = async (
 			data: appointment,
 		});
 	} catch (error) {
-		console.error('Error fetching appointment:', error);
+		logger.error(
+			'[AppointmentController] Error fetching appointment',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Erreur lors de la récupération du rendez-vous',
@@ -424,7 +453,10 @@ export const updateAppointmentStatus = async (
 			message: 'Rendez-vous mis à jour avec succès',
 		});
 	} catch (error) {
-		console.error('Error updating appointment:', error);
+		logger.error(
+			'[AppointmentController] Error updating appointment',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Erreur lors de la mise à jour du rendez-vous',
@@ -540,7 +572,10 @@ export const rescheduleAppointment = async (
 			message: 'Rendez-vous reporté avec succès',
 		});
 	} catch (error) {
-		console.error('Error rescheduling appointment:', error);
+		logger.error(
+			'[AppointmentController] Error rescheduling appointment',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Erreur lors du report du rendez-vous',
@@ -588,7 +623,10 @@ export const getAppointmentStats = async (
 			},
 		});
 	} catch (error) {
-		console.error('Error fetching appointment stats:', error);
+		logger.error(
+			'[AppointmentController] Error fetching appointment stats',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Erreur lors de la récupération des statistiques',
@@ -658,7 +696,10 @@ export const getAgentAvailability = async (
 			data: availability,
 		});
 	} catch (error) {
-		console.error('Error fetching agent availability:', error);
+		logger.error(
+			'[AppointmentController] Error fetching agent availability',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Erreur lors de la récupération des disponibilités',
@@ -687,7 +728,10 @@ export const updateAgentAvailability = async (
 			message: 'Disponibilités mises à jour avec succès',
 		});
 	} catch (error) {
-		console.error('Error updating agent availability:', error);
+		logger.error(
+			'[AppointmentController] Error updating agent availability',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Erreur lors de la mise à jour des disponibilités',
@@ -720,7 +764,9 @@ export const getAvailableSlots = async (
 
 		// If no availability exists, create default availability for the agent
 		if (!availability) {
-			console.log(`Creating default availability for agent ${agentId}`);
+			logger.debug(
+				`[AppointmentController] Creating default availability for agent ${agentId}`,
+			);
 			availability = await AgentAvailability.create({
 				agentId,
 				weeklySchedule: [
@@ -834,7 +880,10 @@ export const getAvailableSlots = async (
 			},
 		});
 	} catch (error) {
-		console.error('Error fetching available slots:', error);
+		logger.error(
+			'[AppointmentController] Error fetching available slots',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Erreur lors de la récupération des créneaux disponibles',

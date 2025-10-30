@@ -3,6 +3,7 @@
 - ui-state-persistence.md – Session-scoped UI state persistence for scroll, tabs, filters, and pagination with reusable hooks.
 - home-scroll-restoration-guards.md – App-wide scroll restoration fix: manual scroll mode without cleanup that was breaking navigation.
 - auth-signup-validation.md – Production signup validation hardening and rationale.
+- auth-security-audit-2025-10-30.md – Comprehensive auth security audit with rating, risks, and prioritized fixes.
 - client-information-feature.md – Client information feature for property posts (confidential data).
 - search-ads-client-information-feature.md – Client information feature for search ads (confidential data).
 - dashboard-professional-info-and-stats.md – Collapsible Professional Info card and live dashboard KPIs.

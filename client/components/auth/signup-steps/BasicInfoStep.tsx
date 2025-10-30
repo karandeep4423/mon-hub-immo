@@ -82,7 +82,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
 				value={phone}
 				onChange={onChange}
 				error={errors.phone}
-				placeholder="Téléphone * (ex: 0123456789)"
+				placeholder={Features.Auth.AUTH_PLACEHOLDERS.PHONE}
 				required
 			/>
 		</div>

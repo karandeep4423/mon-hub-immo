@@ -1,16 +1,21 @@
-import type { Metadata } from 'next';
-import {ForgotPasswordForm  } from '@/components/auth/ForgotPasswordForm';
-import { AuthLayout } from '@/components/auth/AuthLayout';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Forgot Password - HubImmo',
-  description: 'Forgot your password? Reset it here',
-};
+import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm';
+import { AuthLayout } from '@/components/auth/AuthLayout';
+import { useAuthRedirect } from '@/hooks/useAuthRedirect';
 
 export default function ForgotPasswordPage() {
-  return (
-    <AuthLayout title="Forgot Password">
-      <ForgotPasswordForm />
-    </AuthLayout>
-  );
+	const { loading } = useAuthRedirect();
+
+	if (loading) {
+		return (
+			<div className="animate-pulse bg-gray-100 h-64 rounded-lg"></div>
+		);
+	}
+
+	return (
+		<AuthLayout title="Forgot Password">
+			<ForgotPasswordForm />
+		</AuthLayout>
+	);
 }

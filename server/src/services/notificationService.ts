@@ -5,6 +5,7 @@ import {
 	NotificationType,
 } from '../models/Notification';
 import { getSocketService } from '../server';
+import { logger } from '../utils/logger';
 
 type EntityType = 'chat' | 'collaboration';
 
@@ -47,7 +48,7 @@ export const notificationService = {
 		});
 
 		await doc.save();
-		console.log('✅ Notification created:', {
+		logger.debug('[NotificationService] Notification created::', {
 			id: String(doc._id),
 			type: doc.type,
 			recipientId: String(doc.recipientId),
@@ -62,16 +63,22 @@ export const notificationService = {
 				const socketId = socketService.getReceiverSocketId(recipientId);
 
 				if (socketId) {
-					console.log('📤 Emitting notification via socket:', {
-						recipientId,
-						socketId,
-						type: doc.type,
-					});
+					logger.debug(
+						'[NotificationService] Emitting notification via socket: via socket:',
+						{
+							recipientId,
+							socketId,
+							type: doc.type,
+						},
+					);
 				} else {
-					console.log('⚠️ Recipient not connected via socket:', {
-						recipientId,
-						type: doc.type,
-					});
+					logger.warn(
+						'[NotificationService] Recipient not connected via socket: via socket:',
+						{
+							recipientId,
+							type: doc.type,
+						},
+					);
 				}
 
 				socketService.emitToUser(recipientId, 'notification:new', {
@@ -100,8 +107,9 @@ export const notificationService = {
 					unreadCount: unread,
 				});
 			} catch (err) {
-				console.error(
-					'❌ Failed to emit notification via socket:',
+				logger.error(
+					'[NotificationService]',
+					'? Failed to emit notification via socket:',
 					err,
 				);
 			}

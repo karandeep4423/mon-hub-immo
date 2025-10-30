@@ -11,7 +11,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
 import { authService } from '@/lib/api/authApi';
 import { signUpSchema, type SignUpFormData } from '@/lib/validation';
 import { ZodError } from 'zod';
@@ -22,6 +21,11 @@ import {
 	commonValidationRules,
 	type StepValidationSchema,
 } from '@/hooks/useFormValidation';
+import {
+	handleAuthError,
+	showSignupSuccess,
+	authToastError,
+} from '@/lib/utils/authToast';
 
 // Validation schema for signup form
 const signupValidationSchema: StepValidationSchema = {
@@ -102,30 +106,32 @@ export const useSignUpForm = () => {
 			// Keep confirmPassword for API call as it's required by SignUpData type
 			const result = await authService.signUp(
 				validatedData as Parameters<typeof authService.signUp>[0],
+				identityCardFile, // Pass identity card file
 			);
 			return result;
 		},
 		{
-			successMessage: 'Inscription réussie! Vérifiez votre email.',
+			showErrorToast: false, // Disable automatic error toast to prevent duplicates
 			onSuccess: () => {
-				router.push(Features.Auth.AUTH_ROUTES.VERIFY_EMAIL);
+				// Pass email as query parameter for verification
+				const email = formData.email;
+				showSignupSuccess();
+				router.push(
+					`${Features.Auth.AUTH_ROUTES.VERIFY_EMAIL}?email=${encodeURIComponent(email)}`,
+				);
 			},
 			onError: (error) => {
 				if (error instanceof ZodError && error.errors) {
 					const backendErrors: Record<string, string> = {};
-					error.errors.forEach(
-						(err: {
-							path?: (string | number)[];
-							message: string;
-						}) => {
-							if (err.path && err.path.length > 0) {
-								const field = err.path[0] as string;
-								backendErrors[field] = err.message;
-							}
-						},
-					);
+					error.errors.forEach((err) => {
+						if (err.path && err.path.length > 0) {
+							const field = err.path[0] as string;
+							backendErrors[field] = err.message;
+						}
+					});
 					setErrors(backendErrors);
 				}
+				handleAuthError(error); // This already handles toast notifications
 			},
 		},
 	);
@@ -214,16 +220,20 @@ export const useSignUpForm = () => {
 		return isValid;
 	};
 
-	const handleNext = () => {
-		if (validateStep(currentStep)) {
-			// Skip step 3 (Agent Professional Info) for apporteurs
-			if (currentStep === 2 && formData.userType === 'apporteur') {
-				setCurrentStep(4); // Jump directly to password step
-			} else {
-				setCurrentStep((prev) => Math.min(prev + 1, 5));
-			}
+	const handleNext = async () => {
+		// Validate current step before proceeding
+		const isStepValid = validateStep(currentStep);
+
+		if (!isStepValid) {
+			authToastError(Features.Auth.AUTH_TOAST_MESSAGES.VALIDATION_ERROR);
+			return;
+		}
+
+		// Move to next step (step 3 is skipped for apporteur)
+		if (currentStep === 2 && formData.userType === 'apporteur') {
+			setCurrentStep(4); // Skip to password step for apporteurs
 		} else {
-			toast.error(Features.Auth.AUTH_TOAST_MESSAGES.VALIDATION_ERROR);
+			setCurrentStep((prev) => Math.min(prev + 1, 5));
 		}
 	};
 
@@ -280,8 +290,8 @@ export const useSignUpForm = () => {
 
 			if (Object.keys(newErrors).length > 0) {
 				setErrors(newErrors);
-				toast.error(
-					'Veuillez compléter tous les champs requis avant de soumettre',
+				authToastError(
+					Features.Auth.AUTH_TOAST_MESSAGES.MISSING_REQUIRED_FIELDS,
 				);
 				return;
 			}

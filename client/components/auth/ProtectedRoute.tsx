@@ -19,8 +19,15 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 	requiredUserType,
 }) => {
 	const router = useRouter();
-	const { user, loading, shouldRedirect, isAuthenticated } =
+	const { user, loading, shouldRedirect, isAuthenticated, refreshUser } =
 		useProtectedRoute();
+
+	// Fetch user profile when component mounts (only for protected routes)
+	React.useEffect(() => {
+		if (!user && !loading) {
+			refreshUser();
+		}
+	}, []); // eslint-disable-line react-hooks/exhaustive-deps
 
 	React.useEffect(() => {
 		if (shouldRedirect) {

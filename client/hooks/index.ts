@@ -4,12 +4,7 @@
  */
 
 // Authentication
-export {
-	useAuth,
-	useProtectedRoute,
-	useProfileStatus,
-	useUserTypeHelpers,
-} from './useAuth';
+export { useAuth, useProtectedRoute } from './useAuth';
 export { useRequireAuth } from './useRequireAuth';
 
 // Socket listeners (NEW - reusable patterns)

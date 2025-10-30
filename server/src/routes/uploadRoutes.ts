@@ -1,8 +1,14 @@
 import { Router, Response } from 'express';
-import { uploadSingle, uploadChatSingle } from '../middleware/uploadMiddleware';
+import {
+	uploadSingle,
+	uploadChatSingle,
+	uploadIdentityDoc,
+} from '../middleware/uploadMiddleware';
 import { s3Service } from '../services/s3Service';
 import { authenticateToken } from '../middleware/auth';
 import { AuthRequest } from '../types/auth';
+import { generalLimiter } from '../middleware/rateLimiter';
+import { logger } from '../utils/logger';
 
 interface UploadedImageData {
 	url: string;
@@ -11,54 +17,60 @@ interface UploadedImageData {
 
 const router = Router();
 
-// Upload single image (profile, etc.)
-router.post('/single', authenticateToken, (req: AuthRequest, res: Response) => {
-	uploadSingle(req, res, async (err: unknown) => {
-		if (err) {
-			return res.status(400).json({
-				success: false,
-				message: (err as Error).message,
-			});
-		}
-
-		try {
-			if (!req.user || !req.file) {
+// Upload single image (profile, etc.) with rate limiting
+router.post(
+	'/single',
+	generalLimiter,
+	authenticateToken,
+	(req: AuthRequest, res: Response) => {
+		uploadSingle(req, res, async (err: unknown) => {
+			if (err) {
 				return res.status(400).json({
 					success: false,
-					message: 'Aucune image fournie',
+					message: (err as Error).message,
 				});
 			}
 
-			const imageVariants = await s3Service.uploadImage({
-				buffer: req.file.buffer,
-				originalName: req.file.originalname,
-				userId: req.user.id,
-				folder: 'users',
-			});
+			try {
+				if (!req.user || !req.file) {
+					return res.status(400).json({
+						success: false,
+						message: 'Aucune image fournie',
+					});
+				}
 
-			const uploadedImage: UploadedImageData = {
-				url: imageVariants[0]?.url,
-				key: imageVariants[0]?.key,
-			};
+				const imageVariants = await s3Service.uploadImage({
+					buffer: req.file.buffer,
+					originalName: req.file.originalname,
+					userId: req.user.id,
+					folder: 'users',
+				});
 
-			res.status(200).json({
-				success: true,
-				message: 'Image uploadée avec succès',
-				data: uploadedImage,
-			});
-		} catch (error) {
-			console.error('Upload error:', error);
-			res.status(500).json({
-				success: false,
-				message: "Erreur lors de l'upload de l'image",
-			});
-		}
-	});
-});
+				const uploadedImage: UploadedImageData = {
+					url: imageVariants[0]?.url,
+					key: imageVariants[0]?.key,
+				};
 
-// Generic chat file upload (images, pdf, docs)
+				res.status(200).json({
+					success: true,
+					message: 'Image uploadée avec succès',
+					data: uploadedImage,
+				});
+			} catch (error) {
+				logger.error('[UploadRoutes] Upload error', error);
+				res.status(500).json({
+					success: false,
+					message: "Erreur lors de l'upload de l'image",
+				});
+			}
+		});
+	},
+);
+
+// Generic chat file upload (images, pdf, docs) with rate limiting
 router.post(
 	'/chat-file',
+	generalLimiter,
 	authenticateToken,
 	(req: AuthRequest, res: Response) => {
 		uploadChatSingle(req, res, async (err: unknown) => {
@@ -97,7 +109,7 @@ router.post(
 					},
 				});
 			} catch (error) {
-				console.error('Upload chat file error:', error);
+				logger.error('[UploadRoutes] Upload chat file error', error);
 				return res.status(500).json({
 					success: false,
 					message: "Erreur lors de l'upload du fichier",
@@ -107,9 +119,10 @@ router.post(
 	},
 );
 
-// Delete images
+// Delete images with rate limiting
 router.delete(
 	'/delete',
+	generalLimiter,
 	authenticateToken,
 	async (req: AuthRequest, res: Response) => {
 		try {
@@ -138,12 +151,64 @@ router.delete(
 				message: 'Images supprimées avec succès',
 			});
 		} catch (error) {
-			console.error('Delete error:', error);
+			logger.error('[UploadRoutes] Delete error', error);
 			res.status(500).json({
 				success: false,
 				message: 'Erreur lors de la suppression des images',
 			});
 		}
+	},
+);
+
+// Upload identity card document (image or PDF) with rate limiting
+router.post(
+	'/identity-card',
+	generalLimiter,
+	authenticateToken,
+	(req: AuthRequest, res: Response) => {
+		uploadIdentityDoc(req, res, async (err: unknown) => {
+			if (err) {
+				return res.status(400).json({
+					success: false,
+					message: (err as Error).message,
+				});
+			}
+
+			try {
+				if (!req.user || !req.file) {
+					return res.status(400).json({
+						success: false,
+						message: 'Aucun document fourni',
+					});
+				}
+
+				const uploaded = await s3Service.uploadObject({
+					buffer: req.file.buffer,
+					originalName: req.file.originalname,
+					userId: req.user.id,
+					folder: 'users',
+					contentType: req.file.mimetype,
+				});
+
+				return res.status(200).json({
+					success: true,
+					message: "Carte d'identité uploadée avec succès",
+					data: {
+						url: uploaded.url,
+						key: uploaded.key,
+					},
+				});
+			} catch (error) {
+				logger.error(
+					'[UploadRoutes] Upload identity card error',
+					error,
+				);
+				return res.status(500).json({
+					success: false,
+					message: "Erreur lors de l'upload du document",
+				});
+			}
+		});
 	},
 );
 
