@@ -1,4 +1,4 @@
-import { emailService } from '../utils/emailService';
+import { sendEmail } from '../utils/emailService';
 import {
 	getNewAppointmentClientTemplate,
 	getNewAppointmentAgentTemplate,
@@ -36,7 +36,7 @@ export class AppointmentEmailService {
 			scheduledTime: appointment.scheduledTime,
 		};
 
-		await emailService.sendEmail({
+		await sendEmail({
 			to: clientEmail,
 			subject: 'Demande de rendez-vous envoyée - MonHubImmo',
 			html: getNewAppointmentClientTemplate(clientData),
@@ -58,7 +58,7 @@ export class AppointmentEmailService {
 			'[AppointmentEmailService] Sending email to agent:',
 			agent.email,
 		);
-		await emailService.sendEmail({
+		await sendEmail({
 			to: agent.email,
 			subject: 'Nouvelle demande de rendez-vous - MonHubImmo',
 			html: getNewAppointmentAgentTemplate(agentData),
@@ -87,7 +87,7 @@ export class AppointmentEmailService {
 			scheduledTime: appointment.scheduledTime,
 		};
 
-		await emailService.sendEmail({
+		await sendEmail({
 			to: clientEmail,
 			subject: 'Rendez-vous confirmé - MonHubImmo',
 			html: getAppointmentConfirmedTemplate(data),
@@ -117,7 +117,7 @@ export class AppointmentEmailService {
 			reason: appointment.cancellationReason,
 		};
 
-		await emailService.sendEmail({
+		await sendEmail({
 			to: clientEmail,
 			subject: 'Rendez-vous refusé - MonHubImmo',
 			html: getAppointmentRejectedTemplate(data),
@@ -147,7 +147,7 @@ export class AppointmentEmailService {
 			reason: appointment.cancellationReason,
 		};
 
-		await emailService.sendEmail({
+		await sendEmail({
 			to: clientEmail,
 			subject: 'Rendez-vous annulé - MonHubImmo',
 			html: getAppointmentCancelledTemplate(data),
@@ -190,7 +190,7 @@ export class AppointmentEmailService {
 			reason: appointment.rescheduleReason,
 		};
 
-		await emailService.sendEmail({
+		await sendEmail({
 			to: clientEmail,
 			subject: 'Rendez-vous reporté - MonHubImmo',
 			html: getAppointmentRescheduledTemplate(data),

@@ -9,7 +9,14 @@ import {
 	generateRefreshToken,
 	verifyRefreshToken,
 } from '../utils/jwt';
-import { emailService } from '../utils/emailService';
+import {
+	sendEmail,
+	generateVerificationCode,
+	getVerificationCodeTemplate,
+	getPasswordResetTemplate,
+	getPasswordResetConfirmationTemplate,
+	getAccountLockedTemplate,
+} from '../utils/emailService';
 import { AuthRequest } from '../types/auth';
 import { signupSchema } from '../validation/schemas';
 import { S3Service } from '../services/s3Service';
@@ -110,7 +117,7 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 		});
 		if (existingPending) {
 			// Pending verification exists, update it and resend code
-			const verificationCode = emailService.generateVerificationCode();
+			const verificationCode = generateVerificationCode();
 			const verificationExpires = new Date(
 				Date.now() + 24 * 60 * 60 * 1000,
 			);
@@ -153,12 +160,12 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 
 			// Send verification email
 			try {
-				const emailTemplate = emailService.getVerificationCodeTemplate(
+				const emailTemplate = getVerificationCodeTemplate(
 					`${existingPending.firstName} ${existingPending.lastName}`,
 					verificationCode,
 				);
 
-				await emailService.sendEmail({
+				await sendEmail({
 					to: email,
 					subject: `${verificationCode} est votre code de vérification`,
 					html: emailTemplate,
@@ -179,7 +186,7 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 		}
 
 		// Generate verification code (6-digit)
-		const verificationCode = emailService.generateVerificationCode();
+		const verificationCode = generateVerificationCode();
 		const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
 		// Handle identity card upload for agents (optional during signup)
@@ -214,12 +221,12 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 
 		// Send verification email with code
 		try {
-			const emailTemplate = emailService.getVerificationCodeTemplate(
+			const emailTemplate = getVerificationCodeTemplate(
 				`${sanitizedFirstName} ${sanitizedLastName}`,
 				verificationCode,
 			);
 
-			await emailService.sendEmail({
+			await sendEmail({
 				to: sanitizedEmail,
 				subject: `${verificationCode} est votre code de vérification - MonHubImmo`,
 				html: emailTemplate,
@@ -343,13 +350,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 							timeStyle: 'short',
 						},
 					);
-					const emailTemplate = emailService.getAccountLockedTemplate(
+					const emailTemplate = getAccountLockedTemplate(
 						`${user.firstName} ${user.lastName}`,
 						30, // lock duration in minutes
 						unlockTimeFormatted,
 					);
 
-					await emailService.sendEmail({
+					await sendEmail({
 						to: email,
 						subject:
 							'🔐 Alerte de sécurité : Compte temporairement verrouillé - MonHubImmo',
@@ -405,7 +412,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 		// Check if email is verified
 		if (!user.isEmailVerified) {
 			// Generate new verification code for unverified user
-			const verificationCode = emailService.generateVerificationCode();
+			const verificationCode = generateVerificationCode();
 			const verificationExpires = new Date(
 				Date.now() + 24 * 60 * 60 * 1000,
 			);
@@ -422,12 +429,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 			);
 
 			try {
-				const emailTemplate = emailService.getVerificationCodeTemplate(
+				const emailTemplate = getVerificationCodeTemplate(
 					`${user.firstName} ${user.lastName}`,
 					verificationCode,
 				);
 
-				await emailService.sendEmail({
+				await sendEmail({
 					to: email,
 					subject: `${verificationCode} est votre code de vérification - MonHubImmo`,
 					html: emailTemplate,
@@ -739,7 +746,7 @@ export const resendVerificationCode = async (
 		}
 
 		// Generate new verification code
-		const verificationCode = emailService.generateVerificationCode();
+		const verificationCode = generateVerificationCode();
 		const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
 		// Update pending verification
@@ -755,12 +762,12 @@ export const resendVerificationCode = async (
 
 		// Send verification email
 		try {
-			const emailTemplate = emailService.getVerificationCodeTemplate(
+			const emailTemplate = getVerificationCodeTemplate(
 				`${pendingVerification.firstName} ${pendingVerification.lastName}`,
 				verificationCode,
 			);
 
-			await emailService.sendEmail({
+			await sendEmail({
 				to: email,
 				subject: `${verificationCode} est votre code de vérification - MonHubImmo`,
 				html: emailTemplate,
@@ -818,7 +825,7 @@ export const forgotPassword = async (
 		}
 
 		// Generate password reset code (6-digit)
-		const resetCode = emailService.generateVerificationCode();
+		const resetCode = generateVerificationCode();
 		const resetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiry
 
 		// Update user with reset code (atomic without full validation)
@@ -835,12 +842,12 @@ export const forgotPassword = async (
 
 		// Send password reset email
 		try {
-			const emailTemplate = emailService.getPasswordResetTemplate(
+			const emailTemplate = getPasswordResetTemplate(
 				`${user.firstName} ${user.lastName}`,
 				resetCode,
 			);
 
-			await emailService.sendEmail({
+			await sendEmail({
 				to: email,
 				subject: `${resetCode} est votre code de réinitialisation - MonHubImmo`,
 				html: emailTemplate,
@@ -981,12 +988,11 @@ export const resetPassword = async (
 
 		// Send confirmation email
 		try {
-			const emailTemplate =
-				emailService.getPasswordResetConfirmationTemplate(
-					`${user.firstName} ${user.lastName}`,
-				);
+			const emailTemplate = getPasswordResetConfirmationTemplate(
+				`${user.firstName} ${user.lastName}`,
+			);
 
-			await emailService.sendEmail({
+			await sendEmail({
 				to: email,
 				subject: 'Mot de passe réinitialisé avec succès - MonHubImmo',
 				html: emailTemplate,

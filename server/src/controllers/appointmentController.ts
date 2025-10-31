@@ -405,29 +405,34 @@ export const updateAppointmentStatus = async (
 				| IUser
 				| undefined;
 
-			// Only send emails if we have client info (might be undefined for guest bookings)
-			if (client && client.email) {
-				const clientName = `${client.firstName} ${client.lastName}`;
+			// Determine client name and email
+			const clientEmail =
+				client?.email || populatedAppointment.contactDetails.email;
+			const clientName =
+				client && client.firstName && client.lastName
+					? `${client.firstName} ${client.lastName}`
+					: populatedAppointment.contactDetails.name;
 
+			if (clientEmail) {
 				if (status === 'confirmed') {
 					await appointmentEmailService.sendAppointmentConfirmedEmail(
 						populatedAppointment,
 						agent,
-						client.email,
+						clientEmail,
 						clientName,
 					);
 				} else if (status === 'rejected') {
 					await appointmentEmailService.sendAppointmentRejectedEmail(
 						populatedAppointment,
 						agent,
-						client.email,
+						clientEmail,
 						clientName,
 					);
 				} else if (status === 'cancelled') {
 					await appointmentEmailService.sendAppointmentCancelledEmail(
 						populatedAppointment,
 						agent,
-						client.email,
+						clientEmail,
 						clientName,
 					);
 				}
@@ -543,12 +548,19 @@ export const rescheduleAppointment = async (
 				| IUser
 				| undefined;
 
-			if (client && client.email) {
-				const clientName = `${client.firstName} ${client.lastName}`;
+			// Determine client name and email
+			const clientEmail =
+				client?.email || populatedAppointment.contactDetails.email;
+			const clientName =
+				client && client.firstName && client.lastName
+					? `${client.firstName} ${client.lastName}`
+					: populatedAppointment.contactDetails.name;
+
+			if (clientEmail) {
 				await appointmentEmailService.sendAppointmentRescheduledEmail(
 					populatedAppointment,
 					agent,
-					client.email,
+					clientEmail,
 					clientName,
 				);
 			}
