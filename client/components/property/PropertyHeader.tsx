@@ -13,12 +13,12 @@ export const PropertyHeader: React.FC<PropertyHeaderProps> = ({
 	onCreateClick,
 }) => {
 	return (
-		<div className="bg-white rounded-xl shadow-sm border p-6">
-			<div className="flex items-center justify-between">
-				<div className="flex items-center space-x-4">
-					<div className="w-12 h-12 bg-gradient-to-r from-brand to-brand-600 rounded-lg flex items-center justify-center">
+		<div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
+			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+				<div className="flex items-center gap-3 sm:gap-4">
+					<div className="w-10 h-10 sm:w-12 sm:h-12 bg-cyan-500 rounded-lg flex items-center justify-center flex-shrink-0">
 						<svg
-							className="w-6 h-6 text-white"
+							className="w-5 h-5 sm:w-6 sm:h-6 text-white"
 							fill="none"
 							stroke="currentColor"
 							viewBox="0 0 24 24"
@@ -31,11 +31,11 @@ export const PropertyHeader: React.FC<PropertyHeaderProps> = ({
 							/>
 						</svg>
 					</div>
-					<div>
-						<h1 className="text-2xl font-bold text-gray-900">
+					<div className="min-w-0">
+						<h1 className="text-xl sm:text-2xl font-bold text-gray-900">
 							{Features.Properties.PROPERTY_UI_TEXT.title}
 						</h1>
-						<p className="text-gray-600">
+						<p className="text-sm sm:text-base text-gray-600 truncate">
 							{Features.Properties.PROPERTY_UI_TEXT.subtitle} •{' '}
 							{Features.Properties.getPropertyCountText(
 								propertiesCount,
@@ -43,10 +43,10 @@ export const PropertyHeader: React.FC<PropertyHeaderProps> = ({
 						</p>
 					</div>
 				</div>
-				<div className="flex items-center space-x-3">
+				<div className="flex items-center">
 					<Button
 						onClick={onCreateClick}
-						className="bg-gradient-to-r from-brand to-brand-600 hover:from-brand-600 hover:to-brand-700 text-white shadow-lg"
+						className="bg-gradient-to-r from-brand to-brand-600 hover:from-brand-600 hover:to-brand-700 text-white shadow-lg w-full sm:w-auto text-sm"
 					>
 						<svg
 							className="w-4 h-4 mr-2"
@@ -61,7 +61,10 @@ export const PropertyHeader: React.FC<PropertyHeaderProps> = ({
 								d="M12 6v6m0 0v6m0-6h6m-6 0H6"
 							/>
 						</svg>
-						{Features.Properties.PROPERTY_UI_TEXT.newProperty}
+						<span className="hidden sm:inline">
+							{Features.Properties.PROPERTY_UI_TEXT.newProperty}
+						</span>
+						<span className="sm:hidden">Nouvelle annonce</span>
 					</Button>
 				</div>
 			</div>

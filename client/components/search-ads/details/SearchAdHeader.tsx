@@ -11,8 +11,8 @@ export const SearchAdHeader: React.FC<SearchAdHeaderProps> = ({ searchAd }) => {
 	const router = useRouter();
 
 	return (
-		<div className="mb-10">
-			<div className="flex items-center justify-between mb-6">
+		<div className="mb-6">
+			<div className="flex items-center justify-between mb-5">
 				<button
 					onClick={() => router.back()}
 					className="group flex items-center gap-2 text-gray-600 hover:text-brand transition-all duration-200 font-medium"
@@ -50,10 +50,10 @@ export const SearchAdHeader: React.FC<SearchAdHeaderProps> = ({ searchAd }) => {
 								: '✓ Réalisé'}
 					</span>
 					<span
-						className={`px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide shadow-sm ${
+						className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm ${
 							searchAd.authorType === 'agent'
-								? 'bg-gradient-to-r from-brand to-brand-600 text-white'
-								: 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+								? 'bg-brand text-white'
+								: 'bg-purple-600 text-white'
 						}`}
 					>
 						{searchAd.authorType === 'agent'
@@ -63,13 +63,13 @@ export const SearchAdHeader: React.FC<SearchAdHeaderProps> = ({ searchAd }) => {
 				</div>
 			</div>
 
-			<div className="space-y-3 mb-6">
-				<h1 className="text-2xl lg:text-3xl font-bold text-gray-900 leading-tight">
+			<div className="space-y-3">
+				<h1 className="text-3xl lg:text-4xl font-bold text-gray-900 leading-tight">
 					{searchAd.title}
 				</h1>
 
 				{searchAd.description && (
-					<div className="text-base text-gray-600 leading-relaxed max-w-4xl">
+					<div className="text-base text-gray-700 leading-relaxed max-w-4xl">
 						<RichTextDisplay content={searchAd.description} />
 					</div>
 				)}

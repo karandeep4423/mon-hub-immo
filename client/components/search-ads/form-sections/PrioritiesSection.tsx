@@ -33,7 +33,7 @@ export const PrioritiesSection: React.FC<PrioritiesSectionProps> = ({
 						{Features.Properties.PRIORITIES.map((priority) => (
 							<label
 								key={priority}
-								className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer min-h-[3rem]"
+								className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
 							>
 								<input
 									type="checkbox"
@@ -71,7 +71,7 @@ export const PrioritiesSection: React.FC<PrioritiesSectionProps> = ({
 						{Features.Properties.PRIORITIES.map((priority) => (
 							<label
 								key={priority}
-								className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer min-h-[3rem]"
+								className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
 							>
 								<input
 									type="checkbox"
@@ -109,7 +109,7 @@ export const PrioritiesSection: React.FC<PrioritiesSectionProps> = ({
 						{Features.Properties.PRIORITIES.map((priority) => (
 							<label
 								key={priority}
-								className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer min-h-[3rem]"
+								className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer"
 							>
 								<input
 									type="checkbox"

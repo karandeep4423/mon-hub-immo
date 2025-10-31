@@ -154,16 +154,37 @@ function PropertyDetailsPageContent() {
 
 	return (
 		<div className="min-h-screen bg-gray-50">
-			{/* Header */}
-			<div className="bg-white shadow-sm border-b">
-				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-					<Button
-						variant="outline"
-						onClick={() => router.push('/home')}
-						className="mb-4"
-					>
-						← Retour aux ventes
-					</Button>
+			{/* Elegant Integrated Header with Back Navigation */}
+			<div className="bg-white shadow-sm border-b sticky top-0 z-30">
+				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+					<div className="flex items-center gap-4 py-4">
+						<button
+							onClick={() => router.push('/home')}
+							className="flex items-center gap-2 text-gray-600 hover:text-brand transition-colors group"
+							aria-label="Retour aux ventes"
+						>
+							<svg
+								className="w-5 h-5 transition-transform group-hover:-translate-x-1"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									strokeWidth={2}
+									d="M15 19l-7-7 7-7"
+								/>
+							</svg>
+							<span className="hidden sm:inline font-medium">
+								Retour aux ventes
+							</span>
+						</button>
+						<div className="h-6 w-px bg-gray-300 hidden sm:block" />
+						<h1 className="text-lg sm:text-xl font-semibold text-gray-900 truncate flex-1">
+							{property.title}
+						</h1>
+					</div>
 				</div>
 			</div>
 
@@ -244,69 +265,241 @@ function PropertyDetailsPageContent() {
 								className="mb-6"
 							/>
 
-							{/* Additional Details */}
+							{/* Additional Details with Icons */}
 							<div className="mb-6 space-y-3">
 								{property.energyRating && (
-									<div className="flex justify-between">
-										<span className="text-gray-600">
-											Classe énergétique:
-										</span>
-										<span className="font-medium">
+									<div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">
+										<div className="flex items-center space-x-2">
+											<div className="p-1.5 bg-green-100 rounded-full">
+												<svg
+													className="w-4 h-4 text-green-600"
+													fill="none"
+													stroke="currentColor"
+													viewBox="0 0 24 24"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth="2"
+														d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"
+													/>
+												</svg>
+											</div>
+											<span className="text-gray-700 text-sm font-medium">
+												Classe énergétique
+											</span>
+										</div>
+										<span className="font-semibold text-gray-900">
 											{property.energyRating}
 										</span>
 									</div>
 								)}
 								{property.yearBuilt && (
-									<div className="flex justify-between">
-										<span className="text-gray-600">
-											Année de construction:
-										</span>
-										<span className="font-medium">
+									<div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
+										<div className="flex items-center space-x-2">
+											<div className="p-1.5 bg-blue-100 rounded-full">
+												<svg
+													className="w-4 h-4 text-blue-600"
+													fill="none"
+													stroke="currentColor"
+													viewBox="0 0 24 24"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth="2"
+														d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+													/>
+												</svg>
+											</div>
+											<span className="text-gray-700 text-sm font-medium">
+												Année de construction
+											</span>
+										</div>
+										<span className="font-semibold text-gray-900">
 											{property.yearBuilt}
 										</span>
 									</div>
 								)}
 								{property.floor !== undefined && (
-									<div className="flex justify-between">
-										<span className="text-gray-600">
-											Étage:
-										</span>
-										<span className="font-medium">
+									<div className="flex items-center justify-between p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+										<div className="flex items-center space-x-2">
+											<div className="p-1.5 bg-indigo-100 rounded-full">
+												<svg
+													className="w-4 h-4 text-indigo-600"
+													fill="none"
+													stroke="currentColor"
+													viewBox="0 0 24 24"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth="2"
+														d="M3 12h18M3 6h18M3 18h18"
+													/>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth="2"
+														d="M12 3v3m0 6v3m0 6v3"
+														opacity="0.5"
+													/>
+												</svg>
+											</div>
+											<span className="text-gray-700 text-sm font-medium">
+												Étage
+											</span>
+										</div>
+										<span className="font-semibold text-gray-900">
 											{property.floor}
 										</span>
 									</div>
 								)}
 								{property.heatingType && (
-									<div className="flex justify-between">
-										<span className="text-gray-600">
-											Chauffage:
-										</span>
-										<span className="font-medium">
+									<div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-100">
+										<div className="flex items-center space-x-2">
+											<div className="p-1.5 bg-orange-100 rounded-full">
+												<svg
+													className="w-4 h-4 text-orange-600"
+													fill="none"
+													stroke="currentColor"
+													viewBox="0 0 24 24"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth="2"
+														d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"
+													/>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth="2"
+														d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"
+													/>
+												</svg>
+											</div>
+											<span className="text-gray-700 text-sm font-medium">
+												Chauffage
+											</span>
+										</div>
+										<span className="font-semibold text-gray-900">
 											{property.heatingType}
 										</span>
 									</div>
 								)}
 								{property.orientation && (
-									<div className="flex justify-between">
-										<span className="text-gray-600">
-											Orientation:
-										</span>
-										<span className="font-medium">
+									<div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-100">
+										<div className="flex items-center space-x-2">
+											<div className="p-1.5 bg-yellow-100 rounded-full">
+												<svg
+													className="w-4 h-4 text-yellow-600"
+													fill="none"
+													stroke="currentColor"
+													viewBox="0 0 24 24"
+												>
+													<circle
+														cx="12"
+														cy="12"
+														r="4"
+														strokeWidth="2"
+													/>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth="2"
+														d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41"
+													/>
+												</svg>
+											</div>
+											<span className="text-gray-700 text-sm font-medium">
+												Orientation
+											</span>
+										</div>
+										<span className="font-semibold text-gray-900">
 											{property.orientation}
 										</span>
 									</div>
 								)}
-								<div className="flex justify-between">
-									<span className="text-gray-600">Vues:</span>
-									<span className="font-medium">
+								<div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-100">
+									<div className="flex items-center space-x-2">
+										<div className="p-1.5 bg-purple-100 rounded-full">
+											<svg
+												className="w-4 h-4 text-purple-600"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth="2"
+													d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+												/>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth="2"
+													d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+												/>
+											</svg>
+										</div>
+										<span className="text-gray-700 text-sm font-medium">
+											Vues
+										</span>
+									</div>
+									<span className="font-semibold text-gray-900">
 										{property.viewCount}
 									</span>
 								</div>
-								<div className="flex justify-between">
-									<span className="text-gray-600">
-										Publié le:
-									</span>
-									<span className="font-medium">
+								<div className="flex items-center justify-between p-3 bg-teal-50 rounded-lg border border-teal-100">
+									<div className="flex items-center space-x-2">
+										<div className="p-1.5 bg-teal-100 rounded-full">
+											<svg
+												className="w-4 h-4 text-teal-600"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<rect
+													x="3"
+													y="4"
+													width="18"
+													height="18"
+													rx="2"
+													strokeWidth="2"
+												/>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth="2"
+													d="M3 9h18M7 3v3M17 3v3"
+												/>
+												<circle
+													cx="8"
+													cy="14"
+													r="1"
+													fill="currentColor"
+												/>
+												<circle
+													cx="12"
+													cy="14"
+													r="1"
+													fill="currentColor"
+												/>
+												<circle
+													cx="16"
+													cy="14"
+													r="1"
+													fill="currentColor"
+												/>
+											</svg>
+										</div>
+										<span className="text-gray-700 text-sm font-medium">
+											Publié le
+										</span>
+									</div>
+									<span className="font-semibold text-gray-900">
 										{formatDateShort(
 											property.publishedAt ||
 												property.createdAt,

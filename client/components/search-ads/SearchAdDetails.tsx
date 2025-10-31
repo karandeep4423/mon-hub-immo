@@ -79,9 +79,12 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
 				<SearchAdHeader searchAd={searchAd} />
-				<SearchAdAuthorInfo searchAd={searchAd} />
+
+				<div className="mb-6">
+					<SearchAdAuthorInfo searchAd={searchAd} />
+				</div>
 
 				{/* Details Grid */}
 				<div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -98,32 +101,32 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 
 					{/* Client Information */}
 					{searchAd.clientInfo && (
-						<div className="lg:col-span-2 xl:col-span-3 bg-gradient-to-br from-brand-50 to-brand-100 border-brand-200 p-6 rounded-xl shadow-md border-2">
-							<div className="flex items-center gap-3 mb-2.5">
+						<div className="lg:col-span-2 xl:col-span-3 bg-gradient-to-br from-brand-50 to-brand-100 border-brand-200 p-5 rounded-xl shadow-md border-2">
+							<div className="flex items-center gap-3 mb-3">
 								<div className="w-10 h-10 bg-gradient-to-br from-brand to-brand-600 rounded-xl flex items-center justify-center shadow-md">
 									<span className="text-xl">ℹ️</span>
 								</div>
-								<h3 className="text-xl font-bold text-gray-900">
+								<h3 className="text-lg font-bold text-gray-900">
 									Informations sur le client
 								</h3>
 							</div>
-							<p className="text-xs text-brand-700 mb-5 font-medium">
+							<p className="text-xs text-brand-700 mb-4 font-medium">
 								💡 Ces informations vous aident à mieux
 								comprendre les besoins et la situation du
 								client.
 							</p>
 
-							<div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+							<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 								{/* Qualification Info */}
 								{searchAd.clientInfo?.qualificationInfo && (
-									<div className="bg-white p-5 rounded-xl shadow-sm border border-brand-100">
-										<h4 className="font-bold text-gray-900 mb-3.5 flex items-center gap-2 text-base">
+									<div className="bg-white p-4 rounded-xl shadow-sm border border-brand-100">
+										<h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2 text-base">
 											<span>👤</span>
 											<span>
 												Informations de qualification
 											</span>
 										</h4>
-										<div className="space-y-3.5">
+										<div className="space-y-3">
 											{searchAd.clientInfo
 												.qualificationInfo
 												.clientName && (
@@ -131,7 +134,7 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 													<span className="font-semibold text-gray-600 block mb-1 text-xs uppercase tracking-wide">
 														Nom du client
 													</span>
-													<p className="text-gray-900 font-medium text-base">
+													<p className="text-gray-900 font-medium text-sm">
 														{
 															searchAd.clientInfo
 																.qualificationInfo
@@ -147,7 +150,7 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 													<span className="font-semibold text-gray-600 block mb-1 text-xs uppercase tracking-wide">
 														Statut
 													</span>
-													<p className="text-gray-900 font-medium text-base">
+													<p className="text-gray-900 font-medium text-sm">
 														{searchAd.clientInfo
 															.qualificationInfo
 															.clientStatus ===
@@ -170,7 +173,7 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 													<span className="font-semibold text-gray-600 block mb-1 text-xs uppercase tracking-wide">
 														Profession
 													</span>
-													<p className="text-gray-900 font-medium text-base">
+													<p className="text-gray-900 font-medium text-sm">
 														💼{' '}
 														{
 															searchAd.clientInfo
@@ -187,7 +190,7 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 													<span className="font-semibold text-gray-600 block mb-1 text-xs uppercase tracking-wide">
 														Type de projet
 													</span>
-													<p className="text-gray-900 font-medium text-base">
+													<p className="text-gray-900 font-medium text-sm">
 														{searchAd.clientInfo
 															.qualificationInfo
 															.projectType ===
@@ -206,7 +209,7 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 														Agent immobilier
 													</span>
 													<p
-														className={`font-medium text-base ${searchAd.clientInfo.qualificationInfo.hasRealEstateAgent ? 'text-green-700' : 'text-red-700'}`}
+														className={`font-medium text-sm ${searchAd.clientInfo.qualificationInfo.hasRealEstateAgent ? 'text-green-700' : 'text-red-700'}`}
 													>
 														{searchAd.clientInfo
 															.qualificationInfo
@@ -225,7 +228,7 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 														A déjà visité des biens
 													</span>
 													<p
-														className={`font-medium text-base ${searchAd.clientInfo.qualificationInfo.hasVisitedProperties ? 'text-green-700' : 'text-gray-700'}`}
+														className={`font-medium text-sm ${searchAd.clientInfo.qualificationInfo.hasVisitedProperties ? 'text-green-700' : 'text-gray-700'}`}
 													>
 														{searchAd.clientInfo
 															.qualificationInfo
@@ -241,12 +244,12 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 
 								{/* Timeline Info */}
 								{searchAd.clientInfo?.timelineInfo && (
-									<div className="bg-white p-5 rounded-xl shadow-sm border border-brand-100">
-										<h4 className="font-bold text-gray-900 mb-3.5 flex items-center gap-2 text-base">
+									<div className="bg-white p-4 rounded-xl shadow-sm border border-brand-100">
+										<h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2 text-base">
 											<span>⏰</span>
 											<span>Délai et disponibilité</span>
 										</h4>
-										<div className="space-y-3.5">
+										<div className="space-y-3">
 											{searchAd.clientInfo.timelineInfo
 												.urgency && (
 												<div className="pb-2.5 border-b border-gray-100">
@@ -254,7 +257,7 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 														Niveau d&apos;urgence
 													</span>
 													<p
-														className={`font-bold text-base ${
+														className={`font-bold text-sm ${
 															searchAd.clientInfo
 																.timelineInfo
 																.urgency ===
@@ -297,7 +300,7 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 														Disponibilité pour
 														visite
 													</span>
-													<p className="text-gray-900 font-medium text-base">
+													<p className="text-gray-900 font-medium text-sm">
 														📅{' '}
 														{
 															searchAd.clientInfo
@@ -314,7 +317,7 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 														Date idéale
 														d&apos;emménagement
 													</span>
-													<p className="text-gray-900 font-medium text-base">
+													<p className="text-gray-900 font-medium text-sm">
 														🏠{' '}
 														{new Date(
 															searchAd.clientInfo.timelineInfo.idealMoveInDate,

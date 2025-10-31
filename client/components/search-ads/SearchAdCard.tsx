@@ -145,14 +145,16 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 							);
 						})}
 				</div>
-				{/* Favorite Button */}
-				<div className="absolute top-2 right-2">
-					<FavoriteButton
-						itemId={searchAd._id}
-						itemType="searchAd"
-						size="md"
-					/>
-				</div>
+				{/* Favorite Button - Only show on home page, not on dashboard */}
+				{!isOwner && (
+					<div className="absolute top-2 right-2">
+						<FavoriteButton
+							itemId={searchAd._id}
+							itemType="searchAd"
+							size="md"
+						/>
+					</div>
+				)}
 			</div>
 
 			{/* Content Section */}

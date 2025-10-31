@@ -18,14 +18,14 @@ export const SearchAdAuthorInfo: React.FC<SearchAdAuthorInfoProps> = ({
 					className="w-14 h-14 ring-4 ring-white shadow-md"
 				/>
 				<div className="flex-1">
-					<h3 className="text-lg font-bold text-gray-900 mb-0.5">
+					<h3 className="text-lg font-bold text-gray-900 mb-1">
 						{searchAd.authorId.firstName}{' '}
 						{searchAd.authorId.lastName}
 					</h3>
 					<p className="text-sm text-gray-600 font-medium">
 						{searchAd.authorType === 'agent'
 							? '🏢 Agent immobilier professionnel'
-							: "🤝 Apporteur d'affaires certifié"}
+							: "🤝 Apporteur d'affaires"}
 					</p>
 				</div>
 			</div>

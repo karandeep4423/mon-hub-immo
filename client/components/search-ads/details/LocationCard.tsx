@@ -16,7 +16,7 @@ export const LocationCard: React.FC<LocationCardProps> = ({
 		: searchAd.location.cities.slice(0, 2);
 
 	return (
-		<div className="group bg-white p-6 rounded-xl shadow-md border border-gray-200/50 hover:shadow-xl hover:border-brand-200 transition-all duration-300">
+		<div className="group bg-white p-5 rounded-xl shadow-md border border-gray-200/50 hover:shadow-xl hover:border-brand-200 transition-all duration-300">
 			<div className="flex items-center gap-3 mb-4">
 				<div className="w-10 h-10 bg-gradient-to-br from-red-500 to-pink-500 rounded-lg flex items-center justify-center shadow-md">
 					<span className="text-xl">📍</span>

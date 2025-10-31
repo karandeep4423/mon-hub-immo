@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { Button, StatusBadge, RichTextDisplay } from '@/components/ui';
 import { Property } from '@/lib/api/propertyApi';
 import { getImageUrl } from '@/lib/utils/imageUtils';
@@ -19,56 +20,86 @@ export const PropertyListItem: React.FC<PropertyListItemProps> = ({
 }) => {
 	return (
 		<div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-			<div className="flex">
-				<div className="w-48 h-32 bg-gray-200 flex-shrink-0 relative">
-					<img
+			<div className="flex flex-col sm:flex-row">
+				<div className="w-full sm:w-48 h-48 sm:h-32 bg-gray-200 flex-shrink-0 relative">
+					<Image
 						src={getImageUrl(property.mainImage, 'medium')}
 						alt={property.title}
-						className="object-cover w-full h-full"
+						fill
+						className="object-cover"
 					/>
 				</div>
 				<div className="flex-1 p-4">
-					<div className="flex items-start justify-between">
-						<div className="flex-1">
-							<div className="flex items-center flex-wrap gap-2 mb-2">
+					<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+						<div className="flex-1 min-w-0">
+							<div className="flex items-start flex-col sm:flex-row sm:items-center gap-2 mb-2">
 								<h3 className="text-lg font-semibold text-gray-900 truncate">
 									{property.title}
 								</h3>
 								{property.badges &&
-									property.badges.length > 0 &&
-									property.badges.map((badgeValue) => {
-										const config =
-											Features.Properties.getBadgeConfig(
-												badgeValue,
-											);
-										if (!config) return null;
+									property.badges.length > 0 && (
+										<div className="flex flex-wrap gap-1.5">
+											{property.badges.map(
+												(badgeValue) => {
+													const config =
+														Features.Properties.getBadgeConfig(
+															badgeValue,
+														);
+													if (!config) return null;
 
-										return (
-											<span
-												key={badgeValue}
-												className={`${config.bgColor.replace('bg-', 'bg-opacity-20 bg-')} ${config.color.replace('text-white', `text-${config.bgColor.split('-')[1]}-800`)} text-xs px-2 py-1 rounded-full`}
-											>
-												{config.label}
-											</span>
-										);
-									})}
+													// Modern badge colors
+													let badgeClass = '';
+													if (
+														badgeValue === 'nouveau'
+													) {
+														badgeClass =
+															'bg-emerald-500 text-white';
+													} else if (
+														badgeValue === 'urgent'
+													) {
+														badgeClass =
+															'bg-red-500 text-white';
+													} else if (
+														badgeValue ===
+														'negociable'
+													) {
+														badgeClass =
+															'bg-blue-600 text-white';
+													} else {
+														badgeClass = `${config.bgColor} ${config.color}`;
+													}
+
+													return (
+														<span
+															key={badgeValue}
+															className={`${badgeClass} text-xs font-medium px-2.5 py-1 rounded-full whitespace-nowrap shadow-sm`}
+														>
+															{config.label}
+														</span>
+													);
+												},
+											)}
+										</div>
+									)}
 							</div>
 							<div className="text-gray-600 text-sm mb-2 line-clamp-2">
 								<RichTextDisplay
 									content={property.description}
 								/>
 							</div>
-							<div className="flex items-center space-x-4 text-sm text-gray-500">
+							<div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
 								<span>{property.propertyType}</span>
-								<span>•</span>
+								<span className="hidden sm:inline">•</span>
 								<span>{property.surface} m²</span>
-								<span>•</span>
-								<span>{property.city}</span>
-								<span>•</span>
+								<span className="hidden sm:inline">•</span>
+								<span className="truncate">
+									{property.city}
+								</span>
+								<span className="hidden sm:inline">•</span>
 								<span>{property.viewCount} vues</span>
 							</div>
 						</div>
-						<div className="text-right">
+						<div className="text-left sm:text-right flex-shrink-0">
 							<div className="text-xl font-bold text-gray-900 mb-2">
 								{property.price.toLocaleString()} €
 							</div>
@@ -78,8 +109,8 @@ export const PropertyListItem: React.FC<PropertyListItemProps> = ({
 							/>
 						</div>
 					</div>
-					<div className="flex items-center justify-between mt-4 pt-4 border-t">
-						<div className="flex items-center space-x-2">
+					<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4 pt-4 border-t">
+						<div className="flex items-center">
 							<select
 								value={property.status}
 								onChange={(e) =>
@@ -88,7 +119,7 @@ export const PropertyListItem: React.FC<PropertyListItemProps> = ({
 										e.target.value as Property['status'],
 									)
 								}
-								className="text-sm border border-gray-300 rounded px-2 py-1"
+								className="text-sm border border-gray-300 rounded px-2 py-1.5 w-full sm:w-auto"
 							>
 								<option value="draft">Brouillon</option>
 								<option value="active">Actif</option>
@@ -97,11 +128,12 @@ export const PropertyListItem: React.FC<PropertyListItemProps> = ({
 								<option value="archived">Archivé</option>
 							</select>
 						</div>
-						<div className="flex items-center space-x-2">
+						<div className="flex items-center gap-2">
 							<Button
 								variant="outline"
 								size="sm"
 								onClick={() => onEdit(property)}
+								className="flex-1 sm:flex-initial"
 							>
 								{Components.UI.BUTTON_TEXT.edit}
 							</Button>
@@ -109,7 +141,7 @@ export const PropertyListItem: React.FC<PropertyListItemProps> = ({
 								variant="outline"
 								size="sm"
 								onClick={() => onDelete(property._id)}
-								className="text-red-600 border-red-300 hover:bg-red-50"
+								className="text-red-600 border-red-300 hover:bg-red-50 flex-1 sm:flex-initial"
 							>
 								{Components.UI.BUTTON_TEXT.delete}
 							</Button>

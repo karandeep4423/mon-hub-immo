@@ -26,15 +26,15 @@ export const ContactCard: React.FC<ContactCardProps> = ({
 	const isAgent = user?.userType === 'agent';
 
 	return (
-		<div className="bg-gradient-to-br from-brand-50 to-brand-100 p-6 rounded-xl shadow-md border-2 border-brand-200">
-			<div className="flex items-center gap-3 mb-5">
+		<div className="bg-gradient-to-br from-brand-50 to-brand-100 p-5 rounded-xl shadow-md border-2 border-brand-200">
+			<div className="flex items-center gap-3 mb-4">
 				<div className="w-10 h-10 bg-gradient-to-br from-brand to-brand-600 rounded-xl flex items-center justify-center shadow-md">
 					<span className="text-xl">💬</span>
 				</div>
 				<h3 className="text-lg font-bold text-gray-900">Contact</h3>
 			</div>
 
-			<div className="flex items-center gap-3.5 mb-5 bg-white p-3.5 rounded-xl shadow-sm">
+			<div className="flex items-center gap-3 mb-4 bg-white p-3 rounded-xl shadow-sm">
 				<ProfileAvatar
 					user={searchAd.authorId}
 					size="lg"
@@ -55,7 +55,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({
 
 			<div>
 				{isOwner ? (
-					<div className="w-full p-3 rounded-md border bg-gray-50 text-gray-700 text-sm flex items-center justify-center mb-4">
+					<div className="w-full p-3 rounded-lg border bg-gray-50 text-gray-700 text-sm flex items-center justify-center mb-3">
 						<span className="mr-2">🚫</span>
 						Vous êtes le propriétaire de cette page, vous ne pouvez
 						pas proposer une collaboration.
@@ -64,7 +64,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({
 					<>
 						<button
 							onClick={onContact}
-							className="w-full px-4 py-3.5 bg-gradient-to-r from-brand to-brand-600 hover:from-brand-600 hover:to-brand-700 text-white rounded-xl transition-all duration-200 font-semibold flex items-center justify-center gap-2.5 mb-4 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm"
+							className="w-full px-4 py-3 bg-brand hover:bg-brand-600 text-white rounded-lg transition-all duration-200 font-semibold flex items-center justify-center gap-2 mb-3 shadow-md hover:shadow-lg text-sm"
 						>
 							<svg
 								className="w-4 h-4"
@@ -83,14 +83,14 @@ export const ContactCard: React.FC<ContactCardProps> = ({
 						</button>
 
 						{hasBlockingCollab ? (
-							<div className="w-full p-3 rounded-md border bg-brand-50 text-brand-800 text-sm flex items-center justify-center mb-4">
+							<div className="w-full p-3 rounded-lg border bg-blue-50 border-blue-200 text-blue-800 text-sm flex items-center justify-center mb-3">
 								<span className="mr-2">ℹ️</span>
-								{`Annonce déjà en collaboration (${blockingStatus ? Features.Collaboration.COLLABORATION_STATUS_CONFIG[blockingStatus]?.label || blockingStatus : ''})`}
+								{`Annonce déjà en collaboration (${blockingStatus ? Features.Collaboration.COLLABORATION_STATUS_CONFIG[blockingStatus]?.label || blockingStatus : 'En attente'})`}
 							</div>
 						) : isAgent ? (
 							<button
 								onClick={onCollaborate}
-								className="w-full px-4 py-3.5 rounded-xl transition-all duration-200 font-semibold flex items-center justify-center gap-2.5 mb-4 text-sm bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+								className="w-full px-4 py-3 rounded-lg transition-all duration-200 font-semibold flex items-center justify-center gap-2 mb-3 text-sm bg-purple-600 hover:bg-purple-700 text-white shadow-md hover:shadow-lg"
 							>
 								<svg
 									className="w-4 h-4"
@@ -108,7 +108,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({
 								<span>Proposer une collaboration</span>
 							</button>
 						) : (
-							<div className="w-full p-3 rounded-md border bg-amber-50 text-amber-800 text-sm flex items-center justify-center mb-4">
+							<div className="w-full p-3 rounded-lg border bg-amber-50 border-amber-200 text-amber-800 text-sm flex items-center justify-center mb-3">
 								<span className="mr-2">🚫</span>
 								Seuls les agents peuvent proposer des
 								collaborations
@@ -118,8 +118,8 @@ export const ContactCard: React.FC<ContactCardProps> = ({
 				)}
 			</div>
 
-			<div className="bg-white p-3.5 rounded-xl">
-				<h4 className="font-bold text-gray-900 mb-2.5 flex items-center gap-2 text-sm">
+			<div className="bg-white p-3 rounded-xl">
+				<h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2 text-sm">
 					<span>📤</span>
 					<span>Partager cette annonce</span>
 				</h4>
@@ -132,7 +132,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({
 								'Lien copié dans le presse-papiers!',
 						})
 					}
-					className="w-full px-3.5 py-2.5 bg-white border-2 border-gray-300 hover:border-brand hover:bg-brand-50 text-gray-700 hover:text-brand-700 rounded-lg transition-all duration-200 font-semibold flex items-center justify-center gap-2 group text-xs"
+					className="w-full px-3 py-2.5 bg-white border-2 border-gray-300 hover:border-brand hover:bg-brand-50 text-gray-700 hover:text-brand-700 rounded-lg transition-all duration-200 font-semibold flex items-center justify-center gap-2 group text-sm"
 				>
 					<svg
 						className="w-4 h-4 group-hover:rotate-12 transition-transform duration-200"
