@@ -4,6 +4,28 @@ import { CreateSearchAdPayload } from '@/types/createSearchAd';
 import { handleApiError } from '../utils/errorHandler';
 
 /**
+ * Search Ad filters for filtering operations
+ *
+ * @interface SearchAdFilters
+ * @property {string} [search] - Text search query (title, description, cities)
+ * @property {string} [propertyType] - Filter by property type
+ * @property {string} [city] - Filter by city (comma-separated for multiple)
+ * @property {string} [postalCode] - Filter by postal code (comma-separated for multiple)
+ * @property {string} [authorType] - Filter by author type (agent or apporteur)
+ * @property {number} [minBudget] - Minimum budget filter
+ * @property {number} [maxBudget] - Maximum budget filter
+ */
+export interface SearchAdFilters {
+	search?: string;
+	propertyType?: string;
+	city?: string;
+	postalCode?: string;
+	authorType?: string;
+	minBudget?: number;
+	maxBudget?: number;
+}
+
+/**
  * SearchAd API Service
  * Centralized API operations for search advertisements
  *
@@ -201,11 +223,43 @@ export class SearchAdApi {
 	}
 
 	/**
-	 * Get all search ads for home page
+	 * Get all search ads with optional filters
+	 *
+	 * @static
+	 * @async
+	 * @param {SearchAdFilters} [filters] - Optional filters to apply
+	 * @returns {Promise<SearchAd[]>} Array of filtered search ads
+	 * @throws {Error} If the API request fails
+	 *
+	 * @example
+	 * ```typescript
+	 * // Get all search ads
+	 * const allAds = await SearchAdApi.getAllSearchAds();
+	 *
+	 * // Get filtered search ads
+	 * const filtered = await SearchAdApi.getAllSearchAds({
+	 *   propertyType: 'Appartement',
+	 *   authorType: 'agent',
+	 *   minBudget: 200000,
+	 *   maxBudget: 500000
+	 * });
+	 * ```
 	 */
-	static async getAllSearchAds(): Promise<SearchAd[]> {
+	static async getAllSearchAds(
+		filters?: SearchAdFilters,
+	): Promise<SearchAd[]> {
 		try {
-			const { data } = await api.get('/search-ads');
+			const params = new URLSearchParams();
+
+			if (filters) {
+				Object.entries(filters).forEach(([key, value]) => {
+					if (value !== undefined && value !== null && value !== '') {
+						params.append(key, value.toString());
+					}
+				});
+			}
+
+			const { data } = await api.get(`/search-ads?${params.toString()}`);
 			return data.data;
 		} catch (error) {
 			throw handleApiError(

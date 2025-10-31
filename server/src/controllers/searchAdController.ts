@@ -40,9 +40,53 @@ export const getAllSearchAds = async (
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const filter: any = { status: 'active' };
 
-		// Add location filtering support (cities or postal codes)
-		const { city, postalCode } = req.query;
+		// Extract all filter parameters
+		const {
+			city,
+			postalCode,
+			propertyType,
+			authorType,
+			search,
+			minBudget,
+			maxBudget,
+		} = req.query;
 
+		// Filter by author type (profile filter: agent or apporteur)
+		if (authorType) {
+			filter.authorType = authorType;
+		}
+
+		// Filter by property types
+		if (propertyType) {
+			// Map from Property types to SearchAd types
+			const typeMapping: Record<string, string[]> = {
+				Appartement: ['apartment'],
+				Maison: ['house'],
+				Terrain: ['land'],
+				'Local commercial': ['commercial'],
+				Bureaux: ['building', 'commercial'],
+				Parking: ['parking', 'garage'],
+				Autre: ['other'],
+			};
+			const mappedTypes = typeMapping[propertyType as string] || [
+				propertyType,
+			];
+			filter.propertyTypes = {
+				$in: mappedTypes.map((t) => new RegExp(`^${t}$`, 'i')),
+			};
+		}
+
+		// Text search across title, description, and cities
+		if (search) {
+			const searchRegex = new RegExp(search as string, 'i');
+			filter.$or = [
+				{ title: searchRegex },
+				{ description: searchRegex },
+				{ 'location.cities': searchRegex },
+			];
+		}
+
+		// Location filtering by cities
 		if (city) {
 			// Support comma-separated cities
 			const cities = (city as string).split(',').map((c) => c.trim());
@@ -51,12 +95,24 @@ export const getAllSearchAds = async (
 			};
 		}
 
+		// Location filtering by postal codes
 		if (postalCode) {
 			// Support comma-separated postal codes
 			const postalCodes = (postalCode as string)
 				.split(',')
 				.map((pc) => pc.trim());
 			filter['location.postalCodes'] = { $in: postalCodes };
+		}
+
+		// Budget filtering (compare against budget.max)
+		if (minBudget || maxBudget) {
+			filter['budget.max'] = {};
+			if (minBudget) {
+				filter['budget.max'].$gte = Number(minBudget);
+			}
+			if (maxBudget) {
+				filter['budget.max'].$lte = Number(maxBudget);
+			}
 		}
 
 		const searchAds = await SearchAd.find(filter)

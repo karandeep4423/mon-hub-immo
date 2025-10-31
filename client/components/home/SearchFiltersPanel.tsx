@@ -1,5 +1,12 @@
+import React from 'react';
 import { LocationSearchWithRadius } from '@/components/ui';
 import type { LocationItem } from '@/components/ui/LocationSearchWithRadius';
+import {
+	validatePriceInput,
+	validateSurfaceInput,
+} from '@/lib/utils/filterValidation';
+import { FILTER_DEFAULTS, PROPERTY_TYPES } from '@/lib/constants/filters';
+import type { PriceRange, SurfaceRange } from '@/types/filters';
 
 type ContentFilter =
 	| 'all'
@@ -21,10 +28,10 @@ interface SearchFiltersPanelProps {
 	onTypeFilterChange: (type: string) => void;
 	profileFilter: string;
 	onProfileFilterChange: (profile: string) => void;
-	priceFilter: { min: number; max: number };
-	onPriceFilterChange: (filter: { min: number; max: number }) => void;
-	surfaceFilter: { min: number; max: number };
-	onSurfaceFilterChange: (filter: { min: number; max: number }) => void;
+	priceFilter: PriceRange;
+	onPriceFilterChange: (filter: PriceRange) => void;
+	surfaceFilter: SurfaceRange;
+	onSurfaceFilterChange: (filter: SurfaceRange) => void;
 	filteredPropertiesCount: number;
 	filteredSearchAdsCount: number;
 	isAuthenticated: boolean;
@@ -34,7 +41,7 @@ interface SearchFiltersPanelProps {
 	favoriteSearchAdIds: Set<string>;
 }
 
-export const SearchFiltersPanel = ({
+const SearchFiltersPanelComponent = ({
 	searchTerm,
 	onSearchTermChange,
 	selectedLocations,
@@ -142,104 +149,146 @@ export const SearchFiltersPanel = ({
 				)}
 			</div>
 
-			{/* Property-specific Filters */}
-			{(contentFilter === 'all' ||
-				contentFilter === 'properties' ||
-				contentFilter === 'favorites') && (
-				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-					<select
-						value={typeFilter}
-						onChange={(e) => onTypeFilterChange(e.target.value)}
-						className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-					>
-						<option value="">Type de bien</option>
-						<option value="Appartement">Appartement</option>
-						<option value="Maison">Maison</option>
-						<option value="Terrain">Terrain</option>
-						<option value="Local commercial">
-							Local commercial
+			{/* Filters - Always visible for all content types */}
+			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+				<select
+					value={typeFilter}
+					onChange={(e) => onTypeFilterChange(e.target.value)}
+					className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+				>
+					<option value="">Type de bien</option>
+					{PROPERTY_TYPES.map((type) => (
+						<option key={type} value={type}>
+							{type}
 						</option>
-						<option value="Bureaux">Bureaux</option>
-						<option value="Parking">Parking</option>
-						<option value="Autre">Autre</option>
-					</select>
+					))}
+				</select>
 
-					<select
-						value={profileFilter}
-						onChange={(e) => onProfileFilterChange(e.target.value)}
+				<select
+					value={profileFilter}
+					onChange={(e) => onProfileFilterChange(e.target.value)}
+					className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+				>
+					<option value="">Tous les profils</option>
+					<option value="agent">Agent</option>
+					<option value="apporteur">Apporteur</option>
+				</select>
+
+				<div className="flex items-center gap-2">
+					<input
+						type="number"
+						placeholder="Prix min"
+						value={priceFilter.min === 0 ? '' : priceFilter.min}
+						onChange={(e) => {
+							const validated = validatePriceInput(
+								e.target.value,
+								'min',
+								priceFilter,
+							);
+							onPriceFilterChange(validated);
+						}}
 						className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-					>
-						<option value="">Tous les profils</option>
-						<option value="agent">Agent</option>
-						<option value="apporteur">Apporteur</option>
-					</select>
-
-					<div className="flex items-center gap-2">
-						<input
-							type="number"
-							placeholder="Prix min"
-							value={priceFilter.min || ''}
-							onChange={(e) =>
-								onPriceFilterChange({
-									...priceFilter,
-									min: parseInt(e.target.value) || 0,
-								})
-							}
-							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-						/>
-						<span className="text-gray-500">-</span>
-						<input
-							type="number"
-							placeholder="Prix max"
-							value={
-								priceFilter.max === 10000000
-									? ''
-									: priceFilter.max
-							}
-							onChange={(e) =>
-								onPriceFilterChange({
-									...priceFilter,
-									max: parseInt(e.target.value) || 10000000,
-								})
-							}
-							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-						/>
-					</div>
-
-					{/* Surface habitable */}
-					<div className="flex items-center gap-2">
-						<input
-							type="number"
-							placeholder="Surface min (m²)"
-							value={surfaceFilter.min || ''}
-							onChange={(e) =>
-								onSurfaceFilterChange({
-									...surfaceFilter,
-									min: parseInt(e.target.value) || 0,
-								})
-							}
-							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-						/>
-						<span className="text-gray-500">-</span>
-						<input
-							type="number"
-							placeholder="Surface max (m²)"
-							value={
-								surfaceFilter.max === 100000
-									? ''
-									: surfaceFilter.max
-							}
-							onChange={(e) =>
-								onSurfaceFilterChange({
-									...surfaceFilter,
-									max: parseInt(e.target.value) || 100000,
-								})
-							}
-							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-						/>
-					</div>
+					/>
+					<span className="text-gray-500">-</span>
+					<input
+						type="number"
+						placeholder="Prix max"
+						value={
+							priceFilter.max === FILTER_DEFAULTS.PRICE_MAX
+								? ''
+								: priceFilter.max
+						}
+						onChange={(e) => {
+							const validated = validatePriceInput(
+								e.target.value,
+								'max',
+								priceFilter,
+							);
+							onPriceFilterChange(validated);
+						}}
+						className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+					/>
 				</div>
-			)}
+
+				{/* Surface habitable */}
+				<div className="flex items-center gap-2">
+					<input
+						type="number"
+						placeholder="Surface min (m²)"
+						value={surfaceFilter.min === 0 ? '' : surfaceFilter.min}
+						onChange={(e) => {
+							const validated = validateSurfaceInput(
+								e.target.value,
+								'min',
+								surfaceFilter,
+							);
+							onSurfaceFilterChange(validated);
+						}}
+						className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+					/>
+					<span className="text-gray-500">-</span>
+					<input
+						type="number"
+						placeholder="Surface max (m²)"
+						value={
+							surfaceFilter.max === FILTER_DEFAULTS.SURFACE_MAX
+								? ''
+								: surfaceFilter.max
+						}
+						onChange={(e) => {
+							const validated = validateSurfaceInput(
+								e.target.value,
+								'max',
+								surfaceFilter,
+							);
+							onSurfaceFilterChange(validated);
+						}}
+						className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+					/>
+				</div>
+			</div>
 		</div>
 	);
 };
+
+/**
+ * Memoized SearchFiltersPanel to prevent unnecessary re-renders
+ * Only re-renders when props actually change
+ */
+export const SearchFiltersPanel = React.memo(
+	SearchFiltersPanelComponent,
+	(prevProps, nextProps) => {
+		// Custom comparison for better performance
+		// Return true if props are equal (skip render), false if different (re-render)
+		return (
+			prevProps.searchTerm === nextProps.searchTerm &&
+			prevProps.typeFilter === nextProps.typeFilter &&
+			prevProps.radiusKm === nextProps.radiusKm &&
+			prevProps.profileFilter === nextProps.profileFilter &&
+			prevProps.contentFilter === nextProps.contentFilter &&
+			prevProps.priceFilter.min === nextProps.priceFilter.min &&
+			prevProps.priceFilter.max === nextProps.priceFilter.max &&
+			prevProps.surfaceFilter.min === nextProps.surfaceFilter.min &&
+			prevProps.surfaceFilter.max === nextProps.surfaceFilter.max &&
+			prevProps.filteredPropertiesCount ===
+				nextProps.filteredPropertiesCount &&
+			prevProps.filteredSearchAdsCount ===
+				nextProps.filteredSearchAdsCount &&
+			prevProps.isAuthenticated === nextProps.isAuthenticated &&
+			prevProps.hasMyArea === nextProps.hasMyArea &&
+			prevProps.myAreaLocationsCount === nextProps.myAreaLocationsCount &&
+			prevProps.favoritePropertyIds.size ===
+				nextProps.favoritePropertyIds.size &&
+			prevProps.favoriteSearchAdIds.size ===
+				nextProps.favoriteSearchAdIds.size &&
+			prevProps.selectedLocations.length ===
+				nextProps.selectedLocations.length &&
+			prevProps.selectedLocations.every(
+				(loc, idx) =>
+					loc.value === nextProps.selectedLocations[idx]?.value,
+			)
+		);
+	},
+);
+
+SearchFiltersPanel.displayName = 'SearchFiltersPanel';

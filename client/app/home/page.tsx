@@ -2,12 +2,16 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Property, PropertyFilters } from '@/lib/api/propertyApi';
-import { SearchAd } from '@/types/searchAd';
+import { SearchAdFilters } from '@/lib/api/searchAdApi';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { useAuth } from '@/hooks/useAuth';
 import { useProperties } from '@/hooks/useProperties';
 import { useSearchAds } from '@/hooks/useSearchAds';
-import { GeolocationPrompt } from '@/components/ui';
+import {
+	GeolocationPrompt,
+	ErrorBoundary,
+	FilterErrorFallback,
+} from '@/components/ui';
 import type { LocationItem } from '@/components/ui/LocationSearchWithRadius';
 import { authService } from '@/lib/api/authApi';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
@@ -32,13 +36,13 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { Features } from '@/lib/constants';
 import { usePageState } from '@/hooks/usePageState';
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
-
-type ContentFilter =
-	| 'all'
-	| 'myArea'
-	| 'properties'
-	| 'searchAds'
-	| 'favorites';
+import { FILTER_DEFAULTS } from '@/lib/constants/filters';
+import type {
+	ContentFilter,
+	PriceRange,
+	SurfaceRange,
+	RestorationState,
+} from '@/types/filters';
 
 export default function Home() {
 	const { user, refreshUser } = useAuth();
@@ -49,10 +53,16 @@ export default function Home() {
 	const [selectedLocations, setSelectedLocations] = useState<LocationItem[]>(
 		[],
 	);
-	const [radiusKm, setRadiusKm] = useState(50); // Default 50km
+	const [radiusKm, setRadiusKm] = useState<number>(FILTER_DEFAULTS.RADIUS_KM);
 	const [profileFilter, setProfileFilter] = useState('');
-	const [priceFilter, setPriceFilter] = useState({ min: 0, max: 10000000 });
-	const [surfaceFilter, setSurfaceFilter] = useState({ min: 0, max: 100000 });
+	const [priceFilter, setPriceFilter] = useState<PriceRange>({
+		min: FILTER_DEFAULTS.PRICE_MIN,
+		max: FILTER_DEFAULTS.PRICE_MAX,
+	});
+	const [surfaceFilter, setSurfaceFilter] = useState<SurfaceRange>({
+		min: FILTER_DEFAULTS.SURFACE_MIN,
+		max: FILTER_DEFAULTS.SURFACE_MAX,
+	});
 	const [contentFilter, setContentFilter] = useState<ContentFilter>('all');
 	const [propPage, setPropPage] = useState(1);
 	const [adPage, setAdPage] = useState(1);
@@ -62,11 +72,14 @@ export default function Home() {
 	);
 	const [myAreaLocations, setMyAreaLocations] = useState<LocationItem[]>([]);
 	const [isInitialLoad, setIsInitialLoad] = useState(true);
-	const restorationCompleteRef = useRef(false);
-	const restorationInProgressRef = useRef(false);
-	const skipNextFilterResetRef = useRef(true);
-	const lastFiltersSignatureRef = useRef<string | null>(null);
-	const restorationCompleteAtRef = useRef<number | null>(null);
+
+	// Simplified restoration state management
+	const restorationStateRef = useRef<RestorationState>({
+		status: 'pending',
+		completedAt: null,
+		skipNextReset: true,
+		lastFiltersSignature: null,
+	});
 
 	// Persist filters and dual pagination for Home; restore window scroll
 	const {
@@ -87,7 +100,7 @@ export default function Home() {
 				contentFilter,
 				propPage,
 				adPage,
-			} as unknown as Record<string, unknown>,
+			},
 		}),
 	});
 
@@ -96,16 +109,6 @@ export default function Home() {
 		searchTerm,
 		Features.Common.DEBOUNCE.SEARCH,
 	);
-
-	const PAGE_SIZE = 6;
-	// Normalize city names for robust comparisons (remove accents, trim, lowercase)
-	const normalizeCity = (value: string): string =>
-		value
-			.normalize('NFD')
-			.replace(/[\u0300-\u036f]/g, '')
-			.replace(/\s+/g, ' ')
-			.trim()
-			.toLowerCase();
 
 	const isAuthenticated = !!user;
 
@@ -139,12 +142,12 @@ export default function Home() {
 
 		if (!filters) {
 			// No saved state, mark restoration as complete to allow normal operation
-			restorationCompleteRef.current = true;
+			restorationStateRef.current.status = 'complete';
 			return;
 		}
 
 		// Mark that restoration is in progress to block reset effects
-		restorationInProgressRef.current = true;
+		restorationStateRef.current.status = 'in-progress';
 
 		if (typeof filters.searchTerm === 'string')
 			setSearchTerm(filters.searchTerm);
@@ -179,13 +182,12 @@ export default function Home() {
 
 	// Mark restoration complete AFTER all state updates have been processed
 	useEffect(() => {
-		if (restorationInProgressRef.current) {
+		if (restorationStateRef.current.status === 'in-progress') {
 			logger.debug(
 				'[Home] Restoration complete - enabling normal operations',
 			);
-			restorationInProgressRef.current = false;
-			restorationCompleteRef.current = true;
-			restorationCompleteAtRef.current = Date.now();
+			restorationStateRef.current.status = 'complete';
+			restorationStateRef.current.completedAt = Date.now();
 		}
 	}, [propPage, adPage, contentFilter]);
 
@@ -201,212 +203,6 @@ export default function Home() {
 				logger.error('Error saving radius preference:', error);
 			}
 		}
-	};
-
-	// Mapping function for property types between properties and search ads
-	const mapPropertyType = (propertyType: string): string[] => {
-		const typeMapping: Record<string, string[]> = {
-			Appartement: ['apartment'],
-			Maison: ['house'],
-			Terrain: ['land'],
-			'Local commercial': ['commercial'],
-			Bureaux: ['building', 'commercial'],
-			Parking: ['parking', 'garage'],
-			Autre: ['other'],
-		};
-		return typeMapping[propertyType] || [];
-	};
-
-	// Helper function to filter search ads based on current filters
-	const filterSearchAds = (searchAds: SearchAd[]): SearchAd[] => {
-		return searchAds.filter((searchAd) => {
-			// Filter by status (only active)
-			if (searchAd.status !== 'active') return false;
-
-			// Filter by profile (user type)
-			if (profileFilter && searchAd.authorType !== profileFilter) {
-				return false;
-			}
-
-			// Filter by property type
-			if (typeFilter) {
-				const mappedTypes = mapPropertyType(typeFilter);
-				const hasMatchingType = searchAd.propertyTypes.some((type) =>
-					mappedTypes.includes(type),
-				);
-				if (!hasMatchingType) return false;
-			}
-
-			// Filter by search term (search in title, description, and cities)
-			if (searchTerm) {
-				const searchLower = searchTerm.toLowerCase();
-				const matchesTitle = searchAd.title
-					.toLowerCase()
-					.includes(searchLower);
-				const matchesDescription =
-					searchAd.description?.toLowerCase().includes(searchLower) ||
-					false;
-				const matchesCities = searchAd.location.cities.some((city) =>
-					city.toLowerCase().includes(searchLower),
-				);
-				if (!matchesTitle && !matchesDescription && !matchesCities)
-					return false;
-			}
-
-			// Filter by "Mon secteur" if active
-			if (contentFilter === 'myArea' && myAreaLocations.length > 0) {
-				const myAreaCities = myAreaLocations.map((loc) =>
-					normalizeCity(loc.name),
-				);
-				const myAreaPostalCodes = myAreaLocations.map((loc) =>
-					String(loc.postcode).trim(),
-				);
-
-				// Try matching by postal codes first, then by city names
-				const matchesByPostalCode =
-					searchAd.location.postalCodes &&
-					searchAd.location.postalCodes.length > 0 &&
-					searchAd.location.postalCodes.some((pc) =>
-						myAreaPostalCodes.includes(String(pc).trim()),
-					);
-
-				const matchesByCity =
-					searchAd.location.cities &&
-					searchAd.location.cities.length > 0 &&
-					searchAd.location.cities.some((city) => {
-						const norm = normalizeCity(city);
-						return (
-							myAreaCities.includes(norm) ||
-							myAreaCities.some((c) => norm.includes(c))
-						);
-					});
-
-				const matchesMyArea = matchesByPostalCode || matchesByCity;
-				if (!matchesMyArea) return false;
-			} // Filter by selected locations (cities or postal codes)
-			if (selectedLocations.length > 0 && contentFilter !== 'myArea') {
-				// Filter by cities and postal codes with radius
-				const cities = selectedLocations.map((loc) =>
-					loc.name.toLowerCase(),
-				);
-				const postalCodes = selectedLocations.map(
-					(loc) => loc.postcode,
-				);
-
-				const matchesCity =
-					cities.length === 0 ||
-					searchAd.location.cities.some((city) =>
-						cities.some((filterCity) =>
-							city.toLowerCase().includes(filterCity),
-						),
-					);
-
-				const matchesPostalCode =
-					postalCodes.length === 0 ||
-					(searchAd.location.postalCodes &&
-						searchAd.location.postalCodes.some((pc) =>
-							postalCodes.includes(pc),
-						));
-
-				if (!matchesCity && !matchesPostalCode) return false;
-			} // Filter by price range (budget max should be within range)
-			if (priceFilter.min > 0 && searchAd.budget.max < priceFilter.min)
-				return false;
-			if (
-				priceFilter.max < 10000000 &&
-				searchAd.budget.max > priceFilter.max
-			)
-				return false;
-
-			return true;
-		});
-	};
-
-	// Helper function to filter properties based on current filters
-	const filterProperties = (properties: Property[]): Property[] => {
-		logger.debug('[Home] filterProperties called:', {
-			totalProperties: properties.length,
-			contentFilter,
-			profileFilter,
-			selectedLocationsCount: selectedLocations.length,
-			myAreaLocationsCount: myAreaLocations.length,
-		});
-
-		const filtered = properties.filter((property) => {
-			// Filter by profile (user type)
-			if (profileFilter && property.owner.userType !== profileFilter) {
-				return false;
-			}
-
-			// Filter by "Mon secteur" if active
-			if (contentFilter === 'myArea' && myAreaLocations.length > 0) {
-				const myAreaPostalCodes = myAreaLocations.map((loc) =>
-					String(loc.postcode).trim(),
-				);
-				const myAreaCities = myAreaLocations.map((loc) =>
-					loc.name.toLowerCase(),
-				);
-				const propertyPostal = property.postalCode
-					? String(property.postalCode).trim()
-					: '';
-				const propertyCity = property.city
-					? normalizeCity(property.city)
-					: '';
-
-				const matchesByPostal =
-					propertyPostal.length > 0 &&
-					myAreaPostalCodes.includes(propertyPostal);
-				const matchesByCity =
-					propertyCity.length > 0 &&
-					(myAreaCities.includes(propertyCity) ||
-						myAreaCities.some((c) => propertyCity.includes(c)));
-
-				if (!(matchesByPostal || matchesByCity)) {
-					return false;
-				}
-			}
-
-			// Filter by selected locations (when not in "Mon secteur" mode)
-			if (selectedLocations.length > 0 && contentFilter !== 'myArea') {
-				const selectedCities = selectedLocations.map((loc) =>
-					loc.name.toLowerCase(),
-				);
-				const selectedPostalCodes = selectedLocations.map(
-					(loc) => loc.postcode,
-				);
-
-				const propertyPostal = property.postalCode
-					? String(property.postalCode).trim()
-					: '';
-				const propertyCity = property.city
-					? normalizeCity(property.city)
-					: '';
-
-				const matchesByPostal =
-					selectedPostalCodes.length > 0 &&
-					propertyPostal.length > 0 &&
-					selectedPostalCodes.includes(propertyPostal);
-
-				const matchesByCity =
-					selectedCities.length > 0 &&
-					propertyCity.length > 0 &&
-					selectedCities.some((filterCity) =>
-						propertyCity.includes(filterCity),
-					);
-
-				if (!matchesByPostal && !matchesByCity) {
-					return false;
-				}
-			}
-
-			return true;
-		});
-
-		logger.debug('[Home] filterProperties result:', {
-			filteredCount: filtered.length,
-		});
-
-		return filtered;
 	};
 
 	// Reset to 'all' if favorites is selected but user is not authenticated
@@ -586,27 +382,70 @@ export default function Home() {
 		if (debouncedSearchTerm) filters.search = debouncedSearchTerm;
 		if (typeFilter) filters.propertyType = typeFilter;
 
-		// Add location filters (postal codes) - but NOT when in "Mon secteur" mode
-		// "Mon secteur" uses client-side filtering with myAreaLocations
-		if (selectedLocations.length > 0 && contentFilter !== 'myArea') {
-			const postalCodes = selectedLocations.map((loc) => loc.postcode);
+		// Add location filters - use myArea locations when in "Mon secteur" mode
+		const locationsToFilter =
+			contentFilter === 'myArea' && myAreaLocations.length > 0
+				? myAreaLocations
+				: selectedLocations;
+
+		if (locationsToFilter.length > 0) {
+			const postalCodes = locationsToFilter.map((loc) => loc.postcode);
 			if (postalCodes.length > 0) {
 				filters.postalCode = postalCodes.join(',');
 			}
 		}
+
 		if (priceFilter.min > 0) filters.minPrice = priceFilter.min;
-		if (priceFilter.max < 10000000) filters.maxPrice = priceFilter.max;
+		if (priceFilter.max < FILTER_DEFAULTS.PRICE_MAX)
+			filters.maxPrice = priceFilter.max;
 		if (surfaceFilter.min > 0) filters.minSurface = surfaceFilter.min;
-		if (surfaceFilter.max < 100000) filters.maxSurface = surfaceFilter.max;
+		if (surfaceFilter.max < FILTER_DEFAULTS.SURFACE_MAX)
+			filters.maxSurface = surfaceFilter.max;
 
 		return filters;
 	}, [
 		debouncedSearchTerm,
 		typeFilter,
 		selectedLocations,
+		myAreaLocations,
 		contentFilter,
 		priceFilter,
 		surfaceFilter,
+	]);
+
+	// Build search ad filters based on current state
+	const searchAdFilters = useMemo((): SearchAdFilters => {
+		const filters: SearchAdFilters = {};
+		if (debouncedSearchTerm) filters.search = debouncedSearchTerm;
+		if (typeFilter) filters.propertyType = typeFilter;
+		if (profileFilter) filters.authorType = profileFilter;
+
+		// Add location filters - use myArea locations when in "Mon secteur" mode
+		const locationsToFilter =
+			contentFilter === 'myArea' && myAreaLocations.length > 0
+				? myAreaLocations
+				: selectedLocations;
+
+		if (locationsToFilter.length > 0) {
+			const postalCodes = locationsToFilter.map((loc) => loc.postcode);
+			if (postalCodes.length > 0) {
+				filters.postalCode = postalCodes.join(',');
+			}
+		}
+
+		if (priceFilter.min > 0) filters.minBudget = priceFilter.min;
+		if (priceFilter.max < FILTER_DEFAULTS.PRICE_MAX)
+			filters.maxBudget = priceFilter.max;
+
+		return filters;
+	}, [
+		debouncedSearchTerm,
+		typeFilter,
+		profileFilter,
+		selectedLocations,
+		myAreaLocations,
+		contentFilter,
+		priceFilter,
 	]);
 
 	// Fetch properties using SWR
@@ -617,12 +456,13 @@ export default function Home() {
 	} = useProperties(propertyFilters);
 	const properties: Property[] = swrProperties || [];
 
-	// Fetch search ads using SWR
+	// Fetch search ads using SWR with server-side filtering
 	const {
-		data: searchAds = [],
+		data: swrSearchAds = [],
 		isLoading: loadingSearchAds,
 		error: searchAdsError,
-	} = useSearchAds();
+	} = useSearchAds(searchAdFilters);
+	const searchAds = swrSearchAds || [];
 
 	// Combined loading and error states
 	const loading = loadingProperties || loadingSearchAds;
@@ -631,7 +471,8 @@ export default function Home() {
 	// Restore scroll only after data and restored state are settled
 	useScrollRestoration({
 		key: pageKey,
-		ready: () => restorationCompleteRef.current && !loading,
+		ready: () =>
+			restorationStateRef.current.status === 'complete' && !loading,
 		debug: true,
 	});
 
@@ -665,16 +506,16 @@ export default function Home() {
 
 	// Reset pagination when filters/content change, but skip restoration-driven updates
 	useEffect(() => {
-		if (!restorationCompleteRef.current) {
+		if (restorationStateRef.current.status !== 'complete') {
 			logger.debug(
 				'[Home] Skipping pagination reset - restoration not complete',
 			);
 			return;
 		}
 
-		if (skipNextFilterResetRef.current) {
-			skipNextFilterResetRef.current = false;
-			lastFiltersSignatureRef.current = filtersSignature;
+		if (restorationStateRef.current.skipNextReset) {
+			restorationStateRef.current.skipNextReset = false;
+			restorationStateRef.current.lastFiltersSignature = filtersSignature;
 			logger.debug(
 				'[Home] Skipping pagination reset - flagged to skip once',
 				{ filtersSignature },
@@ -684,22 +525,30 @@ export default function Home() {
 
 		// Short cooldown after restoration to allow dependent effects to settle
 		if (
-			restorationCompleteAtRef.current &&
-			Date.now() - restorationCompleteAtRef.current < 800
+			restorationStateRef.current.completedAt &&
+			Date.now() - restorationStateRef.current.completedAt <
+				FILTER_DEFAULTS.RESTORATION_COOLDOWN_MS
 		) {
-			if (lastFiltersSignatureRef.current !== filtersSignature) {
-				lastFiltersSignatureRef.current = filtersSignature;
+			if (
+				restorationStateRef.current.lastFiltersSignature !==
+				filtersSignature
+			) {
+				restorationStateRef.current.lastFiltersSignature =
+					filtersSignature;
 			}
 			logger.debug('[Home] Skipping pagination reset during cooldown');
 			return;
 		}
 
-		if (lastFiltersSignatureRef.current === filtersSignature) {
+		if (
+			restorationStateRef.current.lastFiltersSignature ===
+			filtersSignature
+		) {
 			logger.debug('[Home] Filters unchanged; no pagination reset');
 			return;
 		}
 
-		lastFiltersSignatureRef.current = filtersSignature;
+		restorationStateRef.current.lastFiltersSignature = filtersSignature;
 		logger.debug('[Home] Resetting pagination due to filter change');
 		// Reset only the relevant pagination for current contentFilter
 		if (contentFilter === 'properties') {
@@ -710,12 +559,12 @@ export default function Home() {
 			setPropPage(1);
 			setAdPage(1);
 		}
-		save({ filters: filtersForSave as unknown as Record<string, unknown> });
+		save({ filters: filtersForSave });
 	}, [filtersForSave, filtersSignature, save, contentFilter]);
 
 	// Persist page changes
 	useEffect(() => {
-		if (!restorationCompleteRef.current) {
+		if (restorationStateRef.current.status !== 'complete') {
 			logger.debug(
 				'[Home] Skipping pagination save - restoration not complete',
 			);
@@ -723,14 +572,24 @@ export default function Home() {
 		}
 		logger.debug('[Home] Saving pagination:', { propPage, adPage });
 		save({
-			filters: { propPage, adPage } as unknown as Record<string, unknown>,
+			filters: { propPage, adPage },
 		});
 	}, [propPage, adPage, save]);
 
-	// Count filtered items for display (respect current contentFilter including 'myArea')
-	const filteredSearchAdsCount = filterSearchAds(searchAds).length;
-	const filteredProperties = filterProperties(properties);
+	// Server-side filtering now handles all cases including "Mon secteur"
+	// Filter favorites client-side only
+	const filteredProperties =
+		contentFilter === 'favorites'
+			? properties.filter((prop) => favoritePropertyIds.has(prop._id))
+			: properties;
+
+	const filteredSearchAds =
+		contentFilter === 'favorites'
+			? searchAds.filter((ad) => favoriteSearchAdIds.has(ad._id))
+			: searchAds;
+
 	const filteredPropertiesCount = filteredProperties.length;
+	const filteredSearchAdsCount = filteredSearchAds.length;
 
 	return (
 		<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -749,34 +608,37 @@ export default function Home() {
 				filteredSearchAdsCount={filteredSearchAdsCount}
 			/>
 
-			{/* Unified Search and Filters */}
-			<SearchFiltersPanel
-				searchTerm={searchTerm}
-				onSearchTermChange={setSearchTerm}
-				selectedLocations={selectedLocations}
-				onLocationsChange={setSelectedLocations}
-				radiusKm={radiusKm}
-				onRadiusChange={handleRadiusChange}
-				contentFilter={contentFilter}
-				onContentFilterChange={setContentFilter}
-				typeFilter={typeFilter}
-				onTypeFilterChange={setTypeFilter}
-				profileFilter={profileFilter}
-				onProfileFilterChange={setProfileFilter}
-				priceFilter={priceFilter}
-				onPriceFilterChange={setPriceFilter}
-				surfaceFilter={surfaceFilter}
-				onSurfaceFilterChange={setSurfaceFilter}
-				filteredPropertiesCount={filteredPropertiesCount}
-				filteredSearchAdsCount={filteredSearchAdsCount}
-				isAuthenticated={isAuthenticated}
-				hasMyArea={
-					!!user?.professionalInfo?.city && myAreaLocations.length > 0
-				}
-				myAreaLocationsCount={myAreaLocations.length}
-				favoritePropertyIds={favoritePropertyIds}
-				favoriteSearchAdIds={favoriteSearchAdIds}
-			/>
+			{/* Unified Search and Filters - Wrapped with ErrorBoundary */}
+			<ErrorBoundary fallback={<FilterErrorFallback />}>
+				<SearchFiltersPanel
+					searchTerm={searchTerm}
+					onSearchTermChange={setSearchTerm}
+					selectedLocations={selectedLocations}
+					onLocationsChange={setSelectedLocations}
+					radiusKm={radiusKm}
+					onRadiusChange={handleRadiusChange}
+					contentFilter={contentFilter}
+					onContentFilterChange={setContentFilter}
+					typeFilter={typeFilter}
+					onTypeFilterChange={setTypeFilter}
+					profileFilter={profileFilter}
+					onProfileFilterChange={setProfileFilter}
+					priceFilter={priceFilter}
+					onPriceFilterChange={setPriceFilter}
+					surfaceFilter={surfaceFilter}
+					onSurfaceFilterChange={setSurfaceFilter}
+					filteredPropertiesCount={filteredPropertiesCount}
+					filteredSearchAdsCount={filteredSearchAdsCount}
+					isAuthenticated={isAuthenticated}
+					hasMyArea={
+						!!user?.professionalInfo?.city &&
+						myAreaLocations.length > 0
+					}
+					myAreaLocationsCount={myAreaLocations.length}
+					favoritePropertyIds={favoritePropertyIds}
+					favoriteSearchAdIds={favoriteSearchAdIds}
+				/>
+			</ErrorBoundary>
 
 			{/* Unified Feed */}
 			{loading ? (
@@ -808,7 +670,7 @@ export default function Home() {
 							contentFilter={contentFilter}
 							favoritePropertyIds={favoritePropertyIds}
 							currentPage={propPage}
-							pageSize={PAGE_SIZE}
+							pageSize={FILTER_DEFAULTS.PAGE_SIZE}
 							onPageChange={setPropPage}
 						/>
 					)}
@@ -821,13 +683,13 @@ export default function Home() {
 						<SearchAdsSection
 							searchAds={
 								contentFilter === 'favorites'
-									? filterSearchAds(searchAds).filter((ad) =>
+									? filteredSearchAds.filter((ad) =>
 											favoriteSearchAdIds.has(ad._id),
 										)
-									: filterSearchAds(searchAds)
+									: filteredSearchAds
 							}
 							currentPage={adPage}
-							pageSize={PAGE_SIZE}
+							pageSize={FILTER_DEFAULTS.PAGE_SIZE}
 							onPageChange={setAdPage}
 						/>
 					)}

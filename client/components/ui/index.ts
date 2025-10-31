@@ -17,7 +17,7 @@ export { Modal } from './Modal';
 export { ConfirmDialog } from './ConfirmDialog';
 export { FormSection, FormField } from './Form';
 export { Alert } from './Alert';
-export { ErrorBoundary } from './ErrorBoundary';
+export { ErrorBoundary, FilterErrorFallback } from './ErrorBoundary';
 export { GeolocationPrompt } from './GeolocationPrompt';
 export { CheckmarkIcon } from './CheckmarkIcon';
 export { StepStatusIndicator } from './StepStatusIndicator';

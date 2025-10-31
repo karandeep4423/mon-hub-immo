@@ -4,7 +4,7 @@
  */
 
 import useSWR, { useSWRConfig } from 'swr';
-import { SearchAdApi } from '@/lib/api/searchAdApi';
+import { SearchAdApi, SearchAdFilters } from '@/lib/api/searchAdApi';
 import { SearchAd } from '@/types/searchAd';
 import { CreateSearchAdPayload } from '@/types/createSearchAd';
 import { swrKeys } from '@/lib/swrKeys';
@@ -16,11 +16,15 @@ import { Features } from '@/lib/constants';
 // ============ QUERIES ============
 
 /**
- * Fetch all search ads (public listing)
+ * Fetch all search ads with optional filters
  * Used in: Home page, search listings
  */
-export function useSearchAds() {
-	return useSWR(swrKeys.searchAds.all, () => SearchAdApi.getAllSearchAds(), {
+export function useSearchAds(filters?: SearchAdFilters) {
+	const key = filters
+		? swrKeys.searchAds.list(filters as Record<string, unknown>)
+		: swrKeys.searchAds.all;
+
+	return useSWR(key, () => SearchAdApi.getAllSearchAds(filters), {
 		revalidateOnFocus: true,
 		dedupingInterval: 5000,
 	});
