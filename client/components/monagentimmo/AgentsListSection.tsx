@@ -130,7 +130,7 @@ export const AgentsListSection = forwardRef<
 							{/* Navigation Buttons */}
 							<button
 								onClick={() => onScrollCarousel('left')}
-								className="absolute left-0 top-1/2 -translate-y-1/2 z-10 rounded-full p-3 border border-gray-300 bg-transparent hover:bg-white/60 backdrop-blur-sm transition-colors"
+								className="absolute left-0 top-1/2 -translate-y-1/2 z-10 rounded-full p-2 sm:p-3 border border-gray-300 bg-transparent hover:bg-white/60 backdrop-blur-sm transition-colors hidden sm:block"
 								aria-label="Previous"
 							>
 								<svg
@@ -151,7 +151,7 @@ export const AgentsListSection = forwardRef<
 							{/* Carousel */}
 							<div
 								ref={carouselRef}
-								className="flex gap-6 overflow-x-auto scrollbar-hide snap-x snap-mandatory px-12"
+								className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide snap-x snap-mandatory px-8 sm:px-12"
 								style={{
 									scrollbarWidth: 'none',
 									msOverflowStyle: 'none',
@@ -160,7 +160,7 @@ export const AgentsListSection = forwardRef<
 								{filteredAgents.map((agent) => (
 									<div
 										key={agent._id}
-										className="flex-shrink-0 w-72 snap-center"
+										className="flex-shrink-0 w-64 sm:w-72 snap-center"
 									>
 										<AgentCard agent={agent} />
 									</div>
@@ -169,7 +169,7 @@ export const AgentsListSection = forwardRef<
 
 							<button
 								onClick={() => onScrollCarousel('right')}
-								className="absolute right-0 top-1/2 -translate-y-1/2 z-10 rounded-full p-3 border border-gray-300 bg-transparent hover:bg-white/60 backdrop-blur-sm transition-colors"
+								className="absolute right-0 top-1/2 -translate-y-1/2 z-10 rounded-full p-2 sm:p-3 border border-gray-300 bg-transparent hover:bg-white/60 backdrop-blur-sm transition-colors hidden sm:block"
 								aria-label="Next"
 							>
 								<svg

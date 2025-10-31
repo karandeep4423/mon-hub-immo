@@ -67,7 +67,7 @@ const SearchFiltersPanelComponent = ({
 	favoriteSearchAdIds,
 }: SearchFiltersPanelProps) => {
 	return (
-		<div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+		<div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6 mb-6">
 			{/* Text Search */}
 			<div className="mb-4">
 				<input
@@ -94,7 +94,7 @@ const SearchFiltersPanelComponent = ({
 			<div className="flex flex-wrap gap-2 mb-4">
 				<button
 					onClick={() => onContentFilterChange('all')}
-					className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+					className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm transition-colors whitespace-nowrap ${
 						contentFilter === 'all'
 							? 'bg-brand text-white'
 							: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -105,39 +105,39 @@ const SearchFiltersPanelComponent = ({
 				{isAuthenticated && hasMyArea && (
 					<button
 						onClick={() => onContentFilterChange('myArea')}
-						className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+						className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm transition-colors whitespace-nowrap ${
 							contentFilter === 'myArea'
 								? 'bg-brand text-white'
 								: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
 						}`}
 					>
-						Mon secteur ({myAreaLocationsCount} villes)
+						Mon secteur ({myAreaLocationsCount})
 					</button>
 				)}
 				<button
 					onClick={() => onContentFilterChange('properties')}
-					className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+					className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm transition-colors whitespace-nowrap ${
 						contentFilter === 'properties'
 							? 'bg-brand text-white'
 							: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
 					}`}
 				>
-					Biens à vendre ({filteredPropertiesCount})
+					Biens ({filteredPropertiesCount})
 				</button>
 				<button
 					onClick={() => onContentFilterChange('searchAds')}
-					className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+					className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm transition-colors whitespace-nowrap ${
 						contentFilter === 'searchAds'
 							? 'bg-brand text-white'
 							: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
 					}`}
 				>
-					Recherche de biens ({filteredSearchAdsCount})
+					Recherches ({filteredSearchAdsCount})
 				</button>
 				{isAuthenticated && (
 					<button
 						onClick={() => onContentFilterChange('favorites')}
-						className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+						className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm transition-colors whitespace-nowrap ${
 							contentFilter === 'favorites'
 								? 'bg-brand text-white'
 								: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -150,11 +150,11 @@ const SearchFiltersPanelComponent = ({
 			</div>
 
 			{/* Filters - Always visible for all content types */}
-			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
 				<select
 					value={typeFilter}
 					onChange={(e) => onTypeFilterChange(e.target.value)}
-					className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+					className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
 				>
 					<option value="">Type de bien</option>
 					{PROPERTY_TYPES.map((type) => (
@@ -167,14 +167,14 @@ const SearchFiltersPanelComponent = ({
 				<select
 					value={profileFilter}
 					onChange={(e) => onProfileFilterChange(e.target.value)}
-					className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+					className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
 				>
 					<option value="">Tous les profils</option>
 					<option value="agent">Agent</option>
 					<option value="apporteur">Apporteur</option>
 				</select>
 
-				<div className="flex items-center gap-2">
+				<div className="flex items-center gap-1 sm:gap-2">
 					<input
 						type="number"
 						placeholder="Prix min"
@@ -187,9 +187,9 @@ const SearchFiltersPanelComponent = ({
 							);
 							onPriceFilterChange(validated);
 						}}
-						className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+						className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
 					/>
-					<span className="text-gray-500">-</span>
+					<span className="text-gray-500 flex-shrink-0">-</span>
 					<input
 						type="number"
 						placeholder="Prix max"
@@ -206,15 +206,15 @@ const SearchFiltersPanelComponent = ({
 							);
 							onPriceFilterChange(validated);
 						}}
-						className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+						className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
 					/>
 				</div>
 
 				{/* Surface habitable */}
-				<div className="flex items-center gap-2">
+				<div className="flex items-center gap-1 sm:gap-2">
 					<input
 						type="number"
-						placeholder="Surface min (m²)"
+						placeholder="Min m²"
 						value={surfaceFilter.min === 0 ? '' : surfaceFilter.min}
 						onChange={(e) => {
 							const validated = validateSurfaceInput(
@@ -224,12 +224,12 @@ const SearchFiltersPanelComponent = ({
 							);
 							onSurfaceFilterChange(validated);
 						}}
-						className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+						className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
 					/>
-					<span className="text-gray-500">-</span>
+					<span className="text-gray-500 flex-shrink-0">-</span>
 					<input
 						type="number"
-						placeholder="Surface max (m²)"
+						placeholder="Max m²"
 						value={
 							surfaceFilter.max === FILTER_DEFAULTS.SURFACE_MAX
 								? ''
@@ -243,7 +243,7 @@ const SearchFiltersPanelComponent = ({
 							);
 							onSurfaceFilterChange(validated);
 						}}
-						className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+						className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
 					/>
 				</div>
 			</div>

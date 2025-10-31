@@ -46,11 +46,11 @@ const Home = () => {
 				)}
 			</div>
 
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
 				{/* Mes biens */}
-				<div className="bg-white rounded-lg shadow p-6">
+				<div className="bg-white rounded-lg shadow p-4 sm:p-6">
 					<div className="flex items-center">
-						<div className="p-3 rounded-full bg-brand-100 text-brand">
+						<div className="p-3 rounded-full bg-brand-100 text-brand flex-shrink-0">
 							<svg
 								className="w-6 h-6"
 								fill="none"

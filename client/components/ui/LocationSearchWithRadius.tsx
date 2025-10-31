@@ -255,9 +255,9 @@ export const LocationSearchWithRadius: React.FC<
 				</div>
 			)}
 
-			<div className="flex gap-3">
+			<div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
 				{/* Location search input */}
-				<div className="flex-1 relative">
+				<div className="flex-1 relative min-w-0">
 					<div className="relative">
 						<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
 							<svg
@@ -343,7 +343,7 @@ export const LocationSearchWithRadius: React.FC<
 									))}
 								</div>
 
-								<div className="sticky bottom-0 bg-white border-t border-gray-200 p-3 flex gap-2">
+								<div className="sticky bottom-0 bg-white border-t border-gray-200 p-3 flex flex-col sm:flex-row gap-2">
 									<button
 										type="button"
 										onClick={handleSelectAllNearby}
@@ -364,7 +364,7 @@ export const LocationSearchWithRadius: React.FC<
 									<button
 										type="button"
 										onClick={handleCancelNearby}
-										className="px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+										className="sm:flex-none px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
 									>
 										Annuler
 									</button>
@@ -418,7 +418,7 @@ export const LocationSearchWithRadius: React.FC<
 				</div>
 
 				{/* Radius selector */}
-				<div className="w-40">
+				<div className="w-full sm:w-32">
 					<select
 						value={radiusKm}
 						onChange={(e) => onRadiusChange(Number(e.target.value))}

@@ -66,15 +66,19 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 							);
 						}}
 					/>
-					<div className="absolute top-2 left-2 flex flex-wrap gap-1 max-w-[70%]">
+					<div className="absolute top-2 left-2 flex flex-wrap gap-1 max-w-[calc(100%-5rem)] sm:max-w-[70%]">
 						{collaborationStatus && (
-							<span className="bg-brand text-white text-xs px-2 py-1 rounded-full font-semibold shadow-md">
-								ℹ️ En collaboration (
-								{Features.Collaboration
-									.COLLABORATION_STATUS_CONFIG[
-									collaborationStatus
-								]?.label || collaborationStatus}
-								)
+							<span className="bg-brand text-white text-xs px-2 py-1 rounded-full font-semibold shadow-md whitespace-nowrap">
+								ℹ️{' '}
+								<span className="hidden sm:inline">
+									En collaboration (
+									{Features.Collaboration
+										.COLLABORATION_STATUS_CONFIG[
+										collaborationStatus
+									]?.label || collaborationStatus}
+									)
+								</span>
+								<span className="sm:hidden">Collab</span>
 							</span>
 						)}
 						{property.badges &&
