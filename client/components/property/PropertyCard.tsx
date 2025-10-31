@@ -52,7 +52,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 
 	return (
 		<Link href={`/property/${property._id}`} className="block">
-			<div className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+			<div className="bg-white shadow-card rounded-2xl overflow-hidden hover:shadow-card-hover transition-all duration-300 hover:scale-102 border border-gray-200">
 				{/* Image with badges */}
 				<div className="relative">
 					<img
@@ -68,7 +68,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 					/>
 					<div className="absolute top-2 left-2 flex flex-wrap gap-1 max-w-[70%]">
 						{collaborationStatus && (
-							<span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+							<span className="bg-brand text-white text-xs px-2 py-1 rounded-full font-semibold shadow-md">
 								ℹ️ En collaboration (
 								{Features.Collaboration
 									.COLLABORATION_STATUS_CONFIG[
@@ -137,20 +137,20 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 					</div>
 
 					<div className="flex flex-wrap gap-2 mb-3">
-						<span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded">
+						<span className="bg-brand-100 text-brand-800 text-xs font-semibold px-2.5 py-1 rounded-lg">
 							{property.propertyType}
 						</span>
-						<span className="bg-gray-100 text-gray-800 text-xs font-semibold px-2 py-1 rounded">
+						<span className="bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-1 rounded-lg">
 							{property.city}
 						</span>
 						{property.rooms && (
-							<span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">
+							<span className="bg-success-light text-success text-xs font-semibold px-2.5 py-1 rounded-lg">
 								{property.rooms} pièce
 								{property.rooms > 1 ? 's' : ''}
 							</span>
 						)}
 						{property.bedrooms && (
-							<span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-1 rounded">
+							<span className="bg-secondary-100 text-secondary-700 text-xs font-semibold px-2.5 py-1 rounded-lg">
 								{property.bedrooms} ch.
 							</span>
 						)}
@@ -172,7 +172,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 							)}
 						{property.parkingSpaces &&
 							property.parkingSpaces > 0 && (
-								<span className="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2 py-1 rounded">
+								<span className="bg-info-light text-info text-xs font-semibold px-2.5 py-1 rounded-lg">
 									{property.parkingSpaces} parking
 									{property.parkingSpaces > 1 ? 's' : ''}
 								</span>

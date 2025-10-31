@@ -610,7 +610,7 @@ export default function CollaborationPage() {
 										(
 											collaboration.postId as PropertyDetails
 										)?.agencyFeesPercentage && (
-											<Card className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200">
+											<Card className="p-6 bg-gradient-to-br from-brand-50 to-brand-100 border-2 border-brand-200">
 												<h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
 													<span>�</span> Prix et frais
 												</h3>
@@ -632,7 +632,7 @@ export default function CollaborationPage() {
 															% frais
 															d&apos;agence
 														</span>
-														<span className="text-lg font-semibold text-cyan-600">
+														<span className="text-lg font-semibold text-brand">
 															{
 																(
 																	collaboration.postId as PropertyDetails
@@ -658,7 +658,7 @@ export default function CollaborationPage() {
 														<span className="text-gray-600">
 															→ Prix FAI
 														</span>
-														<span className="text-lg font-semibold text-blue-600">
+														<span className="text-lg font-semibold text-brand">
 															{(
 																collaboration.postId as PropertyDetails
 															)?.priceIncludingFees?.toLocaleString()}{' '}
@@ -759,13 +759,13 @@ export default function CollaborationPage() {
 																		€
 																	</span>
 																</div>
-																<div className="flex justify-between items-center py-2 pl-6 bg-blue-50 px-3 rounded">
+																<div className="flex justify-between items-center py-2 pl-6 bg-info-light px-3 rounded">
 																	<span className="text-gray-600">
 																		→
 																		Commission
 																		mandataire
 																	</span>
-																	<span className="text-lg font-semibold text-blue-600">
+																	<span className="text-lg font-semibold text-brand">
 																		{(
 																			((
 																				collaboration.postId as PropertyDetails

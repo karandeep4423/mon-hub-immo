@@ -88,7 +88,7 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 			},
 			fulfilled: {
 				label: 'Réalisé',
-				className: 'bg-blue-100 text-blue-800',
+				className: 'bg-brand-100 text-brand-800',
 			},
 			sold: {
 				label: 'Vendu',
@@ -96,7 +96,7 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 			},
 			rented: {
 				label: 'Loué',
-				className: 'bg-blue-100 text-blue-800',
+				className: 'bg-brand-100 text-brand-800',
 			},
 			archived: {
 				label: 'Archivé',

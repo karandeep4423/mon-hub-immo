@@ -126,7 +126,7 @@ const getUserInitials = (user: ProfileAvatarProps['user']): string => {
 const getAvatarBgColor = (userId: string): string => {
 	const colors = [
 		'bg-red-500',
-		'bg-blue-500',
+		'bg-brand',
 		'bg-green-500',
 		'bg-yellow-500',
 		'bg-purple-500',
@@ -134,7 +134,7 @@ const getAvatarBgColor = (userId: string): string => {
 		'bg-indigo-500',
 		'bg-teal-500',
 		'bg-orange-500',
-		'bg-cyan-500',
+		'bg-brand',
 	];
 
 	// Generate a hash from userId to get consistent color

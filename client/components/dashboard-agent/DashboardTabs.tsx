@@ -23,7 +23,7 @@ export const DashboardTabs: React.FC<DashboardTabsProps> = ({
 	const getTabClass = (tab: DashboardTab) => {
 		return `py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
 			activeTab === tab
-				? 'border-cyan-500 text-cyan-600'
+				? 'border-brand text-brand'
 				: 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
 		}`;
 	};
@@ -120,7 +120,7 @@ export const DashboardTabs: React.FC<DashboardTabsProps> = ({
 				<div className="w-full sm:w-auto sm:shrink-0 flex gap-3">
 					<Button
 						onClick={() => router.push('/search-ads/create')}
-						className="w-full sm:w-auto bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg"
+						className="w-full sm:w-auto bg-gradient-to-r from-brand to-brand-700 hover:from-brand-600 hover:to-brand-800 text-white shadow-lg"
 						size="sm"
 					>
 						<svg
@@ -140,7 +140,7 @@ export const DashboardTabs: React.FC<DashboardTabsProps> = ({
 					</Button>
 					<Button
 						onClick={() => onTabChange('properties')}
-						className="w-full sm:w-auto bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg"
+						className="w-full sm:w-auto bg-gradient-to-r from-brand to-brand-700 hover:from-brand-600 hover:to-brand-800 text-white shadow-lg"
 						size="sm"
 					>
 						<svg

@@ -397,7 +397,7 @@ function PropertyDetailsPageContent() {
 										{user && user.userType === 'agent' && (
 											<>
 												{hasBlockingCollab ? (
-													<div className="w-full p-3 rounded-md border bg-blue-50 text-blue-800 text-sm flex items-center justify-center">
+													<div className="w-full p-3 rounded-md border bg-info-light text-info text-sm flex items-center justify-center">
 														<span className="mr-2">
 															ℹ️
 														</span>

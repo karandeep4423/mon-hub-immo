@@ -185,7 +185,7 @@ export const STATUS_COLORS = {
 	success: 'text-green-600 bg-green-50 border-green-200',
 	error: 'text-red-600 bg-red-50 border-red-200',
 	warning: 'text-yellow-600 bg-yellow-50 border-yellow-200',
-	info: 'text-blue-600 bg-blue-50 border-blue-200',
+	info: 'text-info bg-info-light border-info',
 	neutral: 'text-gray-600 bg-gray-50 border-gray-200',
 	pending: 'text-orange-600 bg-orange-50 border-orange-200',
 	active: 'text-green-600 bg-green-50 border-green-200',

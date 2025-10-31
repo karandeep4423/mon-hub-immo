@@ -32,7 +32,7 @@ export const DayScheduleCard = ({
 		<div
 			className={`border rounded-lg p-4 transition-all ${
 				isAvailable
-					? 'border-cyan-200 bg-gradient-to-r from-cyan-50 to-blue-50'
+					? 'border-brand-200 bg-gradient-to-r from-brand-50 to-brand-100'
 					: 'border-gray-200 bg-gray-50'
 			}`}
 		>
@@ -45,7 +45,7 @@ export const DayScheduleCard = ({
 							checked={isAvailable}
 							onChange={onToggleAvailability}
 						/>
-						<div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-cyan-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600"></div>
+						<div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand"></div>
 					</label>
 					<span className="text-lg font-medium text-gray-900">
 						{day.label}
@@ -57,7 +57,7 @@ export const DayScheduleCard = ({
 						onClick={onAddSlot}
 						variant="outline"
 						size="sm"
-						className="text-cyan-600 border-cyan-300 hover:bg-cyan-50"
+						className="text-brand border-brand-200 hover:bg-brand-50"
 					>
 						<svg
 							className="w-4 h-4 mr-1"

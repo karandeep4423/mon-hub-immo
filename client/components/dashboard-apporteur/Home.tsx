@@ -24,7 +24,7 @@ const Home = () => {
 
 	const renderOverview = () => (
 		<div className="space-y-6">
-			<div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white">
+			<div className="bg-gradient-to-r from-brand to-brand-600 rounded-lg p-6 text-white">
 				<h2 className="text-2xl font-bold mb-2">
 					Bienvenue, {user?.firstName} !
 				</h2>
@@ -50,7 +50,7 @@ const Home = () => {
 				{/* Mes biens */}
 				<div className="bg-white rounded-lg shadow p-6">
 					<div className="flex items-center">
-						<div className="p-3 rounded-full bg-blue-100 text-blue-600">
+						<div className="p-3 rounded-full bg-brand-100 text-brand">
 							<svg
 								className="w-6 h-6"
 								fill="none"
@@ -180,7 +180,7 @@ const Home = () => {
 					<div className="space-y-3">
 						<Button
 							onClick={() => setActiveTab('properties')}
-							className="w-full justify-start bg-blue-600 hover:bg-blue-700"
+							className="w-full justify-start bg-brand hover:bg-brand-600"
 						>
 							<svg
 								className="w-5 h-5 mr-2"
@@ -226,28 +226,28 @@ const Home = () => {
 					</h3>
 					<div className="space-y-3 text-sm text-gray-600">
 						<div className="flex items-start space-x-2">
-							<div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
+							<div className="w-2 h-2 bg-brand rounded-full mt-2 flex-shrink-0"></div>
 							<p>
 								Ajoutez des photos de qualité pour attirer plus
 								de clients
 							</p>
 						</div>
 						<div className="flex items-start space-x-2">
-							<div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
+							<div className="w-2 h-2 bg-brand rounded-full mt-2 flex-shrink-0"></div>
 							<p>
 								Rédigez des descriptions détaillées et
 								attractives
 							</p>
 						</div>
 						<div className="flex items-start space-x-2">
-							<div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
+							<div className="w-2 h-2 bg-brand rounded-full mt-2 flex-shrink-0"></div>
 							<p>
 								Répondez rapidement aux messages des clients
 								intéressés
 							</p>
 						</div>
 						<div className="flex items-start space-x-2">
-							<div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
+							<div className="w-2 h-2 bg-brand rounded-full mt-2 flex-shrink-0"></div>
 							<p>Mettez à jour vos annonces régulièrement</p>
 						</div>
 					</div>
@@ -274,7 +274,7 @@ const Home = () => {
 										onClick={() => setActiveTab('overview')}
 										className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
 											activeTab === 'overview'
-												? 'bg-blue-100 text-blue-700'
+												? 'bg-brand-100 text-brand-700'
 												: 'text-gray-600 hover:text-gray-900'
 										}`}
 									>
@@ -289,7 +289,7 @@ const Home = () => {
 										}
 										className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
 											activeTab === 'properties'
-												? 'bg-blue-100 text-blue-700'
+												? 'bg-brand-100 text-brand-700'
 												: 'text-gray-600 hover:text-gray-900'
 										}`}
 									>
@@ -304,7 +304,7 @@ const Home = () => {
 										}
 										className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
 											activeTab === 'collaborations'
-												? 'bg-blue-100 text-blue-700'
+												? 'bg-brand-100 text-brand-700'
 												: 'text-gray-600 hover:text-gray-900'
 										}`}
 									>
@@ -317,7 +317,7 @@ const Home = () => {
 										onClick={() => setActiveTab('searches')}
 										className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
 											activeTab === 'searches'
-												? 'bg-blue-100 text-blue-700'
+												? 'bg-brand-100 text-brand-700'
 												: 'text-gray-600 hover:text-gray-900'
 										}`}
 									>

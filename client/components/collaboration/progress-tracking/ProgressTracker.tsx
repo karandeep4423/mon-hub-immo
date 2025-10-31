@@ -171,7 +171,7 @@ export const ProgressTracker: React.FC<ExtendedProgressTrackingProps> = ({
 													!canUpdate ||
 													!isOwner
 												}
-												className="h-5 w-5 appearance-none rounded border-2 border-gray-300 bg-white checked:bg-cyan-600 checked:border-cyan-600 disabled:checked:bg-cyan-600 disabled:checked:border-cyan-600 bg-center bg-no-repeat focus:ring-2 focus:ring-cyan-500 focus:ring-offset-0 disabled:cursor-not-allowed cursor-pointer disabled:opacity-100 checked:bg-[url('data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M3.5%208.5l3%203%206-6%22%20stroke%3D%22white%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')]"
+												className="h-5 w-5 appearance-none rounded border-2 border-gray-300 bg-white checked:bg-brand checked:border-brand disabled:checked:bg-brand disabled:checked:border-brand bg-center bg-no-repeat focus:ring-2 focus:ring-brand/20 focus:ring-offset-0 disabled:cursor-not-allowed cursor-pointer disabled:opacity-100 checked:bg-[url('data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M3.5%208.5l3%203%206-6%22%20stroke%3D%22white%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')]"
 											/>
 										</div>
 										<div className="flex items-center space-x-3 flex-1">
@@ -199,11 +199,11 @@ export const ProgressTracker: React.FC<ExtendedProgressTrackingProps> = ({
 														{ownerUser.firstName}{' '}
 														{ownerUser.lastName}
 													</span>
-													<span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full">
+													<span className="text-xs px-2 py-0.5 bg-brand-100 text-brand-800 rounded-full">
 														Mandataire
 													</span>
 													{isOwner && (
-														<span className="text-xs text-cyan-600 font-medium">
+														<span className="text-xs text-brand font-medium">
 															(Vous)
 														</span>
 													)}
@@ -247,7 +247,7 @@ export const ProgressTracker: React.FC<ExtendedProgressTrackingProps> = ({
 													!canUpdate ||
 													!isCollaborator
 												}
-												className="h-5 w-5 rounded border-2 border-gray-300 accent-cyan-600 checked:bg-cyan-600 checked:border-cyan-600 disabled:checked:bg-cyan-600 disabled:checked:border-cyan-600 focus:ring-2 focus:ring-cyan-500 focus:ring-offset-0 disabled:cursor-not-allowed cursor-pointer"
+												className="h-5 w-5 rounded border-2 border-gray-300 accent-cyan-600 checked:bg-brand checked:border-brand disabled:checked:bg-brand disabled:checked:border-brand focus:ring-2 focus:ring-brand/20 focus:ring-offset-0 disabled:cursor-not-allowed cursor-pointer"
 											/>
 										</div>
 										<div className="flex items-center space-x-3 flex-1">
@@ -283,7 +283,7 @@ export const ProgressTracker: React.FC<ExtendedProgressTrackingProps> = ({
 														Collaborateur
 													</span>
 													{isCollaborator && (
-														<span className="text-xs text-cyan-600 font-medium">
+														<span className="text-xs text-brand font-medium">
 															(Vous)
 														</span>
 													)}

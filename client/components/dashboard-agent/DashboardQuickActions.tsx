@@ -21,7 +21,7 @@ export const DashboardQuickActions: React.FC<DashboardQuickActionsProps> = ({
 				<div className="sm:col-span-2 lg:col-span-1">
 					<Button
 						onClick={onCreateProperty}
-						className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg transform hover:scale-105 transition-all duration-200"
+						className="w-full bg-gradient-to-r from-brand to-brand-700 hover:from-brand-600 hover:to-brand-800 text-white shadow-lg transform hover:scale-105 transition-all duration-200"
 						size="md"
 					>
 						<svg

@@ -145,39 +145,50 @@ export const VerifyEmailForm: React.FC = () => {
 	};
 
 	return (
-		<div className="min-h-screen bg-white flex flex-col">
-			{/* Header */}
-			<div className="text-center pt-8 sm:pt-12 pb-6 sm:pb-8 px-4 sm:px-6">
-				<h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">
-					mon<span className="text-cyan-500">hubimmo</span>
-				</h1>
+		<div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4 py-8">
+			<div className="w-full max-w-md">
+				{/* Logo & Header */}
+				<div className="text-center mb-8">
+					<div className="inline-flex items-center justify-center w-16 h-16 bg-brand rounded-2xl mb-6 shadow-brand transition-all duration-200 hover:scale-105">
+						<svg
+							className="w-8 h-8 text-white"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								strokeWidth="2"
+								d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+							/>
+						</svg>
+					</div>
 
-				<div className="space-y-3 sm:space-y-4">
-					<h2 className="text-lg sm:text-xl font-semibold text-gray-800">
+					<h1 className="text-2xl font-bold text-gray-900 mb-2">
+						mon<span className="text-brand">hubimmo</span>
+					</h1>
+
+					<h2 className="text-xl font-bold text-gray-900 mb-3">
 						Vérification de votre e-mail
 					</h2>
-					<p className="text-sm sm:text-base text-gray-600 max-w-md mx-auto px-4">
+					<p className="text-sm text-gray-600">
 						Nous avons envoyé un code à 6 chiffres à
 					</p>
 					{email ? (
-						<p className="text-sm sm:text-base font-semibold text-gray-900">
+						<p className="text-sm font-semibold text-gray-900 mt-2">
 							{email}
 						</p>
 					) : (
-						<p className="text-sm text-red-600 font-semibold">
+						<p className="text-sm text-error font-semibold mt-2 bg-red-50 p-3 rounded-lg border border-red-200">
 							⚠️ Email manquant. Veuillez vous inscrire à nouveau.
 						</p>
 					)}
 				</div>
-			</div>
 
-			{/* Content */}
-			<div className="flex-1 px-4 sm:px-6">
-				<div className="max-w-sm mx-auto">
-					<form
-						onSubmit={handleSubmit}
-						className="space-y-6 sm:space-y-8"
-					>
+				{/* Form Card */}
+				<div className="bg-white rounded-2xl shadow-card border border-gray-200 p-8">
+					<form onSubmit={handleSubmit} className="space-y-6">
 						{/* Code Input */}
 						<div className="space-y-2">
 							<Input
@@ -204,7 +215,7 @@ export const VerifyEmailForm: React.FC = () => {
 										.VERIFICATION_CODE
 								}
 								maxLength={8}
-								className="text-center text-xl sm:text-2xl tracking-[0.3em] font-mono uppercase"
+								className="text-center text-xl tracking-[0.3em] font-mono uppercase"
 								required
 							/>
 						</div>
@@ -213,7 +224,7 @@ export const VerifyEmailForm: React.FC = () => {
 						<Button
 							type="submit"
 							loading={isSubmitting}
-							className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
+							className="w-full"
 							size="lg"
 							disabled={isSubmitting || values.code.length !== 6}
 						>
@@ -228,15 +239,16 @@ export const VerifyEmailForm: React.FC = () => {
 							</div>
 						)}
 					</form>
+
 					{/* Resend and Navigation */}
-					<div className="text-center mt-8 sm:mt-10 space-y-4">
+					<div className="text-center mt-6 space-y-4 pt-6 border-t border-gray-200">
 						{/* Resend Code */}
 						<div>
 							<button
 								type="button"
 								onClick={handleResendCode}
 								disabled={timer > 0 || resendLoading}
-								className="text-cyan-600 hover:text-cyan-500 font-medium text-sm disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+								className="text-brand hover:text-brand-600 font-medium text-sm disabled:text-gray-400 disabled:cursor-not-allowed transition-colors duration-200"
 							>
 								{resendLoading
 									? 'Envoi en cours...'
@@ -253,14 +265,15 @@ export const VerifyEmailForm: React.FC = () => {
 								onClick={() =>
 									router.push(Features.Auth.AUTH_ROUTES.LOGIN)
 								}
-								className="text-gray-600 hover:text-gray-500 text-sm font-medium transition-colors"
+								className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors duration-200"
 							>
 								Retour à la connexion
 							</button>
 						</div>
-					</div>{' '}
+					</div>
+
 					{/* Helper Text */}
-					<div className="text-center mt-6 sm:mt-8 pb-8">
+					<div className="text-center mt-6">
 						<p className="text-xs text-gray-500">
 							Le code expire dans 24 heures
 						</p>

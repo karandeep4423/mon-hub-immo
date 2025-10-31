@@ -30,11 +30,11 @@ export const CollaborationClientInfo: React.FC<
 	const clientInfo = (collaboration.postId as PropertyDetails)?.clientInfo;
 
 	return (
-		<Card className="p-6 bg-blue-50 border-blue-200">
+		<Card className="p-6 bg-brand-50 border-brand-200">
 			<h3 className="text-lg font-medium text-gray-900 mb-4">
 				🔒 Informations client confidentielles
 			</h3>
-			<p className="text-sm text-blue-600 mb-4">
+			<p className="text-sm text-brand mb-4">
 				Ces informations sont confidentielles et uniquement visibles
 				dans le cadre de cette collaboration.
 			</p>

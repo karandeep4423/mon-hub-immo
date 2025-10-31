@@ -11,7 +11,7 @@ export const AutoSaveIndicator = ({
 }: AutoSaveIndicatorProps) => {
 	if (saving) {
 		return (
-			<div className="flex items-center gap-2 text-cyan-600 bg-cyan-50 px-4 py-2 rounded-lg">
+			<div className="flex items-center gap-2 text-brand bg-brand-50 px-4 py-2 rounded-lg">
 				<LoadingSpinner size="sm" />
 				<span className="text-sm font-medium">Enregistrement...</span>
 			</div>

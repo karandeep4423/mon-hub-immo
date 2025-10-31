@@ -54,9 +54,9 @@ export const SignUpForm: React.FC = () => {
 	const steps = getSteps();
 
 	return (
-		<div className="min-h-screen bg-white flex">
-			{/* Left Side - Branding and Image Section (Hidden on Mobile) */}
-			<div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-cyan-600 via-blue-600 to-indigo-700 relative overflow-hidden">
+		<div className="min-h-screen bg-gray-50 flex">
+			{/* Left Side - Branding Section (Hidden on Mobile) */}
+			<div className="hidden lg:flex lg:w-2/5 bg-brand-gradient relative overflow-hidden">
 				{/* Decorative Background Pattern */}
 				<div className="absolute inset-0 opacity-10">
 					<div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full -translate-x-1/2 -translate-y-1/2"></div>
@@ -68,7 +68,7 @@ export const SignUpForm: React.FC = () => {
 					{/* Logo and Brand */}
 					<div>
 						<div className="flex items-center space-x-3 mb-8">
-							<div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+							<div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center transition-all duration-200 hover:bg-white/30">
 								<svg
 									className="w-7 h-7 text-white"
 									fill="none"
@@ -85,7 +85,7 @@ export const SignUpForm: React.FC = () => {
 							</div>
 							<h1 className="text-2xl font-bold">
 								mon
-								<span className="text-cyan-200">hubimmo</span>
+								<span className="text-brand-200">hubimmo</span>
 							</h1>
 						</div>
 
@@ -96,7 +96,7 @@ export const SignUpForm: React.FC = () => {
 							<br />
 							professionnels
 						</h2>
-						<p className="text-lg text-blue-100 mb-12">
+						<p className="text-lg text-brand-100 mb-12">
 							La solution collaborative pour agents immobiliers et
 							apporteurs d&apos;affaires
 						</p>
@@ -104,7 +104,7 @@ export const SignUpForm: React.FC = () => {
 						{/* Features List */}
 						<div className="space-y-4">
 							<div className="flex items-start space-x-3">
-								<div className="w-6 h-6 bg-cyan-400/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+								<div className="w-6 h-6 bg-brand-400/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
 									<svg
 										className="w-4 h-4"
 										fill="currentColor"
@@ -118,17 +118,17 @@ export const SignUpForm: React.FC = () => {
 									</svg>
 								</div>
 								<div>
-									<p className="font-semibold">
+									<p className="font-semibold text-white">
 										Réseau professionnel qualifié
 									</p>
-									<p className="text-sm text-blue-100">
+									<p className="text-sm text-brand-100">
 										Connectez-vous avec des agents et
 										apporteurs vérifiés
 									</p>
 								</div>
 							</div>
 							<div className="flex items-start space-x-3">
-								<div className="w-6 h-6 bg-cyan-400/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+								<div className="w-6 h-6 bg-brand-400/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
 									<svg
 										className="w-4 h-4"
 										fill="currentColor"
@@ -142,17 +142,17 @@ export const SignUpForm: React.FC = () => {
 									</svg>
 								</div>
 								<div>
-									<p className="font-semibold">
+									<p className="font-semibold text-white">
 										Gestion simplifiée
 									</p>
-									<p className="text-sm text-blue-100">
+									<p className="text-sm text-brand-100">
 										Gérez vos biens et collaborations en un
 										seul endroit
 									</p>
 								</div>
 							</div>
 							<div className="flex items-start space-x-3">
-								<div className="w-6 h-6 bg-cyan-400/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+								<div className="w-6 h-6 bg-brand-400/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
 									<svg
 										className="w-4 h-4"
 										fill="currentColor"
@@ -166,10 +166,10 @@ export const SignUpForm: React.FC = () => {
 									</svg>
 								</div>
 								<div>
-									<p className="font-semibold">
+									<p className="font-semibold text-white">
 										Transactions sécurisées
 									</p>
-									<p className="text-sm text-blue-100">
+									<p className="text-sm text-brand-100">
 										Vos données et transactions sont
 										protégées
 									</p>
@@ -182,19 +182,19 @@ export const SignUpForm: React.FC = () => {
 					<div className="grid grid-cols-3 gap-6 pt-8 border-t border-white/20">
 						<div>
 							<p className="text-3xl font-bold">500+</p>
-							<p className="text-sm text-blue-100">
+							<p className="text-sm text-brand-100">
 								Professionnels
 							</p>
 						</div>
 						<div>
 							<p className="text-3xl font-bold">1000+</p>
-							<p className="text-sm text-blue-100">
+							<p className="text-sm text-brand-100">
 								Biens actifs
 							</p>
 						</div>
 						<div>
 							<p className="text-3xl font-bold">98%</p>
-							<p className="text-sm text-blue-100">
+							<p className="text-sm text-brand-100">
 								Satisfaction
 							</p>
 						</div>
@@ -203,9 +203,9 @@ export const SignUpForm: React.FC = () => {
 			</div>
 
 			{/* Right Side - Form Section */}
-			<div className="flex-1 flex flex-col lg:w-1/2">
+			<div className="flex-1 flex flex-col lg:w-3/5">
 				{/* Mobile Header */}
-				<div className="lg:hidden bg-gradient-to-r from-cyan-600 to-blue-600 text-white p-6">
+				<div className="lg:hidden bg-brand-gradient text-white p-6">
 					<div className="flex items-center space-x-3 mb-4">
 						<div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
 							<svg
@@ -223,16 +223,16 @@ export const SignUpForm: React.FC = () => {
 							</svg>
 						</div>
 						<h1 className="text-xl font-bold">
-							mon<span className="text-cyan-200">hubimmo</span>
+							mon<span className="text-brand-200">hubimmo</span>
 						</h1>
 					</div>
-					<p className="text-sm text-blue-100">
+					<p className="text-sm text-brand-100">
 						Créez votre compte professionnel
 					</p>
 				</div>
 
 				{/* Step Indicator */}
-				<div className="bg-gray-50 px-6 py-4">
+				<div className="bg-white border-b border-gray-200 px-6 py-4">
 					<MultiStepProgress
 						steps={steps}
 						currentStep={currentStep}
@@ -255,14 +255,14 @@ export const SignUpForm: React.FC = () => {
 								Vous avez déjà un compte ?{' '}
 								<a
 									href={Features.Auth.AUTH_ROUTES.LOGIN}
-									className="text-brand-600 hover:text-brand-700 font-semibold"
+									className="text-brand hover:text-brand-600 font-semibold transition-colors duration-200"
 								>
 									Se connecter
 								</a>
 							</p>
 						</div>
 
-						<div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+						<div className="bg-white rounded-2xl shadow-card border border-gray-200 p-8 transition-all duration-300">
 							<form onSubmit={handleSubmit} noValidate>
 								{/* Step Content with Slide Animation */}
 								<div className="relative overflow-hidden">
@@ -412,7 +412,7 @@ export const SignUpForm: React.FC = () => {
 										<Button
 											type="button"
 											onClick={handleNext}
-											className={`bg-brand hover:bg-brand-dark text-white ${
+											className={`${
 												currentStep === 1
 													? 'w-full'
 													: 'flex-1'
@@ -437,7 +437,7 @@ export const SignUpForm: React.FC = () => {
 										<Button
 											type="submit"
 											loading={loading}
-											className="flex-1 bg-brand hover:bg-brand-dark text-white"
+											className="flex-1"
 										>
 											Créer mon compte
 										</Button>
@@ -451,7 +451,7 @@ export const SignUpForm: React.FC = () => {
 									Vous avez déjà un compte ?{' '}
 									<a
 										href={Features.Auth.AUTH_ROUTES.LOGIN}
-										className="text-brand-600 hover:text-brand-700 font-semibold"
+										className="text-brand hover:text-brand-600 font-semibold transition-colors duration-200"
 									>
 										Se connecter
 									</a>

@@ -229,7 +229,7 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 						<Button
 							size="sm"
 							onClick={handleOpenChat}
-							className="bg-blue-600 hover:bg-blue-700 text-white flex-1"
+							className="bg-brand hover:bg-brand-600 text-white flex-1"
 						>
 							💬 Chat
 						</Button>

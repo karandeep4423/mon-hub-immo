@@ -51,7 +51,7 @@ export const CollaborationPostHeader: React.FC<
 							)}
 						</h3>
 						{property && postPrice && (
-							<p className="text-sm text-blue-600 font-medium">
+							<p className="text-sm text-brand font-medium">
 								{postPrice.toLocaleString('fr-FR')} €
 							</p>
 						)}

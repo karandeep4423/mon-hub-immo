@@ -9,8 +9,8 @@ export const PropertyEmptyState: React.FC<PropertyEmptyStateProps> = ({
 	onCreateClick,
 }) => {
 	return (
-		<div className="text-center py-16 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-100">
-			<div className="mx-auto w-20 h-20 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full flex items-center justify-center mb-6 shadow-lg">
+		<div className="text-center py-16 bg-brand-subtle rounded-2xl border border-brand-200">
+			<div className="mx-auto w-20 h-20 bg-brand rounded-full flex items-center justify-center mb-6 shadow-brand">
 				<svg
 					className="w-10 h-10 text-white"
 					fill="none"
@@ -39,7 +39,7 @@ export const PropertyEmptyState: React.FC<PropertyEmptyStateProps> = ({
 			<div className="space-y-3">
 				<Button
 					onClick={onCreateClick}
-					className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white px-8 py-3 text-lg font-semibold shadow-lg"
+					className="px-8 py-3 text-lg font-semibold"
 					size="lg"
 				>
 					<svg

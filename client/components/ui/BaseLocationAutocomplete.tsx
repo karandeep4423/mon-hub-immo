@@ -246,7 +246,7 @@ export const BaseLocationAutocomplete: React.FC<
 					{selectedItems.map((item, index) => (
 						<span
 							key={`${item.name}-${item.postcode}-${index}`}
-							className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
+							className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-brand-100 text-brand-800"
 						>
 							{showPostalCode
 								? `${item.name} (${item.postcode})`
@@ -254,7 +254,7 @@ export const BaseLocationAutocomplete: React.FC<
 							<button
 								type="button"
 								onClick={() => handleRemoveItem(index)}
-								className="ml-2 text-blue-600 hover:text-blue-800"
+								className="ml-2 text-brand hover:text-brand-700"
 								disabled={disabled}
 							>
 								×
@@ -274,7 +274,7 @@ export const BaseLocationAutocomplete: React.FC<
 					onFocus={handleFocus}
 					placeholder={placeholder}
 					disabled={disabled}
-					className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+					className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-brand/20 focus:border-transparent ${
 						error ? 'border-red-500' : 'border-gray-300'
 					} ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
 				/>
@@ -301,7 +301,7 @@ export const BaseLocationAutocomplete: React.FC<
 							key={`${suggestion.citycode || suggestion.name}-${suggestion.postcode}-${index}`}
 							type="button"
 							onClick={() => handleSuggestionClick(suggestion)}
-							className="w-full px-4 py-2 text-left hover:bg-blue-50 focus:bg-blue-50 focus:outline-none transition-colors"
+							className="w-full px-4 py-2 text-left hover:bg-brand-50 focus:bg-brand-50 focus:outline-none transition-colors"
 						>
 							<div className="font-medium text-gray-900">
 								{suggestion.name}

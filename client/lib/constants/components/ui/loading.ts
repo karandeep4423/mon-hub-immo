@@ -35,10 +35,10 @@ export const LOADING_SPINNER_SIZE_CLASSES = {
 // ============================================================================
 
 export const LOADING_SPINNER_COLORS = {
-	brand: 'text-brand-600',
+	brand: 'text-brand',
 	white: 'text-white',
 	gray: 'text-gray-600',
-	primary: 'text-brand-600',
+	primary: 'text-brand',
 	secondary: 'text-gray-600',
 } as const;
 
@@ -66,7 +66,7 @@ export const LOADING_MESSAGES = {
 
 export const LOADING_OVERLAY = {
 	className:
-		'fixed inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50',
+		'fixed inset-0 bg-white/90 backdrop-blur-md flex items-center justify-center z-50',
 	spinnerSize: LOADING_SPINNER_SIZES.lg,
 	message: LOADING_MESSAGES.default,
 } as const;
@@ -76,14 +76,14 @@ export const LOADING_OVERLAY = {
 // ============================================================================
 
 export const LOADING_SKELETON = {
-	baseClassName: 'animate-pulse bg-gray-200 rounded',
+	baseClassName: 'animate-shimmer bg-gray-200 rounded',
 	variants: {
 		text: 'h-4 w-full',
 		title: 'h-6 w-3/4',
 		avatar: 'h-12 w-12 rounded-full',
 		image: 'h-48 w-full',
-		button: 'h-10 w-24',
-		card: 'h-64 w-full',
+		button: 'h-10 w-24 rounded-xl',
+		card: 'h-64 w-full rounded-2xl',
 	},
 } as const;
 

@@ -457,7 +457,7 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 							onClick={() => setActiveTab('weekly')}
 							className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
 								activeTab === 'weekly'
-									? 'border-cyan-500 text-cyan-600'
+									? 'border-brand text-brand'
 									: 'border-transparent text-gray-500 hover:text-gray-700'
 							}`}
 						>
@@ -480,7 +480,7 @@ export const AvailabilityManager: React.FC<AvailabilityManagerProps> = ({
 							onClick={() => setActiveTab('blocked')}
 							className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
 								activeTab === 'blocked'
-									? 'border-cyan-500 text-cyan-600'
+									? 'border-brand text-brand'
 									: 'border-transparent text-gray-500 hover:text-gray-700'
 							}`}
 						>

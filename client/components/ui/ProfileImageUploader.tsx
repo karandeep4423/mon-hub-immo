@@ -232,7 +232,7 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 					<ImageUploader
 						onImagesChange={handleImageSelection}
 						maxImages={1}
-						className="border-cyan-600 border-2"
+						className="border-brand-600 border-2"
 						disabled={disabled || isUploading}
 					/>
 				</div>

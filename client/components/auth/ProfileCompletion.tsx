@@ -247,16 +247,37 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 			<div className="max-w-2xl mx-auto px-4 py-8">
 				{/* Header */}
 				<div className="text-center mb-8">
-					<h1 className="text-xl font-semibold text-gray-800 mb-4">
+					<div className="inline-flex items-center justify-center w-16 h-16 bg-brand rounded-2xl mb-6 shadow-brand transition-all duration-200 hover:scale-105">
+						<svg
+							className="w-8 h-8 text-white"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								strokeWidth="2"
+								d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+							/>
+						</svg>
+					</div>
+
+					<h1 className="text-2xl font-bold text-gray-900 mb-2">
 						{editMode
 							? 'Modifier le profil Agent'
 							: 'Création du profil Agent'}
 					</h1>
+					<p className="text-sm text-gray-600">
+						{editMode
+							? 'Mettez à jour vos informations professionnelles'
+							: 'Complétez votre profil pour commencer'}
+					</p>
 				</div>
 
 				<form
 					onSubmit={handleSubmit}
-					className="bg-white rounded-xl shadow-sm p-6 space-y-8"
+					className="bg-white rounded-2xl shadow-card border border-gray-200 p-8 space-y-8"
 				>
 					{/* Personal Information */}
 					<div>
@@ -368,7 +389,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 									name="interventionRadius"
 									value={values.interventionRadius}
 									onChange={handleChange}
-									className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+									className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
 								>
 									<option value={10}>10 km</option>
 									<option value={20}>20 km</option>
@@ -388,7 +409,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 								value={values.coveredCities}
 								onChange={handleChange}
 								rows={3}
-								className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+								className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
 								placeholder={
 									Features.Auth.AUTH_PLACEHOLDERS.CITIES
 								}
@@ -411,7 +432,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 									name="network"
 									value={values.network}
 									onChange={handleChange}
-									className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+									className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
 								>
 									<option value="IAD">IAD</option>
 									<option value="Century21">
@@ -468,7 +489,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 													mandate.id,
 												)}
 												onChange={handleChange}
-												className="rounded border-gray-300 text-cyan-600 shadow-sm focus:border-cyan-300 focus:ring focus:ring-offset-0 focus:ring-cyan-200 focus:ring-opacity-50"
+												className="rounded border-gray-300 text-brand shadow-sm focus:border-brand focus:ring focus:ring-offset-0 focus:ring-brand/20 focus:ring-opacity-50"
 											/>
 											<span className="ml-2 text-sm text-gray-700">
 												{mandate.label}
@@ -514,7 +535,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 								name="collaborateWithAgents"
 								checked={values.collaborateWithAgents}
 								onChange={handleChange}
-								className="rounded border-gray-300 text-cyan-600 shadow-sm focus:border-cyan-300 focus:ring focus:ring-offset-0 focus:ring-cyan-200 focus:ring-opacity-50"
+								className="rounded border-gray-300 text-brand shadow-sm focus:border-brand focus:ring focus:ring-offset-0 focus:ring-brand/20 focus:ring-opacity-50"
 							/>
 							<span className="ml-2 text-sm text-gray-700">
 								Je souhaite collaborer avec d&apos;autres agents
@@ -527,7 +548,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 								name="shareCommission"
 								checked={values.shareCommission}
 								onChange={handleChange}
-								className="rounded border-gray-300 text-cyan-600 shadow-sm focus:border-cyan-300 focus:ring focus:ring-offset-0 focus:ring-cyan-200 focus:ring-opacity-50"
+								className="rounded border-gray-300 text-brand shadow-sm focus:border-brand focus:ring focus:ring-offset-0 focus:ring-brand/20 focus:ring-opacity-50"
 							/>
 							<span className="ml-2 text-gray-700">
 								Je suis ouvert à partager ma commission
@@ -553,7 +574,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 									name="independentAgent"
 									checked={values.independentAgent}
 									onChange={handleChange}
-									className="rounded border-gray-300 text-cyan-600 shadow-sm focus:border-cyan-300 focus:ring focus:ring-offset-0 focus:ring-cyan-200 focus:ring-opacity-50"
+									className="rounded border-gray-300 text-brand shadow-sm focus:border-brand focus:ring focus:ring-offset-0 focus:ring-brand/20 focus:ring-opacity-50"
 								/>
 								<span className="ml-2 text-sm text-gray-700">
 									Je certifie être un agent immobilier
@@ -567,9 +588,9 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 									name="acceptTerms"
 									checked={values.acceptTerms}
 									onChange={handleChange}
-									className="rounded border-gray-300 text-cyan-600 shadow-sm focus:border-cyan-300 focus:ring focus:ring-offset-0 focus:ring-cyan-200 focus:ring-opacity-50"
+									className="rounded border-gray-300 text-brand shadow-sm focus:border-brand focus:ring focus:ring-offset-0 focus:ring-brand/20 focus:ring-opacity-50"
 								/>
-								<span className="ml-2 text-sm text-cyan-600">
+								<span className="ml-2 text-sm text-brand">
 									J&apos;accepte les conditions
 									d&apos;utilisation
 								</span>
@@ -587,7 +608,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 						<Button
 							type="submit"
 							loading={isSubmitting || isUploadingFile}
-							className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
+							className="w-full bg-brand hover:bg-brand-600 text-white"
 							size="lg"
 						>
 							{isUploadingFile

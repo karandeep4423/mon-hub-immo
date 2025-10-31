@@ -142,11 +142,11 @@ export const RescheduleAppointmentModal: React.FC<
 					</div>
 
 					{/* Current Appointment Info */}
-					<div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-						<p className="text-xs text-blue-800 font-medium mb-1">
+					<div className="mt-4 p-3 bg-info-light rounded-lg border border-info">
+						<p className="text-xs text-info font-medium mb-1">
 							Rendez-vous actuel:
 						</p>
-						<div className="flex items-center gap-2 text-sm text-blue-900">
+						<div className="flex items-center gap-2 text-sm text-info">
 							<svg
 								className="w-4 h-4"
 								fill="none"

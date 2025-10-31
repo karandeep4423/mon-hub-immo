@@ -58,7 +58,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								)
 							}
 							disabled={disabled}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand/20"
 							rows={3}
 							placeholder="Lumière naturelle, proximité transports, rénovation récente..."
 						/>
@@ -81,7 +81,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								)
 							}
 							disabled={disabled}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand/20"
 							rows={3}
 							placeholder="Travaux à prévoir, nuisances sonores..."
 						/>
@@ -123,7 +123,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								)
 							}
 							disabled={disabled}
-							className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+							className="h-4 w-4 text-brand focus:ring-brand/20 border-gray-300 rounded"
 						/>
 						<label
 							htmlFor="openToLowerOffers"
@@ -212,7 +212,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								)
 							}
 							disabled={disabled}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand/20"
 							rows={3}
 							placeholder="Retours des visiteurs précédents..."
 						/>
@@ -235,7 +235,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								)
 							}
 							disabled={disabled}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand/20"
 							rows={3}
 							placeholder="Historique des modifications de prix..."
 						/>
@@ -268,7 +268,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								)
 							}
 							disabled={disabled}
-							className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+							className="h-4 w-4 text-brand focus:ring-brand/20 border-gray-300 rounded"
 						/>
 						<label
 							htmlFor="urgentToSell"
@@ -293,7 +293,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								)
 							}
 							disabled={disabled}
-							className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+							className="h-4 w-4 text-brand focus:ring-brand/20 border-gray-300 rounded"
 						/>
 						<label
 							htmlFor="openToNegotiation"
@@ -338,7 +338,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								)
 							}
 							disabled={disabled}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand/20"
 							rows={3}
 							placeholder="Raisons de la vente..."
 						/>
@@ -360,7 +360,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								)
 							}
 							disabled={disabled}
-							className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+							className="h-4 w-4 text-brand focus:ring-brand/20 border-gray-300 rounded"
 						/>
 						<label
 							htmlFor="presentDuringVisits"
@@ -386,7 +386,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								)
 							}
 							disabled={disabled}
-							className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+							className="h-4 w-4 text-brand focus:ring-brand/20 border-gray-300 rounded"
 						/>
 						<label
 							htmlFor="flexibleSchedule"
@@ -412,7 +412,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								)
 							}
 							disabled={disabled}
-							className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+							className="h-4 w-4 text-brand focus:ring-brand/20 border-gray-300 rounded"
 						/>
 						<label
 							htmlFor="acceptConditionalOffers"

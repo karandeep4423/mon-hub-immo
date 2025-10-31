@@ -271,7 +271,7 @@ export const ContractViewModal: React.FC<ContractViewModalProps> = ({
 									{collaboration.postOwnerId.firstName}{' '}
 									{collaboration.postOwnerId.lastName}
 								</p>
-								<span className="inline-block mt-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+								<span className="inline-block mt-2 text-xs bg-info-light text-info px-2 py-1 rounded-full">
 									Agent Propriétaire
 								</span>
 							</div>
@@ -316,7 +316,7 @@ export const ContractViewModal: React.FC<ContractViewModalProps> = ({
 								<p className="text-sm text-gray-600 mb-1">
 									Agent propriétaire
 								</p>
-								<p className="text-3xl font-bold text-blue-600">
+								<p className="text-3xl font-bold text-brand">
 									{100 - collaboration.proposedCommission}%
 								</p>
 							</div>

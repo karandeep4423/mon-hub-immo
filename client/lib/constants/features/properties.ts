@@ -43,7 +43,7 @@ export const PROPERTY_BADGES: BadgeConfig[] = [
 		value: 'NEGOCIABLE',
 		label: 'NÉGOCIABLE',
 		color: 'text-white',
-		bgColor: 'bg-blue-500',
+		bgColor: 'bg-info',
 	},
 	{
 		value: 'SOUS_COMPROMIS',
@@ -73,7 +73,7 @@ export const PROPERTY_BADGES: BadgeConfig[] = [
 		value: 'VUE_MER',
 		label: 'VUE MER',
 		color: 'text-white',
-		bgColor: 'bg-cyan-500',
+		bgColor: 'bg-brand',
 	},
 	{
 		value: 'PROCHE_ECOLE',
@@ -121,7 +121,7 @@ export const PROPERTY_BADGES: BadgeConfig[] = [
 		value: 'PISCINE',
 		label: 'PISCINE',
 		color: 'text-white',
-		bgColor: 'bg-blue-400',
+		bgColor: 'bg-info',
 	},
 	{
 		value: 'STANDING_PRESTIGE',
@@ -201,13 +201,13 @@ export const SEARCH_AD_BADGES: Record<string, BadgeConfig> = {
 		value: 'Contact direct propriétaire',
 		label: 'CONTACT DIRECT',
 		color: 'text-white',
-		bgColor: 'bg-blue-600',
+		bgColor: 'bg-info',
 	},
 	'Contact ami / famille': {
 		value: 'Contact ami / famille',
 		label: 'CONTACT AMI/FAMILLE',
 		color: 'text-white',
-		bgColor: 'bg-cyan-600',
+		bgColor: 'bg-brand',
 	},
 	'Contact pro (collègue, artisan, notaire…)': {
 		value: 'Contact pro (collègue, artisan, notaire…)',
@@ -231,7 +231,7 @@ export const SEARCH_AD_BADGES: Record<string, BadgeConfig> = {
 		value: 'Appartement',
 		label: 'APPARTEMENT',
 		color: 'text-white',
-		bgColor: 'bg-blue-500',
+		bgColor: 'bg-info',
 	},
 	'Terrain constructible': {
 		value: 'Terrain constructible',
@@ -441,7 +441,7 @@ export const PROPERTY_STATUS_CONFIG: Record<string, StatusConfig> = {
 	rented: {
 		label: 'Loué',
 		variant: 'info',
-		className: 'bg-blue-100 text-blue-800',
+		className: 'bg-info-light text-info',
 	},
 	archived: {
 		label: 'Archivé',

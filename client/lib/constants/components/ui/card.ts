@@ -49,9 +49,9 @@ export type CardShadow = (typeof CARD_SHADOW)[keyof typeof CARD_SHADOW];
 
 export const CARD_SHADOW_CLASSES = {
 	none: '',
-	sm: 'shadow-sm',
-	md: 'shadow-md',
-	lg: 'shadow-lg',
+	sm: 'shadow-xs',
+	md: 'shadow-card',
+	lg: 'shadow-card-hover',
 	xl: 'shadow-xl',
 } as const;
 
@@ -87,7 +87,8 @@ export const CARD_ROUNDED_CLASSES = {
 // BASE CLASSES
 // ============================================================================
 
-export const CARD_BASE_CLASSES = 'bg-white border border-gray-200' as const;
+export const CARD_BASE_CLASSES =
+	'bg-white border border-gray-200 transition-all duration-300' as const;
 
 // ============================================================================
 // HOVER VARIANTS
@@ -95,9 +96,9 @@ export const CARD_BASE_CLASSES = 'bg-white border border-gray-200' as const;
 
 export const CARD_HOVER = {
 	none: '',
-	shadow: 'hover:shadow-md transition-shadow',
-	lift: 'hover:shadow-lg hover:-translate-y-1 transition-all duration-200',
-	scale: 'hover:scale-105 transition-transform duration-200',
+	shadow: 'hover:shadow-card-hover transition-shadow cursor-pointer',
+	lift: 'hover:shadow-card-hover hover:-translate-y-1 hover:scale-102 transition-all duration-300 cursor-pointer',
+	scale: 'hover:scale-102 hover:shadow-card-hover transition-all duration-300 cursor-pointer',
 } as const;
 
 export type CardHover = keyof typeof CARD_HOVER;

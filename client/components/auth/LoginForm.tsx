@@ -160,7 +160,7 @@ export const LoginWithUserType: React.FC = () => {
 	return (
 		<div className="min-h-screen bg-white flex">
 			{/* Left Side - Branding and Image Section (Hidden on Mobile) */}
-			<div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-cyan-600 via-blue-600 to-indigo-700 relative overflow-hidden">
+			<div className="hidden lg:flex lg:w-2/5 bg-brand-gradient relative overflow-hidden">
 				{/* Decorative Background Pattern */}
 				<div className="absolute inset-0 opacity-10">
 					<div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full -translate-x-1/2 -translate-y-1/2"></div>
@@ -189,7 +189,7 @@ export const LoginWithUserType: React.FC = () => {
 							</div>
 							<h1 className="text-2xl font-bold">
 								mon
-								<span className="text-cyan-200">hubimmo</span>
+								<span className="text-brand-200">hubimmo</span>
 							</h1>
 						</div>
 
@@ -198,7 +198,7 @@ export const LoginWithUserType: React.FC = () => {
 							Connectez-vous à<br />
 							votre espace pro
 						</h2>
-						<p className="text-lg text-blue-100 mb-12">
+						<p className="text-lg text-brand-100 mb-12">
 							Accédez à votre tableau de bord et gérez vos
 							collaborations en toute simplicité
 						</p>
@@ -206,7 +206,7 @@ export const LoginWithUserType: React.FC = () => {
 						{/* Benefits List */}
 						<div className="space-y-4">
 							<div className="flex items-start space-x-3">
-								<div className="w-6 h-6 bg-cyan-400/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+								<div className="w-6 h-6 bg-brand-400/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
 									<svg
 										className="w-4 h-4"
 										fill="currentColor"
@@ -223,14 +223,14 @@ export const LoginWithUserType: React.FC = () => {
 									<p className="font-semibold">
 										Gestion centralisée
 									</p>
-									<p className="text-sm text-blue-100">
+									<p className="text-sm text-brand-100">
 										Tous vos biens et collaborations en un
 										seul endroit
 									</p>
 								</div>
 							</div>
 							<div className="flex items-start space-x-3">
-								<div className="w-6 h-6 bg-cyan-400/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+								<div className="w-6 h-6 bg-brand-400/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
 									<svg
 										className="w-4 h-4"
 										fill="currentColor"
@@ -247,13 +247,13 @@ export const LoginWithUserType: React.FC = () => {
 									<p className="font-semibold">
 										Communication instantanée
 									</p>
-									<p className="text-sm text-blue-100">
+									<p className="text-sm text-brand-100">
 										Chat en temps réel avec vos partenaires
 									</p>
 								</div>
 							</div>
 							<div className="flex items-start space-x-3">
-								<div className="w-6 h-6 bg-cyan-400/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+								<div className="w-6 h-6 bg-brand-400/30 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
 									<svg
 										className="w-4 h-4"
 										fill="currentColor"
@@ -270,7 +270,7 @@ export const LoginWithUserType: React.FC = () => {
 									<p className="font-semibold">
 										Sécurité garantie
 									</p>
-									<p className="text-sm text-blue-100">
+									<p className="text-sm text-brand-100">
 										Vos données sont protégées et cryptées
 									</p>
 								</div>
@@ -292,7 +292,7 @@ export const LoginWithUserType: React.FC = () => {
 								<p className="font-semibold text-sm">
 									Marie Curie
 								</p>
-								<p className="text-xs text-blue-100">
+								<p className="text-xs text-brand-100">
 									Agent immobilier, Paris
 								</p>
 							</div>
@@ -302,9 +302,9 @@ export const LoginWithUserType: React.FC = () => {
 			</div>
 
 			{/* Right Side - Form Section */}
-			<div className="flex-1 flex flex-col lg:w-1/2">
+			<div className="flex-1 flex flex-col lg:w-3/5">
 				{/* Mobile Header */}
-				<div className="lg:hidden bg-gradient-to-r from-cyan-600 to-blue-600 text-white p-6">
+				<div className="lg:hidden bg-brand-gradient text-white p-6">
 					<div className="flex items-center space-x-3">
 						<div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
 							<svg
@@ -322,13 +322,13 @@ export const LoginWithUserType: React.FC = () => {
 							</svg>
 						</div>
 						<h1 className="text-xl font-bold">
-							mon<span className="text-cyan-200">hubimmo</span>
+							mon<span className="text-brand-200">hubimmo</span>
 						</h1>
 					</div>
 				</div>
 
 				{/* Form Container */}
-				<div className="flex-1 flex items-center justify-center px-6 py-8 lg:py-12">
+				<div className="flex-1 flex items-center justify-center px-6 py-8 lg:py-12 bg-gray-50">
 					<div className="w-full max-w-md">
 						{/* Desktop Header */}
 						<div className="hidden lg:block mb-8">
@@ -342,7 +342,7 @@ export const LoginWithUserType: React.FC = () => {
 						</div>
 
 						{/* User Type Selector + Login Form */}
-						<div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+						<div className="bg-white rounded-2xl shadow-card p-8 border border-gray-200">
 							{/* Mobile Title */}
 							<div className="lg:hidden text-center mb-6">
 								<h2 className="text-2xl font-bold text-gray-900 mb-2">
@@ -355,7 +355,7 @@ export const LoginWithUserType: React.FC = () => {
 
 							{/* Account Type Selector */}
 							<div className="mb-6">
-								<label className="block text-sm font-medium text-gray-700 mb-3">
+								<label className="block text-sm font-semibold text-gray-700 mb-3">
 									Type de compte
 								</label>
 								<div className="grid grid-cols-3 gap-3">
@@ -369,16 +369,16 @@ export const LoginWithUserType: React.FC = () => {
 												onClick={() =>
 													setSelectedUserType(type.id)
 												}
-												className={`group flex flex-col items-center justify-center rounded-xl border-2 p-4 text-center transition-all duration-200 hover:shadow-md ${
+												className={`group flex flex-col items-center justify-center rounded-xl border-2 p-4 text-center transition-all duration-200 ${
 													selected
-														? 'border-brand bg-gradient-to-br from-brand-50 to-cyan-50 shadow-lg'
-														: 'border-gray-200 hover:border-brand-300 bg-white'
+														? 'border-brand bg-brand-subtle shadow-brand scale-105'
+														: 'border-gray-200 hover:border-brand hover:shadow-md bg-white'
 												}`}
 											>
 												<div
-													className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 transition-colors ${
+													className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2 transition-all duration-200 ${
 														selected
-															? 'bg-brand text-white'
+															? 'bg-brand text-white shadow-md'
 															: 'bg-gray-100 text-gray-400 group-hover:bg-brand-100 group-hover:text-brand'
 													}`}
 												>
@@ -442,7 +442,7 @@ export const LoginWithUserType: React.FC = () => {
 
 								<div className="flex items-center justify-end">
 									<Link
-										className="text-sm text-brand-600 hover:text-brand-700 font-medium transition-colors"
+										className="text-sm text-brand hover:text-brand-600 font-semibold transition-colors duration-200"
 										href={
 											Features.Auth.AUTH_ROUTES
 												.FORGOT_PASSWORD
@@ -458,7 +458,7 @@ export const LoginWithUserType: React.FC = () => {
 								<Button
 									type="submit"
 									loading={isSubmitting}
-									className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg"
+									className="w-full"
 									size="lg"
 								>
 									{selectedUserType === 'partenaire'
@@ -473,7 +473,7 @@ export const LoginWithUserType: React.FC = () => {
 									<div className="w-full border-t border-gray-200"></div>
 								</div>
 								<div className="relative flex justify-center text-sm">
-									<span className="px-4 bg-white text-gray-500">
+									<span className="px-4 bg-white text-gray-500 font-medium">
 										ou
 									</span>
 								</div>
@@ -491,7 +491,7 @@ export const LoginWithUserType: React.FC = () => {
 													.SIGNUP,
 											)
 										}
-										className="text-brand-600 hover:text-brand-700 font-semibold transition-colors"
+										className="text-brand hover:text-brand-600 font-semibold transition-colors duration-200"
 									>
 										{Features.Auth.AUTH_UI_TEXT.signUpHere}
 									</button>

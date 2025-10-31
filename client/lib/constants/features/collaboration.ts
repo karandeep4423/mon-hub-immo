@@ -54,7 +54,7 @@ export const COLLABORATION_STATUS_CONFIG: Record<string, StatusConfig> = {
 	accepted: {
 		label: 'Acceptée',
 		variant: 'info',
-		className: 'bg-blue-100 text-blue-800',
+		className: 'bg-info-light text-info',
 	},
 	active: {
 		label: 'Active',
@@ -64,7 +64,7 @@ export const COLLABORATION_STATUS_CONFIG: Record<string, StatusConfig> = {
 	completed: {
 		label: 'Complétée',
 		variant: 'info',
-		className: 'bg-blue-100 text-blue-800',
+		className: 'bg-info-light text-info',
 	},
 	rejected: {
 		label: 'Refusée',

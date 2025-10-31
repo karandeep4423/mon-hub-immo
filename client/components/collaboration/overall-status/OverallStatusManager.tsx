@@ -188,7 +188,7 @@ export const OverallStatusManager: React.FC<OverallStatusManagerProps> = ({
 											: reasonDetails.color.includes(
 														'blue',
 												  )
-												? 'text-blue-700'
+												? 'text-brand-700'
 												: 'text-gray-700'
 								}`}
 							>

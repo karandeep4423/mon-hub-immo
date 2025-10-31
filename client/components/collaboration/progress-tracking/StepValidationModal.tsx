@@ -43,7 +43,7 @@ export const StepValidationModal: React.FC<StepValidationModalProps> = ({
 		<Modal isOpen={isOpen} onClose={onClose} title="Valider l'étape">
 			<div className="space-y-6">
 				{/* Step Info */}
-				<div className="flex items-center space-x-3 p-4 bg-blue-50 rounded-lg">
+				<div className="flex items-center space-x-3 p-4 bg-brand-50 rounded-lg">
 					<span className="text-3xl">{stepIcon}</span>
 					<div>
 						<h3 className="font-medium text-gray-900">
@@ -77,7 +77,7 @@ export const StepValidationModal: React.FC<StepValidationModalProps> = ({
 						placeholder="Ajoutez une note pour cette étape..."
 						rows={4}
 						maxLength={500}
-						className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+						className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-transparent resize-none"
 					/>
 					<p className="text-xs text-gray-500 mt-1">
 						{note.length}/500 caractères

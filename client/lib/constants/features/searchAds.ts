@@ -42,7 +42,7 @@ export const SEARCH_AD_STATUS_CONFIG: Record<string, StatusConfig> = {
 	fulfilled: {
 		label: 'Satisfaite',
 		variant: 'info',
-		className: 'bg-blue-100 text-blue-800',
+		className: 'bg-info-light text-info',
 	},
 	sold: {
 		label: 'Vendue',
@@ -52,7 +52,7 @@ export const SEARCH_AD_STATUS_CONFIG: Record<string, StatusConfig> = {
 	rented: {
 		label: 'Louée',
 		variant: 'info',
-		className: 'bg-blue-100 text-blue-800',
+		className: 'bg-info-light text-info',
 	},
 	archived: {
 		label: 'Archivée',

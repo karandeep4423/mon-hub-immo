@@ -53,13 +53,13 @@ export const CollaborationParticipants: React.FC<
 							<p className="text-sm font-medium text-gray-900 truncate">
 								{ownerUser.firstName} {ownerUser.lastName}
 								{ownerUser._id === currentUserId && (
-									<span className="ml-1 text-[10px] text-blue-600">
+									<span className="ml-1 text-[10px] text-brand">
 										(Vous)
 									</span>
 								)}
 							</p>
 							<div className="flex items-center gap-2 text-xs text-gray-600">
-								<span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+								<span className="px-2 py-0.5 rounded-full bg-brand-100 text-brand-700">
 									Propriétaire
 								</span>
 								{property?.city && (
@@ -86,7 +86,7 @@ export const CollaborationParticipants: React.FC<
 								{collaboratorUser.firstName}{' '}
 								{collaboratorUser.lastName}
 								{collaboratorUser._id === currentUserId && (
-									<span className="ml-1 text-[10px] text-blue-600">
+									<span className="ml-1 text-[10px] text-brand">
 										(Vous)
 									</span>
 								)}

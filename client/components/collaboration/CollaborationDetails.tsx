@@ -43,12 +43,12 @@ export const CollaborationDetails: React.FC<CollaborationDetailsProps> = ({
 			{collaboration.status ===
 				Features.Collaboration.COLLABORATION_STATUS_VALUES.ACTIVE && (
 				<div className="px-4 pb-4">
-					<div className="bg-blue-50 rounded-lg p-3">
+					<div className="bg-brand-50 rounded-lg p-3">
 						<div className="flex items-center justify-between mb-2">
 							<p className="text-sm font-medium text-gray-900">
 								Étape actuelle
 							</p>
-							<span className="text-xs text-blue-600">
+							<span className="text-xs text-brand">
 								{completedSteps}/{totalSteps} étapes
 							</span>
 						</div>
@@ -57,10 +57,10 @@ export const CollaborationDetails: React.FC<CollaborationDetailsProps> = ({
 								{currentStepConfig?.icon}
 							</span>
 							<div>
-								<p className="text-sm font-medium text-blue-800">
+								<p className="text-sm font-medium text-brand-800">
 									{currentStepConfig?.title}
 								</p>
-								<p className="text-xs text-blue-600">
+								<p className="text-xs text-brand">
 									{currentStepConfig?.description}
 								</p>
 							</div>
@@ -69,7 +69,7 @@ export const CollaborationDetails: React.FC<CollaborationDetailsProps> = ({
 						<div className="mt-3">
 							<div className="bg-blue-200 rounded-full h-2">
 								<div
-									className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+									className="bg-brand h-2 rounded-full transition-all duration-300"
 									style={{
 										width: `${(completedSteps / totalSteps) * 100}%`,
 									}}
@@ -93,7 +93,7 @@ export const CollaborationDetails: React.FC<CollaborationDetailsProps> = ({
 							collaboration.compensationType ===
 								'fixed_amount' ? (
 								<div className="text-center py-2">
-									<p className="text-lg font-bold text-blue-600">
+									<p className="text-lg font-bold text-brand">
 										{compensationInfo.value}
 									</p>
 									<p className="text-xs text-gray-500 mt-1">
@@ -119,7 +119,7 @@ export const CollaborationDetails: React.FC<CollaborationDetailsProps> = ({
 										<p className="text-xs text-gray-500">
 											Collaborateur
 										</p>
-										<p className="text-sm font-semibold text-blue-600">
+										<p className="text-sm font-semibold text-brand">
 											{isOwner
 												? `${collaboration.proposedCommission}%`
 												: compensationInfo.value}
@@ -147,7 +147,7 @@ export const CollaborationDetails: React.FC<CollaborationDetailsProps> = ({
 						{collaboration.status ===
 							Features.Collaboration.COLLABORATION_STATUS_VALUES
 								.ACTIVE && (
-							<span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+							<span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-800">
 								🔄 Active
 							</span>
 						)}
@@ -224,7 +224,7 @@ export const CollaborationDetails: React.FC<CollaborationDetailsProps> = ({
 																	: reasonDetails.color.includes(
 																				'blue',
 																		  )
-																		? 'text-blue-700'
+																		? 'text-brand-700'
 																		: 'text-gray-700'
 														}`}
 													>
@@ -300,7 +300,7 @@ export const CollaborationDetails: React.FC<CollaborationDetailsProps> = ({
 									{latestActivity.message}
 								</p>
 								{collaboration.activities.length > 1 && (
-									<p className="text-xs text-blue-600 mt-1">
+									<p className="text-xs text-brand mt-1">
 										+{collaboration.activities.length - 1}{' '}
 										autres activités
 									</p>

@@ -77,7 +77,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 								Features.Dashboard.DASHBOARD_ROUTES.BASE,
 							)
 						}
-						className="text-blue-600 hover:text-blue-500 font-medium"
+						className="text-brand hover:text-brand font-medium"
 					>
 						Return to Dashboard
 					</button>

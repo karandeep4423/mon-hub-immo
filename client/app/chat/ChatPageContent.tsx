@@ -202,10 +202,10 @@ export const ChatPageContent = () => {
 
 			if (contextCollaborationType === 'contact') {
 				return (
-					<div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+					<div className="bg-info-light border border-brand-200 rounded-lg p-4 mb-4">
 						<div className="flex items-center space-x-2">
 							<svg
-								className="w-5 h-5 text-blue-600"
+								className="w-5 h-5 text-brand"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -217,11 +217,11 @@ export const ChatPageContent = () => {
 									d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
 								/>
 							</svg>
-							<span className="text-sm font-medium text-blue-800">
+							<span className="text-sm font-medium text-brand-800">
 								Demande de contact
 							</span>
 						</div>
-						<p className="text-sm text-blue-700 mt-1">
+						<p className="text-sm text-brand-700 mt-1">
 							Vous souhaitez obtenir plus d&apos;informations sur
 							cette annonce
 							{propertyDetails && (

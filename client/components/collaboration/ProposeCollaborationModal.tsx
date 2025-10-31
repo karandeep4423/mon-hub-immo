@@ -272,7 +272,7 @@ export const ProposeCollaborationModal: React.FC<
 												e.target.value,
 											)
 										}
-										className="text-cyan-600 focus:ring-cyan-500"
+										className="text-brand focus:ring-brand/20"
 									/>
 									<span className="flex-1 text-sm text-gray-700">
 										Pourcentage de commission (&lt; 50%)
@@ -293,7 +293,7 @@ export const ProposeCollaborationModal: React.FC<
 												e.target.value,
 											)
 										}
-										className="text-cyan-600 focus:ring-cyan-500"
+										className="text-brand focus:ring-brand/20"
 									/>
 									<span className="flex-1 text-sm text-gray-700">
 										Montant fixe en euros (€)
@@ -314,7 +314,7 @@ export const ProposeCollaborationModal: React.FC<
 												e.target.value,
 											)
 										}
-										className="text-cyan-600 focus:ring-cyan-500"
+										className="text-brand focus:ring-brand/20"
 									/>
 									<span className="flex-1 text-sm text-gray-700">
 										Chèques cadeaux
@@ -418,7 +418,7 @@ export const ProposeCollaborationModal: React.FC<
 								setFieldValue('message', e.target.value)
 							}
 							placeholder="Expliquez pourquoi cette collaboration serait bénéfique..."
-							className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-cyan-500 focus:border-cyan-500"
+							className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand/20 focus:border-brand"
 							maxLength={500}
 						/>
 						<div className="text-xs text-gray-500 mt-1">
@@ -426,7 +426,7 @@ export const ProposeCollaborationModal: React.FC<
 						</div>
 					</div>
 
-					<div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+					<div className="bg-brand-50 border border-brand-200 rounded-lg p-4">
 						<label className="flex items-start space-x-3 cursor-pointer">
 							<input
 								type="checkbox"
@@ -437,7 +437,7 @@ export const ProposeCollaborationModal: React.FC<
 										e.target.checked,
 									)
 								}
-								className="mt-1 rounded border-gray-300 text-cyan-600 shadow-sm focus:border-cyan-300 focus:ring focus:ring-offset-0 focus:ring-cyan-200 focus:ring-opacity-50"
+								className="mt-1 rounded border-gray-300 text-brand shadow-sm focus:border-brand focus:ring focus:ring-offset-0 focus:ring-brand/20 focus:ring-opacity-50"
 							/>
 							<span className="text-sm text-gray-700 leading-relaxed">
 								Je contribue à une collaboration saine et

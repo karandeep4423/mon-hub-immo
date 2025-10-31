@@ -12,7 +12,7 @@ export const UserTypeStep: React.FC<UserTypeStepProps> = ({
 	return (
 		<div className="space-y-6">
 			<div className="text-center mb-8">
-				<div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-2xl mb-4">
+				<div className="inline-flex items-center justify-center w-14 h-14 bg-brand rounded-2xl mb-4 shadow-brand transition-all duration-200 hover:scale-105">
 					<svg
 						className="w-7 h-7 text-white"
 						fill="none"
@@ -37,10 +37,10 @@ export const UserTypeStep: React.FC<UserTypeStepProps> = ({
 
 			<div className="space-y-4">
 				<label
-					className={`group block p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-md ${
+					className={`group block p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-card ${
 						userType === 'apporteur'
-							? 'border-brand bg-gradient-to-br from-brand-50 to-cyan-50 shadow-lg'
-							: 'border-gray-200 hover:border-brand-300 bg-white'
+							? 'border-brand bg-brand-subtle shadow-brand scale-105'
+							: 'border-gray-200 hover:border-brand bg-white'
 					}`}
 				>
 					<input
@@ -53,7 +53,7 @@ export const UserTypeStep: React.FC<UserTypeStepProps> = ({
 					/>
 					<div className="flex items-start">
 						<div
-							className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center mr-4 transition-colors ${
+							className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center mr-4 transition-all duration-200 ${
 								userType === 'apporteur'
 									? 'bg-brand text-white'
 									: 'bg-gray-100 text-gray-400 group-hover:bg-brand-100 group-hover:text-brand'
@@ -99,10 +99,10 @@ export const UserTypeStep: React.FC<UserTypeStepProps> = ({
 				</label>
 
 				<label
-					className={`group block p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-md ${
+					className={`group block p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-card ${
 						userType === 'agent'
-							? 'border-brand bg-gradient-to-br from-brand-50 to-cyan-50 shadow-lg'
-							: 'border-gray-200 hover:border-brand-300 bg-white'
+							? 'border-brand bg-brand-subtle shadow-brand scale-105'
+							: 'border-gray-200 hover:border-brand bg-white'
 					}`}
 				>
 					<input
@@ -115,7 +115,7 @@ export const UserTypeStep: React.FC<UserTypeStepProps> = ({
 					/>
 					<div className="flex items-start">
 						<div
-							className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center mr-4 transition-colors ${
+							className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center mr-4 transition-all duration-200 ${
 								userType === 'agent'
 									? 'bg-brand text-white'
 									: 'bg-gray-100 text-gray-400 group-hover:bg-brand-100 group-hover:text-brand'
@@ -162,7 +162,9 @@ export const UserTypeStep: React.FC<UserTypeStepProps> = ({
 			</div>
 
 			{error && (
-				<p className="text-sm text-red-600 text-center">{error}</p>
+				<p className="text-sm text-error font-medium text-center">
+					{error}
+				</p>
 			)}
 		</div>
 	);

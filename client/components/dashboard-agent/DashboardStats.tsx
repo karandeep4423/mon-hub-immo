@@ -25,11 +25,11 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
 		<>
 			{/* Main Stats Cards */}
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-				<div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+				<div className="bg-white rounded-2xl shadow-card p-6 hover:shadow-card-hover hover:scale-102 transition-all duration-300 border border-gray-200">
 					<div className="flex items-center">
-						<div className="p-3 bg-blue-100 rounded-lg">
+						<div className="p-3 bg-brand-100 rounded-xl">
 							<svg
-								className="w-6 h-6 text-blue-600"
+								className="w-6 h-6 text-brand"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -43,10 +43,10 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
 							</svg>
 						</div>
 						<div className="ml-4">
-							<p className="text-sm font-medium text-gray-600">
+							<p className="text-sm font-semibold text-gray-600">
 								Mes biens
 							</p>
-							<p className="text-2xl font-bold text-gray-900">
+							<p className="text-3xl font-bold text-gray-900">
 								{loading
 									? '—'
 									: formatNumber(kpis.propertiesTotal)}
@@ -55,11 +55,11 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
 					</div>
 				</div>
 
-				<div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+				<div className="bg-white rounded-2xl shadow-card p-6 hover:shadow-card-hover hover:scale-102 transition-all duration-300 border border-gray-200">
 					<div className="flex items-center">
-						<div className="p-3 bg-green-100 rounded-lg">
+						<div className="p-3 bg-success-light rounded-xl">
 							<svg
-								className="w-6 h-6 text-green-600"
+								className="w-6 h-6 text-success"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -73,10 +73,10 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
 							</svg>
 						</div>
 						<div className="ml-4">
-							<p className="text-sm font-medium text-gray-600">
+							<p className="text-sm font-semibold text-gray-600">
 								Collaborations totales
 							</p>
-							<p className="text-2xl font-bold text-gray-900">
+							<p className="text-3xl font-bold text-gray-900">
 								{loading
 									? '—'
 									: formatNumber(kpis.collaborationsTotal)}
@@ -85,11 +85,11 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
 					</div>
 				</div>
 
-				<div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+				<div className="bg-white rounded-2xl shadow-card p-6 hover:shadow-card-hover hover:scale-102 transition-all duration-300 border border-gray-200">
 					<div className="flex items-center">
-						<div className="p-3 bg-yellow-100 rounded-lg">
+						<div className="p-3 bg-warning-light rounded-xl">
 							<svg
-								className="w-6 h-6 text-yellow-600"
+								className="w-6 h-6 text-warning"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -148,9 +148,9 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
 				<div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
 					<div className="flex items-center">
-						<div className="p-3 bg-cyan-100 rounded-lg">
+						<div className="p-3 bg-brand-100 rounded-lg">
 							<svg
-								className="w-6 h-6 text-cyan-600"
+								className="w-6 h-6 text-brand"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"

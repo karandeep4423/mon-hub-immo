@@ -16,7 +16,7 @@ export const PropertyHeader: React.FC<PropertyHeaderProps> = ({
 		<div className="bg-white rounded-xl shadow-sm border p-6">
 			<div className="flex items-center justify-between">
 				<div className="flex items-center space-x-4">
-					<div className="w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
+					<div className="w-12 h-12 bg-gradient-to-r from-brand to-brand-600 rounded-lg flex items-center justify-center">
 						<svg
 							className="w-6 h-6 text-white"
 							fill="none"
@@ -46,7 +46,7 @@ export const PropertyHeader: React.FC<PropertyHeaderProps> = ({
 				<div className="flex items-center space-x-3">
 					<Button
 						onClick={onCreateClick}
-						className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg"
+						className="bg-gradient-to-r from-brand to-brand-600 hover:from-brand-600 hover:to-brand-700 text-white shadow-lg"
 					>
 						<svg
 							className="w-4 h-4 mr-2"

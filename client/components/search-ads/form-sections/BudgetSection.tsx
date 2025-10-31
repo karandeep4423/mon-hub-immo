@@ -56,7 +56,7 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
 							onChange={(e) =>
 								onBudgetMaxChange(Number(e.target.value))
 							}
-							className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+							className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand/20 focus:border-brand"
 						/>
 					</div>
 
@@ -79,7 +79,7 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
 										: undefined,
 								)
 							}
-							className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+							className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand/20 focus:border-brand"
 						/>
 					</div>
 				</div>
@@ -97,7 +97,7 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
 						name="financingType"
 						value={financingType}
 						onChange={(e) => onFinancingTypeChange(e.target.value)}
-						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand/20 focus:border-brand"
 					>
 						<option value="">Sélectionner...</option>
 						{financingTypes.map((type) => (
@@ -116,7 +116,7 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
 							onChange={(e) =>
 								onSaleInProgressChange(e.target.checked)
 							}
-							className="rounded border-gray-300 text-blue-600"
+							className="rounded border-gray-300 text-brand"
 						/>
 						<span className="text-sm text-gray-700">
 							Vente d&apos;un autre bien en cours ? (vente en
@@ -131,7 +131,7 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
 							onChange={(e) =>
 								onBankApprovalChange(e.target.checked)
 							}
-							className="rounded border-gray-300 text-blue-600"
+							className="rounded border-gray-300 text-brand"
 						/>
 						<span className="text-sm text-gray-700">
 							Avez-vous un accord de principe ou une simulation

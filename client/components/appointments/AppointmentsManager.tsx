@@ -262,7 +262,7 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 					<Button
 						onClick={() => setViewMode('availability')}
 						variant="outline"
-						className="border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+						className="border-brand text-brand hover:bg-brand-50"
 					>
 						<svg
 							className="w-4 h-4 mr-2"
@@ -343,7 +343,7 @@ export const AppointmentsManager: React.FC<AppointmentsManagerProps> = ({
 					<div className="flex items-center">
 						<div className="p-3 bg-cyan-100 rounded-lg">
 							<svg
-								className="w-6 h-6 text-cyan-600"
+								className="w-6 h-6 text-brand"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"

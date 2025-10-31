@@ -26,9 +26,9 @@ export const ContactCard: React.FC<ContactCardProps> = ({
 	const isAgent = user?.userType === 'agent';
 
 	return (
-		<div className="bg-gradient-to-br from-cyan-50 to-blue-50 p-6 rounded-xl shadow-md border-2 border-cyan-200">
+		<div className="bg-gradient-to-br from-brand-50 to-brand-100 p-6 rounded-xl shadow-md border-2 border-brand-200">
 			<div className="flex items-center gap-3 mb-5">
-				<div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
+				<div className="w-10 h-10 bg-gradient-to-br from-brand to-brand-600 rounded-xl flex items-center justify-center shadow-md">
 					<span className="text-xl">💬</span>
 				</div>
 				<h3 className="text-lg font-bold text-gray-900">Contact</h3>
@@ -38,7 +38,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({
 				<ProfileAvatar
 					user={searchAd.authorId}
 					size="lg"
-					className="w-12 h-12 ring-2 ring-cyan-200"
+					className="w-12 h-12 ring-2 ring-brand-200"
 				/>
 				<div>
 					<h4 className="font-bold text-gray-900 text-base">
@@ -64,7 +64,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({
 					<>
 						<button
 							onClick={onContact}
-							className="w-full px-4 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl transition-all duration-200 font-semibold flex items-center justify-center gap-2.5 mb-4 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm"
+							className="w-full px-4 py-3.5 bg-gradient-to-r from-brand to-brand-600 hover:from-brand-600 hover:to-brand-700 text-white rounded-xl transition-all duration-200 font-semibold flex items-center justify-center gap-2.5 mb-4 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm"
 						>
 							<svg
 								className="w-4 h-4"
@@ -83,7 +83,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({
 						</button>
 
 						{hasBlockingCollab ? (
-							<div className="w-full p-3 rounded-md border bg-blue-50 text-blue-800 text-sm flex items-center justify-center mb-4">
+							<div className="w-full p-3 rounded-md border bg-brand-50 text-brand-800 text-sm flex items-center justify-center mb-4">
 								<span className="mr-2">ℹ️</span>
 								{`Annonce déjà en collaboration (${blockingStatus ? Features.Collaboration.COLLABORATION_STATUS_CONFIG[blockingStatus]?.label || blockingStatus : ''})`}
 							</div>
@@ -132,7 +132,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({
 								'Lien copié dans le presse-papiers!',
 						})
 					}
-					className="w-full px-3.5 py-2.5 bg-white border-2 border-gray-300 hover:border-cyan-500 hover:bg-cyan-50 text-gray-700 hover:text-cyan-700 rounded-lg transition-all duration-200 font-semibold flex items-center justify-center gap-2 group text-xs"
+					className="w-full px-3.5 py-2.5 bg-white border-2 border-gray-300 hover:border-brand hover:bg-brand-50 text-gray-700 hover:text-brand-700 rounded-lg transition-all duration-200 font-semibold flex items-center justify-center gap-2 group text-xs"
 				>
 					<svg
 						className="w-4 h-4 group-hover:rotate-12 transition-transform duration-200"

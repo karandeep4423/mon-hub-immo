@@ -24,10 +24,10 @@ export const PriceBreakdown: React.FC<PriceBreakdownProps> = ({
 
 	return (
 		<div
-			className={`bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-5 border-2 border-blue-100 ${className}`}
+			className={`bg-gradient-to-br from-brand-50 to-brand-100 rounded-lg p-5 border-2 border-brand-100 ${className}`}
 		>
 			<div className="flex items-center gap-2 mb-4">
-				<div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+				<div className="w-8 h-8 bg-gradient-to-br from-brand to-brand-600 rounded-lg flex items-center justify-center">
 					<span className="text-white text-lg">💰</span>
 				</div>
 				<h3 className="text-base font-bold text-gray-900">
@@ -51,7 +51,7 @@ export const PriceBreakdown: React.FC<PriceBreakdownProps> = ({
 					<span className="text-sm text-gray-600">
 						% frais d&apos;agence
 					</span>
-					<span className="text-base font-semibold text-blue-600">
+					<span className="text-base font-semibold text-brand">
 						{agencyFeesPercentage} %
 					</span>
 				</div>
@@ -62,7 +62,7 @@ export const PriceBreakdown: React.FC<PriceBreakdownProps> = ({
 				{/* Agency fees amount */}
 				<div className="flex justify-between items-center">
 					<span className="text-sm text-gray-600 flex items-center gap-1">
-						<span className="text-blue-500">→</span> Frais
+						<span className="text-brand">→</span> Frais
 						d&apos;agence
 					</span>
 					<span className="text-base font-semibold text-gray-700">
@@ -73,9 +73,9 @@ export const PriceBreakdown: React.FC<PriceBreakdownProps> = ({
 				{/* Total price including fees */}
 				<div className="flex justify-between items-center bg-white rounded-lg p-3 border border-blue-200">
 					<span className="text-sm font-semibold text-gray-700 flex items-center gap-1">
-						<span className="text-blue-500">→</span> Prix FAI
+						<span className="text-brand">→</span> Prix FAI
 					</span>
-					<span className="text-xl font-bold text-blue-600">
+					<span className="text-xl font-bold text-brand">
 						{priceIncludingFees.toLocaleString('fr-FR')} €
 					</span>
 				</div>

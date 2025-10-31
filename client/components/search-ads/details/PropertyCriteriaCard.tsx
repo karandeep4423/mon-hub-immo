@@ -29,9 +29,9 @@ export const PropertyCriteriaCard: React.FC<PropertyCriteriaCardProps> = ({
 	searchAd,
 }) => {
 	return (
-		<div className="group bg-white p-6 rounded-xl shadow-md border border-gray-200/50 hover:shadow-xl hover:border-cyan-200 transition-all duration-300">
+		<div className="group bg-white p-6 rounded-xl shadow-md border border-gray-200/50 hover:shadow-xl hover:border-brand-200 transition-all duration-300">
 			<div className="flex items-center gap-3 mb-4">
-				<div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center shadow-md">
+				<div className="w-10 h-10 bg-gradient-to-br from-brand to-brand-600 rounded-lg flex items-center justify-center shadow-md">
 					<span className="text-xl">🏠</span>
 				</div>
 				<h3 className="text-lg font-bold text-gray-900">

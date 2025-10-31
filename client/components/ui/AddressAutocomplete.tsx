@@ -92,7 +92,7 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
 						suggestions.length > 0 && setShowDropdown(true)
 					}
 					placeholder={placeholder}
-					className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+					className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 ${
 						error ? 'border-red-500' : 'border-gray-300'
 					}`}
 				/>
@@ -113,7 +113,7 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
 							key={index}
 							type="button"
 							onClick={() => handleSelectAddress(suggestion)}
-							className="w-full text-left px-4 py-2 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none border-b border-gray-100 last:border-b-0"
+							className="w-full text-left px-4 py-2 hover:bg-brand-50 focus:bg-brand-50 focus:outline-none border-b border-gray-100 last:border-b-0"
 						>
 							<div className="font-medium text-gray-900">
 								{suggestion.label}

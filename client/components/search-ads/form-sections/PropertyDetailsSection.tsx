@@ -76,7 +76,7 @@ export const PropertyDetailsSection: React.FC<PropertyDetailsSectionProps> = ({
 										: undefined,
 								)
 							}
-							className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+							className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand/20 focus:border-brand"
 						/>
 					</div>
 
@@ -99,7 +99,7 @@ export const PropertyDetailsSection: React.FC<PropertyDetailsSectionProps> = ({
 										: undefined,
 								)
 							}
-							className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+							className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand/20 focus:border-brand"
 						/>
 					</div>
 
@@ -122,7 +122,7 @@ export const PropertyDetailsSection: React.FC<PropertyDetailsSectionProps> = ({
 										: undefined,
 								)
 							}
-							className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+							className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand/20 focus:border-brand"
 						/>
 					</div>
 				</div>
@@ -135,7 +135,7 @@ export const PropertyDetailsSection: React.FC<PropertyDetailsSectionProps> = ({
 							onChange={(e) =>
 								onHasExteriorChange(e.target.checked)
 							}
-							className="rounded border-gray-300 text-blue-600"
+							className="rounded border-gray-300 text-brand"
 						/>
 						<span className="text-sm text-gray-700">
 							Extérieur nécessaire ? (jardin, terrasse, balcon)
@@ -149,7 +149,7 @@ export const PropertyDetailsSection: React.FC<PropertyDetailsSectionProps> = ({
 							onChange={(e) =>
 								onHasParkingChange(e.target.checked)
 							}
-							className="rounded border-gray-300 text-blue-600"
+							className="rounded border-gray-300 text-brand"
 						/>
 						<span className="text-sm text-gray-700">
 							Parking / garage obligatoire ?
@@ -169,7 +169,7 @@ export const PropertyDetailsSection: React.FC<PropertyDetailsSectionProps> = ({
 						name="acceptedFloors"
 						value={acceptedFloors || ''}
 						onChange={(e) => onAcceptedFloorsChange(e.target.value)}
-						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand/20 focus:border-brand"
 					>
 						<option value="">Sélectionner...</option>
 						{floorOptions.map((option) => (
@@ -201,7 +201,7 @@ export const PropertyDetailsSection: React.FC<PropertyDetailsSectionProps> = ({
 											e.target.checked,
 										)
 									}
-									className="rounded border-gray-300 text-blue-600 mt-1 flex-shrink-0"
+									className="rounded border-gray-300 text-brand mt-1 flex-shrink-0"
 								/>
 								<span className="text-sm leading-tight break-words">
 									{STATE_LABELS[state] || state}

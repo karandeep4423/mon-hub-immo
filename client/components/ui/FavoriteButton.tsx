@@ -141,7 +141,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
 						: 'bg-white/80 text-gray-600 hover:text-red-500 hover:bg-white shadow-sm border border-gray-200'
 				}
 				${isLoading ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}
-				${!isAuthenticated ? 'hover:bg-blue-50 hover:text-blue-500 hover:border-blue-200' : ''}
+				${!isAuthenticated ? 'hover:bg-brand-50 hover:text-brand hover:border-brand-200' : ''}
 			`}
 			title={
 				!isAuthenticated

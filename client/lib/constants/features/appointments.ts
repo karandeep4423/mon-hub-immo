@@ -62,7 +62,7 @@ export const APPOINTMENT_STATUS_CONFIG: Record<string, StatusConfig> = {
 	completed: {
 		label: 'Terminé',
 		variant: 'info',
-		className: 'bg-blue-100 text-blue-800',
+		className: 'bg-info-light text-info',
 	},
 	rejected: {
 		label: 'Refusé',

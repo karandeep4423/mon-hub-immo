@@ -49,7 +49,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 								onClick={() =>
 									router.push('/auth/complete-profile')
 								}
-								className="bg-cyan-600 hover:bg-cyan-700 text-white"
+								className="bg-brand hover:bg-brand-600 text-white"
 								size="sm"
 							>
 								<svg
@@ -170,7 +170,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 						>
 							<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
 								<div className="text-center p-4 bg-gray-50 rounded-lg">
-									<p className="text-2xl font-bold text-cyan-600">
+									<p className="text-2xl font-bold text-brand">
 										{user.professionalInfo
 											?.interventionRadius || 20}
 										km
@@ -180,7 +180,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 									</p>
 								</div>
 								<div className="text-center p-4 bg-gray-50 rounded-lg">
-									<p className="text-2xl font-bold text-cyan-600">
+									<p className="text-2xl font-bold text-brand">
 										{user.professionalInfo
 											?.yearsExperience || 0}
 									</p>
@@ -189,7 +189,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 									</p>
 								</div>
 								<div className="text-center p-4 bg-gray-50 rounded-lg">
-									<p className="text-2xl font-bold text-cyan-600">
+									<p className="text-2xl font-bold text-brand">
 										{user.professionalInfo?.network ||
 											'N/A'}
 									</p>
@@ -230,7 +230,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 													(city, index) => (
 														<span
 															key={index}
-															className="inline-flex px-3 py-1 text-sm bg-cyan-50 text-cyan-700 rounded-full"
+															className="inline-flex px-3 py-1 text-sm bg-brand-50 text-brand-700 rounded-full"
 														>
 															{city}
 														</span>

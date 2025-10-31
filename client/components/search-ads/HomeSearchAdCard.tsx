@@ -46,7 +46,7 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 
 	return (
 		<Link href={`/search-ads/${searchAd._id}`} className="block">
-			<div className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 h-full flex flex-col">
+			<div className="bg-white shadow-card rounded-2xl overflow-hidden hover:shadow-card-hover transition-all duration-300 hover:scale-102 border border-gray-200 h-full flex flex-col">
 				{/* Header section with image and badges */}
 				<div className="relative h-48 overflow-hidden">
 					<Image
@@ -100,7 +100,7 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 
 					<div className="flex flex-wrap gap-2 mb-3">
 						{collaborationStatus && (
-							<span className="bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded">
+							<span className="bg-brand text-white text-xs font-semibold px-2 py-1 rounded">
 								ℹ️ En collaboration (
 								{Features.Collaboration
 									.COLLABORATION_STATUS_CONFIG[

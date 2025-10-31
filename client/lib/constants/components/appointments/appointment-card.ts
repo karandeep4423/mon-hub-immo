@@ -36,7 +36,7 @@ export const APPOINTMENT_STATUS_BADGES = {
 	},
 	completed: {
 		label: 'Terminé',
-		color: 'bg-blue-100 text-blue-800',
+		color: 'bg-info-light text-info',
 		icon: '✓',
 	},
 	rescheduled: {

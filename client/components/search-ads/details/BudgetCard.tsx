@@ -16,7 +16,7 @@ const formatFinancingType = (type: string) => {
 
 export const BudgetCard: React.FC<BudgetCardProps> = ({ searchAd }) => {
 	return (
-		<div className="group bg-white p-6 rounded-xl shadow-md border border-gray-200/50 hover:shadow-xl hover:border-cyan-200 transition-all duration-300">
+		<div className="group bg-white p-6 rounded-xl shadow-md border border-gray-200/50 hover:shadow-xl hover:border-brand-200 transition-all duration-300">
 			<div className="flex items-center gap-3 mb-4">
 				<div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center shadow-md">
 					<span className="text-xl">💰</span>
@@ -57,9 +57,9 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({ searchAd }) => {
 
 				<div className="space-y-2 pt-1">
 					{searchAd.budget.isSaleInProgress && (
-						<div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg">
-							<div className="w-1.5 h-1.5 bg-blue-500 rounded-full shadow-sm"></div>
-							<span className="text-xs font-medium text-blue-800">
+						<div className="flex items-center gap-2 bg-info-light px-3 py-1.5 rounded-lg">
+							<div className="w-1.5 h-1.5 bg-info rounded-full shadow-sm"></div>
+							<span className="text-xs font-medium text-info">
 								Vente en cours
 							</span>
 						</div>

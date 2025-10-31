@@ -31,13 +31,10 @@ export const CollaborationParticipants: React.FC<
 				{owner && (
 					<div className="flex items-center space-x-3">
 						<ProfileAvatar
-							user={
-								{
-									...owner,
-									profileImage:
-										owner.profileImage || undefined,
-								}
-							}
+							user={{
+								...owner,
+								profileImage: owner.profileImage || undefined,
+							}}
 							size="md"
 						/>
 						<div className="flex-1 min-w-0">
@@ -48,7 +45,7 @@ export const CollaborationParticipants: React.FC<
 								Propriétaire
 							</p>
 						</div>
-						<span className="px-2.5 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+						<span className="px-2.5 py-0.5 text-xs font-medium rounded-full bg-brand-100 text-brand-800">
 							Agent
 						</span>
 					</div>
@@ -58,13 +55,11 @@ export const CollaborationParticipants: React.FC<
 				{collaborator && (
 					<div className="flex items-center space-x-3">
 						<ProfileAvatar
-							user={
-								{
-									...collaborator,
-									profileImage:
-										collaborator.profileImage || undefined,
-								}
-							}
+							user={{
+								...collaborator,
+								profileImage:
+									collaborator.profileImage || undefined,
+							}}
 							size="md"
 						/>
 						<div className="flex-1 min-w-0">
@@ -84,4 +79,3 @@ export const CollaborationParticipants: React.FC<
 		</Card>
 	);
 };
-

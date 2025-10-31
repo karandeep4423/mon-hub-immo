@@ -110,7 +110,7 @@ export const ResetPasswordForm: React.FC = () => {
 				{/* Header */}
 				<div className="text-center pt-8 sm:pt-12 pb-6 sm:pb-8 px-4 sm:px-6">
 					<h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">
-						mon<span className="text-cyan-500">hubimmo</span>
+						mon<span className="text-brand">hubimmo</span>
 					</h1>
 				</div>
 
@@ -155,7 +155,7 @@ export const ResetPasswordForm: React.FC = () => {
 			{/* Header */}
 			<div className="text-center pt-8 sm:pt-12 pb-6 sm:pb-8 px-4 sm:px-6">
 				<h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">
-					mon<span className="text-cyan-500">hubimmo</span>
+					mon<span className="text-brand">hubimmo</span>
 				</h1>
 
 				<div className="space-y-3 sm:space-y-4">
@@ -293,7 +293,7 @@ export const ResetPasswordForm: React.FC = () => {
 							<Button
 								type="submit"
 								loading={isSubmitting}
-								className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
+								className="w-full bg-brand hover:bg-brand-600 text-white"
 								size="lg"
 								disabled={
 									values.code.length !== 6 ||
@@ -321,7 +321,7 @@ export const ResetPasswordForm: React.FC = () => {
 											.FORGOT_PASSWORD,
 									)
 								}
-								className="text-cyan-600 hover:text-cyan-500 text-sm font-medium"
+								className="text-brand hover:text-brand text-sm font-medium"
 							>
 								Code non reçu ? Réessayer
 							</button>

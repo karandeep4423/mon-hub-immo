@@ -100,7 +100,7 @@ export const CollaborationPostInfo: React.FC<CollaborationPostInfoProps> = ({
 
 			{collaboration.postType === 'SearchAd' && (
 				<div className="mb-4 w-full">
-					<div className="relative w-full h-48 sm:h-56 md:h-64 rounded-lg overflow-hidden bg-gradient-to-br from-cyan-50 to-blue-50 shadow-md flex items-center justify-center">
+					<div className="relative w-full h-48 sm:h-56 md:h-64 rounded-lg overflow-hidden bg-gradient-to-br from-brand-50 to-brand-100 shadow-md flex items-center justify-center">
 						<Image
 							src="/recherches-des-biens.png"
 							alt="Recherche de bien"
@@ -124,7 +124,7 @@ export const CollaborationPostInfo: React.FC<CollaborationPostInfoProps> = ({
 						href={postLink}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="font-medium text-blue-600 hover:text-blue-800 hover:underline block"
+						className="font-medium text-brand hover:text-brand-800 hover:underline block"
 					>
 						Voir l&apos;annonce
 					</a>

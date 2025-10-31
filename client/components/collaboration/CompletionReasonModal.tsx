@@ -60,7 +60,7 @@ export const COMPLETION_REASONS = [
 		value: 'vendu_tiers' as CompletionReason,
 		label: 'Vendu par un tiers',
 		icon: '📊',
-		color: 'text-blue-700 bg-blue-50 border-blue-200',
+		color: 'text-info bg-info-light border-info',
 		hoverColor: 'hover:bg-blue-100',
 	},
 	{
@@ -126,7 +126,7 @@ export const CompletionReasonModal: React.FC<CompletionReasonModalProps> = ({
 								reason.color
 							} ${reason.hoverColor} ${
 								selectedReason === reason.value
-									? 'ring-2 ring-offset-2 ring-cyan-500 border-cyan-500'
+									? 'ring-2 ring-offset-2 ring-brand border-brand'
 									: ''
 							} ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
 						>
@@ -136,7 +136,7 @@ export const CompletionReasonModal: React.FC<CompletionReasonModalProps> = ({
 							</span>
 							{selectedReason === reason.value && (
 								<svg
-									className="w-6 h-6 text-cyan-600"
+									className="w-6 h-6 text-brand"
 									fill="currentColor"
 									viewBox="0 0 20 20"
 								>

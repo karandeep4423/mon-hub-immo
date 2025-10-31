@@ -70,7 +70,7 @@ export const CollaborationProgress: React.FC<CollaborationProgressProps> = ({
 				};
 			case 'current':
 				return {
-					text: 'text-blue-600',
+					text: 'text-brand',
 					connector: 'bg-gray-200',
 				};
 			case 'upcoming':

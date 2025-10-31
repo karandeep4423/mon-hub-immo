@@ -21,12 +21,12 @@ export const ProfileCompletionBanner: React.FC<
 
 	return (
 		<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-			<div className="bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-200 rounded-xl p-6 mb-6">
+			<div className="bg-gradient-to-r from-brand-50 to-brand-100 border border-brand-200 rounded-xl p-6 mb-6">
 				<div className="flex items-start space-x-4">
 					<div className="flex-shrink-0">
-						<div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center">
+						<div className="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center">
 							<svg
-								className="w-6 h-6 text-cyan-600"
+								className="w-6 h-6 text-brand"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -53,7 +53,7 @@ export const ProfileCompletionBanner: React.FC<
 						<div className="flex flex-col sm:flex-row gap-3">
 							<Button
 								onClick={handleCompleteProfile}
-								className="bg-cyan-600 hover:bg-cyan-700 text-white"
+								className="bg-brand hover:bg-brand-600 text-white"
 								size="md"
 							>
 								<svg

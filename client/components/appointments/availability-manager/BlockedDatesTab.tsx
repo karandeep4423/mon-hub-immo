@@ -27,10 +27,10 @@ export const BlockedDatesTab = ({
 	return (
 		<div className="space-y-6">
 			{/* Add blocked date or date range */}
-			<div className="bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-200 rounded-lg p-4">
+			<div className="bg-gradient-to-r from-brand-50 to-brand-100 border border-brand-200 rounded-lg p-4">
 				<h4 className="font-semibold text-gray-900 mb-3 flex items-center">
 					<svg
-						className="w-5 h-5 mr-2 text-cyan-600"
+						className="w-5 h-5 mr-2 text-brand"
 						fill="none"
 						stroke="currentColor"
 						viewBox="0 0 24 24"
@@ -64,7 +64,7 @@ export const BlockedDatesTab = ({
 									}
 								}}
 								min={new Date().toISOString().split('T')[0]}
-								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20"
 							/>
 						</div>
 						<div>
@@ -82,7 +82,7 @@ export const BlockedDatesTab = ({
 									new Date().toISOString().split('T')[0]
 								}
 								disabled={!newBlockedDate}
-								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:bg-gray-100 disabled:cursor-not-allowed"
 							/>
 						</div>
 					</div>
@@ -95,7 +95,7 @@ export const BlockedDatesTab = ({
 						onClick={onAddBlockedDate}
 						loading={saving}
 						disabled={!newBlockedDate}
-						className="w-full bg-cyan-600 hover:bg-cyan-700 text-white"
+						className="w-full bg-brand hover:bg-brand-600 text-white"
 					>
 						<svg
 							className="w-4 h-4 mr-2"

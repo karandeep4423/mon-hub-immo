@@ -21,7 +21,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
 	return (
 		<div className="space-y-5">
 			<div className="text-center mb-8">
-				<div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-2xl mb-4">
+				<div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r from-brand to-brand-600 rounded-2xl mb-4">
 					<svg
 						className="w-7 h-7 text-white"
 						fill="none"

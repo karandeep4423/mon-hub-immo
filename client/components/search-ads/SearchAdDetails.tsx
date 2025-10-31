@@ -98,16 +98,16 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 
 					{/* Client Information */}
 					{searchAd.clientInfo && (
-						<div className="lg:col-span-2 xl:col-span-3 bg-gradient-to-br from-blue-50 via-cyan-50 to-blue-50 border-blue-200 p-6 rounded-xl shadow-md border-2">
+						<div className="lg:col-span-2 xl:col-span-3 bg-gradient-to-br from-brand-50 to-brand-100 border-brand-200 p-6 rounded-xl shadow-md border-2">
 							<div className="flex items-center gap-3 mb-2.5">
-								<div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-md">
+								<div className="w-10 h-10 bg-gradient-to-br from-brand to-brand-600 rounded-xl flex items-center justify-center shadow-md">
 									<span className="text-xl">ℹ️</span>
 								</div>
 								<h3 className="text-xl font-bold text-gray-900">
 									Informations sur le client
 								</h3>
 							</div>
-							<p className="text-xs text-blue-700 mb-5 font-medium">
+							<p className="text-xs text-brand-700 mb-5 font-medium">
 								💡 Ces informations vous aident à mieux
 								comprendre les besoins et la situation du
 								client.
@@ -116,7 +116,7 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 							<div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 								{/* Qualification Info */}
 								{searchAd.clientInfo?.qualificationInfo && (
-									<div className="bg-white p-5 rounded-xl shadow-sm border border-blue-100">
+									<div className="bg-white p-5 rounded-xl shadow-sm border border-brand-100">
 										<h4 className="font-bold text-gray-900 mb-3.5 flex items-center gap-2 text-base">
 											<span>👤</span>
 											<span>
@@ -241,7 +241,7 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 
 								{/* Timeline Info */}
 								{searchAd.clientInfo?.timelineInfo && (
-									<div className="bg-white p-5 rounded-xl shadow-sm border border-blue-100">
+									<div className="bg-white p-5 rounded-xl shadow-sm border border-brand-100">
 										<h4 className="font-bold text-gray-900 mb-3.5 flex items-center gap-2 text-base">
 											<span>⏰</span>
 											<span>Délai et disponibilité</span>

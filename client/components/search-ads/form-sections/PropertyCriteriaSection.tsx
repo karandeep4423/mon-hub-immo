@@ -82,7 +82,7 @@ export const PropertyCriteriaSection: React.FC<
 											e.target.checked,
 										)
 									}
-									className="rounded border-gray-300 text-blue-600 mt-1 flex-shrink-0"
+									className="rounded border-gray-300 text-brand mt-1 flex-shrink-0"
 								/>
 								<span className="text-sm capitalize leading-tight break-words">
 									{PROPERTY_TYPE_LABELS[type] || type}
@@ -118,7 +118,7 @@ export const PropertyCriteriaSection: React.FC<
 											e.target.checked,
 										)
 									}
-									className="rounded border-gray-300 text-blue-600 mt-1 flex-shrink-0"
+									className="rounded border-gray-300 text-brand mt-1 flex-shrink-0"
 								/>
 								<span className="text-sm leading-tight break-words">
 									{PROPERTY_STATE_LABELS[state] || state}
@@ -141,7 +141,7 @@ export const PropertyCriteriaSection: React.FC<
 						name="projectType"
 						value={projectType}
 						onChange={(e) => onProjectTypeChange(e.target.value)}
-						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand/20 focus:border-brand"
 					>
 						<option value="">Sélectionner...</option>
 						{projectTypesList.map((type) => (

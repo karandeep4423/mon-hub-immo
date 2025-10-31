@@ -76,7 +76,7 @@ export const ProgressTrackingDisplay: React.FC<
 				{canUpdate && (
 					<Button
 						onClick={() => setIsModalOpen(true)}
-						className="bg-blue-600 hover:bg-blue-700 text-white"
+						className="bg-brand hover:bg-brand-600 text-white"
 					>
 						✏️ Modifier le statut
 					</Button>
@@ -127,7 +127,7 @@ export const ProgressTrackingDisplay: React.FC<
 											<span
 												className={`font-medium ${
 													status === 'current'
-														? 'text-blue-600'
+														? 'text-brand'
 														: status === 'completed'
 															? 'text-green-600'
 															: 'text-gray-600'
@@ -136,7 +136,7 @@ export const ProgressTrackingDisplay: React.FC<
 												{config.title}
 											</span>
 											{status === 'current' && (
-												<span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+												<span className="text-xs bg-brand-100 text-brand-800 px-2 py-1 rounded-full">
 													Étape actuelle
 												</span>
 											)}

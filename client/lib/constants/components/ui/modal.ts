@@ -60,7 +60,7 @@ export const MODAL_ANIMATION = {
 
 export const MODAL_BACKDROP = {
 	className:
-		'fixed inset-0 bg-[rgba(0,0,0,0.5)] bg-opacity-10 transition-opacity',
+		'fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-200',
 	zIndex: 'z-40',
 } as const;
 
@@ -69,7 +69,7 @@ export const MODAL_BACKDROP = {
 // ============================================================================
 
 export const MODAL_CONTAINER = {
-	className: 'fixed inset-0 z-50 flex items-center justify-center',
+	className: 'fixed inset-0 z-50 flex items-center justify-center p-4',
 	maxHeight: 'max-h-[90vh]',
 	overflow: 'overflow-y-auto',
 } as const;
@@ -79,7 +79,8 @@ export const MODAL_CONTAINER = {
 // ============================================================================
 
 export const MODAL_CONTENT = {
-	baseClassName: 'relative bg-white rounded-2xl shadow-xl w-full m-4',
+	baseClassName:
+		'relative bg-white rounded-2xl shadow-xl w-full m-4 animate-scale-in',
 	headerClassName:
 		'flex items-center justify-between p-6 border-b border-gray-200',
 	bodyClassName: 'p-6',
@@ -93,7 +94,8 @@ export const MODAL_CONTENT = {
 
 export const MODAL_CLOSE_BUTTON = {
 	ariaLabel: 'Fermer',
-	className: 'text-gray-400 hover:text-gray-600 transition-colors',
+	className:
+		'text-gray-400 hover:text-gray-600 transition-colors duration-200',
 	iconClassName: 'w-6 h-6',
 } as const;
 

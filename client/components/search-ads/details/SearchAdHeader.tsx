@@ -15,7 +15,7 @@ export const SearchAdHeader: React.FC<SearchAdHeaderProps> = ({ searchAd }) => {
 			<div className="flex items-center justify-between mb-6">
 				<button
 					onClick={() => router.back()}
-					className="group flex items-center gap-2 text-gray-600 hover:text-cyan-600 transition-all duration-200 font-medium"
+					className="group flex items-center gap-2 text-gray-600 hover:text-brand transition-all duration-200 font-medium"
 				>
 					<svg
 						className="w-5 h-5 transform group-hover:-translate-x-1 transition-transform duration-200"
@@ -52,7 +52,7 @@ export const SearchAdHeader: React.FC<SearchAdHeaderProps> = ({ searchAd }) => {
 					<span
 						className={`px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide shadow-sm ${
 							searchAd.authorType === 'agent'
-								? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
+								? 'bg-gradient-to-r from-brand to-brand-600 text-white'
 								: 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
 						}`}
 					>

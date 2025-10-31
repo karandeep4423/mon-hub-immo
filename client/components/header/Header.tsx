@@ -14,16 +14,16 @@ export default function Header() {
 	const pathname = usePathname();
 
 	return (
-		<header className="bg-white shadow-lg relative z-10">
+		<header className="bg-white/80 backdrop-blur-lg shadow-md sticky top-0 z-50 border-b border-gray-200 transition-all duration-300">
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 				<div className="flex justify-between items-center py-4">
 					<div className="flex-shrink-0">
 						<Link
 							href="/"
-							className="inline-flex items-baseline text-2xl font-bold hover:opacity-90"
+							className="inline-flex items-baseline text-2xl font-bold hover:opacity-90 transition-opacity duration-200"
 						>
-							<span className="text-black">mon</span>
-							<span className="text-[#6AD1E3]">hubimmo</span>
+							<span className="text-gray-900">mon</span>
+							<span className="text-brand">hubimmo</span>
 						</Link>
 					</div>
 
@@ -35,19 +35,19 @@ export default function Header() {
 									<NotificationBell />
 									<Link
 										href="/dashboard"
-										className="inline-flex items-center space-x-2 hover:opacity-80"
+										className="inline-flex items-center space-x-2 hover:opacity-80 transition-opacity duration-200"
 									>
 										<ProfileAvatar
 											user={user}
 											size="sm"
 											className="w-8 h-8"
 										/>
-										<span className="text-gray-700 text-sm">
+										<span className="text-gray-700 text-sm font-medium">
 											{user.firstName} {user.lastName}
 										</span>
 									</Link>
 									<button
-										className="px-4 py-2 rounded-md bg-[#6AD1E3] text-white text-sm hover:bg-[#59c4d8]"
+										className="px-4 py-2 rounded-xl bg-brand text-white text-sm font-semibold hover:bg-brand-600 shadow-md hover:shadow-brand transition-all duration-200 active:scale-98"
 										onClick={() => logout()}
 									>
 										Déconnexion
@@ -58,7 +58,7 @@ export default function Header() {
 									{pathname === '/monagentimmo' ? (
 										<Link
 											href="/"
-											className="px-4 py-2 rounded-md bg-[#6AD1E3] text-white text-sm hover:bg-[#59c4d8]"
+											className="px-4 py-2 rounded-xl bg-brand text-white text-sm font-semibold hover:bg-brand-600 shadow-md hover:shadow-brand transition-all duration-200 active:scale-98"
 										>
 											Vous êtes agent immobilier ?
 										</Link>
@@ -67,14 +67,14 @@ export default function Header() {
 											href={
 												Features.Auth.AUTH_ROUTES.SIGNUP
 											}
-											className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 text-sm hover:bg-gray-200"
+											className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition-all duration-200"
 										>
 											Nous rejoindre
 										</Link>
 									)}
 									<Link
 										href={Features.Auth.AUTH_ROUTES.LOGIN}
-										className="px-4 py-2 rounded-md bg-[#6AD1E3] text-white text-sm hover:bg-[#59c4d8]"
+										className="px-4 py-2 rounded-xl bg-brand text-white text-sm font-semibold hover:bg-brand-600 shadow-md hover:shadow-brand transition-all duration-200 active:scale-98"
 									>
 										Se connecter
 									</Link>
@@ -89,13 +89,13 @@ export default function Header() {
 							) : (
 								<Link
 									href={Features.Auth.AUTH_ROUTES.LOGIN}
-									className="px-3 py-1.5 rounded-md bg-[#6AD1E3] text-white text-xs hover:bg-[#59c4d8]"
+									className="px-3 py-1.5 rounded-lg bg-brand text-white text-xs font-semibold hover:bg-brand-600 shadow-sm transition-all duration-200"
 								>
 									Se connecter
 								</Link>
 							)}
 							<button
-								className="text-gray-500 hover:text-[#6AD1E3]"
+								className="text-gray-500 hover:text-brand transition-colors duration-200"
 								onClick={() =>
 									setIsMobileMenuOpen(!isMobileMenuOpen)
 								}
@@ -123,7 +123,7 @@ export default function Header() {
 
 			{/* Mobile menu content */}
 			{isMobileMenuOpen && (
-				<div className="md:hidden border-t border-gray-100 bg-white">
+				<div className="md:hidden border-t border-gray-200 bg-white/95 backdrop-blur-md animate-slide-up">
 					<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 space-y-3">
 						{user ? (
 							<>
@@ -140,14 +140,14 @@ export default function Header() {
 											size="sm"
 											className="w-8 h-8"
 										/>
-										<span className="text-gray-700 text-sm">
+										<span className="text-gray-700 text-sm font-medium">
 											{user.firstName} {user.lastName}
 										</span>
 									</Link>
 									<NotificationBell />
 								</div>
 								<button
-									className="w-full px-4 py-2 rounded-md bg-[#6AD1E3] text-white text-sm hover:bg-[#59c4d8]"
+									className="w-full px-4 py-2 rounded-xl bg-brand text-white text-sm font-semibold hover:bg-brand-600 shadow-md transition-all duration-200"
 									onClick={() => {
 										setIsMobileMenuOpen(false);
 										logout();
@@ -161,7 +161,7 @@ export default function Header() {
 								{pathname === '/monagentimmo' ? (
 									<Link
 										href="/"
-										className="col-span-2 px-4 py-2 rounded-md bg-[#6AD1E3] text-white text-sm text-center hover:bg-[#59c4d8]"
+										className="col-span-2 px-4 py-2 rounded-xl bg-brand text-white text-sm text-center font-semibold hover:bg-brand-600 shadow-md transition-all duration-200"
 										onClick={() =>
 											setIsMobileMenuOpen(false)
 										}
@@ -171,7 +171,7 @@ export default function Header() {
 								) : (
 									<Link
 										href={Features.Auth.AUTH_ROUTES.SIGNUP}
-										className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 text-sm text-center hover:bg-gray-200"
+										className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm text-center font-semibold hover:bg-gray-200 transition-all duration-200"
 										onClick={() =>
 											setIsMobileMenuOpen(false)
 										}
@@ -181,7 +181,7 @@ export default function Header() {
 								)}
 								<Link
 									href={Features.Auth.AUTH_ROUTES.LOGIN}
-									className={`px-4 py-2 rounded-md bg-[#6AD1E3] text-white text-sm text-center hover:bg-[#59c4d8] ${pathname === '/monagentimmo' ? 'col-span-2' : ''}`}
+									className={`px-4 py-2 rounded-xl bg-brand text-white text-sm text-center font-semibold hover:bg-brand-600 shadow-md transition-all duration-200 ${pathname === '/monagentimmo' ? 'col-span-2' : ''}`}
 									onClick={() => setIsMobileMenuOpen(false)}
 								>
 									Se connecter

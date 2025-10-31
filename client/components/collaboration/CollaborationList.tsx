@@ -345,16 +345,16 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 			/>
 			{/* Statistics Dashboard */}
 			<div className="grid grid-cols-2 md:grid-cols-7 gap-4">
-				<div className="bg-blue-50 p-4 rounded-lg text-center">
+				<div className="bg-brand-50 p-4 rounded-lg text-center">
 					<div className="flex items-center justify-center mb-1">
-						<span className="text-blue-600" aria-hidden>
+						<span className="text-brand" aria-hidden>
 							📊
 						</span>
 					</div>
-					<div className="text-2xl font-bold text-blue-600">
+					<div className="text-2xl font-bold text-brand">
 						{stats.total}
 					</div>
-					<div className="text-sm text-blue-600">Total</div>
+					<div className="text-sm text-brand">Total</div>
 				</div>
 				<div className="bg-yellow-50 p-4 rounded-lg text-center">
 					<div className="flex items-center justify-center mb-1">
@@ -449,7 +449,7 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 							onChange={(e) =>
 								handleFilterChange('status', e.target.value)
 							}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand/20"
 						>
 							<option value="all">Tous les statuts</option>
 							<option value="pending">En attente</option>
@@ -469,7 +469,7 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 							onChange={(e) =>
 								handleFilterChange('role', e.target.value)
 							}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand/20"
 						>
 							<option value="all">Tous les rôles</option>
 							<option value="owner">Propriétaire</option>

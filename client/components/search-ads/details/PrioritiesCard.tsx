@@ -9,7 +9,7 @@ export const PrioritiesCard: React.FC<PrioritiesCardProps> = ({ searchAd }) => {
 	if (!searchAd.priorities) return null;
 
 	return (
-		<div className="bg-white p-6 rounded-xl shadow-md border border-gray-200/50 hover:shadow-xl hover:border-cyan-200 transition-all duration-300 lg:col-span-2">
+		<div className="bg-white p-6 rounded-xl shadow-md border border-gray-200/50 hover:shadow-xl hover:border-brand-200 transition-all duration-300 lg:col-span-2">
 			<div className="flex items-center gap-3 mb-5">
 				<div className="w-10 h-10 bg-gradient-to-br from-rose-500 to-red-500 rounded-lg flex items-center justify-center shadow-md">
 					<span className="text-xl">❤️</span>

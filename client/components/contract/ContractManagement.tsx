@@ -400,7 +400,7 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 									})
 								}
 								rows={12}
-								className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+								className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand/20"
 								placeholder={
 									Features.Collaboration
 										.COLLABORATION_FORM_PLACEHOLDERS
@@ -421,7 +421,7 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 									})
 								}
 								rows={4}
-								className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+								className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand/20"
 								placeholder={
 									Features.Collaboration
 										.COLLABORATION_FORM_PLACEHOLDERS
@@ -433,7 +433,7 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 							<Button
 								onClick={handleUpdateContract}
 								loading={isSubmitting}
-								className="bg-blue-600 hover:bg-blue-700"
+								className="bg-brand hover:bg-brand-600"
 							>
 								{
 									Features.Collaboration.CONTRACT_UI_TEXT
@@ -490,11 +490,11 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 						Signature
 					</h3>
 					<div className="space-y-4">
-						<div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-							<h4 className="font-medium text-blue-900 mb-2">
+						<div className="bg-info-light border border-info rounded-lg p-4">
+							<h4 className="font-medium text-gray-900 mb-2">
 								Conditions d&apos;acceptation
 							</h4>
-							<div className="space-y-2 text-sm text-blue-800">
+							<div className="space-y-2 text-sm text-gray-800">
 								<label className="flex items-center">
 									<input
 										type="checkbox"
