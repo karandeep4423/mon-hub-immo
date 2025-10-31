@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { SearchAd } from '@/types/searchAd';
-import { ProfileAvatar, FavoriteButton } from '../ui';
+import { ProfileAvatar, FavoriteButton, RichTextDisplay } from '../ui';
 import { useAuth } from '@/hooks/useAuth';
 import { useCollaborationsBySearchAd } from '@/hooks/useCollaborations';
 import { Features, Components } from '@/lib/constants';
@@ -93,9 +93,9 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 					</h3>
 
 					{searchAd.description && (
-						<p className="text-gray-600 text-sm mb-3 line-clamp-2">
-							{searchAd.description}
-						</p>
+						<div className="text-gray-600 text-sm mb-3 line-clamp-2">
+							<RichTextDisplay content={searchAd.description} />
+						</div>
 					)}
 
 					<div className="flex flex-wrap gap-2 mb-3">

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 import { Button } from '@/components/ui/Button';
+import { RichTextDisplay } from '@/components/ui';
 import { BookAppointmentModal } from '@/components/appointments/BookAppointmentModal';
 
 interface AgentCardProps {
@@ -127,9 +128,10 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent }) => {
 					{/* Personal Pitch */}
 					{agent.professionalInfo?.personalPitch && (
 						<div className="border-t pt-4">
-							<p className="text-sm text-gray-600 line-clamp-3">
-								{agent.professionalInfo.personalPitch}
-							</p>
+							<RichTextDisplay
+								content={agent.professionalInfo.personalPitch}
+								className="text-sm text-gray-600 line-clamp-3"
+							/>
 						</div>
 					)}
 				</div>

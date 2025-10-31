@@ -3,6 +3,7 @@ import React from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { RichTextDisplay } from '../ui';
 import { useCollaborationMutations } from '@/hooks/useCollaborations';
 import { toast } from 'react-toastify';
 import type { Property } from '@/lib/api/propertyApi';
@@ -192,9 +193,11 @@ export const ProposeCollaborationModal: React.FC<
 					<h4 className="font-medium text-gray-900">
 						{searchAd.title}
 					</h4>
-					<p className="text-sm text-gray-600 line-clamp-2">
-						{searchAd.description}
-					</p>
+					{searchAd.description && (
+						<div className="text-sm text-gray-600 line-clamp-2">
+							<RichTextDisplay content={searchAd.description} />
+						</div>
+					)}
 					<div className="flex flex-wrap gap-2 text-sm text-gray-500">
 						<span>📍 {searchAd.location.cities.join(', ')}</span>
 						<span>

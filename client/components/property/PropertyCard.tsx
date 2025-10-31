@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Property } from '@/lib/api/propertyApi';
 import { getImageUrl } from '@/lib/utils/imageUtils';
-import { ProfileAvatar, FavoriteButton } from '../ui';
+import { ProfileAvatar, FavoriteButton, RichTextDisplay } from '../ui';
 import { Features } from '@/lib/constants';
 import { collaborationApi } from '@/lib/api/collaborationApi';
 import { useAuth } from '@/hooks/useAuth';
@@ -132,9 +132,9 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 						{property.title}
 					</h3>
 
-					<p className="text-gray-600 text-sm mb-3 line-clamp-2">
-						{property.description}
-					</p>
+					<div className="text-gray-600 text-sm mb-3 line-clamp-2">
+						<RichTextDisplay content={property.description} />
+					</div>
 
 					<div className="flex flex-wrap gap-2 mb-3">
 						<span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded">

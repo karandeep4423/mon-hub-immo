@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, StatusBadge } from '@/components/ui';
+import { Button, StatusBadge, RichTextDisplay } from '@/components/ui';
 import { Property } from '@/lib/api/propertyApi';
 import { getImageUrl } from '@/lib/utils/imageUtils';
 import { Features, Components } from '@/lib/constants';
@@ -53,9 +53,11 @@ export const PropertyListItem: React.FC<PropertyListItemProps> = ({
 										);
 									})}
 							</div>
-							<p className="text-gray-600 text-sm mb-2 line-clamp-2">
-								{property.description}
-							</p>
+							<div className="text-gray-600 text-sm mb-2 line-clamp-2">
+								<RichTextDisplay
+									content={property.description}
+								/>
+							</div>
 							<div className="flex items-center space-x-4 text-sm text-gray-500">
 								<span>{property.propertyType}</span>
 								<span>•</span>
