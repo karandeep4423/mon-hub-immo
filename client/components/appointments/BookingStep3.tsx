@@ -74,9 +74,15 @@ export const BookingStep3: React.FC<BookingStep3Props> = ({
 						type="tel"
 						required
 						value={contactDetails.phone}
-						onChange={(e) =>
-							onContactChange('phone', e.target.value)
-						}
+						onChange={(e) => {
+							const value = e.target.value.replace(/\D/g, '');
+							onContactChange('phone', value);
+						}}
+						onKeyPress={(e) => {
+							if (!/[0-9]/.test(e.key)) {
+								e.preventDefault();
+							}
+						}}
 						className="w-full px-3 md:px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-all text-sm"
 					/>
 				</div>
