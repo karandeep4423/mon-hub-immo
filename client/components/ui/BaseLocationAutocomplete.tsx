@@ -1,6 +1,6 @@
 /**
  * BaseLocationAutocomplete - Unified location/city autocomplete component
- * Consolidates: CityAutocomplete, MultiCityAutocomplete, LocationSearchWithRadius
+ * Provides both single and multi-selection modes for French cities/municipalities
  *
  * Features:
  * - Single or multi-selection mode

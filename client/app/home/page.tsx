@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import { Property, PropertyFilters } from '@/lib/api/propertyApi';
 import { SearchAdFilters } from '@/lib/api/searchAdApi';
 import { useFavoritesStore } from '@/store/favoritesStore';
@@ -44,7 +44,7 @@ import type {
 	RestorationState,
 } from '@/types/filters';
 
-export default function Home() {
+function HomeContent() {
 	const { user, refreshUser } = useAuth();
 	const { favoritePropertyIds, favoriteSearchAdIds, initializeFavorites } =
 		useFavoritesStore();
@@ -696,5 +696,13 @@ export default function Home() {
 				</div>
 			)}
 		</div>
+	);
+}
+
+export default function Home() {
+	return (
+		<Suspense fallback={<PageLoader />}>
+			<HomeContent />
+		</Suspense>
 	);
 }

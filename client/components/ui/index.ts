@@ -28,20 +28,13 @@ export { PropertyTypeSelector } from './PropertyTypeSelector';
 export { NumberInput } from './NumberInput';
 export { Select } from './Select';
 export { Pagination } from './Pagination';
-// Location search components (consolidated)
-export {
-	LocationSearch,
-	UnifiedSearchBar,
-	SingleUnifiedSearch,
-} from './LocationSearch';
+// Location search components
 export {
 	BaseLocationAutocomplete,
 	type LocationItem,
 } from './BaseLocationAutocomplete';
 export type { LocationItem as LocationItemType } from '@/types/location';
-// Additional location components
 export { CityAutocomplete } from './CityAutocomplete';
-export { MultiCityAutocomplete } from './MultiCityAutocomplete';
 export { AddressAutocomplete } from './AddressAutocomplete';
 export { LocationSearchWithRadius } from './LocationSearchWithRadius';
 export { PriceBreakdown } from './PriceBreakdown';

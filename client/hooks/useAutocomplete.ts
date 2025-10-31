@@ -1,6 +1,6 @@
 /**
  * useAutocomplete - Shared autocomplete logic
- * Eliminates duplicate code across CityAutocomplete, MultiCityAutocomplete, and LocationSearchWithRadius
+ * Used by CityAutocomplete and LocationSearchWithRadius components
  *
  * Handles:
  * - Debounced API calls
