@@ -14,6 +14,7 @@ interface SelectProps {
 	placeholder?: string;
 	required?: boolean;
 	disabled?: boolean;
+	icon?: React.ReactNode;
 }
 
 export const Select = ({
@@ -25,13 +26,15 @@ export const Select = ({
 	placeholder = 'Choisissez...',
 	required = false,
 	disabled = false,
+	icon,
 }: SelectProps) => {
 	return (
 		<div>
 			<label
 				htmlFor={name}
-				className="block text-sm font-medium text-gray-700 mb-1"
+				className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"
 			>
+				{icon}
 				{label} {required && <span className="text-red-500">*</span>}
 			</label>
 			<select
@@ -40,7 +43,7 @@ export const Select = ({
 				value={value || ''}
 				onChange={(e) => onChange(e.target.value)}
 				disabled={disabled}
-				className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-600 focus:border-brand-600 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+				className="block w-full"
 			>
 				<option value="">{placeholder}</option>
 				{options.map((option) => (

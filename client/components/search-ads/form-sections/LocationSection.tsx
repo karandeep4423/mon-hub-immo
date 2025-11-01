@@ -64,19 +64,49 @@ export const LocationSection: React.FC<LocationSectionProps> = ({
 						/>
 					</div>
 
-					<div className="flex items-center pt-6">
-						<label className="flex items-center space-x-2">
+					<div className="pt-6">
+						<label
+							className={`
+								relative overflow-hidden rounded-xl cursor-pointer
+								transition-all duration-300 ease-in-out block
+								${
+									openToOtherAreas
+										? 'ring-2 ring-cyan-500 shadow-lg shadow-cyan-200'
+										: 'ring-1 ring-gray-200 hover:ring-cyan-300 hover:shadow-md'
+								}
+							`}
+						>
 							<input
 								type="checkbox"
 								checked={openToOtherAreas}
 								onChange={(e) =>
 									onOpenToOtherAreasChange(e.target.checked)
 								}
-								className="rounded border-gray-300 text-brand"
+								className="sr-only"
 							/>
-							<span className="text-sm text-gray-700">
-								Êtes-vous ouvert à d&apos;autres zones ?
-							</span>
+							<div
+								className={`
+								bg-gradient-to-br ${openToOtherAreas ? 'from-indigo-50 to-blue-50' : 'from-gray-50 to-slate-50'}
+								p-3 sm:p-4 transition-all duration-300
+								${openToOtherAreas ? 'bg-opacity-100' : 'bg-opacity-60 hover:bg-opacity-80'}
+							`}
+							>
+								<div className="flex items-center gap-2">
+									<div className="text-xl sm:text-2xl">
+										🗺️
+									</div>
+									<span
+										className={`text-sm font-medium transition-colors duration-300 ${openToOtherAreas ? 'text-brand' : 'text-gray-700'}`}
+									>
+										Êtes-vous ouvert à d&apos;autres zones ?
+									</span>
+									{openToOtherAreas && (
+										<div className="text-brand text-sm sm:text-base absolute top-1 right-3">
+											✓
+										</div>
+									)}
+								</div>
+							</div>
 						</label>
 					</div>
 				</div>

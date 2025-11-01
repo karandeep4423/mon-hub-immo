@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/Input';
 import { AddressAutocomplete } from '@/components/ui';
 import { PropertyFormData, Property } from '@/lib/api/propertyApi';
 import { logger } from '@/lib/utils/logger';
+import { MapPin, Home, Mail, Map } from 'lucide-react';
 
 interface PropertyFormStep2Props {
 	formData: PropertyFormData;
@@ -28,7 +29,10 @@ export const PropertyFormStep2: React.FC<PropertyFormStep2Props> = ({
 }) => {
 	return (
 		<div className="space-y-6">
-			<h3 className="text-lg font-semibold mb-4">Localisation</h3>
+			<h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+				<MapPin className="w-5 h-5 text-red-600" />
+				Localisation
+			</h3>
 
 			<AddressAutocomplete
 				label="Adresse"
@@ -51,7 +55,8 @@ export const PropertyFormStep2: React.FC<PropertyFormStep2Props> = ({
 
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 				<div>
-					<label className="block text-sm font-medium text-gray-700 mb-2">
+					<label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+						<Home className="w-4 h-4 text-blue-600" />
 						Ville *
 					</label>
 					<Input
@@ -66,7 +71,8 @@ export const PropertyFormStep2: React.FC<PropertyFormStep2Props> = ({
 				</div>
 
 				<div>
-					<label className="block text-sm font-medium text-gray-700 mb-2">
+					<label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+						<Mail className="w-4 h-4 text-purple-600" />
 						Code postal *
 					</label>
 					<Input
@@ -82,7 +88,8 @@ export const PropertyFormStep2: React.FC<PropertyFormStep2Props> = ({
 				</div>
 
 				<div>
-					<label className="block text-sm font-medium text-gray-700 mb-2">
+					<label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+						<Map className="w-4 h-4 text-green-600" />
 						Secteur *
 					</label>
 					<Input

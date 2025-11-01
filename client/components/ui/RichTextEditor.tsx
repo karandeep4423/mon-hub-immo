@@ -18,6 +18,7 @@ import dynamic from 'next/dynamic';
 import { Modal } from './Modal';
 import { Input } from './Input';
 import { Button } from './Button';
+import { Select } from '@/components/ui/Select';
 
 const EmojiPicker = dynamic(() => import('emoji-picker-react'), {
 	ssr: false,
@@ -360,18 +361,14 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 					<div
 						className={`relative ${showAllTools ? 'block' : 'hidden md:block'}`}
 					>
-						<select
-							onChange={(e) => applyFontSize(e.target.value)}
+						<Select
+							value={size.value}
+							onChange={(value) => applyFontSize(value)}
+							options={[
+								{ value: 'size.value', label: '{size.label}' },
+							]}
 							className="px-2 py-1.5 text-sm rounded-lg border border-gray-300 hover:bg-gray-200 text-gray-700 cursor-pointer"
-							title="Taille de police"
-							defaultValue="3"
-						>
-							{fontSizes.map((size) => (
-								<option key={size.value} value={size.value}>
-									{size.label}
-								</option>
-							))}
-						</select>
+						/>
 					</div>
 
 					{/* Color Picker - visible on desktop, in More on mobile */}

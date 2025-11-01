@@ -4,6 +4,7 @@ import { Button, StatusBadge, RichTextDisplay } from '@/components/ui';
 import { Property } from '@/lib/api/propertyApi';
 import { getImageUrl } from '@/lib/utils/imageUtils';
 import { Features, Components } from '@/lib/constants';
+import { Select } from '@/components/ui/Select';
 
 interface PropertyListItemProps {
 	property: Property;
@@ -111,22 +112,23 @@ export const PropertyListItem: React.FC<PropertyListItemProps> = ({
 					</div>
 					<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4 pt-4 border-t">
 						<div className="flex items-center">
-							<select
+							<Select
 								value={property.status}
-								onChange={(e) =>
+								onChange={(value) =>
 									onStatusChange(
 										property._id,
-										e.target.value as Property['status'],
+										value as Property['status'],
 									)
 								}
+								options={[
+									{ value: 'draft', label: 'Brouillon' },
+									{ value: 'active', label: 'Actif' },
+									{ value: 'sold', label: 'Vendu' },
+									{ value: 'rented', label: 'Loué' },
+									{ value: 'archived', label: 'Archivé' },
+								]}
 								className="text-sm border border-gray-300 rounded px-2 py-1.5 w-full sm:w-auto"
-							>
-								<option value="draft">Brouillon</option>
-								<option value="active">Actif</option>
-								<option value="sold">Vendu</option>
-								<option value="rented">Loué</option>
-								<option value="archived">Archivé</option>
-							</select>
+							/>
 						</div>
 						<div className="flex items-center gap-2">
 							<Button

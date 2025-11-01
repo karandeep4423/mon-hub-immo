@@ -92,7 +92,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 						value={
 							clientInfo.commercialDetails?.occupancyStatus || ''
 						}
-						onChange={(value) =>
+						onChange={(value: string) =>
 							handleNestedChange(
 								'commercialDetails',
 								'occupancyStatus',
@@ -307,7 +307,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 					<Select
 						label="Y a-t-il un mandat exclusif, simple ou partagé ?"
 						value={clientInfo.ownerInfo?.mandateType || ''}
-						onChange={(value) =>
+						onChange={(value: string) =>
 							handleNestedChange(
 								'ownerInfo',
 								'mandateType',

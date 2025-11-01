@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { CityAutocomplete } from '../ui/CityAutocomplete';
+import { Select } from '@/components/ui/Select';
 
 interface AgentFiltersProps {
 	filters: {
@@ -116,22 +117,21 @@ export const AgentFilters: React.FC<AgentFiltersProps> = ({
 					<label className="block text-sm font-medium text-gray-700 mb-1">
 						Expérience minimum
 					</label>
-					<select
-						value={filters.minExperience}
-						onChange={(e) =>
-							handleChange(
-								'minExperience',
-								parseInt(e.target.value),
-							)
+					<Select
+						label=""
+						value={filters.minExperience?.toString() || ''}
+						onChange={(value) =>
+							handleChange('minExperience', parseInt(value))
 						}
-						className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-					>
-						<option value="0">Toutes</option>
-						<option value="1">1 an et plus</option>
-						<option value="3">3 ans et plus</option>
-						<option value="5">5 ans et plus</option>
-						<option value="10">10 ans et plus</option>
-					</select>
+						name="minExperience"
+						options={[
+							{ value: '0', label: 'Toutes' },
+							{ value: '1', label: '1 an et plus' },
+							{ value: '3', label: '3 ans et plus' },
+							{ value: '5', label: '5 ans et plus' },
+							{ value: '10', label: '10 ans et plus' },
+						]}
+					/>
 				</div>
 			</div>
 		</div>

@@ -1,6 +1,7 @@
 import { Input } from '@/components/ui/Input';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { Features } from '@/lib/constants';
+import { Select } from '@/components/ui/Select';
 
 interface AgentProfessionalInfoStepProps {
 	agentType: string;
@@ -47,29 +48,33 @@ export const AgentProfessionalInfoStep: React.FC<
 				>
 					Type d&apos;agent immobilier *
 				</label>
-				<select
-					id="agentType"
-					name="agentType"
+				<Select
+					label=""
 					value={agentType}
-					onChange={onChange}
-					className={`block w-full px-4 py-3 text-base border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-all duration-200 ${
-						agentType === '' ? 'text-gray-400' : 'text-gray-900'
-					}`}
-					required
-				>
-					<option value="" disabled className="text-gray-400">
-						Choisissez votre type d&apos;agent
-					</option>
-					<option value="independent" className="text-gray-900">
-						Agent immobilier indépendant
-					</option>
-					<option value="commercial" className="text-gray-900">
-						Agent commercial immobilier
-					</option>
-					<option value="employee" className="text-gray-900">
-						Négociateur VRP employé d&apos;agence
-					</option>
-				</select>
+					onChange={(value: string) => {
+						const event = {
+							target: { name: 'agentType', value },
+						} as React.ChangeEvent<HTMLSelectElement>;
+						onChange(event);
+					}}
+					name="agentType"
+					options={[
+						{
+							value: 'independent',
+							label: 'Agent immobilier indépendant',
+						},
+						{
+							value: 'commercial',
+							label: 'Agent commercial immobilier',
+						},
+						{
+							value: 'employee',
+							label: 'Négociateur VRP employé d&apos;agence',
+						},
+					]}
+					disabled={true}
+					required={true}
+				/>
 				{errors.agentType && (
 					<p className="mt-1 text-sm text-red-600">
 						{errors.agentType}

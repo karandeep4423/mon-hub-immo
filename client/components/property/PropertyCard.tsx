@@ -51,10 +51,10 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 	}, [property._id, user]);
 
 	return (
-		<Link href={`/property/${property._id}`} className="block">
-			<div className="bg-white shadow-card rounded-2xl overflow-hidden hover:shadow-card-hover transition-all duration-300 hover:scale-102 border border-gray-200">
+		<Link href={`/property/${property._id}`} className="block h-full">
+			<div className="bg-white shadow-card rounded-2xl overflow-hidden hover:shadow-card-hover transition-all duration-300 hover:scale-102 border border-gray-200 h-full flex flex-col relative">
 				{/* Image with badges */}
-				<div className="relative">
+				<div className="relative flex-shrink-0 rounded-t-2xl overflow-hidden">
 					<img
 						src={getImageUrl(property.mainImage, 'medium')}
 						alt={property.title}
@@ -66,7 +66,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 							);
 						}}
 					/>
-					<div className="absolute top-2 left-2 flex flex-wrap gap-1 max-w-[calc(100%-5rem)] sm:max-w-[70%]">
+					<div className="absolute top-2 left-2 flex flex-wrap gap-1 max-w-[calc(100%-5rem)] sm:max-w-[70%] z-10">
 						{collaborationStatus && (
 							<span className="bg-brand text-white text-xs px-2 py-1 rounded-full font-semibold shadow-md whitespace-nowrap">
 								ℹ️{' '}
@@ -93,7 +93,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 								return (
 									<span
 										key={badgeValue}
-										className={`${config.bgColor} ${config.color} text-xs px-2 py-1 rounded-full`}
+										className={`${config.bgColor} ${config.color} text-xs px-2 py-1 rounded-full whitespace-nowrap`}
 									>
 										{config.label}
 									</span>
@@ -101,7 +101,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 							})}
 					</div>
 					{/* Favorite Button */}
-					<div className="absolute top-2 right-2">
+					<div className="absolute top-2 right-2 z-10">
 						<FavoriteButton
 							itemId={property._id}
 							itemType="property"
@@ -120,7 +120,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 				</div>
 
 				{/* Content */}
-				<div className="p-4">
+				<div className="p-4 flex flex-col flex-grow">
 					<div className="flex items-center justify-between mb-2">
 						<div className="flex items-baseline space-x-2">
 							<p className="text-2xl font-bold text-black">
@@ -140,8 +140,8 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 						<RichTextDisplay content={property.description} />
 					</div>
 
-					<div className="flex flex-wrap gap-2 mb-3">
-						<span className="bg-brand-100 text-brand-800 text-xs font-semibold px-2.5 py-1 rounded-lg">
+					<div className="flex flex-wrap gap-2 mb-3 ">
+						<span className="bg-brand-100  text-brand-800 text-xs font-semibold px-2.5 py-1 rounded-lg">
 							{property.propertyType}
 						</span>
 						<span className="bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-1 rounded-lg">

@@ -17,6 +17,7 @@ import {
 } from './form-sections';
 import { Button } from '../ui/Button';
 import { Features, Components } from '@/lib/constants';
+import { Select } from '@/components/ui/Select';
 
 export const CreateSearchAdForm = () => {
 	const router = useRouter();
@@ -31,11 +32,12 @@ export const CreateSearchAdForm = () => {
 
 	return (
 		<div className="w-full">
-			<div className="mb-8 text-center">
-				<h1 className="text-3xl font-bold text-gray-900 mb-2">
+			<div className="mb-10 text-center relative">
+				<div className="absolute inset-0 bg-gradient-to-r from-brand/5 via-brand/10 to-brand/5 blur-3xl -z-10" />
+				<h1 className="text-4xl font-bold bg-gradient-to-r from-brand to-brand/70 bg-clip-text  mb-3">
 					Créer une annonce de recherche
 				</h1>
-				<p className="text-gray-600">
+				<p className="text-gray-600 text-lg">
 					Décrivez les critères de recherche de votre client pour
 					trouver le bien idéal
 				</p>
@@ -197,24 +199,28 @@ export const CreateSearchAdForm = () => {
 								<label className="block text-sm font-medium text-gray-700 mb-2">
 									Statut de la recherche
 								</label>
-								<select
+								<Select
 									value={values.status}
-									onChange={(e) =>
+									onChange={(value) =>
 										setFieldValue(
 											'status',
 											e.target
 												.value as SearchAdFormData['status'],
 										)
 									}
+									options={[
+										{ value: 'active', label: 'Actif' },
+										{ value: 'paused', label: 'En pause' },
+										{
+											value: 'fulfilled',
+											label: 'Réalisé',
+										},
+										{ value: 'sold', label: 'Vendu' },
+										{ value: 'rented', label: 'Loué' },
+										{ value: 'archived', label: 'Archivé' },
+									]}
 									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-								>
-									<option value="active">Actif</option>
-									<option value="paused">En pause</option>
-									<option value="fulfilled">Réalisé</option>
-									<option value="sold">Vendu</option>
-									<option value="rented">Loué</option>
-									<option value="archived">Archivé</option>
-								</select>
+								/>
 								<p className="text-xs text-gray-500 mt-1">
 									Changez le statut pour mettre à jour la
 									visibilité de votre recherche.

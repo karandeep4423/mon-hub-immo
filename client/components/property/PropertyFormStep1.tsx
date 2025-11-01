@@ -9,6 +9,14 @@ import {
 	RichTextEditor,
 } from '@/components/ui';
 import { PropertyFormData, Property } from '@/lib/api/propertyApi';
+import {
+	Home,
+	FileText,
+	Euro,
+	Ruler,
+	ArrowLeftRight,
+	Briefcase,
+} from 'lucide-react';
 
 interface PropertyFormStep1Props {
 	formData: PropertyFormData;
@@ -34,12 +42,13 @@ export const PropertyFormStep1: React.FC<PropertyFormStep1Props> = ({
 }) => {
 	return (
 		<div className="space-y-6">
-			<h3 className="text-lg font-semibold mb-4">
+			<h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+				<Home className="w-5 h-5 text-blue-600" />
 				Informations générales
 			</h3>
-
 			<div>
-				<label className="block text-sm font-medium text-gray-700 mb-2">
+				<label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+					<FileText className="w-4 h-4 text-purple-600" />
 					Titre de l&apos;annonce *
 				</label>
 				<Input
@@ -50,7 +59,6 @@ export const PropertyFormStep1: React.FC<PropertyFormStep1Props> = ({
 					error={errors.title}
 				/>
 			</div>
-
 			<RichTextEditor
 				label="Description *"
 				value={formData.description}
@@ -60,7 +68,6 @@ export const PropertyFormStep1: React.FC<PropertyFormStep1Props> = ({
 				minHeight="150px"
 				showCharCount
 			/>
-
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 				<NumberInput
 					label="Prix de vente"
@@ -72,6 +79,7 @@ export const PropertyFormStep1: React.FC<PropertyFormStep1Props> = ({
 					min={1000}
 					max={50000000}
 					required
+					icon={<Euro className="w-4 h-4 text-green-600" />}
 				/>
 
 				{formData.propertyType !== 'Terrain' && (
@@ -87,22 +95,21 @@ export const PropertyFormStep1: React.FC<PropertyFormStep1Props> = ({
 						min={1}
 						max={10000}
 						required
+						icon={<Ruler className="w-4 h-4 text-orange-600" />}
 					/>
 				)}
 			</div>
-
 			<PropertyTypeSelector
 				value={formData.propertyType}
 				onChange={(value) => handleInputChange('propertyType', value)}
 				name="propertyType"
 			/>
-
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 				<Select
 					label="Type de vente"
 					value={formData.saleType}
 					onChange={(value) => handleInputChange('saleType', value)}
-					name="saleType"
+					icon={<Briefcase className="w-4 h-4 text-indigo-600" />}
 					options={
 						formData.propertyType === 'Terrain'
 							? [
@@ -161,7 +168,7 @@ export const PropertyFormStep1: React.FC<PropertyFormStep1Props> = ({
 					onChange={(value) =>
 						handleInputChange('transactionType', value)
 					}
-					name="transactionType"
+					icon={<ArrowLeftRight className="w-4 h-4 text-teal-600" />}
 					options={[
 						{ value: 'Vente', label: 'Vente' },
 						{ value: 'Location', label: 'Location' },
@@ -169,8 +176,7 @@ export const PropertyFormStep1: React.FC<PropertyFormStep1Props> = ({
 					placeholder="Choisissez..."
 					required
 				/>
-			</div>
-
+			</div>{' '}
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 				{formData.propertyType !== 'Terrain' && (
 					<Select
@@ -179,7 +185,6 @@ export const PropertyFormStep1: React.FC<PropertyFormStep1Props> = ({
 						onChange={(value) =>
 							handleInputChange('propertyNature', value)
 						}
-						name="propertyNature"
 						options={
 							formData.propertyType === 'Maison'
 								? [
@@ -298,7 +303,6 @@ export const PropertyFormStep1: React.FC<PropertyFormStep1Props> = ({
 					/>
 				)}
 			</div>
-
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 				{formData.propertyType !== 'Terrain' && (
 					<Input
@@ -331,7 +335,6 @@ export const PropertyFormStep1: React.FC<PropertyFormStep1Props> = ({
 					/>
 				)}
 			</div>
-
 			{formData.propertyType === 'Appartement' && (
 				<div>
 					<NumberInput
@@ -348,7 +351,6 @@ export const PropertyFormStep1: React.FC<PropertyFormStep1Props> = ({
 					/>
 				</div>
 			)}
-
 			{formData.propertyType === 'Terrain' && (
 				<div>
 					<Input
@@ -363,7 +365,6 @@ export const PropertyFormStep1: React.FC<PropertyFormStep1Props> = ({
 					/>
 				</div>
 			)}
-
 			{userType === 'agent' && (
 				<div className="border-t pt-6 mt-6">
 					<h4 className="text-md font-semibold mb-4 text-gray-800">

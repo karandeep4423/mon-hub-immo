@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, ConfirmDialog, Pagination } from '@/components/ui';
+import { ConfirmDialog, Pagination } from '@/components/ui';
 import { PropertyForm } from './PropertyForm';
 import {
 	PropertyFilters,
@@ -155,21 +155,14 @@ export const PropertyManager: React.FC = () => {
 	if (showForm) {
 		return (
 			<div>
-				<div className="flex items-center justify-between mb-6">
-					<Button
-						variant="outline"
-						onClick={() => {
-							setShowForm(false);
-							setEditingProperty(null);
-						}}
-					>
-						← Retour à la liste
-					</Button>
-				</div>
 				<PropertyForm
 					onSubmit={handleFormSubmit}
 					initialData={editingProperty || undefined}
 					isEditing={!!editingProperty}
+					onCancel={() => {
+						setShowForm(false);
+						setEditingProperty(null);
+					}}
 				/>
 			</div>
 		);

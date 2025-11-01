@@ -10,9 +10,10 @@ import { PropertyFormStep3 } from './PropertyFormStep3';
 import { PropertyFormStep4 } from './PropertyFormStep4';
 import { PropertyFormStep5 } from './PropertyFormStep5';
 import { logger } from '@/lib/utils/logger';
-import { Features, Components, UI_TRANSITION_MS } from '@/lib/constants';
+import { Components, UI_TRANSITION_MS } from '@/lib/constants';
 import { usePropertyMutations } from '@/hooks/useProperties';
 import { useAuth } from '@/hooks/useAuth';
+import { PlusCircle, Edit, ArrowLeft } from 'lucide-react';
 
 interface ExistingImage {
 	url: string;
@@ -24,6 +25,7 @@ interface PropertyFormProps {
 	initialData?: Partial<PropertyFormData> | Property;
 	isEditing?: boolean;
 	isLoading?: boolean;
+	onCancel?: () => void;
 }
 
 export const PropertyForm: React.FC<PropertyFormProps> = ({
@@ -31,6 +33,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({
 	initialData = {},
 	isEditing = false,
 	isLoading = false,
+	onCancel,
 }) => {
 	const { user } = useAuth();
 	const { createProperty, updateProperty } = usePropertyMutations(user?._id);
@@ -225,11 +228,30 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({
 	return (
 		<div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
 			<div className="mb-8">
-				<h2 className="text-2xl font-bold text-gray-900 mb-4">
-					{isEditing
-						? Components.UI.BUTTON_TEXT.editProperty
-						: 'Créer une nouvelle annonce'}
-				</h2>
+				<div className="flex items-center justify-between mb-4">
+					<h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+						{isEditing ? (
+							<>
+								<Edit className="w-6 h-6 text-blue-600" />
+								{Components.UI.BUTTON_TEXT.editProperty}
+							</>
+						) : (
+							<>
+								<PlusCircle className="w-6 h-6 text-green-600" />
+								Créer une nouvelle annonce
+							</>
+						)}
+					</h2>
+					{onCancel && (
+						<button
+							onClick={onCancel}
+							className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200 shadow-sm hover:shadow"
+						>
+							<ArrowLeft className="w-4 h-4" />
+							Retour à la liste
+						</button>
+					)}
+				</div>
 
 				<div className="flex items-center space-x-4 mb-6">
 					{Array.from({ length: totalSteps }, (_, i) => (

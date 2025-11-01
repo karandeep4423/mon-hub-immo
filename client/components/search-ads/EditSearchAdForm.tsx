@@ -20,6 +20,7 @@ import {
 import { PageLoader } from '../ui/LoadingSpinner';
 import { Button } from '../ui/Button';
 import { Features, Components } from '@/lib/constants';
+import { Select } from '@/components/ui/Select';
 
 interface EditSearchAdFormProps {
 	id: string;
@@ -252,24 +253,28 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 								<label className="block text-sm font-medium text-gray-700 mb-2">
 									Statut de la recherche
 								</label>
-								<select
+								<Select
 									value={values.status}
-									onChange={(e) =>
+									onChange={(value) =>
 										setFieldValue(
 											'status',
 											e.target
 												.value as SearchAdFormData['status'],
 										)
 									}
+									options={[
+										{ value: 'active', label: 'Actif' },
+										{ value: 'paused', label: 'En pause' },
+										{
+											value: 'fulfilled',
+											label: 'Réalisé',
+										},
+										{ value: 'sold', label: 'Vendu' },
+										{ value: 'rented', label: 'Loué' },
+										{ value: 'archived', label: 'Archivé' },
+									]}
 									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
-								>
-									<option value="active">Actif</option>
-									<option value="paused">En pause</option>
-									<option value="fulfilled">Réalisé</option>
-									<option value="sold">Vendu</option>
-									<option value="rented">Loué</option>
-									<option value="archived">Archivé</option>
-								</select>
+								/>
 								<p className="text-xs text-gray-500 mt-1">
 									Changez le statut pour mettre à jour la
 									visibilité de votre recherche.

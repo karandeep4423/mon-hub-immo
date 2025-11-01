@@ -30,9 +30,9 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent }) => {
 
 	return (
 		<>
-			<div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-200 overflow-hidden">
+			<div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-200 overflow-hidden h-full flex flex-col">
 				{/* Header with gradient */}
-				<div className="bg-brand-gradient-horizontal p-6 text-white">
+				<div className="bg-brand-gradient-horizontal p-6 text-white flex-shrink-0">
 					<div className="flex items-center space-x-4">
 						<ProfileAvatar
 							user={agent}
@@ -51,7 +51,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent }) => {
 				</div>
 
 				{/* Content */}
-				<div className="p-6 space-y-4">
+				<div className="p-6 space-y-4 flex-1">
 					{/* Stats */}
 					<div className="grid grid-cols-2 gap-4">
 						<div className="bg-brand-50 rounded-lg p-3 text-center">
@@ -137,7 +137,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent }) => {
 				</div>
 
 				{/* Footer */}
-				<div className="px-6 pb-6">
+				<div className="px-6 pb-6 mt-auto">
 					<Button
 						onClick={() => setShowBookingModal(true)}
 						className="w-full bg-brand hover:bg-brand-dark text-white"

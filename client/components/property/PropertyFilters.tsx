@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@/components/ui';
+import { Button, Select } from '@/components/ui';
 
 export interface PropertyFiltersState {
 	searchTerm: string;
@@ -71,58 +71,51 @@ export const PropertyFilters: React.FC<PropertyFiltersProps> = ({
 						</div>
 					</div>
 				</div>
-
 				{/* Status Filter */}
 				<div className="w-full lg:w-48">
-					<select
+					<Select
 						value={filters.statusFilter}
-						onChange={(e) => handleStatusChange(e.target.value)}
-						className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-					>
-						<option value="all">Tous les statuts</option>
-						<option value="draft">Brouillon</option>
-						<option value="active">Actif</option>
-						<option value="sold">Vendu</option>
-						<option value="rented">Loué</option>
-						<option value="archived">Archivé</option>
-					</select>
+						onChange={handleStatusChange}
+						options={[
+							{ value: 'all', label: 'Tous les statuts' },
+							{ value: 'draft', label: 'Brouillon' },
+							{ value: 'active', label: 'Actif' },
+							{ value: 'sold', label: 'Vendu' },
+							{ value: 'rented', label: 'Loué' },
+							{ value: 'archived', label: 'Archivé' },
+						]}
+					/>
 				</div>
-
 				{/* Property Type Filter */}
 				<div className="w-full lg:w-48">
-					<select
+					<Select
 						value={filters.propertyTypeFilter}
-						onChange={(e) =>
-							handlePropertyTypeChange(e.target.value)
-						}
-						className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-					>
-						<option value="all">Tous les types</option>
-						<option value="Appartement">Appartement</option>
-						<option value="Maison">Maison</option>
-						<option value="Terrain">Terrain</option>
-						<option value="Local commercial">
-							Local commercial
-						</option>
-						<option value="Bureaux">Bureaux</option>
-					</select>
+						onChange={handlePropertyTypeChange}
+						options={[
+							{ value: 'all', label: 'Tous les types' },
+							{ value: 'Appartement', label: 'Appartement' },
+							{ value: 'Maison', label: 'Maison' },
+							{ value: 'Terrain', label: 'Terrain' },
+							{
+								value: 'Local commercial',
+								label: 'Local commercial',
+							},
+							{ value: 'Bureaux', label: 'Bureaux' },
+						]}
+					/>
 				</div>
-
 				{/* Transaction Type Filter */}
 				<div className="w-full lg:w-40">
-					<select
+					<Select
 						value={filters.transactionTypeFilter}
-						onChange={(e) =>
-							handleTransactionTypeChange(e.target.value)
-						}
-						className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-					>
-						<option value="all">Tous</option>
-						<option value="Vente">Vente</option>
-						<option value="Location">Location</option>
-					</select>
-				</div>
-
+						onChange={handleTransactionTypeChange}
+						options={[
+							{ value: 'all', label: 'Tous' },
+							{ value: 'Vente', label: 'Vente' },
+							{ value: 'Location', label: 'Location' },
+						]}
+					/>
+				</div>{' '}
 				{/* Reset Filters Button */}
 				{hasActiveFilters && (
 					<Button

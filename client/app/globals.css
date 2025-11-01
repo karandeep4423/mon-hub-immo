@@ -601,3 +601,284 @@ textarea:focus-visible,
 select:focus-visible {
 	outline-offset: 0px;
 }
+
+/* ============================================
+   GLOBAL DROPDOWN/SELECT STYLING
+   Brand-consistent design for all dropdowns
+   ============================================ */
+
+/* Base select styling */
+select {
+	appearance: none;
+	background-color: white;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2300b4d8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+	background-position: right 0.75rem center;
+	background-repeat: no-repeat;
+	background-size: 1.25rem 1.25rem;
+	padding-right: 2.5rem;
+	border: 1px solid var(--gray-300);
+	border-radius: var(--radius-lg);
+	padding: 0.625rem 2.5rem 0.625rem 0.875rem;
+	font-size: 0.875rem;
+	line-height: 1.5;
+	color: var(--text-primary);
+	transition:
+		border-color 150ms ease,
+		box-shadow 150ms ease,
+		background-color 150ms ease;
+	cursor: pointer;
+}
+
+/* Select hover state */
+select:hover:not(:disabled) {
+	border-color: var(--brand-300);
+	background-color: var(--gray-50);
+}
+
+/* Select focus state - brand colors */
+select:focus {
+	outline: none;
+	border-color: var(--brand) !important;
+	box-shadow: 0 0 0 3px rgba(0, 180, 216, 0.1) !important;
+	background-color: white;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2300b4d8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+}
+
+/* Select disabled state */
+select:disabled {
+	background-color: var(--gray-100);
+	color: var(--text-disabled);
+	cursor: not-allowed;
+	opacity: 0.6;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+}
+
+/* Select with error state */
+select.error,
+select[aria-invalid='true'] {
+	border-color: var(--error) !important;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23ff6b6b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+}
+
+select.error:focus,
+select[aria-invalid='true']:focus {
+	box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1) !important;
+}
+
+/* Select success state */
+select.success {
+	border-color: var(--success);
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2351cf66' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+}
+
+/* Option styling - Force brand colors */
+select option {
+	padding: 0.5rem 0.875rem;
+	color: var(--text-primary) !important;
+	background-color: white !important;
+}
+
+select option:hover,
+select option:focus {
+	background-color: var(--brand-50) !important;
+	background: var(--brand-50) !important;
+	color: var(--brand-800) !important;
+}
+
+select option:checked,
+select option[selected] {
+	background-color: var(--brand) !important;
+	background: var(--brand) !important;
+	color: white !important;
+	font-weight: 600 !important;
+}
+
+select option:disabled {
+	color: var(--text-disabled) !important;
+	background-color: var(--gray-50) !important;
+	background: var(--gray-50) !important;
+}
+
+/* Multiple select styling */
+select[multiple] {
+	padding: 0.5rem;
+	background-image: none;
+}
+
+select[multiple] option {
+	padding: 0.5rem 0.875rem;
+	border-radius: var(--radius-sm);
+	margin-bottom: 0.25rem;
+}
+
+select[multiple] option:checked {
+	background: linear-gradient(
+		90deg,
+		var(--brand-50) 0%,
+		var(--brand-100) 100%
+	);
+	color: var(--brand-800);
+	font-weight: 500;
+}
+
+/* Size variants */
+select.select-sm {
+	padding: 0.5rem 2.25rem 0.5rem 0.75rem;
+	font-size: 0.8125rem;
+	background-size: 1rem 1rem;
+	background-position: right 0.625rem center;
+}
+
+select.select-lg {
+	padding: 0.875rem 2.75rem 0.875rem 1rem;
+	font-size: 1rem;
+	background-size: 1.5rem 1.5rem;
+	background-position: right 0.875rem center;
+}
+
+/* Modern dropdown with brand accent */
+select.select-brand {
+	border: 2px solid var(--brand-200);
+	background-color: var(--brand-50);
+	color: var(--brand-800);
+	font-weight: 500;
+}
+
+select.select-brand:hover:not(:disabled) {
+	border-color: var(--brand-400);
+	background-color: var(--brand-100);
+}
+
+select.select-brand:focus {
+	border-color: var(--brand-600);
+	background-color: white;
+	box-shadow: 0 0 0 4px rgba(0, 180, 216, 0.15) !important;
+}
+
+/* Custom dropdown for React Select / Headless UI compatibility */
+[role='listbox'],
+[role='combobox'] {
+	border: 1px solid var(--gray-300);
+	border-radius: var(--radius-lg);
+	background-color: white;
+	box-shadow: var(--shadow-md);
+}
+
+[role='option'] {
+	padding: 0.625rem 0.875rem;
+	cursor: pointer;
+	transition:
+		background-color 100ms ease,
+		color 100ms ease;
+	color: var(--text-primary);
+}
+
+[role='option']:hover,
+[role='option'][data-focus],
+[role='option'][aria-selected='true'] {
+	background-color: var(--brand-50);
+	color: var(--brand-800);
+}
+
+[role='option'][aria-disabled='true'] {
+	color: var(--text-disabled);
+	cursor: not-allowed;
+	opacity: 0.5;
+}
+
+/* Dropdown animations */
+@keyframes dropdownSlide {
+	from {
+		opacity: 0;
+		transform: translateY(-8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+[role='listbox'] {
+	animation: dropdownSlide 150ms ease-out;
+}
+
+/* ============================================
+   BROWSER-SPECIFIC DROPDOWN OVERRIDES
+   Force brand colors across all browsers
+   ============================================ */
+
+/* Firefox - option colors */
+@-moz-document url-prefix() {
+	select option:checked,
+	select option[selected] {
+		background: var(--brand) !important;
+		color: white !important;
+	}
+
+	select option:hover {
+		background: var(--brand-50) !important;
+		color: var(--brand-800) !important;
+	}
+}
+
+/* WebKit/Chrome/Safari - option colors */
+select option:checked {
+	background: linear-gradient(
+		0deg,
+		var(--brand) 0%,
+		var(--brand) 100%
+	) !important;
+	color: white !important;
+}
+
+select:focus option:checked {
+	background: linear-gradient(
+		0deg,
+		var(--brand) 0%,
+		var(--brand) 100%
+	) !important;
+}
+
+/* Override any system blue colors */
+select option::selection {
+	background: var(--brand) !important;
+	color: white !important;
+}
+
+/* Additional WebKit specific */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+	select option {
+		background-color: white;
+		color: var(--text-primary);
+	}
+
+	select option:hover {
+		background-color: var(--brand-50) !important;
+		color: var(--brand-800) !important;
+	}
+
+	select option:checked {
+		background: var(--brand) !important;
+		background-color: var(--brand) !important;
+		color: white !important;
+	}
+}
+
+/* Fallback for older browsers */
+select::-webkit-scrollbar {
+	width: 8px;
+}
+
+select::-webkit-scrollbar-track {
+	background: var(--gray-100);
+	border-radius: 4px;
+}
+
+select::-webkit-scrollbar-thumb {
+	background: var(--brand-300);
+	border-radius: 4px;
+}
+
+select::-webkit-scrollbar-thumb:hover {
+	background: var(--brand-500);
+}

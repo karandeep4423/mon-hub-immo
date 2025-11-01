@@ -4,6 +4,20 @@ import React from 'react';
 import { Input } from '@/components/ui/Input';
 import { NumberInput, Select, EnergyRatingSelector } from '@/components/ui';
 import { PropertyFormData, Property } from '@/lib/api/propertyApi';
+import {
+	Layers,
+	BedDouble,
+	Bath,
+	Building2,
+	Compass,
+	ParkingCircle,
+	Trees,
+	Calendar,
+	Hammer,
+	Flame,
+	Zap,
+	Leaf,
+} from 'lucide-react';
 
 interface PropertyFormStep3Props {
 	formData: PropertyFormData;
@@ -25,8 +39,10 @@ export const PropertyFormStep3: React.FC<PropertyFormStep3Props> = ({
 }) => {
 	return (
 		<div className="space-y-6">
-			<h3 className="text-lg font-semibold mb-4">Détails du bien</h3>
-
+			<h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+				<Layers className="w-5 h-5 text-indigo-600" />
+				Détails du bien
+			</h3>
 			{!['Terrain', 'Local commercial'].includes(
 				formData.propertyType,
 			) && (
@@ -40,23 +56,20 @@ export const PropertyFormStep3: React.FC<PropertyFormStep3Props> = ({
 						placeholder="3"
 						min={1}
 						max={50}
+						icon={<Building2 className="w-4 h-4 text-blue-600" />}
 					/>
 
-					<Select
+					<NumberInput
 						label="Nombre de chambres"
-						value={formData.bedrooms?.toString()}
+						value={formData.bedrooms}
 						onChange={(value) =>
-							handleInputChange(
-								'bedrooms',
-								parseInt(value) || undefined,
-							)
+							handleInputChange('bedrooms', value)
 						}
 						name="bedrooms"
-						options={Array.from({ length: 10 }, (_, i) => ({
-							value: (i + 1).toString(),
-							label: (i + 1).toString(),
-						}))}
-						placeholder="Choisissez..."
+						placeholder="2"
+						min={0}
+						max={10}
+						icon={<BedDouble className="w-4 h-4 text-purple-600" />}
 					/>
 
 					<NumberInput
@@ -69,6 +82,7 @@ export const PropertyFormStep3: React.FC<PropertyFormStep3Props> = ({
 						placeholder="1"
 						min={0}
 						max={10}
+						icon={<Bath className="w-4 h-4 text-cyan-600" />}
 					/>
 
 					<NumberInput
@@ -79,21 +93,22 @@ export const PropertyFormStep3: React.FC<PropertyFormStep3Props> = ({
 						placeholder="1"
 						min={1}
 						max={20}
+						icon={<Layers className="w-4 h-4 text-slate-600" />}
 					/>
 				</div>
 			)}
-
 			<div className="grid grid-cols-2 md:grid-cols-3 gap-4">
 				{!['Terrain', 'Local commercial'].includes(
 					formData.propertyType,
 				) && (
 					<Select
 						label="Exposition"
+						name="orientation"
 						value={formData.orientation}
 						onChange={(value) =>
 							handleInputChange('orientation', value)
 						}
-						name="orientation"
+						icon={<Compass className="w-4 h-4 text-amber-600" />}
 						options={[
 							{ value: 'Nord', label: 'Nord' },
 							{ value: 'Sud', label: 'Sud' },
@@ -111,6 +126,7 @@ export const PropertyFormStep3: React.FC<PropertyFormStep3Props> = ({
 				{formData.propertyType !== 'Terrain' && (
 					<Select
 						label="Places de parking"
+						name="parkingSpaces"
 						value={formData.parkingSpaces?.toString()}
 						onChange={(value) =>
 							handleInputChange(
@@ -118,7 +134,9 @@ export const PropertyFormStep3: React.FC<PropertyFormStep3Props> = ({
 								parseInt(value) || undefined,
 							)
 						}
-						name="parkingSpaces"
+						icon={
+							<ParkingCircle className="w-4 h-4 text-blue-600" />
+						}
 						options={Array.from({ length: 11 }, (_, i) => ({
 							value: i.toString(),
 							label: i === 0 ? 'Aucune' : i.toString(),
@@ -130,11 +148,12 @@ export const PropertyFormStep3: React.FC<PropertyFormStep3Props> = ({
 				{formData.propertyType !== 'Local commercial' && (
 					<Select
 						label="Extérieur"
+						name="exterior"
 						value={formData.exterior?.[0] || ''}
 						onChange={(value) =>
 							handleInputChange('exterior', value ? [value] : [])
 						}
-						name="exterior"
+						icon={<Trees className="w-4 h-4 text-green-600" />}
 						options={[
 							{ value: 'garden', label: 'Jardin' },
 							{ value: 'balcony', label: 'Balcon' },
@@ -145,8 +164,7 @@ export const PropertyFormStep3: React.FC<PropertyFormStep3Props> = ({
 						placeholder="Choisissez..."
 					/>
 				)}
-			</div>
-
+			</div>{' '}
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 				<Input
 					type="text"
@@ -165,13 +183,15 @@ export const PropertyFormStep3: React.FC<PropertyFormStep3Props> = ({
 					label="Disponible à partir de"
 					name="availableFrom"
 					maxLength={7}
+					icon={<Calendar className="w-4 h-4 text-pink-600" />}
 				/>
 
 				<Select
 					label="État du bien"
+					name="condition"
 					value={formData.condition}
 					onChange={(value) => handleInputChange('condition', value)}
-					name="condition"
+					icon={<Hammer className="w-4 h-4 text-orange-600" />}
 					options={[
 						{ value: 'new', label: 'Neuf' },
 						{ value: 'good', label: 'Bon état' },
@@ -181,7 +201,6 @@ export const PropertyFormStep3: React.FC<PropertyFormStep3Props> = ({
 					placeholder="Choisissez..."
 				/>
 			</div>
-
 			{!['Terrain', 'Local commercial'].includes(
 				formData.propertyType,
 			) && (
@@ -189,11 +208,12 @@ export const PropertyFormStep3: React.FC<PropertyFormStep3Props> = ({
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 						<Select
 							label="Mode de chauffage"
+							name="heatingType"
 							value={formData.heatingType}
 							onChange={(value) =>
 								handleInputChange('heatingType', value)
 							}
-							name="heatingType"
+							icon={<Flame className="w-4 h-4 text-red-600" />}
 							options={[
 								{ value: 'Gaz', label: 'Gaz' },
 								{ value: 'Électrique', label: 'Électrique' },
@@ -207,25 +227,33 @@ export const PropertyFormStep3: React.FC<PropertyFormStep3Props> = ({
 							]}
 							placeholder="Choisissez..."
 						/>
+					</div>{' '}
+					<div className="flex items-start gap-2">
+						<Zap className="w-5 h-5 text-yellow-600 mt-1 flex-shrink-0" />
+						<div className="flex-1">
+							<EnergyRatingSelector
+								label="Classé énergie *"
+								value={formData.energyRating}
+								onChange={(value) =>
+									handleInputChange('energyRating', value)
+								}
+								name="energyRating"
+							/>
+						</div>
 					</div>
-
-					<EnergyRatingSelector
-						label="Classé énergie *"
-						value={formData.energyRating}
-						onChange={(value) =>
-							handleInputChange('energyRating', value)
-						}
-						name="energyRating"
-					/>
-
-					<EnergyRatingSelector
-						label="GES *"
-						value={formData.gasEmissionClass}
-						onChange={(value) =>
-							handleInputChange('gasEmissionClass', value)
-						}
-						name="gasEmissionClass"
-					/>
+					<div className="flex items-start gap-2">
+						<Leaf className="w-5 h-5 text-green-600 mt-1 flex-shrink-0" />
+						<div className="flex-1">
+							<EnergyRatingSelector
+								label="GES *"
+								value={formData.gasEmissionClass}
+								onChange={(value) =>
+									handleInputChange('gasEmissionClass', value)
+								}
+								name="gasEmissionClass"
+							/>
+						</div>
+					</div>
 				</>
 			)}
 		</div>

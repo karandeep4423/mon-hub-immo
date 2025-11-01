@@ -14,6 +14,7 @@ import { authService } from '@/lib/api/authApi';
 import { useForm } from '@/hooks/useForm';
 import { PageLoader } from '../ui/LoadingSpinner';
 import { Features } from '@/lib/constants';
+import { Select } from '@/components/ui/Select';
 import {
 	handleAuthError,
 	showProfileCompletionSuccess,
@@ -385,18 +386,30 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 								<label className="block text-sm font-medium text-gray-700 mb-1">
 									Rayon d&apos;intervention
 								</label>
-								<select
+								<Select
+									label=""
+									value={
+										values.interventionRadius?.toString() ||
+										''
+									}
+									onChange={(value) => {
+										const event = {
+											target: {
+												name: 'interventionRadius',
+												value,
+											},
+										} as React.ChangeEvent<HTMLSelectElement>;
+										handleChange(event);
+									}}
 									name="interventionRadius"
-									value={values.interventionRadius}
-									onChange={handleChange}
-									className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
-								>
-									<option value={10}>10 km</option>
-									<option value={20}>20 km</option>
-									<option value={30}>30 km</option>
-									<option value={50}>50 km</option>
-									<option value={100}>100 km</option>
-								</select>
+									options={[
+										{ value: '10', label: '10 km' },
+										{ value: '20', label: '20 km' },
+										{ value: '30', label: '30 km' },
+										{ value: '50', label: '50 km' },
+										{ value: '100', label: '100 km' },
+									]}
+								/>
 							</div>
 						</div>
 
@@ -428,21 +441,32 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 								<label className="block text-sm font-medium text-gray-700 mb-1">
 									Réseau ou statut
 								</label>
-								<select
-									name="network"
+								<Select
+									label=""
 									value={values.network}
-									onChange={handleChange}
-									className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
-								>
-									<option value="IAD">IAD</option>
-									<option value="Century21">
-										Century 21
-									</option>
-									<option value="Orpi">Orpi</option>
-									<option value="Independant">
-										Indépendant
-									</option>
-								</select>
+									onChange={(value) => {
+										const event = {
+											target: {
+												name: 'network',
+												value,
+											},
+										} as React.ChangeEvent<HTMLSelectElement>;
+										handleChange(event);
+									}}
+									name="network"
+									options={[
+										{ value: 'IAD', label: 'IAD' },
+										{
+											value: 'Century21',
+											label: 'Century 21',
+										},
+										{ value: 'Orpi', label: 'Orpi' },
+										{
+											value: 'Independant',
+											label: 'Indépendant',
+										},
+									]}
+								/>
 							</div>
 
 							<Input

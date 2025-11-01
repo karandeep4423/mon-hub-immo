@@ -1,5 +1,6 @@
 import { FormSection } from './FormSection';
 import { Features } from '@/lib/constants';
+import { Select } from '@/components/ui/Select';
 
 interface PropertyDetailsSectionProps {
 	minRooms?: number;
@@ -24,11 +25,30 @@ const FLOOR_LABELS: Record<string, string> = {
 	ground_floor_only: 'Rez-de-chaussée uniquement',
 };
 
-const STATE_LABELS: Record<string, string> = {
-	new: 'Neuf',
-	good: 'Bon état',
-	refresh: 'À rafraîchir',
-	renovate: 'À rénover',
+const STATE_CONFIG: Record<
+	string,
+	{ label: string; icon: string; gradient: string }
+> = {
+	new: {
+		label: 'Neuf',
+		icon: '✨',
+		gradient: 'from-blue-50 to-cyan-50',
+	},
+	good: {
+		label: 'Bon état',
+		icon: '👍',
+		gradient: 'from-green-50 to-emerald-50',
+	},
+	refresh: {
+		label: 'À rafraîchir',
+		icon: '🎨',
+		gradient: 'from-yellow-50 to-amber-50',
+	},
+	renovate: {
+		label: 'À rénover',
+		icon: '🔨',
+		gradient: 'from-orange-50 to-red-50',
+	},
 };
 
 export const PropertyDetailsSection: React.FC<PropertyDetailsSectionProps> = ({
@@ -128,32 +148,91 @@ export const PropertyDetailsSection: React.FC<PropertyDetailsSectionProps> = ({
 				</div>
 
 				<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-					<label className="flex items-center space-x-2">
+					{/* Extérieur nécessaire ? */}
+					<label
+						className={`
+							relative overflow-hidden rounded-xl cursor-pointer
+							transition-all duration-300 ease-in-out
+							${
+								hasExterior
+									? 'ring-2 ring-cyan-500 shadow-lg shadow-cyan-200'
+									: 'ring-1 ring-gray-200 hover:ring-cyan-300 hover:shadow-md'
+							}
+						`}
+					>
 						<input
 							type="checkbox"
 							checked={hasExterior}
 							onChange={(e) =>
 								onHasExteriorChange(e.target.checked)
 							}
-							className="rounded border-gray-300 text-brand"
+							className="sr-only"
 						/>
-						<span className="text-sm text-gray-700">
-							Extérieur nécessaire ? (jardin, terrasse, balcon)
-						</span>
+						<div
+							className={`
+								bg-gradient-to-br ${hasExterior ? 'from-green-50 to-emerald-50' : 'from-gray-50 to-slate-50'}
+								p-3 sm:p-4 transition-all duration-300
+								${hasExterior ? 'bg-opacity-100' : 'bg-opacity-60 hover:bg-opacity-80'}
+							`}
+						>
+							<div className="flex items-center gap-2">
+								<div className="text-xl sm:text-2xl">🌿</div>
+								<span
+									className={`text-sm font-medium transition-colors duration-300 ${hasExterior ? 'text-brand' : 'text-gray-700'}`}
+								>
+									Extérieur nécessaire ? (jardin, terrasse,
+									balcon)
+								</span>
+								{hasExterior && (
+									<div className="text-brand text-sm sm:text-base absolute top-1 right-3">
+										✓
+									</div>
+								)}
+							</div>
+						</div>
 					</label>
 
-					<label className="flex items-center space-x-2">
+					{/* Parking / garage obligatoire ? */}
+					<label
+						className={`
+							relative overflow-hidden rounded-xl cursor-pointer
+							transition-all duration-300 ease-in-out
+							${
+								hasParking
+									? 'ring-2 ring-cyan-500 shadow-lg shadow-cyan-200'
+									: 'ring-1 ring-gray-200 hover:ring-cyan-300 hover:shadow-md'
+							}
+						`}
+					>
 						<input
 							type="checkbox"
 							checked={hasParking}
 							onChange={(e) =>
 								onHasParkingChange(e.target.checked)
 							}
-							className="rounded border-gray-300 text-brand"
+							className="sr-only"
 						/>
-						<span className="text-sm text-gray-700">
-							Parking / garage obligatoire ?
-						</span>
+						<div
+							className={`
+								bg-gradient-to-br ${hasParking ? 'from-blue-50 to-indigo-50' : 'from-gray-50 to-slate-50'}
+								p-3 sm:p-4 transition-all duration-300
+								${hasParking ? 'bg-opacity-100' : 'bg-opacity-60 hover:bg-opacity-80'}
+							`}
+						>
+							<div className="flex items-center gap-2">
+								<div className="text-xl sm:text-2xl">🚗</div>
+								<span
+									className={`text-sm font-medium transition-colors duration-300 ${hasParking ? 'text-brand' : 'text-gray-700'}`}
+								>
+									Parking / garage obligatoire ?
+								</span>
+								{hasParking && (
+									<div className="text-brand text-sm sm:text-base absolute top-1 right-3">
+										✓
+									</div>
+								)}
+							</div>
+						</div>
 					</label>
 				</div>
 
@@ -164,50 +243,84 @@ export const PropertyDetailsSection: React.FC<PropertyDetailsSectionProps> = ({
 					>
 						Étages acceptés (si appartement) ?
 					</label>
-					<select
-						id="acceptedFloors"
-						name="acceptedFloors"
+					<Select
 						value={acceptedFloors || ''}
-						onChange={(e) => onAcceptedFloorsChange(e.target.value)}
+						onChange={(value) => onAcceptedFloorsChange(value)}
+						name="acceptedFloors"
+						options={[
+							{ value: '', label: 'Sélectionner...' },
+							{
+								value: 'option',
+								label: '{FLOOR_LABELS[option] || option}',
+							},
+						]}
 						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand/20 focus:border-brand"
-					>
-						<option value="">Sélectionner...</option>
-						{floorOptions.map((option) => (
-							<option key={option} value={option}>
-								{FLOOR_LABELS[option] || option}
-							</option>
-						))}
-					</select>
+					/>
 				</div>
 
 				<div>
-					<label className="block text-sm font-medium text-gray-700 mb-2">
+					<label className="block text-sm font-semibold text-gray-800 mb-3">
 						État général souhaité : neuf / à rafraîchir / à rénover
 						?
 					</label>
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-						{stateOptions.map((state) => (
-							<label
-								key={state}
-								className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer min-h-[3rem]"
-							>
-								<input
-									type="checkbox"
-									value={state}
-									checked={desiredState.includes(state)}
-									onChange={(e) =>
-										onDesiredStateChange(
-											state,
-											e.target.checked,
-										)
-									}
-									className="rounded border-gray-300 text-brand mt-1 flex-shrink-0"
-								/>
-								<span className="text-sm leading-tight break-words">
-									{STATE_LABELS[state] || state}
-								</span>
-							</label>
-						))}
+					<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-2 sm:gap-3">
+						{stateOptions.map((state) => {
+							const config = STATE_CONFIG[state];
+							const isSelected = desiredState.includes(state);
+							return (
+								<label
+									key={state}
+									className={`
+										relative overflow-hidden rounded-xl cursor-pointer h-full
+										transition-all duration-300 ease-in-out
+										${
+											isSelected
+												? 'ring-2 ring-cyan-500 shadow-lg shadow-cyan-200'
+												: 'ring-1 ring-gray-200 hover:ring-cyan-300 hover:shadow-md'
+										}
+									`}
+								>
+									<input
+										type="checkbox"
+										value={state}
+										checked={isSelected}
+										onChange={(e) =>
+											onDesiredStateChange(
+												state,
+												e.target.checked,
+											)
+										}
+										className="sr-only"
+									/>
+									<div
+										className={`
+										bg-gradient-to-br ${config.gradient} h-full
+										p-3 sm:p-4 transition-all duration-300
+										${isSelected ? 'bg-opacity-100' : 'bg-opacity-60 hover:bg-opacity-80'}
+									`}
+									>
+										<div className="flex flex-col items-center justify-center text-center space-y-1 sm:space-y-2 h-full">
+											<div className="text-2xl sm:text-3xl">
+												{config.icon}
+											</div>
+											<span
+												className={`
+												text-xs sm:text-sm font-medium transition-colors duration-300
+												${isSelected ? 'text-brand' : 'text-gray-700'}
+											`}
+											>
+												{config.label}
+											</span>
+											{isSelected && (
+												<div className="text-brand text-sm sm:text-base absolute top-1 right-3">
+													✓
+												</div>
+											)}
+										</div>
+									</div>
+								</label>
+							);
+						})}
 					</div>
 				</div>
 			</div>

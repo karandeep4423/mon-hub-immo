@@ -1,5 +1,6 @@
 import { FormSection } from './FormSection';
 import { Features } from '@/lib/constants';
+import { Select } from '@/components/ui/Select';
 
 interface PropertyCriteriaSectionProps {
 	propertyTypes: string[];
@@ -11,17 +12,51 @@ interface PropertyCriteriaSectionProps {
 	errors?: Record<string, string>;
 }
 
-const PROPERTY_TYPE_LABELS: Record<string, string> = {
-	house: 'Maison',
-	apartment: 'Appartement',
-	land: 'Terrain',
-	building: 'Immeuble',
-	commercial: 'Local commercial',
+const PROPERTY_TYPE_CONFIG: Record<
+	string,
+	{ label: string; icon: string; gradient: string }
+> = {
+	house: {
+		label: 'Maison',
+		icon: '🏡',
+		gradient: 'from-blue-50 to-indigo-50',
+	},
+	apartment: {
+		label: 'Appartement',
+		icon: '🏢',
+		gradient: 'from-purple-50 to-pink-50',
+	},
+	land: {
+		label: 'Terrain',
+		icon: '🌳',
+		gradient: 'from-green-50 to-emerald-50',
+	},
+	building: {
+		label: 'Immeuble',
+		icon: '🏛️',
+		gradient: 'from-gray-50 to-slate-50',
+	},
+	commercial: {
+		label: 'Local commercial',
+		icon: '🏪',
+		gradient: 'from-orange-50 to-amber-50',
+	},
 };
 
-const PROPERTY_STATE_LABELS: Record<string, string> = {
-	new: 'Neuf',
-	old: 'Ancien',
+const PROPERTY_STATE_CONFIG: Record<
+	string,
+	{ label: string; icon: string; gradient: string }
+> = {
+	new: {
+		label: 'Neuf',
+		icon: '✨',
+		gradient: 'from-cyan-50 to-blue-50',
+	},
+	old: {
+		label: 'Ancien',
+		icon: '🏛️',
+		gradient: 'from-amber-50 to-yellow-50',
+	},
 };
 
 const PROJECT_TYPE_LABELS: Record<string, string> = {
@@ -59,39 +94,74 @@ export const PropertyCriteriaSection: React.FC<
 			<div className="space-y-6">
 				{/* Property Types */}
 				<div>
-					<label className="block text-sm font-medium text-gray-700 mb-2">
+					<label className="block text-sm font-semibold text-gray-800 mb-3">
 						Type de bien recherché *
 					</label>
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-						{propertyTypesList.map((type) => (
-							<label
-								key={type}
-								className={`flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer min-h-[3rem] ${
-									errors.propertyTypes
-										? 'border-red-500 bg-red-50'
-										: ''
-								}`}
-							>
-								<input
-									type="checkbox"
-									value={type}
-									checked={propertyTypes.includes(type)}
-									onChange={(e) =>
-										onPropertyTypesChange(
-											type,
-											e.target.checked,
-										)
-									}
-									className="rounded border-gray-300 text-brand mt-1 flex-shrink-0"
-								/>
-								<span className="text-sm capitalize leading-tight break-words">
-									{PROPERTY_TYPE_LABELS[type] || type}
-								</span>
-							</label>
-						))}
+					<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-3">
+						{propertyTypesList.map((type) => {
+							const config = PROPERTY_TYPE_CONFIG[type];
+							const isSelected = propertyTypes.includes(type);
+							return (
+								<label
+									key={type}
+									className={`
+										relative overflow-hidden rounded-xl cursor-pointer
+										transition-all duration-300 ease-in-out
+										${
+											isSelected
+												? 'ring-2 ring-cyan-500 shadow-lg shadow-cyan-200'
+												: 'ring-1 ring-gray-200 hover:ring-cyan-300 hover:shadow-md'
+										}
+										${errors.propertyTypes ? 'ring-red-500 ring-2' : ''}
+									`}
+								>
+									<input
+										type="checkbox"
+										value={type}
+										checked={isSelected}
+										onChange={(e) =>
+											onPropertyTypesChange(
+												type,
+												e.target.checked,
+											)
+										}
+										className="sr-only"
+									/>
+									<div
+										className={`
+										bg-gradient-to-br ${config.gradient}
+										p-3 sm:p-4 transition-all duration-300
+										${isSelected ? 'bg-opacity-100' : 'bg-opacity-60 hover:bg-opacity-80'}
+									`}
+									>
+										<div className="flex flex-col sm:flex-row items-center sm:space-x-2 space-y-1 sm:space-y-0">
+											<div className="text-2xl sm:text-3xl">
+												{config.icon}
+											</div>
+											<div className="flex-1 text-center sm:text-left">
+												<span
+													className={`
+													text-xs sm:text-sm font-medium transition-colors duration-300
+													${isSelected ? 'text-brand' : 'text-gray-700'}
+												`}
+												>
+													{config.label}
+												</span>
+											</div>
+											{isSelected && (
+												<div className="text-brand text-sm sm:text-base absolute top-1 right-3">
+													✓
+												</div>
+											)}
+										</div>
+									</div>
+								</label>
+							);
+						})}
 					</div>
 					{errors.propertyTypes && (
-						<p className="mt-2 text-sm text-red-600">
+						<p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+							<span>⚠️</span>
 							{errors.propertyTypes}
 						</p>
 					)}
@@ -99,57 +169,93 @@ export const PropertyCriteriaSection: React.FC<
 
 				{/* Property State */}
 				<div>
-					<label className="block text-sm font-medium text-gray-700 mb-2">
+					<label className="block text-sm font-semibold text-gray-800 mb-3">
 						Neuf ou ancien ?
 					</label>
-					<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-						{propertyStatesList.map((state) => (
-							<label
-								key={state}
-								className="flex items-start space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer min-h-[3rem]"
-							>
-								<input
-									type="checkbox"
-									value={state}
-									checked={propertyState.includes(state)}
-									onChange={(e) =>
-										onPropertyStateChange(
-											state,
-											e.target.checked,
-										)
-									}
-									className="rounded border-gray-300 text-brand mt-1 flex-shrink-0"
-								/>
-								<span className="text-sm leading-tight break-words">
-									{PROPERTY_STATE_LABELS[state] || state}
-								</span>
-							</label>
-						))}
+					<div className="grid grid-cols-2 sm:grid-cols-2 gap-2 sm:gap-3">
+						{propertyStatesList.map((state) => {
+							const config = PROPERTY_STATE_CONFIG[state];
+							const isSelected = propertyState.includes(state);
+							return (
+								<label
+									key={state}
+									className={`
+										relative overflow-hidden rounded-xl cursor-pointer
+										transition-all duration-300 ease-in-out
+										${
+											isSelected
+												? 'ring-2 ring-cyan-500 shadow-lg shadow-cyan-200'
+												: 'ring-1 ring-gray-200 hover:ring-cyan-300 hover:shadow-md'
+										}
+									`}
+								>
+									<input
+										type="checkbox"
+										value={state}
+										checked={isSelected}
+										onChange={(e) =>
+											onPropertyStateChange(
+												state,
+												e.target.checked,
+											)
+										}
+										className="sr-only"
+									/>
+									<div
+										className={`
+										bg-gradient-to-br ${config.gradient}
+										p-3 sm:p-4 transition-all duration-300
+										${isSelected ? 'bg-opacity-100' : 'bg-opacity-60 hover:bg-opacity-80'}
+									`}
+									>
+										<div className="flex flex-col sm:flex-row items-center sm:space-x-2 space-y-1 sm:space-y-0">
+											<div className="text-2xl sm:text-3xl">
+												{config.icon}
+											</div>
+											<div className="flex-1 text-center sm:text-left">
+												<span
+													className={`
+													text-xs sm:text-sm font-medium transition-colors duration-300
+													${isSelected ? 'text-brand' : 'text-gray-700'}
+												`}
+												>
+													{config.label}
+												</span>
+											</div>
+											{isSelected && (
+												<div className="text-brand text-sm sm:text-base absolute top-1 right-3">
+													✓
+												</div>
+											)}
+										</div>
+									</div>
+								</label>
+							);
+						})}
 					</div>
 				</div>
 
-				{/* Project Type */}
+				{/* Type de projet */}
 				<div>
 					<label
 						htmlFor="projectType"
-						className="block text-sm font-medium text-gray-700"
+						className="text-sm font-medium text-gray-700"
 					>
 						Type de projet
 					</label>
-					<select
-						id="projectType"
-						name="projectType"
+					<Select
 						value={projectType}
-						onChange={(e) => onProjectTypeChange(e.target.value)}
+						onChange={(value) => onProjectTypeChange(value)}
+						name="projectType"
+						options={[
+							{ value: '', label: 'Sélectionner...' },
+							{
+								value: 'type',
+								label: '{PROJECT_TYPE_LABELS[type] || type}',
+							},
+						]}
 						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand/20 focus:border-brand"
-					>
-						<option value="">Sélectionner...</option>
-						{projectTypesList.map((type) => (
-							<option key={type} value={type}>
-								{PROJECT_TYPE_LABELS[type] || type}
-							</option>
-						))}
-					</select>
+					/>
 				</div>
 			</div>
 		</FormSection>

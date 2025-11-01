@@ -11,6 +11,7 @@ import { Features, Components } from '@/lib/constants';
 import { useSearchAdMutations } from '@/hooks/useSearchAds';
 import { formatDateShort } from '@/lib/utils/date';
 import { truncateRichText } from '@/lib/utils/richTextUtils';
+import { Select } from '@/components/ui/Select';
 
 interface SearchAdCardProps {
 	searchAd: SearchAd;
@@ -281,28 +282,34 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 							{/* Status Management Section */}
 							<div className="flex items-center justify-between pt-2 border-t border-gray-100">
 								<div className="flex items-center space-x-2">
-									<select
+									<Select
 										value={searchAd.status}
-										onChange={(e) =>
+										onChange={(value) =>
 											handleStatusChange(
 												e.target
 													.value as SearchAd['status'],
 											)
 										}
-										disabled={isUpdatingStatus}
+										options={[
+											{ value: 'active', label: 'Actif' },
+											{
+												value: 'paused',
+												label: 'En pause',
+											},
+											{
+												value: 'fulfilled',
+												label: 'Réalisé',
+											},
+											{ value: 'sold', label: 'Vendu' },
+											{ value: 'rented', label: 'Loué' },
+											{
+												value: 'archived',
+												label: 'Archivé',
+											},
+										]}
 										className="text-sm border border-gray-300 rounded px-2 py-1 bg-white"
-									>
-										<option value="active">Actif</option>
-										<option value="paused">En pause</option>
-										<option value="fulfilled">
-											Réalisé
-										</option>
-										<option value="sold">Vendu</option>
-										<option value="rented">Loué</option>
-										<option value="archived">
-											Archivé
-										</option>
-									</select>
+										disabled={isUpdatingStatus}
+									/>
 									{getStatusBadge(searchAd.status)}
 								</div>
 							</div>

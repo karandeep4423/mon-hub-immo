@@ -7,6 +7,7 @@ import {
 } from '@/lib/utils/filterValidation';
 import { FILTER_DEFAULTS, PROPERTY_TYPES } from '@/lib/constants/filters';
 import type { PriceRange, SurfaceRange } from '@/types/filters';
+import { Select } from '@/components/ui/Select';
 
 type ContentFilter =
 	| 'all'
@@ -151,28 +152,26 @@ const SearchFiltersPanelComponent = ({
 
 			{/* Filters - Always visible for all content types */}
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-				<select
+				<Select
 					value={typeFilter}
-					onChange={(e) => onTypeFilterChange(e.target.value)}
+					onChange={(value) => onTypeFilterChange(value)}
+					options={[
+						{ value: '', label: 'Type de bien' },
+						{ value: 'type', label: '{type}' },
+					]}
 					className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-				>
-					<option value="">Type de bien</option>
-					{PROPERTY_TYPES.map((type) => (
-						<option key={type} value={type}>
-							{type}
-						</option>
-					))}
-				</select>
+				/>
 
-				<select
+				<Select
 					value={profileFilter}
-					onChange={(e) => onProfileFilterChange(e.target.value)}
+					onChange={(value) => onProfileFilterChange(value)}
+					options={[
+						{ value: '', label: 'Tous les profils' },
+						{ value: 'agent', label: 'Agent' },
+						{ value: 'apporteur', label: 'Apporteur' },
+					]}
 					className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-				>
-					<option value="">Tous les profils</option>
-					<option value="agent">Agent</option>
-					<option value="apporteur">Apporteur</option>
-				</select>
+				/>
 
 				<div className="flex items-center gap-1 sm:gap-2">
 					<input

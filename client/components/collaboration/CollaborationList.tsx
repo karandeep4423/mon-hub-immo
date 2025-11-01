@@ -14,6 +14,7 @@ import {
 import { Features } from '@/lib/constants';
 import { usePageState } from '@/hooks/usePageState';
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
+import { Select } from '@/components/ui';
 
 interface CollaborationListProps {
 	currentUserId: string;
@@ -444,37 +445,44 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 						<label className="block text-sm font-medium text-gray-700 mb-2">
 							Statut
 						</label>
-						<select
+						<Select
+							label=""
 							value={statusFilter}
-							onChange={(e) =>
-								handleFilterChange('status', e.target.value)
+							onChange={(value) =>
+								handleFilterChange('status', value)
 							}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand/20"
-						>
-							<option value="all">Tous les statuts</option>
-							<option value="pending">En attente</option>
-							<option value="accepted">Acceptée</option>
-							<option value="active">Active</option>
-							<option value="completed">Complétée</option>
-							<option value="cancelled">Annulée</option>
-							<option value="rejected">Rejetée</option>
-						</select>
+							name="statusFilter"
+							options={[
+								{ value: 'all', label: 'Tous les statuts' },
+								{ value: 'pending', label: 'En attente' },
+								{ value: 'accepted', label: 'Acceptée' },
+								{ value: 'active', label: 'Active' },
+								{ value: 'completed', label: 'Complétée' },
+								{ value: 'cancelled', label: 'Annulée' },
+								{ value: 'rejected', label: 'Rejetée' },
+							]}
+						/>
 					</div>
 					<div>
 						<label className="block text-sm font-medium text-gray-700 mb-2">
 							Rôle
 						</label>
-						<select
+						<Select
+							label=""
 							value={roleFilter}
-							onChange={(e) =>
-								handleFilterChange('role', e.target.value)
+							onChange={(value) =>
+								handleFilterChange('role', value)
 							}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand/20"
-						>
-							<option value="all">Tous les rôles</option>
-							<option value="owner">Propriétaire</option>
-							<option value="collaborator">Collaborateur</option>
-						</select>
+							name="roleFilter"
+							options={[
+								{ value: 'all', label: 'Tous les rôles' },
+								{ value: 'owner', label: 'Propriétaire' },
+								{
+									value: 'collaborator',
+									label: 'Collaborateur',
+								},
+							]}
+						/>
 					</div>
 					<div className="flex items-end">
 						<Button
