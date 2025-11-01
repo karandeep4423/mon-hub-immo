@@ -12,11 +12,19 @@ import { PageLoader } from '../ui/LoadingSpinner';
 import { Features } from '@/lib/constants';
 import { usePageState } from '@/hooks/usePageState';
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
+import { SearchFilters, SearchFiltersState } from './SearchFilters';
+
+const initialFilters: SearchFiltersState = {
+	searchTerm: '',
+	statusFilter: 'all',
+	propertyTypeFilter: 'all',
+};
 
 export const MySearches = () => {
 	const router = useRouter();
 	const { user } = useAuth();
 	const [currentPage, setCurrentPage] = useState(1);
+	const [filters, setFilters] = useState<SearchFiltersState>(initialFilters);
 	const itemsPerPage = 6;
 
 	// Persist pagination and scroll
@@ -63,12 +71,71 @@ export const MySearches = () => {
 		ready: !loading,
 	});
 
+	// Filter search ads
+	const filteredAds = useMemo(() => {
+		if (!myAds) return [];
+
+		return myAds.filter((ad) => {
+			// Search term filter (search in cities, title would be in ad itself)
+			if (filters.searchTerm) {
+				const searchLower = filters.searchTerm.toLowerCase();
+				const citiesMatch = ad.location.cities.some((city) =>
+					city.toLowerCase().includes(searchLower),
+				);
+				const descriptionMatch = ad.description
+					?.toLowerCase()
+					.includes(searchLower);
+				if (!citiesMatch && !descriptionMatch) return false;
+			}
+
+			// Status filter
+			if (
+				filters.statusFilter !== 'all' &&
+				ad.status !== filters.statusFilter
+			) {
+				return false;
+			}
+
+			// Property type filter
+			if (
+				filters.propertyTypeFilter !== 'all' &&
+				!ad.propertyTypes.includes(
+					filters.propertyTypeFilter as
+						| 'house'
+						| 'apartment'
+						| 'land'
+						| 'building'
+						| 'commercial',
+				)
+			) {
+				return false;
+			}
+
+			return true;
+		});
+	}, [myAds, filters]);
+
 	// Paginated search ads
 	const paginatedAds = useMemo(() => {
-		if (!myAds) return [];
+		if (!filteredAds) return [];
 		const startIndex = (currentPage - 1) * itemsPerPage;
-		return myAds.slice(startIndex, startIndex + itemsPerPage);
-	}, [myAds, currentPage, itemsPerPage]);
+		return filteredAds.slice(startIndex, startIndex + itemsPerPage);
+	}, [filteredAds, currentPage, itemsPerPage]);
+
+	// Reset pagination when filters change
+	useEffect(() => {
+		setCurrentPage(1);
+	}, [filters]);
+
+	const hasActiveFilters =
+		filters.searchTerm !== '' ||
+		filters.statusFilter !== 'all' ||
+		filters.propertyTypeFilter !== 'all';
+
+	const handleResetFilters = () => {
+		setFilters(initialFilters);
+		setCurrentPage(1);
+	};
 
 	if (loading) {
 		return <PageLoader message="Chargement de vos recherches..." />;
@@ -92,25 +159,56 @@ export const MySearches = () => {
 					Créer une recherche
 				</Button>
 			</div>
+
+			{/* Filters */}
+			{myAds && myAds.length > 0 && (
+				<SearchFilters
+					filters={filters}
+					onFiltersChange={setFilters}
+					onReset={handleResetFilters}
+					hasActiveFilters={hasActiveFilters}
+					resultsCount={filteredAds.length}
+					totalCount={myAds.length}
+				/>
+			)}
+
 			{myAds && myAds.length > 0 ? (
 				<>
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-						{paginatedAds.map((ad) => (
-							<SearchAdCard
-								key={ad._id}
-								searchAd={ad}
-								isOwner={true}
-								onUpdate={refreshAds}
+					{filteredAds.length > 0 ? (
+						<>
+							<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+								{paginatedAds.map((ad) => (
+									<SearchAdCard
+										key={ad._id}
+										searchAd={ad}
+										isOwner={true}
+										onUpdate={refreshAds}
+									/>
+								))}
+							</div>
+							<Pagination
+								currentPage={currentPage}
+								totalItems={filteredAds.length}
+								pageSize={itemsPerPage}
+								onPageChange={setCurrentPage}
+								scrollTargetId="searches-section"
 							/>
-						))}
-					</div>
-					<Pagination
-						currentPage={currentPage}
-						totalItems={myAds.length}
-						pageSize={itemsPerPage}
-						onPageChange={setCurrentPage}
-						scrollTargetId="searches-section"
-					/>
+						</>
+					) : (
+						<div className="text-center py-10 bg-gray-50 rounded-lg">
+							<p className="text-gray-600">
+								Aucune recherche ne correspond aux filtres
+								sélectionnés.
+							</p>
+							<Button
+								onClick={handleResetFilters}
+								variant="outline"
+								className="mt-4"
+							>
+								Réinitialiser les filtres
+							</Button>
+						</div>
+					)}
 				</>
 			) : (
 				<div className="text-center py-10 bg-gray-50 rounded-lg">

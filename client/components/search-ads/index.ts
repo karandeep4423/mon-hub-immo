@@ -4,3 +4,4 @@ export { SearchAdCard } from './SearchAdCard';
 export { HomeSearchAdCard } from './HomeSearchAdCard';
 export { SearchAdDetails } from './SearchAdDetails';
 export { MySearches } from './MySearches';
+export { SearchFilters } from './SearchFilters';

@@ -18,7 +18,7 @@ import dynamic from 'next/dynamic';
 import { Modal } from './Modal';
 import { Input } from './Input';
 import { Button } from './Button';
-import { Select } from '@/components/ui/Select';
+import { Select } from '@/components/ui/CustomSelect';
 
 const EmojiPicker = dynamic(() => import('emoji-picker-react'), {
 	ssr: false,
@@ -356,21 +356,16 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 							</button>
 						);
 					})}
-
 					{/* Font Size Dropdown - visible on desktop, in More on mobile */}
 					<div
 						className={`relative ${showAllTools ? 'block' : 'hidden md:block'}`}
 					>
 						<Select
-							value={size.value}
+							value="3"
 							onChange={(value) => applyFontSize(value)}
-							options={[
-								{ value: 'size.value', label: '{size.label}' },
-							]}
-							className="px-2 py-1.5 text-sm rounded-lg border border-gray-300 hover:bg-gray-200 text-gray-700 cursor-pointer"
+							options={fontSizes}
 						/>
-					</div>
-
+					</div>{' '}
 					{/* Color Picker - visible on desktop, in More on mobile */}
 					<div
 						className={`relative ${showAllTools ? 'block' : 'hidden md:block'}`}
@@ -412,7 +407,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 							</div>
 						)}
 					</div>
-
 					{/* Emoji Picker Button */}
 					<button
 						type="button"
@@ -427,7 +421,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 					>
 						<Smile className="w-4 h-4" />
 					</button>
-
 					{showEmojiPicker && (
 						<div
 							ref={emojiPickerRef}
@@ -476,7 +469,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 							</div>
 						</div>
 					)}
-
 					{/* More button - mobile */}
 					{!showAllTools && (
 						<button
@@ -491,7 +483,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 							<MoreHorizontal className="w-4 h-4" />
 						</button>
 					)}
-
 					{showAllTools && (
 						<button
 							type="button"
@@ -504,7 +495,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 							Réduire
 						</button>
 					)}
-
 					{/* Desktop: show secondary tools */}
 					<div className="hidden md:flex items-center gap-1">
 						{secondaryButtons.map((button, index) => {

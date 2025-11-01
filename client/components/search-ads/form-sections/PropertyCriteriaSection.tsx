@@ -1,6 +1,7 @@
 import { FormSection } from './FormSection';
 import { Features } from '@/lib/constants';
-import { Select } from '@/components/ui/Select';
+import React from 'react';
+import { Select } from '@/components/ui/CustomSelect';
 
 interface PropertyCriteriaSectionProps {
 	propertyTypes: string[];
@@ -251,10 +252,14 @@ export const PropertyCriteriaSection: React.FC<
 							{ value: '', label: 'Sélectionner...' },
 							{
 								value: 'type',
-								label: '{PROJECT_TYPE_LABELS[type] || type}',
+								label: projectTypesList
+									.map(
+										(type) =>
+											PROJECT_TYPE_LABELS[type] || type,
+									)
+									.join(','),
 							},
 						]}
-						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand/20 focus:border-brand"
 					/>
 				</div>
 			</div>

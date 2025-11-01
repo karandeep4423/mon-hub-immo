@@ -99,6 +99,36 @@ export const ProgressTracker: React.FC<ExtendedProgressTrackingProps> = ({
 		});
 	};
 
+	// Helper function to get gradient color for notes
+	const getNoteGradient = (userId: string, noteIndex: number) => {
+		// Warm gradients for owner
+		const warmGradients = [
+			'bg-gradient-to-br from-orange-50 to-amber-50',
+			'bg-gradient-to-br from-red-50 to-pink-50',
+			'bg-gradient-to-br from-yellow-50 to-orange-50',
+			'bg-gradient-to-br from-pink-50 to-rose-50',
+			'bg-gradient-to-br from-amber-50 to-yellow-50',
+			'bg-gradient-to-br from-rose-50 to-orange-50',
+		];
+
+		// Cool gradients for collaborator
+		const coolGradients = [
+			'bg-gradient-to-br from-blue-50 to-cyan-50',
+			'bg-gradient-to-br from-indigo-50 to-blue-50',
+			'bg-gradient-to-br from-cyan-50 to-teal-50',
+			'bg-gradient-to-br from-purple-50 to-indigo-50',
+			'bg-gradient-to-br from-teal-50 to-emerald-50',
+			'bg-gradient-to-br from-sky-50 to-blue-50',
+		];
+
+		// Determine if user is owner or collaborator
+		const isOwnerNote = userId === ownerUser?._id;
+		const gradients = isOwnerNote ? warmGradients : coolGradients;
+
+		// Use note index to select gradient (cycling through available gradients)
+		return gradients[noteIndex % gradients.length];
+	};
+
 	return (
 		<Card className="p-6">
 			<div className="mb-6">
@@ -171,7 +201,22 @@ export const ProgressTracker: React.FC<ExtendedProgressTrackingProps> = ({
 													!canUpdate ||
 													!isOwner
 												}
-												className="h-5 w-5 appearance-none rounded border-2 border-gray-300 bg-white checked:bg-brand checked:border-brand disabled:checked:bg-brand disabled:checked:border-brand bg-center bg-no-repeat focus:ring-2 focus:ring-brand/20 focus:ring-offset-0 disabled:cursor-not-allowed cursor-pointer disabled:opacity-100 checked:bg-[url('data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M3.5%208.5l3%203%206-6%22%20stroke%3D%22white%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')]"
+												className={`h-5 w-5 appearance-none rounded border-2 bg-center bg-no-repeat focus:ring-2 focus:ring-offset-0 transition-all
+													${
+														stepData?.ownerValidated
+															? isOwner
+																? 'bg-brand border-brand checked:bg-brand checked:border-brand disabled:bg-brand disabled:border-brand'
+																: 'bg-gray-400 border-gray-400 checked:bg-gray-400 checked:border-gray-400 disabled:bg-gray-400 disabled:border-gray-400'
+															: canUpdate &&
+																  isOwner &&
+																  canValidateStep(
+																		stepId,
+																  )
+																? 'border-brand/60 border-[2.5px] bg-white hover:border-brand hover:bg-brand/5 focus:ring-brand/30 cursor-pointer shadow-sm'
+																: 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-50'
+													}
+													${stepData?.ownerValidated ? "bg-[url('data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M3.5%208.5l3%203%206-6%22%20stroke%3D%22white%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')]" : ''}
+												`}
 											/>
 										</div>
 										<div className="flex items-center space-x-3 flex-1">
@@ -247,7 +292,22 @@ export const ProgressTracker: React.FC<ExtendedProgressTrackingProps> = ({
 													!canUpdate ||
 													!isCollaborator
 												}
-												className="h-5 w-5 rounded border-2 border-gray-300 accent-cyan-600 checked:bg-brand checked:border-brand disabled:checked:bg-brand disabled:checked:border-brand focus:ring-2 focus:ring-brand/20 focus:ring-offset-0 disabled:cursor-not-allowed cursor-pointer"
+												className={`h-5 w-5 appearance-none rounded border-2 bg-center bg-no-repeat focus:ring-2 focus:ring-offset-0 transition-all
+													${
+														stepData?.collaboratorValidated
+															? isCollaborator
+																? 'bg-brand border-brand checked:bg-brand checked:border-brand disabled:bg-brand disabled:border-brand'
+																: 'bg-gray-400 border-gray-400 checked:bg-gray-400 checked:border-gray-400 disabled:bg-gray-400 disabled:border-gray-400'
+															: canUpdate &&
+																  isCollaborator &&
+																  canValidateStep(
+																		stepId,
+																  )
+																? 'border-brand/60 border-[2.5px] bg-white hover:border-brand hover:bg-brand/5 focus:ring-brand/30 cursor-pointer shadow-sm'
+																: 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-50'
+													}
+													${stepData?.collaboratorValidated ? "bg-[url('data:image/svg+xml,%3Csvg%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M3.5%208.5l3%203%206-6%22%20stroke%3D%22white%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')]" : ''}
+												`}
 											/>
 										</div>
 										<div className="flex items-center space-x-3 flex-1">
@@ -301,6 +361,22 @@ export const ProgressTracker: React.FC<ExtendedProgressTrackingProps> = ({
 										</div>
 									</div>
 								)}
+
+								{/* Info message for current validatable step */}
+								{canValidateStep(stepId) &&
+									(!stepData?.ownerValidated ||
+										!stepData?.collaboratorValidated) && (
+										<div className="mt-3 flex items-start space-x-2 text-sm text-gray-500">
+											<span className="text-base">
+												ℹ️
+											</span>
+											<p>
+												Les deux parties doivent valider
+												cette étape pour débloquer la
+												suivante
+											</p>
+										</div>
+									)}
 							</div>
 
 							{/* Show notes if they exist */}
@@ -310,7 +386,7 @@ export const ProgressTracker: React.FC<ExtendedProgressTrackingProps> = ({
 										(noteItem, noteIndex) => (
 											<div
 												key={noteIndex}
-												className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-200"
+												className={`flex items-start space-x-3 p-3 rounded-lg border border-transparent ${getNoteGradient(noteItem.createdBy._id, noteIndex)}`}
 											>
 												<ProfileAvatar
 													user={{

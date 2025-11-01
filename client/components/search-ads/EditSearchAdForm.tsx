@@ -20,7 +20,7 @@ import {
 import { PageLoader } from '../ui/LoadingSpinner';
 import { Button } from '../ui/Button';
 import { Features, Components } from '@/lib/constants';
-import { Select } from '@/components/ui/Select';
+import { Select } from '@/components/ui/CustomSelect';
 
 interface EditSearchAdFormProps {
 	id: string;
@@ -258,8 +258,7 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 									onChange={(value) =>
 										setFieldValue(
 											'status',
-											e.target
-												.value as SearchAdFormData['status'],
+											value as SearchAdFormData['status'],
 										)
 									}
 									options={[
@@ -273,7 +272,6 @@ export const EditSearchAdForm: React.FC<EditSearchAdFormProps> = ({ id }) => {
 										{ value: 'rented', label: 'Loué' },
 										{ value: 'archived', label: 'Archivé' },
 									]}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
 								/>
 								<p className="text-xs text-gray-500 mt-1">
 									Changez le statut pour mettre à jour la

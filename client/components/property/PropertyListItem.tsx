@@ -4,7 +4,7 @@ import { Button, StatusBadge, RichTextDisplay } from '@/components/ui';
 import { Property } from '@/lib/api/propertyApi';
 import { getImageUrl } from '@/lib/utils/imageUtils';
 import { Features, Components } from '@/lib/constants';
-import { Select } from '@/components/ui/Select';
+import { Select } from '@/components/ui/CustomSelect';
 
 interface PropertyListItemProps {
 	property: Property;
@@ -20,9 +20,9 @@ export const PropertyListItem: React.FC<PropertyListItemProps> = ({
 	onStatusChange,
 }) => {
 	return (
-		<div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+		<div className="bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow">
 			<div className="flex flex-col sm:flex-row">
-				<div className="w-full sm:w-48 h-48 sm:h-32 bg-gray-200 flex-shrink-0 relative">
+				<div className="w-full sm:w-48 h-48 sm:h-32 bg-gray-200 flex-shrink-0 relative rounded-t-lg sm:rounded-l-lg sm:rounded-tr-none overflow-hidden">
 					<Image
 						src={getImageUrl(property.mainImage, 'medium')}
 						alt={property.title}
@@ -127,7 +127,6 @@ export const PropertyListItem: React.FC<PropertyListItemProps> = ({
 									{ value: 'rented', label: 'Loué' },
 									{ value: 'archived', label: 'Archivé' },
 								]}
-								className="text-sm border border-gray-300 rounded px-2 py-1.5 w-full sm:w-auto"
 							/>
 						</div>
 						<div className="flex items-center gap-2">

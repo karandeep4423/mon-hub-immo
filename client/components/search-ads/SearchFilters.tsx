@@ -2,23 +2,22 @@ import React from 'react';
 import { Button } from '@/components/ui';
 import { Select } from '@/components/ui/CustomSelect';
 
-export interface PropertyFiltersState {
+export interface SearchFiltersState {
 	searchTerm: string;
 	statusFilter: string;
 	propertyTypeFilter: string;
-	transactionTypeFilter: string;
 }
 
-interface PropertyFiltersProps {
-	filters: PropertyFiltersState;
-	onFiltersChange: (filters: PropertyFiltersState) => void;
+interface SearchFiltersProps {
+	filters: SearchFiltersState;
+	onFiltersChange: (filters: SearchFiltersState) => void;
 	onReset: () => void;
 	hasActiveFilters: boolean;
 	resultsCount?: number;
 	totalCount?: number;
 }
 
-export const PropertyFilters: React.FC<PropertyFiltersProps> = ({
+export const SearchFilters: React.FC<SearchFiltersProps> = ({
 	filters,
 	onFiltersChange,
 	onReset,
@@ -36,10 +35,6 @@ export const PropertyFilters: React.FC<PropertyFiltersProps> = ({
 
 	const handlePropertyTypeChange = (value: string) => {
 		onFiltersChange({ ...filters, propertyTypeFilter: value });
-	};
-
-	const handleTransactionTypeChange = (value: string) => {
-		onFiltersChange({ ...filters, transactionTypeFilter: value });
 	};
 
 	return (
@@ -79,8 +74,9 @@ export const PropertyFilters: React.FC<PropertyFiltersProps> = ({
 						onChange={handleStatusChange}
 						options={[
 							{ value: 'all', label: 'Tous les statuts' },
-							{ value: 'draft', label: 'Brouillon' },
 							{ value: 'active', label: 'Actif' },
+							{ value: 'paused', label: 'En pause' },
+							{ value: 'fulfilled', label: 'Abouti' },
 							{ value: 'sold', label: 'Vendu' },
 							{ value: 'rented', label: 'Loué' },
 							{ value: 'archived', label: 'Archivé' },
@@ -94,29 +90,14 @@ export const PropertyFilters: React.FC<PropertyFiltersProps> = ({
 						onChange={handlePropertyTypeChange}
 						options={[
 							{ value: 'all', label: 'Tous les types' },
-							{ value: 'Appartement', label: 'Appartement' },
-							{ value: 'Maison', label: 'Maison' },
-							{ value: 'Terrain', label: 'Terrain' },
-							{
-								value: 'Local commercial',
-								label: 'Local commercial',
-							},
-							{ value: 'Bureaux', label: 'Bureaux' },
+							{ value: 'apartment', label: 'Appartement' },
+							{ value: 'house', label: 'Maison' },
+							{ value: 'land', label: 'Terrain' },
+							{ value: 'commercial', label: 'Local commercial' },
+							{ value: 'building', label: 'Immeuble' },
 						]}
 					/>
 				</div>
-				{/* Transaction Type Filter */}
-				<div className="w-full lg:w-40">
-					<Select
-						value={filters.transactionTypeFilter}
-						onChange={handleTransactionTypeChange}
-						options={[
-							{ value: 'all', label: 'Tous' },
-							{ value: 'Vente', label: 'Vente' },
-							{ value: 'Location', label: 'Location' },
-						]}
-					/>
-				</div>{' '}
 				{/* Reset Filters Button */}
 				{hasActiveFilters && (
 					<Button
@@ -148,15 +129,8 @@ export const PropertyFilters: React.FC<PropertyFiltersProps> = ({
 				totalCount !== undefined && (
 					<div className="mt-4 pt-4 border-t">
 						<p className="text-sm text-gray-600">
-							<span className="font-semibold text-gray-900">
-								{resultsCount}
-							</span>{' '}
-							résultat
-							{resultsCount !== 1 ? 's' : ''} sur{' '}
-							<span className="font-semibold text-gray-900">
-								{totalCount}
-							</span>{' '}
-							bien{totalCount !== 1 ? 's' : ''}
+							{resultsCount} résultat
+							{resultsCount !== 1 ? 's' : ''} sur {totalCount}
 						</p>
 					</div>
 				)}

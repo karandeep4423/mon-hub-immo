@@ -5,9 +5,10 @@ import {
 	validatePriceInput,
 	validateSurfaceInput,
 } from '@/lib/utils/filterValidation';
-import { FILTER_DEFAULTS, PROPERTY_TYPES } from '@/lib/constants/filters';
+import { FILTER_DEFAULTS } from '@/lib/constants/filters';
+import { PROPERTY_TYPES } from '@/lib/constants/features/properties';
 import type { PriceRange, SurfaceRange } from '@/types/filters';
-import { Select } from '@/components/ui/Select';
+import { Select } from '@/components/ui/CustomSelect';
 
 type ContentFilter =
 	| 'all'
@@ -157,11 +158,12 @@ const SearchFiltersPanelComponent = ({
 					onChange={(value) => onTypeFilterChange(value)}
 					options={[
 						{ value: '', label: 'Type de bien' },
-						{ value: 'type', label: '{type}' },
+						...PROPERTY_TYPES.map((type) => ({
+							value: type,
+							label: type,
+						})),
 					]}
-					className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
 				/>
-
 				<Select
 					value={profileFilter}
 					onChange={(value) => onProfileFilterChange(value)}
@@ -170,9 +172,7 @@ const SearchFiltersPanelComponent = ({
 						{ value: 'agent', label: 'Agent' },
 						{ value: 'apporteur', label: 'Apporteur' },
 					]}
-					className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-				/>
-
+				/>{' '}
 				<div className="flex items-center gap-1 sm:gap-2">
 					<input
 						type="number"
@@ -208,7 +208,6 @@ const SearchFiltersPanelComponent = ({
 						className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
 					/>
 				</div>
-
 				{/* Surface habitable */}
 				<div className="flex items-center gap-1 sm:gap-2">
 					<input

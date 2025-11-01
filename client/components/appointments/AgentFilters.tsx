@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { CityAutocomplete } from '../ui/CityAutocomplete';
-import { Select } from '@/components/ui/Select';
+import { Select } from '@/components/ui/CustomSelect';
 
 interface AgentFiltersProps {
 	filters: {

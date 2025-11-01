@@ -5,7 +5,7 @@ import { PropertyImageManager } from './PropertyImageManager';
 import BadgeSelector from './BadgeSelector';
 import { PropertyFormData } from '@/lib/api/propertyApi';
 import { ImageIcon, Award, FileCheck } from 'lucide-react';
-import { Select } from '@/components/ui';
+import { Select } from '@/components/ui/CustomSelect';
 
 interface ImageFile {
 	file: File;

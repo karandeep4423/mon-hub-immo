@@ -174,22 +174,32 @@ export default function CollaborationPage() {
 		let cancelled = false;
 		(async () => {
 			try {
-				if (
-					collaboration.postType === 'Property' &&
-					typeof collaboration.postId === 'string'
-				) {
-					const res = await PropertyService.getPropertyById(
-						collaboration.postId,
-					);
-					if (!cancelled) setProperty(res);
-				} else if (
-					collaboration.postType === 'SearchAd' &&
-					typeof collaboration.postId === 'string'
-				) {
-					const res = await searchAdApi.getSearchAdById(
-						collaboration.postId,
-					);
-					if (!cancelled) setSearchAd(res);
+				if (collaboration.postType === 'Property') {
+					// If postId is a string, fetch the property
+					if (typeof collaboration.postId === 'string') {
+						const res = await PropertyService.getPropertyById(
+							collaboration.postId,
+						);
+						if (!cancelled) setProperty(res);
+					}
+					// If postId is already an object (populated), use it
+					else if (typeof collaboration.postId === 'object') {
+						if (!cancelled)
+							setProperty(collaboration.postId as Property);
+					}
+				} else if (collaboration.postType === 'SearchAd') {
+					// If postId is a string, fetch the search ad
+					if (typeof collaboration.postId === 'string') {
+						const res = await searchAdApi.getSearchAdById(
+							collaboration.postId,
+						);
+						if (!cancelled) setSearchAd(res);
+					}
+					// If postId is already an object (populated), use it
+					else if (typeof collaboration.postId === 'object') {
+						if (!cancelled)
+							setSearchAd(collaboration.postId as SearchAd);
+					}
 				}
 			} catch {
 				// ignore detail load errors to avoid breaking page

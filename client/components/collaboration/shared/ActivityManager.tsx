@@ -43,6 +43,36 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 	const [isAdding, setIsAdding] = useState(false);
 	const [showAddForm, setShowAddForm] = useState(false);
 
+	// Helper function to get gradient color for notes
+	const getNoteGradient = (userRole: string, noteIndex: number) => {
+		// Warm gradients for agent (owner)
+		const warmGradients = [
+			'bg-gradient-to-br from-orange-50 to-amber-50',
+			'bg-gradient-to-br from-red-50 to-pink-50',
+			'bg-gradient-to-br from-yellow-50 to-orange-50',
+			'bg-gradient-to-br from-pink-50 to-rose-50',
+			'bg-gradient-to-br from-amber-50 to-yellow-50',
+			'bg-gradient-to-br from-rose-50 to-orange-50',
+		];
+
+		// Cool gradients for apporteur (collaborator)
+		const coolGradients = [
+			'bg-gradient-to-br from-blue-50 to-cyan-50',
+			'bg-gradient-to-br from-indigo-50 to-blue-50',
+			'bg-gradient-to-br from-cyan-50 to-teal-50',
+			'bg-gradient-to-br from-purple-50 to-indigo-50',
+			'bg-gradient-to-br from-teal-50 to-emerald-50',
+			'bg-gradient-to-br from-sky-50 to-blue-50',
+		];
+
+		// Determine if user is agent or apporteur
+		const isAgentNote = userRole === 'agent';
+		const gradients = isAgentNote ? warmGradients : coolGradients;
+
+		// Use note index to select gradient (cycling through available gradients)
+		return gradients[noteIndex % gradients.length];
+	};
+
 	const handleAddNote = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!newNote.trim()) return;
@@ -163,10 +193,10 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 						</p>
 					</div>
 				) : (
-					activities.map((activity) => (
+					activities.map((activity, activityIndex) => (
 						<div
 							key={activity.id}
-							className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg"
+							className={`flex items-start space-x-3 p-4 rounded-lg border border-transparent ${getNoteGradient(activity.author.role, activityIndex)}`}
 						>
 							<div className="flex-shrink-0">
 								<div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-sm">

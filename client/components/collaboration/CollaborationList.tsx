@@ -14,7 +14,9 @@ import {
 import { Features } from '@/lib/constants';
 import { usePageState } from '@/hooks/usePageState';
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
-import { Select } from '@/components/ui';
+import { Select } from '@/components/ui/CustomSelect';
+import type { Property } from '@/lib/api/propertyApi';
+import type { SearchAd } from '@/types/searchAd';
 
 interface CollaborationListProps {
 	currentUserId: string;
@@ -184,10 +186,52 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 				const collaborationId = collaboration._id.toLowerCase();
 				const searchLower = searchTerm.toLowerCase();
 
-				return (
+				let matchesSearch =
 					partnerName.includes(searchLower) ||
-					collaborationId.includes(searchLower)
-				);
+					collaborationId.includes(searchLower);
+
+				// Also search in property/search ad data if populated
+				if (
+					!matchesSearch &&
+					typeof collaboration.postId === 'object' &&
+					collaboration.postId !== null
+				) {
+					const post = collaboration.postId as Partial<
+						Property & SearchAd
+					>;
+
+					// Search in Property fields
+					if (collaboration.postType === 'Property') {
+						const propertyTitle = post.title?.toLowerCase() || '';
+						const propertyCity = post.city?.toLowerCase() || '';
+						const propertyType =
+							post.propertyType?.toLowerCase() || '';
+						const propertyDescription =
+							post.description?.toLowerCase() || '';
+
+						matchesSearch =
+							propertyTitle.includes(searchLower) ||
+							propertyCity.includes(searchLower) ||
+							propertyType.includes(searchLower) ||
+							propertyDescription.includes(searchLower);
+					}
+					// Search in SearchAd fields
+					else if (collaboration.postType === 'SearchAd') {
+						const description =
+							post.description?.toLowerCase() || '';
+						const cities = post.location?.cities || [];
+						const citiesMatch = cities.some((city: string) =>
+							city.toLowerCase().includes(searchLower),
+						);
+
+						matchesSearch =
+							description.includes(searchLower) || citiesMatch;
+					}
+				}
+
+				if (!matchesSearch) {
+					return false;
+				}
 			}
 
 			return true;
@@ -434,7 +478,7 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 						</label>
 						<Input
 							type="text"
-							placeholder="Nom du partenaire ou ID..."
+							placeholder="Nom, ville, type de bien..."
 							value={searchTerm}
 							onChange={(e) =>
 								handleFilterChange('search', e.target.value)

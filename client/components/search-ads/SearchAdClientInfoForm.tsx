@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Input, Select } from '@/components/ui';
+import { Input } from '@/components/ui';
+import { Select } from '@/components/ui/CustomSelect';
 import type { SearchAd } from '@/types/searchAd';
 import { Features } from '@/lib/constants';
 

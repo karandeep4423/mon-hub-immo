@@ -14,7 +14,7 @@ import {
 	getMunicipalitiesByPostalPrefix,
 } from '@/lib/services/frenchAddressApi';
 import { useClickOutside } from '@/hooks/useClickOutside';
-import { Select } from '@/components/ui/Select';
+import { Select } from '@/components/ui/CustomSelect';
 
 export interface LocationItem {
 	name: string;
@@ -421,10 +421,12 @@ export const LocationSearchWithRadius: React.FC<
 				{/* Radius selector */}
 				<div className="w-full sm:w-32">
 					<Select
-						value={radiusKm}
+						value={String(radiusKm)}
 						onChange={(value) => onRadiusChange(Number(value))}
-						options={[{ value: 'radius', label: '{radius} km' }]}
-						className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand text-sm bg-white"
+						options={RADIUS_OPTIONS.map((radius) => ({
+							value: String(radius),
+							label: `${radius} km`,
+						}))}
 					/>
 				</div>
 			</div>

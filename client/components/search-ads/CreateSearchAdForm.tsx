@@ -17,7 +17,7 @@ import {
 } from './form-sections';
 import { Button } from '../ui/Button';
 import { Features, Components } from '@/lib/constants';
-import { Select } from '@/components/ui/Select';
+import { Select } from '@/components/ui/CustomSelect';
 
 export const CreateSearchAdForm = () => {
 	const router = useRouter();
@@ -204,8 +204,7 @@ export const CreateSearchAdForm = () => {
 									onChange={(value) =>
 										setFieldValue(
 											'status',
-											e.target
-												.value as SearchAdFormData['status'],
+											value as SearchAdFormData['status'],
 										)
 									}
 									options={[
@@ -219,7 +218,6 @@ export const CreateSearchAdForm = () => {
 										{ value: 'rented', label: 'Loué' },
 										{ value: 'archived', label: 'Archivé' },
 									]}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
 								/>
 								<p className="text-xs text-gray-500 mt-1">
 									Changez le statut pour mettre à jour la

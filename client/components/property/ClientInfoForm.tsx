@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Input, Select, NumberInput } from '@/components/ui';
+import { Input, NumberInput } from '@/components/ui';
+import { Select } from '@/components/ui/CustomSelect';
 import type { Property } from '@/lib/api/propertyApi';
 
 interface ClientInfoFormProps {

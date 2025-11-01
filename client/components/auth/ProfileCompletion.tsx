@@ -14,7 +14,7 @@ import { authService } from '@/lib/api/authApi';
 import { useForm } from '@/hooks/useForm';
 import { PageLoader } from '../ui/LoadingSpinner';
 import { Features } from '@/lib/constants';
-import { Select } from '@/components/ui/Select';
+import { Select } from '@/components/ui/CustomSelect';
 import {
 	handleAuthError,
 	showProfileCompletionSuccess,

@@ -57,11 +57,14 @@ export const usePropertyFilters = ({
 			// Search filter (title, city, or description)
 			if (filters.searchTerm) {
 				const searchLower = filters.searchTerm.toLowerCase();
-				return (
+				const matchesSearch =
 					property.title.toLowerCase().includes(searchLower) ||
 					property.city.toLowerCase().includes(searchLower) ||
-					property.description.toLowerCase().includes(searchLower)
-				);
+					property.description.toLowerCase().includes(searchLower);
+
+				if (!matchesSearch) {
+					return false;
+				}
 			}
 
 			return true;

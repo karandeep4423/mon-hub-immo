@@ -11,7 +11,7 @@ import { Features, Components } from '@/lib/constants';
 import { useSearchAdMutations } from '@/hooks/useSearchAds';
 import { formatDateShort } from '@/lib/utils/date';
 import { truncateRichText } from '@/lib/utils/richTextUtils';
-import { Select } from '@/components/ui/Select';
+import { Select } from '@/components/ui/CustomSelect';
 
 interface SearchAdCardProps {
 	searchAd: SearchAd;
@@ -116,9 +116,9 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 	};
 
 	return (
-		<Card className="overflow-hidden hover:shadow-lg transition-shadow">
+		<Card className="hover:shadow-lg transition-shadow">
 			{/* Image Section */}
-			<div className="relative h-48 w-full">
+			<div className="relative h-48 w-full overflow-hidden rounded-t-lg">
 				<Image
 					src="/recherches-des-biens.png"
 					alt={Components.UI.IMAGE_ALT_TEXT.searchAdImage}
@@ -286,8 +286,7 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 										value={searchAd.status}
 										onChange={(value) =>
 											handleStatusChange(
-												e.target
-													.value as SearchAd['status'],
+												value as SearchAd['status'],
 											)
 										}
 										options={[
@@ -307,7 +306,6 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 												label: 'Archivé',
 											},
 										]}
-										className="text-sm border border-gray-300 rounded px-2 py-1 bg-white"
 										disabled={isUpdatingStatus}
 									/>
 									{getStatusBadge(searchAd.status)}

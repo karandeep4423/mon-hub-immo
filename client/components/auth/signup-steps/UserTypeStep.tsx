@@ -39,7 +39,7 @@ export const UserTypeStep: React.FC<UserTypeStepProps> = ({
 				<label
 					className={`group block p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-card ${
 						userType === 'apporteur'
-							? 'border-brand bg-brand-subtle shadow-brand scale-105'
+							? 'border-brand bg-brand-subtle shadow-brand'
 							: 'border-gray-200 hover:border-brand bg-white'
 					}`}
 				>
@@ -101,7 +101,7 @@ export const UserTypeStep: React.FC<UserTypeStepProps> = ({
 				<label
 					className={`group block p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-card ${
 						userType === 'agent'
-							? 'border-brand bg-brand-subtle shadow-brand scale-105'
+							? 'border-brand bg-brand-subtle shadow-brand'
 							: 'border-gray-200 hover:border-brand bg-white'
 					}`}
 				>

@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { Input } from '@/components/ui/Input';
-import { NumberInput, Select, EnergyRatingSelector } from '@/components/ui';
+import { NumberInput, EnergyRatingSelector } from '@/components/ui';
+import { Select } from '@/components/ui/CustomSelect';
 import { PropertyFormData, Property } from '@/lib/api/propertyApi';
 import {
 	Layers,

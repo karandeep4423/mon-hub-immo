@@ -1,7 +1,7 @@
 import { Input } from '@/components/ui/Input';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { Features } from '@/lib/constants';
-import { Select } from '@/components/ui/Select';
+import { Select } from '@/components/ui/CustomSelect';
 
 interface AgentProfessionalInfoStepProps {
 	agentType: string;
@@ -72,7 +72,7 @@ export const AgentProfessionalInfoStep: React.FC<
 							label: 'Négociateur VRP employé d&apos;agence',
 						},
 					]}
-					disabled={true}
+					disabled={false}
 					required={true}
 				/>
 				{errors.agentType && (

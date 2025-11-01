@@ -1,6 +1,6 @@
 import { FormSection } from './FormSection';
 import { Features } from '@/lib/constants';
-import { Select } from '@/components/ui/Select';
+import { Select } from '@/components/ui/CustomSelect';
 
 interface PropertyDetailsSectionProps {
 	minRooms?: number;
@@ -249,15 +249,13 @@ export const PropertyDetailsSection: React.FC<PropertyDetailsSectionProps> = ({
 						name="acceptedFloors"
 						options={[
 							{ value: '', label: 'Sélectionner...' },
-							{
-								value: 'option',
-								label: '{FLOOR_LABELS[option] || option}',
-							},
+							...floorOptions.map((option) => ({
+								value: option,
+								label: FLOOR_LABELS[option] || option,
+							})),
 						]}
-						className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand/20 focus:border-brand"
 					/>
 				</div>
-
 				<div>
 					<label className="block text-sm font-semibold text-gray-800 mb-3">
 						État général souhaité : neuf / à rafraîchir / à rénover

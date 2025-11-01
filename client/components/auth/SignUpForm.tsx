@@ -240,7 +240,7 @@ export const SignUpForm: React.FC = () => {
 				</div>
 
 				{/* Form Container */}
-				<div className="flex-1 overflow-y-auto px-6 py-8">
+				<div className="flex-1 px-6 py-8">
 					<div className="max-w-lg mx-auto">
 						{/* Desktop Header */}
 						<div className="hidden lg:block mb-8">
@@ -264,8 +264,8 @@ export const SignUpForm: React.FC = () => {
 
 						<div className="bg-white rounded-2xl shadow-card border border-gray-200 p-8 transition-all duration-300">
 							<form onSubmit={handleSubmit} noValidate>
-								{/* Step Content with Slide Animation */}
-								<div className="relative overflow-hidden">
+								{/* Step Content with Slide Animation (hide horizontal overflow, allow dropdowns vertically) */}
+								<div className="relative overflow-x-hidden">
 									{/* Step 1: Basic Information */}
 									<div
 										className={`transition-all duration-500 ease-in-out ${

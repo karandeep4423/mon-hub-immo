@@ -98,19 +98,20 @@ export const Select = ({
 					onClick={() => !disabled && setIsOpen(!isOpen)}
 					onKeyDown={handleKeyDown}
 					disabled={disabled}
+					style={{ outline: 'none', boxShadow: 'none' }}
 					className={`
-						w-full text-left px-4 py-2.5 
-						border rounded-lg
-						transition-all duration-150
-						${
-							disabled
-								? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60'
-								: 'bg-white text-gray-900 cursor-pointer hover:border-brand-300 hover:bg-gray-50'
-						}
-						${error ? 'border-red-500' : 'border-gray-300'}
-						${isOpen ? 'border-brand ring-2 ring-brand/10' : ''}
-						focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10
-					`}
+					w-full text-left px-4 py-2.5 
+					rounded-lg !outline-none
+					transition-all duration-150
+					${
+						disabled
+							? 'bg-gray-100 text-gray-400 cursor-not-allowed opacity-60 border border-gray-300'
+							: 'bg-white text-gray-900 cursor-pointer hover:bg-gray-50'
+					}
+					${error ? 'border-2 border-red-500' : !isOpen ? 'border border-gray-300' : ''}
+					${isOpen ? 'border-2 border-brand' : ''}
+					focus:!outline-none focus:border-2 focus:border-brand
+				`}
 					aria-haspopup="listbox"
 					aria-expanded={isOpen}
 				>
@@ -143,8 +144,9 @@ export const Select = ({
 				{/* Dropdown menu */}
 				{isOpen && !disabled && (
 					<div
-						className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto"
+						className="absolute z-[9999] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-2xl max-h-60 overflow-auto"
 						role="listbox"
+						style={{ boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)' }}
 					>
 						{options.map((option) => (
 							<button
