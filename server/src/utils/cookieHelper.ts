@@ -11,6 +11,7 @@ export interface CookieOptions {
 	secure?: boolean;
 	sameSite?: 'strict' | 'lax' | 'none';
 	maxAge?: number;
+	expires?: Date;
 	path?: string;
 }
 
@@ -22,7 +23,7 @@ export const COOKIE_NAMES = {
 // Cookie expiry times (in milliseconds)
 export const COOKIE_MAX_AGE = {
 	ACCESS_TOKEN: 15 * 60 * 1000, // 15 minutes
-	REFRESH_TOKEN: 7 * 24 * 60 * 60 * 1000, // 7 days
+	REFRESH_TOKEN: 30 * 24 * 60 * 60 * 1000, // 30 days
 } as const;
 
 /**
@@ -36,6 +37,7 @@ export const getSecureCookieOptions = (maxAge: number): CookieOptions => {
 		secure: isProduction, // Only send over HTTPS in production
 		sameSite: 'lax', // Allows cookies on same-site navigations (stricter than 'none', more forgiving than 'strict')
 		maxAge, // Cookie expiration in milliseconds
+		expires: new Date(Date.now() + maxAge), // Explicit expiration date for persistent cookies
 		path: '/', // Cookie available for entire domain
 	};
 };

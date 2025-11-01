@@ -16,8 +16,8 @@ if (!JWT_REFRESH_SECRET) {
 
 // Short-lived access token (15 minutes)
 const ACCESS_TOKEN_EXPIRE = '15m';
-// Long-lived refresh token (7 days)
-const REFRESH_TOKEN_EXPIRE = '7d';
+// Long-lived refresh token (30 days)
+const REFRESH_TOKEN_EXPIRE = '30d';
 
 // Common JWT options
 const SIGN_OPTIONS: SignOptions = {

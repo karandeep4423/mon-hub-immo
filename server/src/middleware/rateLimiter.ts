@@ -11,20 +11,13 @@ const initializeRedisStore = async () => {
 	try {
 		const redisClient = await getRedisClient();
 		if (redisClient) {
-			// Test Redis connection first
-			await redisClient.ping();
-
-			// Dynamic import to avoid loading if Redis not available
-			const RedisStore = (await import('rate-limit-redis')).default;
-			redisStore = new RedisStore({
-				// @ts-expect-error - Type mismatch between redis client versions
-				client: redisClient,
-				prefix: 'rl:',
-			});
-			logger.info('[RateLimiter] Redis store initialized');
+			// Keyv doesn't support rate-limit-redis, use memory store
+			logger.info(
+				'[RateLimiter] Using memory store (Keyv not compatible with rate-limit-redis)',
+			);
 		} else {
 			logger.warn(
-				'[RateLimiter] Redis client not available, using memory store',
+				'[RateLimiter] Client not available, using memory store',
 			);
 		}
 	} catch (error) {

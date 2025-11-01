@@ -1546,12 +1546,12 @@ export const logout = async (req: Request, res: Response) => {
 
 		// Blacklist both tokens (if they exist)
 		// Access token: 15 minutes = 900 seconds
-		// Refresh token: 7 days = 604800 seconds
+		// Refresh token: 30 days = 2592000 seconds
 		if (accessToken) {
 			await blacklistToken(accessToken, 900);
 		}
 		if (refreshToken) {
-			await blacklistToken(refreshToken, 604800);
+			await blacklistToken(refreshToken, 2592000);
 		}
 
 		// Log logout event if we have userId
