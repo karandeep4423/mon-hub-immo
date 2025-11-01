@@ -11,4 +11,6 @@ export interface AuthRequest extends Request {
 	files?:
 		| { [fieldname: string]: Express.Multer.File[] }
 		| Express.Multer.File[];
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	resource?: any; // Attached by authorization middleware
 }

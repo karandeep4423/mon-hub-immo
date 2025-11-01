@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useChat } from '@/hooks/useChat';
 import { useSocket } from '@/context/SocketContext';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 // SWR hooks
 import { useCollaborationData } from '@/hooks/useCollaborationData';
 import { useCollaborationMutations } from '@/hooks/useCollaborations';
@@ -400,472 +401,497 @@ export default function CollaborationPage() {
 	);
 
 	return (
-		<div className="min-h-screen bg-gray-50">
-			<ConfirmDialog
-				isOpen={confirmOpen}
-				title={
-					pendingAction === 'cancelled'
-						? Features.Collaboration
-								.COLLABORATION_CONFIRMATION_DIALOGS.CANCEL_TITLE
-						: Features.Collaboration
-								.COLLABORATION_CONFIRMATION_DIALOGS
-								.COMPLETE_TITLE
-				}
-				description={
-					pendingAction === 'cancelled'
-						? Features.Collaboration
-								.COLLABORATION_CONFIRMATION_DIALOGS
-								.CANCEL_DESCRIPTION
-						: Features.Collaboration
-								.COLLABORATION_CONFIRMATION_DIALOGS
-								.COMPLETE_DESCRIPTION
-				}
-				onCancel={() => {
-					setConfirmOpen(false);
-					setPendingAction(null);
-				}}
-				onConfirm={handleConfirmAction}
-				confirmText={
-					pendingAction === 'cancelled'
-						? Features.Collaboration
-								.COLLABORATION_CONFIRMATION_DIALOGS
-								.CANCEL_CONFIRM
-						: Features.Collaboration
-								.COLLABORATION_CONFIRMATION_DIALOGS
-								.COMPLETE_CONFIRM
-				}
-				cancelText={
-					Features.Collaboration.COLLABORATION_CONFIRMATION_DIALOGS
-						.CANCEL_CANCEL
-				}
-				variant={pendingAction === 'completed' ? 'danger' : 'warning'}
-				loading={confirmLoading}
-			/>
-			{showContractModal && collaboration && (
-				<ContractModal
-					isOpen={showContractModal}
-					onClose={() => setShowContractModal(false)}
-					collaboration={collaboration}
-					onUpdate={async () => {
-						await refetchCollaboration();
+		<ProtectedRoute>
+			<div className="min-h-screen bg-gray-50">
+				<ConfirmDialog
+					isOpen={confirmOpen}
+					title={
+						pendingAction === 'cancelled'
+							? Features.Collaboration
+									.COLLABORATION_CONFIRMATION_DIALOGS
+									.CANCEL_TITLE
+							: Features.Collaboration
+									.COLLABORATION_CONFIRMATION_DIALOGS
+									.COMPLETE_TITLE
+					}
+					description={
+						pendingAction === 'cancelled'
+							? Features.Collaboration
+									.COLLABORATION_CONFIRMATION_DIALOGS
+									.CANCEL_DESCRIPTION
+							: Features.Collaboration
+									.COLLABORATION_CONFIRMATION_DIALOGS
+									.COMPLETE_DESCRIPTION
+					}
+					onCancel={() => {
+						setConfirmOpen(false);
+						setPendingAction(null);
 					}}
+					onConfirm={handleConfirmAction}
+					confirmText={
+						pendingAction === 'cancelled'
+							? Features.Collaboration
+									.COLLABORATION_CONFIRMATION_DIALOGS
+									.CANCEL_CONFIRM
+							: Features.Collaboration
+									.COLLABORATION_CONFIRMATION_DIALOGS
+									.COMPLETE_CONFIRM
+					}
+					cancelText={
+						Features.Collaboration
+							.COLLABORATION_CONFIRMATION_DIALOGS.CANCEL_CANCEL
+					}
+					variant={
+						pendingAction === 'completed' ? 'danger' : 'warning'
+					}
+					loading={confirmLoading}
 				/>
-			)}
-			{/* Loading state */}
-			{(loading || isCollabLoading) && (
-				<PageLoader
-					message={Features.Collaboration.COLLABORATION_LOADING.PAGE}
-				/>
-			)}{' '}
-			{/* Error state */}
-			{(error || collabError || !collaboration) &&
-				!loading &&
-				!isCollabLoading && (
-					<div className="min-h-screen flex items-center justify-center">
-						<div className="text-center">
-							<p className="text-red-600 mb-4">
-								{error ||
-									collabError ||
-									Features.Collaboration.COLLABORATION_ERRORS
-										.NOT_FOUND}
-							</p>
-							<Button
-								onClick={() =>
-									router.push(
-										Features.Dashboard.DASHBOARD_ROUTES
-											.BASE,
-									)
-								}
-							>
-								Retour au tableau de bord
-							</Button>
-						</div>
-					</div>
+				{showContractModal && collaboration && (
+					<ContractModal
+						isOpen={showContractModal}
+						onClose={() => setShowContractModal(false)}
+						collaboration={collaboration}
+						onUpdate={async () => {
+							await refetchCollaboration();
+						}}
+					/>
 				)}
-			{/* Main content */}
-			{collaboration &&
-				!loading &&
-				!isCollabLoading &&
-				!error &&
-				!collabError && (
-					<div>
-						{/* Header */}
-						<CollaborationHeader
-							onBack={() => router.back()}
-						/>{' '}
-						{/* Workflow components */}
-						<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-							<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-								<div className="lg:col-span-2 space-y-6">
-									<OverallStatusManager
-										collaborationId={collaboration._id}
-										currentStatus={collaboration.status}
-										canUpdate={canUpdate}
-										isOwner={Boolean(isOwner)}
-										isCollaborator={Boolean(isCollaborator)}
-										onStatusUpdate={
-											handleOverallStatusUpdate
-										}
-										progressSteps={progressSteps}
-										completionReason={
-											collaboration.completionReason
-										}
-									/>
+				{/* Loading state */}
+				{(loading || isCollabLoading) && (
+					<PageLoader
+						message={
+							Features.Collaboration.COLLABORATION_LOADING.PAGE
+						}
+					/>
+				)}{' '}
+				{/* Error state */}
+				{(error || collabError || !collaboration) &&
+					!loading &&
+					!isCollabLoading && (
+						<div className="min-h-screen flex items-center justify-center">
+							<div className="text-center">
+								<p className="text-red-600 mb-4">
+									{error ||
+										collabError ||
+										Features.Collaboration
+											.COLLABORATION_ERRORS.NOT_FOUND}
+								</p>
+								<Button
+									onClick={() =>
+										router.push(
+											Features.Dashboard.DASHBOARD_ROUTES
+												.BASE,
+										)
+									}
+								>
+									Retour au tableau de bord
+								</Button>
+							</div>
+						</div>
+					)}
+				{/* Main content */}
+				{collaboration &&
+					!loading &&
+					!isCollabLoading &&
+					!error &&
+					!collabError && (
+						<div>
+							{/* Header */}
+							<CollaborationHeader
+								onBack={() => router.back()}
+							/>{' '}
+							{/* Workflow components */}
+							<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+								<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+									<div className="lg:col-span-2 space-y-6">
+										<OverallStatusManager
+											collaborationId={collaboration._id}
+											currentStatus={collaboration.status}
+											canUpdate={canUpdate}
+											isOwner={Boolean(isOwner)}
+											isCollaborator={Boolean(
+												isCollaborator,
+											)}
+											onStatusUpdate={
+												handleOverallStatusUpdate
+											}
+											progressSteps={progressSteps}
+											completionReason={
+												collaboration.completionReason
+											}
+										/>
 
-									<ProgressTracker
-										collaborationId={collaboration._id}
-										currentStep={
-											collaboration.currentProgressStep
-										}
-										steps={progressSteps}
-										canUpdate={canUpdate && isActive}
-										isOwner={Boolean(isOwner)}
-										isCollaborator={Boolean(isCollaborator)}
-										ownerUser={
-											typeof collaboration.postOwnerId ===
-											'object'
-												? collaboration.postOwnerId
-												: undefined
-										}
-										collaboratorUser={
-											typeof collaboration.collaboratorId ===
-											'object'
-												? collaboration.collaboratorId
-												: undefined
-										}
-										onStepUpdate={handleProgressUpdate}
-										onStatusUpdate={
-											handleProgressStatusUpdate
-										}
-									/>
-
-									{/* Activities Section */}
-									<ActivityManager
-										collaborationId={collaboration._id}
-										activities={collaboration.activities
-											.sort(
-												(a, b) =>
-													new Date(
-														b.createdAt,
-													).getTime() -
-													new Date(
-														a.createdAt,
-													).getTime(),
-											)
-											.map((activity, index) => {
-												// Resolve user data from collaboration participants
-												const isOwnerAction =
-													activity.createdBy ===
-													collaboration.postOwnerId
-														?._id;
-												const userInfo = isOwnerAction
+										<ProgressTracker
+											collaborationId={collaboration._id}
+											currentStep={
+												collaboration.currentProgressStep
+											}
+											steps={progressSteps}
+											canUpdate={canUpdate && isActive}
+											isOwner={Boolean(isOwner)}
+											isCollaborator={Boolean(
+												isCollaborator,
+											)}
+											ownerUser={
+												typeof collaboration.postOwnerId ===
+												'object'
 													? collaboration.postOwnerId
-													: collaboration.collaboratorId;
-												return {
-													id: `activity-${index}`,
-													type:
-														activity.type === 'note'
-															? 'note'
-															: 'status_update',
-													title:
-														activity.type === 'note'
-															? 'Note ajoutée'
-															: activity.message,
-													content:
-														activity.type === 'note'
-															? activity.message
-															: '', // Don't duplicate message for status updates
-													author: {
-														id:
-															activity.createdBy ||
-															'unknown',
-														name: userInfo
-															? `${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() ||
-																'Utilisateur'
-															: 'Utilisateur',
-														role: isOwnerAction
-															? ('agent' as const)
-															: ('apporteur' as const),
-														profileImage:
-															userInfo?.profileImage,
-													},
-													createdAt:
-														activity.createdAt,
-												};
-											})}
-										canAddActivity={canUpdate && isActive}
-										onAddActivity={handleAddActivity}
-										onRefresh={refetchCollaboration}
-									/>
-								</div>
+													: undefined
+											}
+											collaboratorUser={
+												typeof collaboration.collaboratorId ===
+												'object'
+													? collaboration.collaboratorId
+													: undefined
+											}
+											onStepUpdate={handleProgressUpdate}
+											onStatusUpdate={
+												handleProgressStatusUpdate
+											}
+										/>
 
-								<div className="space-y-6">
-									{/* Property or SearchAd Information */}
-									<CollaborationPostInfo
-										collaboration={collaboration}
-										property={property}
-										searchAd={searchAd}
-									/>
-									{/* Client Information - Only visible for Property collaborations */}
-									<CollaborationClientInfo
-										collaboration={collaboration}
-										property={property}
-									/>
-									{/* Agents Information */}
-									<CollaborationParticipants
-										collaboration={collaboration}
-									/>
-									{/* Prix et frais - Show if agency fees exist */}
-									{typeof collaboration.postId === 'object' &&
-										(
-											collaboration.postId as PropertyDetails
-										)?.agencyFeesPercentage && (
-											<Card className="p-6 bg-gradient-to-br from-brand-50 to-brand-100 border-2 border-brand-200">
-												<h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
-													<span>�</span> Prix et frais
-												</h3>
+										{/* Activities Section */}
+										<ActivityManager
+											collaborationId={collaboration._id}
+											activities={collaboration.activities
+												.sort(
+													(a, b) =>
+														new Date(
+															b.createdAt,
+														).getTime() -
+														new Date(
+															a.createdAt,
+														).getTime(),
+												)
+												.map((activity, index) => {
+													// Resolve user data from collaboration participants
+													const isOwnerAction =
+														activity.createdBy ===
+														collaboration
+															.postOwnerId?._id;
+													const userInfo =
+														isOwnerAction
+															? collaboration.postOwnerId
+															: collaboration.collaboratorId;
+													return {
+														id: `activity-${index}`,
+														type:
+															activity.type ===
+															'note'
+																? 'note'
+																: 'status_update',
+														title:
+															activity.type ===
+															'note'
+																? 'Note ajoutée'
+																: activity.message,
+														content:
+															activity.type ===
+															'note'
+																? activity.message
+																: '', // Don't duplicate message for status updates
+														author: {
+															id:
+																activity.createdBy ||
+																'unknown',
+															name: userInfo
+																? `${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() ||
+																	'Utilisateur'
+																: 'Utilisateur',
+															role: isOwnerAction
+																? ('agent' as const)
+																: ('apporteur' as const),
+															profileImage:
+																userInfo?.profileImage,
+														},
+														createdAt:
+															activity.createdAt,
+													};
+												})}
+											canAddActivity={
+												canUpdate && isActive
+											}
+											onAddActivity={handleAddActivity}
+											onRefresh={refetchCollaboration}
+										/>
+									</div>
 
-												<div className="space-y-3 bg-white/70 rounded-lg p-4">
-													<div className="flex justify-between items-center py-2">
-														<span className="text-gray-700 font-medium">
-															Prix net vendeur
-														</span>
-														<span className="text-xl font-bold text-gray-900">
-															{(
-																collaboration.postId as PropertyDetails
-															)?.price?.toLocaleString()}{' '}
-															€
-														</span>
-													</div>
-													<div className="flex justify-between items-center py-2 bg-gray-50 px-3 rounded">
-														<span className="text-gray-700">
-															% frais
-															d&apos;agence
-														</span>
-														<span className="text-lg font-semibold text-brand">
-															{
-																(
+									<div className="space-y-6">
+										{/* Property or SearchAd Information */}
+										<CollaborationPostInfo
+											collaboration={collaboration}
+											property={property}
+											searchAd={searchAd}
+										/>
+										{/* Client Information - Only visible for Property collaborations */}
+										<CollaborationClientInfo
+											collaboration={collaboration}
+											property={property}
+										/>
+										{/* Agents Information */}
+										<CollaborationParticipants
+											collaboration={collaboration}
+										/>
+										{/* Prix et frais - Show if agency fees exist */}
+										{typeof collaboration.postId ===
+											'object' &&
+											(
+												collaboration.postId as PropertyDetails
+											)?.agencyFeesPercentage && (
+												<Card className="p-6 bg-gradient-to-br from-brand-50 to-brand-100 border-2 border-brand-200">
+													<h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+														<span>�</span> Prix et
+														frais
+													</h3>
+
+													<div className="space-y-3 bg-white/70 rounded-lg p-4">
+														<div className="flex justify-between items-center py-2">
+															<span className="text-gray-700 font-medium">
+																Prix net vendeur
+															</span>
+															<span className="text-xl font-bold text-gray-900">
+																{(
 																	collaboration.postId as PropertyDetails
-																)
-																	?.agencyFeesPercentage
-															}{' '}
-															%
-														</span>
+																)?.price?.toLocaleString()}{' '}
+																€
+															</span>
+														</div>
+														<div className="flex justify-between items-center py-2 bg-gray-50 px-3 rounded">
+															<span className="text-gray-700">
+																% frais
+																d&apos;agence
+															</span>
+															<span className="text-lg font-semibold text-brand">
+																{
+																	(
+																		collaboration.postId as PropertyDetails
+																	)
+																		?.agencyFeesPercentage
+																}{' '}
+																%
+															</span>
+														</div>
+														<div className="flex justify-between items-center py-2 pl-6">
+															<span className="text-gray-600">
+																→ Frais
+																d&apos;agence
+															</span>
+															<span className="text-lg font-medium text-gray-800">
+																{(
+																	collaboration.postId as PropertyDetails
+																)?.agencyFeesAmount?.toLocaleString()}{' '}
+																€
+															</span>
+														</div>
+														<div className="flex justify-between items-center py-2 pl-6 border-t pt-3">
+															<span className="text-gray-600">
+																→ Prix FAI
+															</span>
+															<span className="text-lg font-semibold text-brand">
+																{(
+																	collaboration.postId as PropertyDetails
+																)?.priceIncludingFees?.toLocaleString()}{' '}
+																€
+															</span>
+														</div>
 													</div>
-													<div className="flex justify-between items-center py-2 pl-6">
-														<span className="text-gray-600">
-															→ Frais
-															d&apos;agence
-														</span>
-														<span className="text-lg font-medium text-gray-800">
+												</Card>
+											)}
+										{/* Commission Details */}
+										<Card className="p-6">
+											<h3 className="text-lg font-medium text-gray-900 mb-4">
+												{collaboration.compensationType ===
+												'gift_vouchers'
+													? '🎁 Chèques cadeaux'
+													: collaboration.compensationType ===
+														  'fixed_amount'
+														? '💰 Montant fixe'
+														: '💰 Répartition commission'}
+											</h3>
+
+											<div className="space-y-3">
+												{/* Gift Vouchers Display */}
+												{collaboration.compensationType ===
+													'gift_vouchers' && (
+													<div className="text-center py-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border-2 border-purple-200">
+														<p className="text-sm text-gray-600 mb-2">
+															Chèques cadeaux pour
+															le collaborateur
+														</p>
+														<p className="text-4xl font-bold text-purple-600">
+															{collaboration.compensationAmount ||
+																0}
+														</p>
+														<p className="text-xs text-gray-500 mt-1">
+															chèques cadeaux
+														</p>
+													</div>
+												)}
+
+												{/* Fixed Amount Display */}
+												{collaboration.compensationType ===
+													'fixed_amount' && (
+													<div className="text-center py-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border-2 border-green-200">
+														<p className="text-sm text-gray-600 mb-2">
+															Montant fixe pour le
+															collaborateur
+														</p>
+														<p className="text-4xl font-bold text-green-600">
 															{(
-																collaboration.postId as PropertyDetails
-															)?.agencyFeesAmount?.toLocaleString()}{' '}
+																collaboration.compensationAmount ||
+																0
+															).toLocaleString()}{' '}
 															€
-														</span>
+														</p>
 													</div>
-													<div className="flex justify-between items-center py-2 pl-6 border-t pt-3">
-														<span className="text-gray-600">
-															→ Prix FAI
-														</span>
-														<span className="text-lg font-semibold text-brand">
-															{(
+												)}
+
+												{/* Percentage Commission Display */}
+												{(!collaboration.compensationType ||
+													collaboration.compensationType ===
+														'percentage') && (
+													<>
+														<div className="flex justify-between items-center">
+															<span className="text-gray-600">
+																Part
+																collaborateur
+															</span>
+															<span className="font-medium text-green-600 text-lg">
+																{
+																	collaboration.proposedCommission
+																}{' '}
+																%
+															</span>
+														</div>
+
+														{typeof collaboration.postId ===
+															'object' &&
+															(
 																collaboration.postId as PropertyDetails
-															)?.priceIncludingFees?.toLocaleString()}{' '}
-															€
-														</span>
-													</div>
-												</div>
-											</Card>
-										)}
-									{/* Commission Details */}
-									<Card className="p-6">
-										<h3 className="text-lg font-medium text-gray-900 mb-4">
-											{collaboration.compensationType ===
-											'gift_vouchers'
-												? '🎁 Chèques cadeaux'
-												: collaboration.compensationType ===
-													  'fixed_amount'
-													? '💰 Montant fixe'
-													: '💰 Répartition commission'}
-										</h3>
+															)
+																?.agencyFeesAmount && (
+																<>
+																	<div className="flex justify-between items-center py-2 pl-6 bg-green-50 px-3 rounded">
+																		<span className="text-gray-600">
+																			→
+																			Commission
+																			collaborateur
+																		</span>
+																		<span className="text-lg font-semibold text-green-600">
+																			{(
+																				((
+																					collaboration.postId as PropertyDetails
+																				)
+																					?.agencyFeesAmount ||
+																					0) *
+																				(collaboration.proposedCommission /
+																					100)
+																			).toLocaleString()}{' '}
+																			€
+																		</span>
+																	</div>
+																	<div className="flex justify-between items-center py-2 pl-6 bg-info-light px-3 rounded">
+																		<span className="text-gray-600">
+																			→
+																			Commission
+																			mandataire
+																		</span>
+																		<span className="text-lg font-semibold text-brand">
+																			{(
+																				((
+																					collaboration.postId as PropertyDetails
+																				)
+																					?.agencyFeesAmount ||
+																					0) *
+																				((100 -
+																					collaboration.proposedCommission) /
+																					100)
+																			).toLocaleString()}{' '}
+																			€
+																		</span>
+																	</div>
+																</>
+															)}
 
-										<div className="space-y-3">
-											{/* Gift Vouchers Display */}
-											{collaboration.compensationType ===
-												'gift_vouchers' && (
-												<div className="text-center py-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border-2 border-purple-200">
-													<p className="text-sm text-gray-600 mb-2">
-														Chèques cadeaux pour le
-														collaborateur
-													</p>
-													<p className="text-4xl font-bold text-purple-600">
-														{collaboration.compensationAmount ||
-															0}
-													</p>
-													<p className="text-xs text-gray-500 mt-1">
-														chèques cadeaux
-													</p>
-												</div>
-											)}
-
-											{/* Fixed Amount Display */}
-											{collaboration.compensationType ===
-												'fixed_amount' && (
-												<div className="text-center py-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border-2 border-green-200">
-													<p className="text-sm text-gray-600 mb-2">
-														Montant fixe pour le
-														collaborateur
-													</p>
-													<p className="text-4xl font-bold text-green-600">
-														{(
-															collaboration.compensationAmount ||
-															0
-														).toLocaleString()}{' '}
-														€
-													</p>
-												</div>
-											)}
-
-											{/* Percentage Commission Display */}
-											{(!collaboration.compensationType ||
-												collaboration.compensationType ===
-													'percentage') && (
-												<>
-													<div className="flex justify-between items-center">
-														<span className="text-gray-600">
-															Part collaborateur
-														</span>
-														<span className="font-medium text-green-600 text-lg">
-															{
-																collaboration.proposedCommission
-															}{' '}
-															%
-														</span>
-													</div>
-
-													{typeof collaboration.postId ===
-														'object' &&
-														(
-															collaboration.postId as PropertyDetails
-														)?.agencyFeesAmount && (
-															<>
-																<div className="flex justify-between items-center py-2 pl-6 bg-green-50 px-3 rounded">
-																	<span className="text-gray-600">
-																		→
-																		Commission
-																		collaborateur
-																	</span>
-																	<span className="text-lg font-semibold text-green-600">
-																		{(
-																			((
-																				collaboration.postId as PropertyDetails
-																			)
-																				?.agencyFeesAmount ||
-																				0) *
-																			(collaboration.proposedCommission /
-																				100)
-																		).toLocaleString()}{' '}
-																		€
-																	</span>
+														{/* Show message if no agency fees configured */}
+														{typeof collaboration.postId ===
+															'object' &&
+															!(
+																collaboration.postId as PropertyDetails
+															)
+																?.agencyFeesAmount && (
+																<div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+																	<p className="text-sm text-amber-800">
+																		ℹ️ Les
+																		montants
+																		en euros
+																		seront
+																		affichés
+																		une fois
+																		que les
+																		frais
+																		d&apos;agence
+																		seront
+																		configurés
+																		sur le
+																		bien.
+																	</p>
 																</div>
-																<div className="flex justify-between items-center py-2 pl-6 bg-info-light px-3 rounded">
-																	<span className="text-gray-600">
-																		→
-																		Commission
-																		mandataire
-																	</span>
-																	<span className="text-lg font-semibold text-brand">
-																		{(
-																			((
-																				collaboration.postId as PropertyDetails
-																			)
-																				?.agencyFeesAmount ||
-																				0) *
-																			((100 -
-																				collaboration.proposedCommission) /
-																				100)
-																		).toLocaleString()}{' '}
-																		€
-																	</span>
-																</div>
-															</>
-														)}
-
-													{/* Show message if no agency fees configured */}
-													{typeof collaboration.postId ===
-														'object' &&
-														!(
-															collaboration.postId as PropertyDetails
-														)?.agencyFeesAmount && (
-															<div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-																<p className="text-sm text-amber-800">
-																	ℹ️ Les
-																	montants en
-																	euros seront
-																	affichés une
-																	fois que les
-																	frais
-																	d&apos;agence
-																	seront
-																	configurés
-																	sur le bien.
-																</p>
-															</div>
-														)}
-												</>
-											)}
-										</div>
-									</Card>{' '}
-									{/* Contract Status */}
-									<CollaborationContract
-										collaboration={collaboration}
-										onViewContract={() =>
-											setShowContractViewModal(true)
-										}
-									/>
-									{/* Collaboration Timeline */}
-									<CollaborationTimeline
-										collaboration={collaboration}
-									/>
+															)}
+													</>
+												)}
+											</div>
+										</Card>{' '}
+										{/* Contract Status */}
+										<CollaborationContract
+											collaboration={collaboration}
+											onViewContract={() =>
+												setShowContractViewModal(true)
+											}
+										/>
+										{/* Collaboration Timeline */}
+										<CollaborationTimeline
+											collaboration={collaboration}
+										/>
+									</div>
 								</div>
 							</div>
 						</div>
-					</div>
+					)}
+				{/* Floating Chat Button */}
+				{!isChatOpen && collaboration && (
+					<CollaborationChatButton
+						unreadCount={unreadCount}
+						onClick={openChat}
+					/>
 				)}
-			{/* Floating Chat Button */}
-			{!isChatOpen && collaboration && (
-				<CollaborationChatButton
-					unreadCount={unreadCount}
-					onClick={openChat}
+				{/* Right-hand chat panel */}
+				<CollaborationChat
+					isOpen={isChatOpen}
+					selectedUser={selectedUser}
+					onlineUsers={onlineUsers}
+					onClose={closeChat}
 				/>
-			)}
-			{/* Right-hand chat panel */}
-			<CollaborationChat
-				isOpen={isChatOpen}
-				selectedUser={selectedUser}
-				onlineUsers={onlineUsers}
-				onClose={closeChat}
-			/>
-			{/* Contract View Modal */}
-			{collaboration && (
-				<ContractViewModal
-					isOpen={showContractViewModal}
-					onClose={() => setShowContractViewModal(false)}
-					contractText={
-						collaboration.contractText ||
-						'Contenu du contrat non disponible.'
-					}
-					collaboration={collaboration}
+				{/* Contract View Modal */}
+				{collaboration && (
+					<ContractViewModal
+						isOpen={showContractViewModal}
+						onClose={() => setShowContractViewModal(false)}
+						contractText={
+							collaboration.contractText ||
+							'Contenu du contrat non disponible.'
+						}
+						collaboration={collaboration}
+					/>
+				)}
+				{/* Completion Reason Modal */}
+				<CompletionReasonModal
+					isOpen={showCompletionReasonModal}
+					onClose={() => setShowCompletionReasonModal(false)}
+					onConfirm={handleCompletionReasonSubmit}
+					isLoading={confirmLoading}
 				/>
-			)}
-			{/* Completion Reason Modal */}
-			<CompletionReasonModal
-				isOpen={showCompletionReasonModal}
-				onClose={() => setShowCompletionReasonModal(false)}
-				onConfirm={handleCompletionReasonSubmit}
-				isLoading={confirmLoading}
-			/>
-		</div>
+			</div>
+		</ProtectedRoute>
 	);
 }

@@ -1,16 +1,10 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { Collaboration } from '../models/Collaboration';
 import { notificationService } from '../services/notificationService';
 import { Types } from 'mongoose';
 import { User } from '../models/User';
 import { logger } from '../utils/logger';
-
-interface AuthenticatedRequest extends Request {
-	user?: {
-		id: string;
-		userType: string;
-	};
-}
+import { AuthRequest } from '../types/auth';
 
 interface PopulatedUser {
 	_id: Types.ObjectId;
@@ -21,7 +15,7 @@ interface PopulatedUser {
 }
 
 export const signContract = async (
-	req: AuthenticatedRequest,
+	req: AuthRequest,
 	res: Response,
 ): Promise<void> => {
 	try {
@@ -29,16 +23,25 @@ export const signContract = async (
 		const userId = req.user?.id;
 
 		if (!userId) {
-			res.status(401).json({ success: false, message: 'Unauthorized' });
+			res.status(401).json({
+				success: false,
+				message: 'Authentication required',
+			});
 			return;
 		}
 
-		const collaboration = await Collaboration.findById(id)
-			.populate('postOwnerId', 'firstName lastName email profileImage')
-			.populate(
-				'collaboratorId',
-				'firstName lastName email profileImage',
-			);
+		// Middleware has already verified authentication and collaboration access
+		const collaboration =
+			req.resource ||
+			(await Collaboration.findById(id)
+				.populate(
+					'postOwnerId',
+					'firstName lastName email profileImage',
+				)
+				.populate(
+					'collaboratorId',
+					'firstName lastName email profileImage',
+				));
 
 		if (!collaboration) {
 			res.status(404).json({
@@ -56,17 +59,20 @@ export const signContract = async (
 			return;
 		}
 
-		const isOwner = collaboration.postOwnerId._id.toString() === userId;
-		const isCollaborator =
-			collaboration.collaboratorId._id.toString() === userId;
+		// Determine if user is owner or collaborator
+		const postOwnerId =
+			typeof collaboration.postOwnerId === 'object' &&
+			'_id' in collaboration.postOwnerId
+				? collaboration.postOwnerId._id.toString()
+				: collaboration.postOwnerId?.toString();
+		const collaboratorId =
+			typeof collaboration.collaboratorId === 'object' &&
+			'_id' in collaboration.collaboratorId
+				? collaboration.collaboratorId._id.toString()
+				: collaboration.collaboratorId?.toString();
 
-		if (!isOwner && !isCollaborator) {
-			res.status(403).json({
-				success: false,
-				message: 'Not authorized to sign this contract',
-			});
-			return;
-		}
+		const isOwner = postOwnerId === userId;
+		const isCollaborator = collaboratorId === userId;
 
 		// Sign the contract
 		const signedAt = new Date();
@@ -201,7 +207,7 @@ export const signContract = async (
 };
 
 export const updateContract = async (
-	req: AuthenticatedRequest,
+	req: AuthRequest,
 	res: Response,
 ): Promise<void> => {
 	try {
@@ -368,7 +374,7 @@ export const updateContract = async (
 };
 
 export const getContract = async (
-	req: AuthenticatedRequest,
+	req: AuthRequest,
 	res: Response,
 ): Promise<void> => {
 	try {
@@ -376,7 +382,10 @@ export const getContract = async (
 		const userId = req.user?.id;
 
 		if (!userId) {
-			res.status(401).json({ success: false, message: 'Unauthorized' });
+			res.status(401).json({
+				success: false,
+				message: 'Authentication required',
+			});
 			return;
 		}
 

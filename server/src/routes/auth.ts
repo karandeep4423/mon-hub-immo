@@ -35,6 +35,10 @@ import {
 
 const router = Router();
 
+// ============================================================================
+// PUBLIC ROUTES (No authentication required)
+// ============================================================================
+
 // Auth routes with rate limiting
 router.post('/signup', authLimiter, uploadIdentityDoc, signup);
 router.post('/login', authLimiter, validate(loginSchema), login);
@@ -65,34 +69,35 @@ router.post(
 	resendVerificationCode,
 );
 
-// Protected routes
-router.get('/profile', authenticateToken, getProfile);
-router.put(
-	'/profile',
-	authenticateToken,
-	validate(updateProfileSchema),
-	updateProfile,
-);
+// Public route to get all agents
+router.get('/agents', getAllAgents);
+
+// Token refresh (public - uses refresh token from cookie)
+router.post('/refresh', refreshAccessToken);
+
+// Logout (public - clears cookies)
+router.post('/logout', logout);
+
+// ============================================================================
+// PROTECTED ROUTES (Authentication required)
+// ============================================================================
+
+// Apply authentication middleware to all routes below
+router.use(authenticateToken);
+
+// User profile management
+router.get('/profile', getProfile);
+router.put('/profile', validate(updateProfileSchema), updateProfile);
 router.post(
 	'/complete-profile',
-	authenticateToken,
 	validate(completeProfileSchema),
 	completeProfile,
 );
 
-// Change password (protected)
-router.post('/change-password', authenticateToken, changePassword);
+// Password management
+router.post('/change-password', changePassword);
 
-// Public route to get all agents
-router.get('/agents', getAllAgents);
-
-// Update search preferences (protected)
-router.patch('/search-preferences', authenticateToken, updateSearchPreferences);
-
-// Refresh access token
-router.post('/refresh', refreshAccessToken);
-
-// Logout
-router.post('/logout', logout);
+// Search preferences
+router.patch('/search-preferences', updateSearchPreferences);
 
 export default router;

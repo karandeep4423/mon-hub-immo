@@ -319,14 +319,6 @@ export const createProperty = async (
 	res: Response,
 ): Promise<void> => {
 	try {
-		if (!req.user) {
-			res.status(401).json({
-				success: false,
-				message: 'Authentification requise',
-			});
-			return;
-		}
-
 		// Validate property data
 		const validationResult = validatePropertyData(req.body);
 		if (!validationResult.success) {
@@ -353,7 +345,7 @@ export const createProperty = async (
 				const mainImageVariants = await s3Service.uploadImage({
 					buffer: files.mainImage[0].buffer,
 					originalName: files.mainImage[0].originalname,
-					userId: req.user.id,
+					userId: req.user!.id,
 					folder: 'properties',
 					isMainImage: true,
 				});
@@ -369,7 +361,7 @@ export const createProperty = async (
 					const galleryImageVariants = await s3Service.uploadImage({
 						buffer: file.buffer,
 						originalName: file.originalname,
-						userId: req.user.id,
+						userId: req.user!.id,
 						folder: 'properties',
 						isMainImage: false,
 					});
@@ -396,7 +388,7 @@ export const createProperty = async (
 			...validationResult.data,
 			mainImage: mainImageData,
 			galleryImages: galleryImagesData,
-			owner: req.user.id,
+			owner: req.user!.id,
 		};
 
 		// Parse clientInfo if it's a JSON string
@@ -483,6 +475,8 @@ export const updateProperty = async (
 	res: Response,
 ): Promise<void> => {
 	try {
+		const { id } = req.params;
+
 		if (!req.user) {
 			res.status(401).json({
 				success: false,
@@ -490,8 +484,6 @@ export const updateProperty = async (
 			});
 			return;
 		}
-
-		const { id } = req.params;
 
 		if (!mongoose.Types.ObjectId.isValid(id)) {
 			res.status(400).json({
@@ -512,7 +504,7 @@ export const updateProperty = async (
 		}
 
 		// Check ownership
-		if (existingProperty.owner.toString() !== req.user.id) {
+		if (existingProperty.owner.toString() !== req.user!.id) {
 			res.status(403).json({
 				success: false,
 				message: "Vous n'êtes pas autorisé à modifier ce bien",
@@ -565,7 +557,7 @@ export const updateProperty = async (
 			const mainImageVariants = await s3Service.uploadImage({
 				buffer: files.mainImage[0].buffer,
 				originalName: files.mainImage[0].originalname,
-				userId: req.user.id,
+				userId: req.user!.id,
 				folder: 'properties',
 				propertyId: id,
 				isMainImage: true,
@@ -608,7 +600,7 @@ export const updateProperty = async (
 				const galleryImageVariants = await s3Service.uploadImage({
 					buffer: file.buffer,
 					originalName: file.originalname,
-					userId: req.user.id,
+					userId: req.user!.id,
 					folder: 'properties',
 					propertyId: id,
 					isMainImage: false,
@@ -729,14 +721,6 @@ export const deleteProperty = async (
 	try {
 		const { id } = req.params;
 
-		if (!req.user) {
-			res.status(401).json({
-				success: false,
-				message: 'Authentification requise',
-			});
-			return;
-		}
-
 		if (!mongoose.Types.ObjectId.isValid(id)) {
 			res.status(400).json({
 				success: false,
@@ -756,7 +740,7 @@ export const deleteProperty = async (
 		}
 
 		// Check if user is the owner
-		if (property.owner.toString() !== req.user.id) {
+		if (property.owner.toString() !== req.user!.id) {
 			res.status(403).json({
 				success: false,
 				message: "Vous n'êtes pas autorisé à supprimer ce bien",
@@ -815,14 +799,6 @@ export const getMyProperties = async (
 	res: Response,
 ): Promise<void> => {
 	try {
-		if (!req.user) {
-			res.status(401).json({
-				success: false,
-				message: 'Authentification requise',
-			});
-			return;
-		}
-
 		const {
 			page = 1,
 			limit = 10,
@@ -833,7 +809,7 @@ export const getMyProperties = async (
 
 		// Build filter
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const filter: any = { owner: req.user.id };
+		const filter: any = { owner: req.user!.id };
 
 		if (status) {
 			filter.status = status;
@@ -891,14 +867,6 @@ export const updatePropertyStatus = async (
 		const { id } = req.params;
 		const { status } = req.body;
 
-		if (!req.user) {
-			res.status(401).json({
-				success: false,
-				message: 'Authentification requise',
-			});
-			return;
-		}
-
 		if (!mongoose.Types.ObjectId.isValid(id)) {
 			res.status(400).json({
 				success: false,
@@ -928,7 +896,7 @@ export const updatePropertyStatus = async (
 		}
 
 		// Check if user is the owner
-		if (property.owner.toString() !== req.user.id) {
+		if (property.owner.toString() !== req.user!.id) {
 			res.status(403).json({
 				success: false,
 				message: "Vous n'êtes pas autorisé à modifier ce bien",
@@ -960,16 +928,8 @@ export const getPropertyStats = async (
 	res: Response,
 ): Promise<void> => {
 	try {
-		if (!req.user) {
-			res.status(401).json({
-				success: false,
-				message: 'Authentification requise',
-			});
-			return;
-		}
-
 		const stats = await Property.aggregate([
-			{ $match: { owner: new mongoose.Types.ObjectId(req.user.id) } },
+			{ $match: { owner: new mongoose.Types.ObjectId(req.user!.id) } },
 			{
 				$group: {
 					_id: '$status',
@@ -981,15 +941,15 @@ export const getPropertyStats = async (
 		]);
 
 		const totalProperties = await Property.countDocuments({
-			owner: req.user.id,
+			owner: req.user!.id,
 		});
 		const totalViews = await Property.aggregate([
-			{ $match: { owner: new mongoose.Types.ObjectId(req.user.id) } },
+			{ $match: { owner: new mongoose.Types.ObjectId(req.user!.id) } },
 			{ $group: { _id: null, total: { $sum: '$viewCount' } } },
 		]);
 
 		const totalValueAgg = await Property.aggregate([
-			{ $match: { owner: new mongoose.Types.ObjectId(req.user.id) } },
+			{ $match: { owner: new mongoose.Types.ObjectId(req.user!.id) } },
 			{ $group: { _id: null, total: { $sum: '$price' } } },
 		]);
 

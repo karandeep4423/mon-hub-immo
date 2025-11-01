@@ -194,6 +194,50 @@ api.interceptors.response.use(
 			}
 		}
 
+		// Transform "Refresh token is required" error message to French
+		if (
+			error.response?.status === 400 &&
+			error.response?.data?.message === 'Refresh token is required'
+		) {
+			// Replace the error message with a French authentication required message
+			const transformedError = {
+				...error,
+				response: {
+					...error.response,
+					data: {
+						...error.response.data,
+						message:
+							'🔒 Connexion requise pour accéder à cette ressource',
+					},
+				},
+			};
+
+			// Show toast notification for unauthenticated users trying to access protected routes
+			const isOnAuthPage =
+				typeof window !== 'undefined' &&
+				window.location.pathname.startsWith('/auth');
+
+			if (!isOnAuthPage) {
+				toast.error('🔒 Veuillez vous connecter pour continuer');
+			}
+
+			return Promise.reject(transformedError);
+		}
+
+		// Transform 401 "Authentification requise" to more user-friendly message
+		if (
+			error.response?.status === 401 &&
+			error.response?.data?.message === 'Authentification requise'
+		) {
+			const isOnAuthPage =
+				typeof window !== 'undefined' &&
+				window.location.pathname.startsWith('/auth');
+
+			if (!isOnAuthPage) {
+				toast.error('🔒 Veuillez vous connecter pour continuer');
+			}
+		}
+
 		return Promise.reject(error);
 	},
 );

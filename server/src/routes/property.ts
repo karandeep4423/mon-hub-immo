@@ -10,6 +10,8 @@ import {
 	updateProperty,
 } from '../controllers/propertyController';
 import { authenticateToken } from '../middleware/auth';
+import { requireOwnership, requireRole } from '../middleware/authorize';
+import { Property } from '../models/Property';
 import { updatePropertyStatusValidation } from '../middleware/validation';
 import { uploadProperty } from '../middleware/uploadMiddleware';
 import { generalLimiter } from '../middleware/rateLimiter';
@@ -21,9 +23,11 @@ router.get('/', generalLimiter, getProperties);
 router.get('/:id', generalLimiter, getPropertyById);
 
 // Combined property creation with image upload
+// Only agents can create properties
 router.post(
 	'/create-property',
 	authenticateToken,
+	requireRole(['agent']),
 	uploadProperty,
 	createProperty,
 );
@@ -32,16 +36,25 @@ router.post(
 router.use(authenticateToken);
 
 // Combined property update with image upload
-router.put('/:id/update', uploadProperty, updateProperty);
-router.delete('/:id', deleteProperty);
+// Ownership verified by middleware
+router.put(
+	'/:id/update',
+	requireOwnership(Property),
+	uploadProperty,
+	updateProperty,
+);
+
+// Delete property - ownership verified by middleware
+router.delete('/:id', requireOwnership(Property), deleteProperty);
 
 // User-specific routes
 router.get('/my/properties', getMyProperties);
 router.get('/my/stats', getPropertyStats);
 
-// Status management
+// Status management - ownership verified by middleware
 router.patch(
 	'/:id/status',
+	requireOwnership(Property),
 	updatePropertyStatusValidation,
 	updatePropertyStatus,
 );

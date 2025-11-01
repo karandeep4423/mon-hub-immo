@@ -1,16 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import ChatPage from '../../components/chat/ChatPage';
 import { useChat } from '../../hooks/useChat';
+import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
 import type { Property } from '@/lib/api/propertyApi';
 import { SearchAd } from '@/types/searchAd';
 import searchAdApi from '@/lib/api/searchAdApi';
 import { logger } from '@/lib/utils/logger';
+import { Features } from '@/lib/constants';
 
 export const ChatPageContent = () => {
+	const router = useRouter();
+	const { user, loading: authLoading } = useAuth();
 	const searchParams = useSearchParams();
 	const { users, getUsers, getUserById, setSelectedUser, selectedUser } =
 		useChat();
@@ -33,6 +37,13 @@ export const ChatPageContent = () => {
 	const propertyId = searchParams?.get('propertyId');
 	const collaborationType = searchParams?.get('type');
 	const searchAdId = searchParams?.get('searchAdId');
+
+	// Redirect to login if not authenticated
+	useEffect(() => {
+		if (!authLoading && !user) {
+			router.push(Features.Auth.AUTH_ROUTES.LOGIN);
+		}
+	}, [user, authLoading, router]);
 
 	useEffect(() => {
 		// Initialize users list
@@ -309,6 +320,25 @@ export const ChatPageContent = () => {
 
 	// Component to display property context information in the chat
 	const ContextMessage = getContextMessage();
+
+	// Show loader while checking authentication
+	if (authLoading) {
+		return (
+			<div className="flex h-screen items-center justify-center bg-gray-50">
+				<div className="text-center">
+					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto mb-4"></div>
+					<p className="text-gray-600">
+						Vérification de l&apos;authentification...
+					</p>
+				</div>
+			</div>
+		);
+	}
+
+	// Don't render anything if not authenticated (will redirect)
+	if (!user) {
+		return null;
+	}
 
 	return (
 		<div className="h-screen flex flex-col">

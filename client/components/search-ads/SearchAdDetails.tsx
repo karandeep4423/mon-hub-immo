@@ -64,6 +64,10 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 	);
 
 	const handleContact = () => {
+		if (!currentUser) {
+			router.push(Features.Auth.AUTH_ROUTES.LOGIN);
+			return;
+		}
 		router.push(
 			`/chat?userId=${searchAd.authorId._id}&searchAdId=${searchAd._id}&type=search-ad-contact`,
 		);
