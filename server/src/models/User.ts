@@ -174,17 +174,7 @@ const userSchema = new Schema<IUser>(
 			],
 			network: {
 				type: String,
-				enum: {
-					values: [
-						'IAD',
-						'Century21',
-						'Orpi',
-						'Independant',
-						'Autre',
-					],
-					message: 'Réseau invalide',
-				},
-				default: 'IAD',
+				trim: true,
 			},
 			siretNumber: {
 				type: String,

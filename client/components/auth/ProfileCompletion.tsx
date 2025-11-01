@@ -73,7 +73,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 					user?.professionalInfo?.interventionRadius || 20,
 				coveredCities:
 					user?.professionalInfo?.coveredCities?.join(', ') || '',
-				network: user?.professionalInfo?.network || 'IAD',
+				network: user?.professionalInfo?.network || '',
 				siretNumber: user?.professionalInfo?.siretNumber || '',
 				mandateTypes: user?.professionalInfo?.mandateTypes || [],
 				yearsExperience:
@@ -141,7 +141,9 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 										: [],
 									network: data.network,
 									siretNumber: data.siretNumber,
-									mandateTypes: data.mandateTypes,
+									mandateTypes: data.mandateTypes as Array<
+										'simple' | 'exclusif' | 'co-mandat'
+									>,
 									yearsExperience:
 										typeof data.yearsExperience === 'string'
 											? parseInt(data.yearsExperience, 10)
@@ -156,7 +158,41 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 								},
 							})
 						: await authService.completeProfile({
-								...data,
+								professionalInfo: {
+									postalCode: data.postalCode,
+									city: data.city,
+									interventionRadius:
+										typeof data.interventionRadius ===
+										'string'
+											? parseInt(
+													data.interventionRadius,
+													10,
+												)
+											: data.interventionRadius,
+									coveredCities: data.coveredCities
+										? data.coveredCities
+												.split(',')
+												.map((c: string) => c.trim())
+												.filter(Boolean)
+										: [],
+									network: data.network,
+									siretNumber: data.siretNumber,
+									mandateTypes: data.mandateTypes as Array<
+										'simple' | 'exclusif' | 'co-mandat'
+									>,
+									yearsExperience:
+										typeof data.yearsExperience === 'string'
+											? parseInt(data.yearsExperience, 10)
+											: data.yearsExperience,
+									personalPitch: data.personalPitch,
+									collaborateWithAgents:
+										data.collaborateWithAgents,
+									shareCommission: data.shareCommission,
+									independentAgent: data.independentAgent,
+									alertsEnabled: data.alertsEnabled,
+									alertFrequency: data.alertFrequency,
+								},
+								profileImage: data.profileImage,
 								identityCard: identityCardData,
 							});
 
@@ -437,37 +473,14 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 						</h3>
 
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-1">
-									Réseau ou statut
-								</label>
-								<Select
-									label=""
-									value={values.network}
-									onChange={(value) => {
-										const event = {
-											target: {
-												name: 'network',
-												value,
-											},
-										} as React.ChangeEvent<HTMLSelectElement>;
-										handleChange(event);
-									}}
-									name="network"
-									options={[
-										{ value: 'IAD', label: 'IAD' },
-										{
-											value: 'Century21',
-											label: 'Century 21',
-										},
-										{ value: 'Orpi', label: 'Orpi' },
-										{
-											value: 'Independant',
-											label: 'Indépendant',
-										},
-									]}
-								/>
-							</div>
+							<Input
+								label="Réseau ou statut"
+								name="network"
+								value={values.network}
+								onChange={handleChange}
+								error={errors.network}
+								placeholder="Ex: IAD, Century 21, Orpi, Indépendant..."
+							/>
 
 							<Input
 								label="Numéro SIRET"

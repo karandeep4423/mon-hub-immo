@@ -1241,11 +1241,14 @@ export const completeProfile = async (
 			return;
 		}
 
+		logger.info(
+			'[AuthController] Complete profile request:',
+			JSON.stringify({ professionalInfo, profileImage }, null, 2),
+		);
+
 		// Update professional info for agents with sanitization
 		if (user.userType === 'agent' && professionalInfo) {
-			const sanitizedProfessionalInfo: typeof professionalInfo = {
-				...professionalInfo,
-			};
+			const sanitizedProfessionalInfo: Record<string, unknown> = {};
 
 			// Sanitize string fields in professionalInfo
 			if (professionalInfo.city) {
@@ -1273,20 +1276,56 @@ export const completeProfile = async (
 					professionalInfo.personalPitch,
 				);
 			}
-			if (
-				professionalInfo.coveredCities &&
-				Array.isArray(professionalInfo.coveredCities)
-			) {
-				sanitizedProfessionalInfo.coveredCities =
-					professionalInfo.coveredCities.map((city: string) =>
-						sanitizeString(city),
-					);
+			if (professionalInfo.interventionRadius !== undefined) {
+				sanitizedProfessionalInfo.interventionRadius =
+					professionalInfo.interventionRadius;
+			}
+			if (professionalInfo.yearsExperience !== undefined) {
+				sanitizedProfessionalInfo.yearsExperience =
+					professionalInfo.yearsExperience;
+			}
+			if (professionalInfo.collaborateWithAgents !== undefined) {
+				sanitizedProfessionalInfo.collaborateWithAgents =
+					professionalInfo.collaborateWithAgents;
+			}
+			if (professionalInfo.shareCommission !== undefined) {
+				sanitizedProfessionalInfo.shareCommission =
+					professionalInfo.shareCommission;
+			}
+			if (professionalInfo.independentAgent !== undefined) {
+				sanitizedProfessionalInfo.independentAgent =
+					professionalInfo.independentAgent;
+			}
+			if (professionalInfo.alertsEnabled !== undefined) {
+				sanitizedProfessionalInfo.alertsEnabled =
+					professionalInfo.alertsEnabled;
+			}
+			if (professionalInfo.alertFrequency) {
+				sanitizedProfessionalInfo.alertFrequency =
+					professionalInfo.alertFrequency;
 			}
 
-			user.professionalInfo = {
-				...user.professionalInfo,
-				...sanitizedProfessionalInfo,
-			};
+			// Handle arrays - convert object notation to arrays if needed
+			if (professionalInfo.coveredCities) {
+				const cities = Array.isArray(professionalInfo.coveredCities)
+					? professionalInfo.coveredCities
+					: Object.values(professionalInfo.coveredCities);
+				sanitizedProfessionalInfo.coveredCities = cities.map(
+					(city: string) => sanitizeString(city),
+				);
+			}
+			if (professionalInfo.mandateTypes) {
+				const mandates = Array.isArray(professionalInfo.mandateTypes)
+					? professionalInfo.mandateTypes
+					: Object.values(professionalInfo.mandateTypes);
+				sanitizedProfessionalInfo.mandateTypes = mandates;
+			}
+
+			// Merge with existing professionalInfo, but don't spread undefined values
+			if (!user.professionalInfo) {
+				user.professionalInfo = {};
+			}
+			Object.assign(user.professionalInfo, sanitizedProfessionalInfo);
 		}
 
 		// Add identity card info if provided (already sanitized URLs from S3)
@@ -1341,6 +1380,30 @@ export const completeProfile = async (
 			},
 		});
 	} catch (error) {
+		// Log detailed error information
+		if (error instanceof mongoose.Error.ValidationError) {
+			logger.error(
+				'[AuthController] Validation error in completeProfile:',
+				JSON.stringify(
+					Object.values(error.errors).map((e) => ({
+						field: e.path,
+						message: e.message,
+						value: 'value' in e ? e.value : undefined,
+					})),
+					null,
+					2,
+				),
+			);
+			res.status(400).json({
+				success: false,
+				message: 'Validation error',
+				errors: Object.values(error.errors).map((e) => ({
+					field: e.path,
+					message: e.message,
+				})),
+			});
+			return;
+		}
 		logger.error('[AuthController] Complete profile error', error);
 		res.status(500).json({
 			success: false,

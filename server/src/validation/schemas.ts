@@ -96,9 +96,7 @@ export const updateProfileSchema = z.object({
 				)
 				.optional(),
 			interventionRadius: z.number().int().min(1).max(200).optional(),
-			network: z
-				.enum(['IAD', 'Century21', 'Orpi', 'Independant', 'Autre'])
-				.optional(),
+			network: z.string().trim().optional(),
 			siretNumber: z
 				.string()
 				.regex(/^[0-9]{14}$/, 'Format SIRET invalide (14 chiffres)')
@@ -130,9 +128,7 @@ export const completeProfileSchema = z.object({
 				/^[a-zA-ZÀ-ÿ\u0100-\u017F\s'-]+$/,
 				'Format de ville invalide',
 			),
-		network: z.enum(['IAD', 'Century21', 'Orpi', 'Independant', 'Autre'], {
-			errorMap: () => ({ message: 'Le réseau est requis' }),
-		}),
+		network: z.string().trim().min(1, 'Le réseau est requis'),
 		// Optional fields
 		interventionRadius: z.number().int().min(1).max(200).optional(),
 		siretNumber: z

@@ -38,14 +38,24 @@ export default function MonAgentImmoPage() {
 
 	// Filtered agents based on search (using useMemo for performance)
 	const filteredAgents = useMemo(() => {
+		// Filter to show only agents from specific cities (case-insensitive)
+		const allowedCities = ['rennes', 'dinan', 'saint-malo'];
+
+		const specificAgents = agents.filter((agent) => {
+			const agentCity = (agent.professionalInfo?.city || '')
+				.toLowerCase()
+				.trim();
+			return allowedCities.includes(agentCity);
+		});
+
 		if (!searchPerformed || (!searchCity && !searchPostalCode)) {
-			return agents;
+			return specificAgents;
 		}
 
 		const cityQuery = searchCity.toLowerCase().trim();
 		const postalQuery = searchPostalCode.trim();
 
-		return agents.filter((agent) => {
+		return specificAgents.filter((agent) => {
 			const agentCity = agent.professionalInfo?.city?.toLowerCase() || '';
 			const agentPostalCode = agent.professionalInfo?.postalCode || '';
 

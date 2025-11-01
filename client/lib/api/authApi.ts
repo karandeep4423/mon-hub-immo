@@ -252,12 +252,20 @@ export class AuthApi {
 	 */
 	static async completeProfile(data: {
 		professionalInfo?: {
-			agentType?: string;
-			registeredCities?: string[];
-			sirenNumber?: string;
-			tCard?: string;
-			rsacNumber?: string;
-			collaboratorCertificate?: string;
+			postalCode?: string;
+			city?: string;
+			interventionRadius?: number;
+			network?: string;
+			siretNumber?: string;
+			yearsExperience?: number;
+			personalPitch?: string;
+			mandateTypes?: Array<'simple' | 'exclusif' | 'co-mandat'>;
+			coveredCities?: string[];
+			collaborateWithAgents?: boolean;
+			shareCommission?: boolean;
+			independentAgent?: boolean;
+			alertsEnabled?: boolean;
+			alertFrequency?: 'quotidien' | 'hebdomadaire';
 		};
 		profileImage?: string;
 		identityCard?: {

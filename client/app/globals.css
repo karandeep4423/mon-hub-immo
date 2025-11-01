@@ -180,11 +180,17 @@
 .bg-success {
 	background-color: var(--success);
 }
+.bg-success-light {
+	background-color: var(--success-light);
+}
 .text-success {
 	color: var(--success);
 }
 .bg-warning {
 	background-color: var(--warning);
+}
+.bg-warning-light {
+	background-color: var(--warning-light);
 }
 .text-warning {
 	color: var(--warning);
