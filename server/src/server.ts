@@ -62,6 +62,7 @@ app.use(
 				],
 				connectSrc: [
 					"'self'",
+					// Allow localhost during development
 					process.env.NODE_ENV === 'development'
 						? 'http://localhost:3000'
 						: null,
@@ -71,7 +72,10 @@ app.use(
 					process.env.NODE_ENV === 'development'
 						? 'ws://localhost:4000'
 						: null,
-					'wss://*.vercel.app',
+					// Production-safe scheme allowances
+					'https:',
+					'wss:',
+					// Known frontends
 					'https://www.monhubimmo.fr',
 					'https://mon-hub-immo.vercel.app',
 					process.env.FRONTEND_URL?.trim() || null,
