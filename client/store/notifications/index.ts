@@ -330,5 +330,49 @@ export const useNotifications = () => {
 		setState((s) => ({ ...s, items: s.items.filter((n) => n.id !== id) }));
 	}, []);
 
-	return { state, loadMore, markRead, markAllRead, remove };
+	const refresh = useCallback(async () => {
+		if (loadingRef.current) return;
+		loadingRef.current = true;
+		try {
+			const now = Date.now();
+			const [listRes, countRes] = await Promise.all([
+				api.get('/notifications', {
+					params: { limit: 20, _ts: now },
+				}),
+				api.get('/notifications/count', {
+					params: { _ts: now },
+				}),
+			]);
+			const items: NotificationItem[] = listRes.data?.items ?? [];
+			const unreadCount = countRes.data?.unreadCount ?? 0;
+
+			// Update dedupe set with refreshed items
+			seenIdsRef.current.clear();
+			for (const it of items) seenIdsRef.current.add(it.id);
+
+			setState((s) => ({
+				...s,
+				items,
+				nextCursor: listRes.data?.nextCursor ?? null,
+				unreadCount,
+			}));
+
+			// Update cache for this user
+			if (userIdKey) {
+				bootstrapCacheMap.set(userIdKey, {
+					items,
+					nextCursor: listRes.data?.nextCursor ?? null,
+					unreadCount,
+				});
+			}
+		} catch (err) {
+			logger.error('Failed to refresh notifications', {
+				error: err instanceof Error ? err.message : String(err),
+			});
+		} finally {
+			loadingRef.current = false;
+		}
+	}, [userIdKey]);
+
+	return { state, loadMore, markRead, markAllRead, remove, refresh };
 };

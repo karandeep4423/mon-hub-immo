@@ -94,16 +94,6 @@ export default function Header() {
 
 						{/* Mobile inline actions + toggle */}
 						<div className="flex items-center md:hidden space-x-2">
-							{user ? (
-								<NotificationBell />
-							) : (
-								<Link
-									href={Features.Auth.AUTH_ROUTES.LOGIN}
-									className="px-3 py-1.5 rounded-lg bg-brand text-white text-xs font-semibold hover:bg-brand-600 shadow-sm transition-all duration-200"
-								>
-									Se connecter
-								</Link>
-							)}
 							<button
 								className="text-gray-500 hover:text-brand transition-colors duration-200"
 								onClick={() =>

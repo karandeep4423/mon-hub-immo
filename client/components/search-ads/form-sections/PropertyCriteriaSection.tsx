@@ -250,15 +250,10 @@ export const PropertyCriteriaSection: React.FC<
 						name="projectType"
 						options={[
 							{ value: '', label: 'Sélectionner...' },
-							{
-								value: 'type',
-								label: projectTypesList
-									.map(
-										(type) =>
-											PROJECT_TYPE_LABELS[type] || type,
-									)
-									.join(','),
-							},
+							...projectTypesList.map((type) => ({
+								value: type,
+								label: PROJECT_TYPE_LABELS[type] || type,
+							})),
 						]}
 					/>
 				</div>
