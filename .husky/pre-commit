@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+echo "Running lint-staged in client..."
+cd client && npx lint-staged
+
+echo "Running lint-staged in server..."
+cd ../server && npx lint-staged

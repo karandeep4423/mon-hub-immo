@@ -4,11 +4,14 @@ import { SearchAd } from '@/types/searchAd';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
-import { ProfileAvatar } from '../ui';
+import { ProfileAvatar, FavoriteButton } from '../ui';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import searchAdApi from '@/lib/api/searchAdApi';
-import { getSearchAdBadgeConfig } from '@/lib/constants/badges';
+import { Features, Components } from '@/lib/constants';
+import { useSearchAdMutations } from '@/hooks/useSearchAds';
+import { formatDateShort } from '@/lib/utils/date';
+import { truncateRichText } from '@/lib/utils/richTextUtils';
+import { Select } from '@/components/ui/CustomSelect';
 
 interface SearchAdCardProps {
 	searchAd: SearchAd;
@@ -25,9 +28,14 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 }) => {
 	const router = useRouter();
 	const { user } = useAuth();
-	const [isDeleting, setIsDeleting] = useState(false);
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+	const [isDeleting, setIsDeleting] = useState(false);
 	const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+	// SWR mutations
+	const { deleteSearchAd, updateSearchAdStatus } = useSearchAdMutations(
+		user?._id,
+	);
 
 	const handleContact = () => {
 		router.push(
@@ -45,17 +53,12 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 
 	const handleDelete = async () => {
 		setIsDeleting(true);
-		try {
-			await searchAdApi.deleteSearchAd(searchAd._id);
+		const result = await deleteSearchAd(searchAd._id);
+		setIsDeleting(false);
+
+		if (result.success) {
 			setShowDeleteConfirm(false);
-			if (onUpdate) {
-				onUpdate();
-			}
-		} catch (error) {
-			console.error('Erreur lors de la suppression:', error);
-			// Could add toast notification here instead of alert
-		} finally {
-			setIsDeleting(false);
+			onUpdate?.();
 		}
 	};
 
@@ -63,15 +66,11 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 		if (newStatus === searchAd.status) return;
 
 		setIsUpdatingStatus(true);
-		try {
-			await searchAdApi.updateSearchAdStatus(searchAd._id, newStatus);
-			if (onUpdate) {
-				onUpdate();
-			}
-		} catch (error) {
-			console.error('Erreur lors de la mise à jour du statut:', error);
-		} finally {
-			setIsUpdatingStatus(false);
+		const result = await updateSearchAdStatus(searchAd._id, newStatus);
+		setIsUpdatingStatus(false);
+
+		if (result.success) {
+			onUpdate?.();
 		}
 	};
 
@@ -90,7 +89,7 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 			},
 			fulfilled: {
 				label: 'Réalisé',
-				className: 'bg-blue-100 text-blue-800',
+				className: 'bg-brand-100 text-brand-800',
 			},
 			sold: {
 				label: 'Vendu',
@@ -98,7 +97,7 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 			},
 			rented: {
 				label: 'Loué',
-				className: 'bg-blue-100 text-blue-800',
+				className: 'bg-brand-100 text-brand-800',
 			},
 			archived: {
 				label: 'Archivé',
@@ -117,12 +116,12 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 	};
 
 	return (
-		<Card className="overflow-hidden hover:shadow-lg transition-shadow">
+		<Card className="hover:shadow-lg transition-shadow">
 			{/* Image Section */}
-			<div className="relative h-48 w-full">
+			<div className="relative h-48 w-full overflow-hidden rounded-t-lg">
 				<Image
 					src="/recherches-des-biens.png"
-					alt="Recherche de bien"
+					alt={Components.UI.IMAGE_ALT_TEXT.searchAdImage}
 					fill
 					className="object-cover"
 				/>
@@ -131,7 +130,10 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 					{searchAd.badges &&
 						searchAd.badges.length > 0 &&
 						searchAd.badges.slice(0, 5).map((badgeValue) => {
-							const config = getSearchAdBadgeConfig(badgeValue);
+							const config =
+								Features.Properties.getSearchAdBadgeConfig(
+									badgeValue,
+								);
 							if (!config) return null;
 
 							return (
@@ -144,6 +146,16 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 							);
 						})}
 				</div>
+				{/* Favorite Button - Only show on home page, not on dashboard */}
+				{!isOwner && (
+					<div className="absolute top-2 right-2">
+						<FavoriteButton
+							itemId={searchAd._id}
+							itemType="searchAd"
+							size="md"
+						/>
+					</div>
+				)}
 			</div>
 
 			{/* Content Section */}
@@ -174,7 +186,7 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 				<div className="grid grid-cols-2 gap-4 text-sm">
 					<div>
 						<p className="font-semibold text-gray-700 flex items-center gap-1">
-							📍 Localisation
+							📍 {Features.SearchAds.SEARCH_AD_UI_TEXT.location}
 						</p>
 						<p className="text-gray-600">
 							{searchAd.location.cities.slice(0, 2).join(', ')}
@@ -183,7 +195,8 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 					</div>
 					<div>
 						<p className="font-semibold text-gray-700 flex items-center gap-1">
-							💰 Budget Max
+							💰{' '}
+							{Features.SearchAds.SEARCH_AD_UI_TEXT.budgetLabel}
 						</p>
 						<p className="text-gray-600">
 							{searchAd.budget.max.toLocaleString('fr-FR')} €
@@ -212,7 +225,11 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 					{searchAd.minSurface && (
 						<div>
 							<p className="font-semibold text-gray-700 flex items-center gap-1">
-								📐 Surface min.
+								📐{' '}
+								{
+									Features.SearchAds.SEARCH_AD_UI_TEXT
+										.surfaceLabel
+								}
 							</p>
 							<p className="text-gray-600">
 								{searchAd.minSurface} m²
@@ -223,10 +240,7 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 
 				{searchAd.description && (
 					<p className="text-sm text-gray-600 italic bg-gray-50 p-3 rounded-lg">
-						&quot;
-						{searchAd.description.length > 100
-							? searchAd.description.substring(0, 100) + '...'
-							: searchAd.description}
+						&quot;{truncateRichText(searchAd.description, 100)}
 						&quot;
 					</p>
 				)}
@@ -236,7 +250,8 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 					searchAd.priorities.mustHaves.length > 0 && (
 						<div>
 							<p className="text-xs font-semibold text-gray-700 mb-1">
-								Critères prioritaires :
+								{Features.SearchAds.SEARCH_AD_UI_TEXT.mustHaves}{' '}
+								:
 							</p>
 							<div className="flex flex-wrap gap-1">
 								{searchAd.priorities.mustHaves
@@ -267,28 +282,32 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 							{/* Status Management Section */}
 							<div className="flex items-center justify-between pt-2 border-t border-gray-100">
 								<div className="flex items-center space-x-2">
-									<select
+									<Select
 										value={searchAd.status}
-										onChange={(e) =>
+										onChange={(value) =>
 											handleStatusChange(
-												e.target
-													.value as SearchAd['status'],
+												value as SearchAd['status'],
 											)
 										}
+										options={[
+											{ value: 'active', label: 'Actif' },
+											{
+												value: 'paused',
+												label: 'En pause',
+											},
+											{
+												value: 'fulfilled',
+												label: 'Réalisé',
+											},
+											{ value: 'sold', label: 'Vendu' },
+											{ value: 'rented', label: 'Loué' },
+											{
+												value: 'archived',
+												label: 'Archivé',
+											},
+										]}
 										disabled={isUpdatingStatus}
-										className="text-sm border border-gray-300 rounded px-2 py-1 bg-white"
-									>
-										<option value="active">Actif</option>
-										<option value="paused">En pause</option>
-										<option value="fulfilled">
-											Réalisé
-										</option>
-										<option value="sold">Vendu</option>
-										<option value="rented">Loué</option>
-										<option value="archived">
-											Archivé
-										</option>
-									</select>
+									/>
 									{getStatusBadge(searchAd.status)}
 								</div>
 							</div>
@@ -299,17 +318,15 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 									variant="outline"
 									className="flex-1"
 								>
-									Modifier
+									{Components.UI.BUTTON_TEXT.edit}
 								</Button>
 								<Button
 									onClick={() => setShowDeleteConfirm(true)}
 									variant="secondary"
 									className="flex-1 bg-red-600 hover:bg-red-700"
-									disabled={isDeleting}
+									loading={isDeleting}
 								>
-									{isDeleting
-										? 'Suppression...'
-										: 'Supprimer'}
+									{Components.UI.BUTTON_TEXT.delete}
 								</Button>
 							</div>
 						</>
@@ -358,9 +375,7 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 							</div>
 						</div>
 						<p className="text-xs text-gray-500">
-							{new Date(searchAd.createdAt).toLocaleDateString(
-								'fr-FR',
-							)}
+							{formatDateShort(searchAd.createdAt)}
 						</p>
 					</div>
 				</div>
@@ -369,12 +384,24 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 			{/* Delete Confirmation Dialog */}
 			<ConfirmDialog
 				isOpen={showDeleteConfirm}
-				title="Êtes-vous sûr de vouloir supprimer cette recherche ?"
-				description="Cette action est irréversible et supprimera définitivement cette recherche."
+				title={
+					Features.SearchAds.SEARCH_AD_CONFIRMATION_DIALOGS
+						.DELETE_TITLE
+				}
+				description={
+					Features.SearchAds.SEARCH_AD_CONFIRMATION_DIALOGS
+						.DELETE_DESCRIPTION
+				}
 				onConfirm={handleDelete}
 				onCancel={() => setShowDeleteConfirm(false)}
-				confirmText="Supprimer"
-				cancelText="Annuler"
+				confirmText={
+					Features.SearchAds.SEARCH_AD_CONFIRMATION_DIALOGS
+						.DELETE_CONFIRM
+				}
+				cancelText={
+					Features.SearchAds.SEARCH_AD_CONFIRMATION_DIALOGS
+						.DELETE_CANCEL
+				}
 				variant="danger"
 				loading={isDeleting}
 			/>

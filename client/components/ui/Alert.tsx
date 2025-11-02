@@ -1,4 +1,5 @@
 import React from 'react';
+import { UI } from '@/lib/constants/components';
 
 interface AlertProps {
 	type: 'info' | 'success' | 'warning' | 'error';
@@ -13,20 +14,6 @@ export const Alert: React.FC<AlertProps> = ({
 	children,
 	className = '',
 }) => {
-	const typeClasses = {
-		info: 'bg-blue-50 border-blue-200 text-blue-800',
-		success: 'bg-green-50 border-green-200 text-green-800',
-		warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-		error: 'bg-red-50 border-red-200 text-red-800',
-	};
-
-	const iconColors = {
-		info: 'text-blue-400',
-		success: 'text-green-400',
-		warning: 'text-yellow-400',
-		error: 'text-red-400',
-	};
-
 	const icons = {
 		info: (
 			<svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -68,17 +55,15 @@ export const Alert: React.FC<AlertProps> = ({
 
 	return (
 		<div
-			className={`border rounded-lg p-4 ${typeClasses[type]} ${className}`}
+			className={`${UI.ALERT_BASE_CLASSES} ${UI.ALERT_TYPE_CLASSES[type]} ${className}`}
 		>
-			<div className="flex">
-				<div className={`flex-shrink-0 ${iconColors[type]}`}>
-					{icons[type]}
-				</div>
-				<div className="ml-3">
-					{title && <h3 className="text-sm font-medium">{title}</h3>}
-					<div className={`${title ? 'mt-2' : ''} text-sm`}>
-						{children}
-					</div>
+			<div className={`flex-shrink-0 ${UI.ALERT_ICON_COLORS[type]}`}>
+				{icons[type]}
+			</div>
+			<div className="flex-1">
+				{title && <h3 className="text-sm font-medium">{title}</h3>}
+				<div className={`${title ? 'mt-2' : ''} text-sm`}>
+					{children}
 				</div>
 			</div>
 		</div>

@@ -4,11 +4,16 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNotification } from '@/hooks/useNotification';
 import { useAuth } from '@/hooks/useAuth';
 import type { User } from '@/types/auth';
+import { logger } from '@/lib/utils/logger';
 
 const OS_NOTIFY_COOLDOWN_MS = 3000;
 
-export type NotificationEntity = { type: 'chat' | 'collaboration'; id: string };
-export type NotificationItem = {
+export interface NotificationEntity {
+	type: 'chat' | 'collaboration' | 'appointment';
+	id: string;
+}
+
+export interface NotificationItem {
 	id: string;
 	type:
 		| 'chat:new_message'
@@ -21,7 +26,12 @@ export type NotificationItem = {
 		| 'collab:progress_updated'
 		| 'collab:cancelled'
 		| 'collab:completed'
-		| 'collab:note_added';
+		| 'collab:note_added'
+		| 'appointment:new'
+		| 'appointment:confirmed'
+		| 'appointment:rejected'
+		| 'appointment:cancelled'
+		| 'appointment:rescheduled';
 	title: string;
 	message: string;
 	entity: NotificationEntity;
@@ -29,14 +39,14 @@ export type NotificationItem = {
 	actorId: string;
 	read: boolean;
 	createdAt: string;
-};
+}
 
-export type NotificationsState = {
+export interface NotificationsState {
 	items: NotificationItem[];
 	nextCursor: string | null;
 	unreadCount: number;
 	loading: boolean;
-};
+}
 
 // Module-level cache keyed by user to avoid refetch storms and cross-user bleed
 type BootData = {
@@ -217,11 +227,11 @@ export const useNotifications = () => {
 			// Only refetch on REconnection, not first connection
 			if (!hasConnectedOnce) {
 				hasConnectedOnce = true;
-				console.log('� Initial socket connection established');
+				logger.debug('🔌 Initial socket connection established');
 				return;
 			}
 
-			console.log('�🔄 Socket reconnected, refetching notifications...');
+			logger.debug('🔄 Socket reconnected, refetching notifications');
 			// Refetch notifications on reconnect to catch any missed during disconnect
 			try {
 				const now = Date.now();
@@ -246,24 +256,28 @@ export const useNotifications = () => {
 					unreadCount,
 				}));
 			} catch (err) {
-				console.error(
-					'Failed to refetch notifications on reconnect:',
-					err,
-				);
+				logger.error('Failed to refetch notifications on reconnect', {
+					error: err instanceof Error ? err.message : String(err),
+				});
 			}
 		};
+		// Use reusable socket listeners pattern
+		const listeners = {
+			'notification:new': onNew,
+			'notifications:count': onCount,
+			'notification:read': onRead,
+			'notifications:readAll': onReadAll,
+			connect: onReconnect,
+		};
 
-		socket.on('notification:new', onNew);
-		socket.on('notifications:count', onCount);
-		socket.on('notification:read', onRead);
-		socket.on('notifications:readAll', onReadAll);
-		socket.on('connect', onReconnect);
+		Object.entries(listeners).forEach(([event, handler]) => {
+			socket.on(event, handler);
+		});
+
 		return () => {
-			socket.off('notification:new', onNew);
-			socket.off('notifications:count', onCount);
-			socket.off('notification:read', onRead);
-			socket.off('notifications:readAll', onReadAll);
-			socket.off('connect', onReconnect);
+			Object.entries(listeners).forEach(([event, handler]) => {
+				socket.off(event, handler);
+			});
 		};
 	}, [socket, showNotification]);
 
@@ -316,5 +330,49 @@ export const useNotifications = () => {
 		setState((s) => ({ ...s, items: s.items.filter((n) => n.id !== id) }));
 	}, []);
 
-	return { state, loadMore, markRead, markAllRead, remove };
+	const refresh = useCallback(async () => {
+		if (loadingRef.current) return;
+		loadingRef.current = true;
+		try {
+			const now = Date.now();
+			const [listRes, countRes] = await Promise.all([
+				api.get('/notifications', {
+					params: { limit: 20, _ts: now },
+				}),
+				api.get('/notifications/count', {
+					params: { _ts: now },
+				}),
+			]);
+			const items: NotificationItem[] = listRes.data?.items ?? [];
+			const unreadCount = countRes.data?.unreadCount ?? 0;
+
+			// Update dedupe set with refreshed items
+			seenIdsRef.current.clear();
+			for (const it of items) seenIdsRef.current.add(it.id);
+
+			setState((s) => ({
+				...s,
+				items,
+				nextCursor: listRes.data?.nextCursor ?? null,
+				unreadCount,
+			}));
+
+			// Update cache for this user
+			if (userIdKey) {
+				bootstrapCacheMap.set(userIdKey, {
+					items,
+					nextCursor: listRes.data?.nextCursor ?? null,
+					unreadCount,
+				});
+			}
+		} catch (err) {
+			logger.error('Failed to refresh notifications', {
+				error: err instanceof Error ? err.message : String(err),
+			});
+		} finally {
+			loadingRef.current = false;
+		}
+	}, [userIdKey]);
+
+	return { state, loadMore, markRead, markAllRead, remove, refresh };
 };

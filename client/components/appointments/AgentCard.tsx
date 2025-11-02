@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 import { Button } from '@/components/ui/Button';
+import { RichTextDisplay } from '@/components/ui';
 import { BookAppointmentModal } from '@/components/appointments/BookAppointmentModal';
+import { useAuth } from '@/hooks/useAuth';
 
 interface AgentCardProps {
 	agent: {
@@ -27,13 +28,15 @@ interface AgentCardProps {
 
 export const AgentCard: React.FC<AgentCardProps> = ({ agent }) => {
 	const [showBookingModal, setShowBookingModal] = useState(false);
-	const router = useRouter();
+	const { user } = useAuth();
+
+	const isAgent = user?.userType === 'agent';
 
 	return (
 		<>
-			<div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-200 overflow-hidden">
+			<div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-200 overflow-hidden h-full flex flex-col">
 				{/* Header with gradient */}
-				<div className="bg-brand-gradient-horizontal p-6 text-white">
+				<div className="bg-brand-gradient-horizontal p-6 text-white flex-shrink-0">
 					<div className="flex items-center space-x-4">
 						<ProfileAvatar
 							user={agent}
@@ -52,7 +55,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent }) => {
 				</div>
 
 				{/* Content */}
-				<div className="p-6 space-y-4">
+				<div className="p-6 space-y-4 flex-1">
 					{/* Stats */}
 					<div className="grid grid-cols-2 gap-4">
 						<div className="bg-brand-50 rounded-lg p-3 text-center">
@@ -129,64 +132,53 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent }) => {
 					{/* Personal Pitch */}
 					{agent.professionalInfo?.personalPitch && (
 						<div className="border-t pt-4">
-							<p className="text-sm text-gray-600 line-clamp-3">
-								{agent.professionalInfo.personalPitch}
-							</p>
+							<RichTextDisplay
+								content={agent.professionalInfo.personalPitch}
+								className="text-sm text-gray-600 line-clamp-3"
+							/>
 						</div>
 					)}
 				</div>
 
 				{/* Footer */}
-				<div className="px-6 pb-6 space-y-3">
-					<Button
-						onClick={() => setShowBookingModal(true)}
-						className="w-full bg-brand hover:bg-brand-dark text-white"
-					>
-						<svg
-							className="w-5 h-5 mr-2"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
+				<div className="px-6 pb-6 mt-auto">
+					{isAgent ? (
+						<div className="text-center py-3 px-4 bg-gray-100 rounded-lg">
+							<p className="text-sm text-gray-600">
+								Les agents ne peuvent pas prendre de rendez-vous
+							</p>
+						</div>
+					) : (
+						<Button
+							onClick={() => setShowBookingModal(true)}
+							className="w-full bg-brand hover:bg-brand-dark text-white"
 						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth="2"
-								d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-							/>
-						</svg>
-						Prendre rendez-vous
-					</Button>
-
-					<Button
-						onClick={() => router.push(`/chat?userId=${agent._id}`)}
-						variant="outline"
-						className="w-full border-brand text-brand hover:bg-brand-50"
-					>
-						<svg
-							className="w-5 h-5 mr-2"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth="2"
-								d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-							/>
-						</svg>
-						Message
-					</Button>
+							<svg
+								className="w-5 h-5 mr-2"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									strokeWidth="2"
+									d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+								/>
+							</svg>
+							Prendre rendez-vous
+						</Button>
+					)}
 				</div>
 			</div>
-
-			{/* Booking Modal */}
-			<BookAppointmentModal
-				isOpen={showBookingModal}
-				onClose={() => setShowBookingModal(false)}
-				agent={agent}
-			/>
+			{/* Booking Modal - Only render for non-agents */}
+			{!isAgent && (
+				<BookAppointmentModal
+					isOpen={showBookingModal}
+					onClose={() => setShowBookingModal(false)}
+					agent={agent}
+				/>
+			)}
 		</>
 	);
 };

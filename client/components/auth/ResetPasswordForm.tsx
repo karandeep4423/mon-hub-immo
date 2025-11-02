@@ -2,27 +2,100 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { toast } from 'react-toastify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/lib/api/authApi';
 import { resetPasswordSchema } from '@/lib/validation';
 import { ResetPasswordData } from '@/types/auth';
+import { useForm } from '@/hooks/useForm';
+import { Features } from '@/lib/constants';
+import {
+	handleAuthError,
+	showPasswordResetSuccess,
+	authToastError,
+} from '@/lib/utils/authToast';
+
+interface ResetPasswordFormData extends Record<string, unknown> {
+	code: string;
+	newPassword: string;
+	confirmPassword: string;
+}
 
 export const ResetPasswordForm: React.FC = () => {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const { login } = useAuth();
-	const [loading, setLoading] = useState(false);
 	const [email, setEmail] = useState('');
-	const [formData, setFormData] = useState({
-		code: '',
-		newPassword: '',
-		confirmPassword: '',
-	});
-	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [success, setSuccess] = useState(false);
+
+	const {
+		values,
+		errors,
+		isSubmitting,
+		handleInputChange,
+		setErrors,
+		handleSubmit,
+	} = useForm<ResetPasswordFormData>({
+		initialValues: {
+			code: '',
+			newPassword: '',
+			confirmPassword: '',
+		},
+		onSubmit: async (data) => {
+			try {
+				if (data.newPassword !== data.confirmPassword) {
+					setErrors({
+						confirmPassword:
+							Features.Auth.AUTH_TOAST_MESSAGES.PASSWORD_MISMATCH,
+					});
+					authToastError(
+						Features.Auth.AUTH_TOAST_MESSAGES.PASSWORD_MISMATCH,
+					);
+					return;
+				}
+
+				if (!email) {
+					setErrors({ email: 'Email requis' });
+					authToastError('❌ Email requis');
+					return;
+				}
+
+				const resetData: ResetPasswordData = {
+					email,
+					code: data.code,
+					newPassword: data.newPassword,
+				};
+
+				resetPasswordSchema.parse(resetData);
+
+				const response = await authService.resetPassword(resetData);
+
+				if (response.success) {
+					setSuccess(true);
+					showPasswordResetSuccess();
+
+					if (response.user) {
+						// Tokens are in httpOnly cookies
+						login(response.user);
+						setTimeout(() => {
+							router.push(
+								Features.Dashboard.DASHBOARD_ROUTES.BASE,
+							);
+						}, 2000);
+					} else {
+						setTimeout(() => {
+							router.push(Features.Auth.AUTH_ROUTES.LOGIN);
+						}, 2000);
+					}
+				} else {
+					handleAuthError(new Error(response.message));
+				}
+			} catch (error) {
+				handleAuthError(error);
+			}
+		},
+	});
 
 	useEffect(() => {
 		const emailParam = searchParams.get('email');
@@ -31,92 +104,13 @@ export const ResetPasswordForm: React.FC = () => {
 		}
 	}, [searchParams]);
 
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const { name, value } = e.target;
-		setFormData((prev) => ({
-			...prev,
-			[name]: value,
-		}));
-		if (errors[name]) {
-			setErrors((prev) => ({
-				...prev,
-				[name]: '',
-			}));
-		}
-	};
-
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setErrors({});
-
-		if (formData.newPassword !== formData.confirmPassword) {
-			setErrors({
-				confirmPassword: 'Les mots de passe ne correspondent pas',
-			});
-			return;
-		}
-
-		if (!email) {
-			setErrors({ email: 'Email requis' });
-			return;
-		}
-
-		try {
-			const resetData: ResetPasswordData = {
-				email,
-				code: formData.code,
-				newPassword: formData.newPassword,
-			};
-
-			resetPasswordSchema.parse(resetData);
-			setLoading(true);
-
-			const response = await authService.resetPassword(resetData);
-
-			if (response.success) {
-				setSuccess(true);
-				toast.success(response.message);
-
-				if (response.token && response.user) {
-					login(response.token, response.user);
-					setTimeout(() => {
-						router.push('/dashboard');
-					}, 2000);
-				} else {
-					setTimeout(() => {
-						router.push('/auth/login');
-					}, 2000);
-				}
-			} else {
-				toast.error(response.message);
-			}
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		} catch (validationError: any) {
-			if (validationError.errors) {
-				const validationErrors: Record<string, string> = {};
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				validationError.errors.forEach((err: any) => {
-					validationErrors[err.path[0]] = err.message;
-				});
-				setErrors(validationErrors);
-			} else {
-				toast.error(
-					validationError.response?.data?.message ||
-						"Une erreur s'est produite",
-				);
-			}
-		} finally {
-			setLoading(false);
-		}
-	};
-
 	if (success) {
 		return (
 			<div className="min-h-screen bg-white flex flex-col">
 				{/* Header */}
 				<div className="text-center pt-8 sm:pt-12 pb-6 sm:pb-8 px-4 sm:px-6">
 					<h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">
-						mon<span className="text-cyan-500">hubimmo</span>
+						mon<span className="text-brand">hubimmo</span>
 					</h1>
 				</div>
 
@@ -161,7 +155,7 @@ export const ResetPasswordForm: React.FC = () => {
 			{/* Header */}
 			<div className="text-center pt-8 sm:pt-12 pb-6 sm:pb-8 px-4 sm:px-6">
 				<h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">
-					hub<span className="text-cyan-500">immo</span>
+					mon<span className="text-brand">hubimmo</span>
 				</h1>
 
 				<div className="space-y-3 sm:space-y-4">
@@ -187,25 +181,27 @@ export const ResetPasswordForm: React.FC = () => {
 								label=""
 								type="text"
 								name="code"
-								value={formData.code}
+								value={values.code}
 								onChange={(e) => {
 									const value = e.target.value
-										.replace(/\D/g, '')
-										.slice(0, 6);
-									setFormData((prev) => ({
-										...prev,
-										code: value,
-									}));
-									if (errors.code)
-										setErrors((prev) => ({
-											...prev,
-											code: '',
-										}));
+										.replace(/[^0-9A-Z]/gi, '')
+										.toUpperCase()
+										.slice(0, 8);
+									handleInputChange({
+										target: {
+											name: 'code',
+											value,
+											type: 'text',
+										},
+									} as React.ChangeEvent<HTMLInputElement>);
 								}}
 								error={errors.code}
-								placeholder="Code à 6 chiffres"
-								maxLength={6}
-								className="text-center text-xl tracking-[0.5em] font-mono"
+								placeholder={
+									Features.Auth.AUTH_PLACEHOLDERS
+										.VERIFICATION_CODE
+								}
+								maxLength={8}
+								className="text-center text-xl tracking-[0.3em] font-mono uppercase"
 								required
 							/>
 						</div>
@@ -216,14 +212,17 @@ export const ResetPasswordForm: React.FC = () => {
 								label=""
 								type="password"
 								name="newPassword"
-								value={formData.newPassword}
-								onChange={handleChange}
+								value={values.newPassword}
+								onChange={handleInputChange}
 								error={errors.newPassword}
-								placeholder="Nouveau mot de passe"
+								placeholder={
+									Features.Auth.AUTH_PLACEHOLDERS.NEW_PASSWORD
+								}
 								required
 							/>
 							<p className="text-xs text-gray-500 text-center">
-								Doit contenir majuscule, minuscule et chiffre
+								Minimum 12 caractères avec majuscule, minuscule,
+								chiffre et caractère spécial
 							</p>
 						</div>
 
@@ -233,77 +232,78 @@ export const ResetPasswordForm: React.FC = () => {
 								label=""
 								type="password"
 								name="confirmPassword"
-								value={formData.confirmPassword}
-								onChange={handleChange}
+								value={values.confirmPassword}
+								onChange={handleInputChange}
 								error={errors.confirmPassword}
-								placeholder="Confirmer le mot de passe"
+								placeholder={
+									Features.Auth.AUTH_PLACEHOLDERS
+										.CONFIRM_PASSWORD
+								}
 								required
 							/>
-							{formData.newPassword &&
-								formData.confirmPassword && (
-									<div className="flex items-center justify-center space-x-2">
-										{formData.newPassword ===
-										formData.confirmPassword ? (
-											<>
-												<svg
-													className="w-4 h-4 text-green-500"
-													fill="none"
-													stroke="currentColor"
-													viewBox="0 0 24 24"
-												>
-													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														strokeWidth="2"
-														d="M5 13l4 4L19 7"
-													/>
-												</svg>
-												<span className="text-xs text-green-600">
-													Les mots de passe
-													correspondent
-												</span>
-											</>
-										) : (
-											<>
-												<svg
-													className="w-4 h-4 text-red-500"
-													fill="none"
-													stroke="currentColor"
-													viewBox="0 0 24 24"
-												>
-													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														strokeWidth="2"
-														d="M6 18L18 6M6 6l12 12"
-													/>
-												</svg>
-												<span className="text-xs text-red-600">
-													Les mots de passe ne
-													correspondent pas
-												</span>
-											</>
-										)}
-									</div>
-								)}
+							{values.newPassword && values.confirmPassword && (
+								<div className="flex items-center justify-center space-x-2">
+									{values.newPassword ===
+									values.confirmPassword ? (
+										<>
+											<svg
+												className="w-4 h-4 text-green-500"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth="2"
+													d="M5 13l4 4L19 7"
+												/>
+											</svg>
+											<span className="text-xs text-green-600">
+												Les mots de passe correspondent
+											</span>
+										</>
+									) : (
+										<>
+											<svg
+												className="w-4 h-4 text-red-500"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth="2"
+													d="M6 18L18 6M6 6l12 12"
+												/>
+											</svg>
+											<span className="text-xs text-red-600">
+												Les mots de passe ne
+												correspondent pas
+											</span>
+										</>
+									)}
+								</div>
+							)}
 						</div>
 
 						{/* Submit Button */}
 						<div className="pt-4">
 							<Button
 								type="submit"
-								loading={loading}
-								className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
+								loading={isSubmitting}
+								className="w-full bg-brand hover:bg-brand-600 text-white"
 								size="lg"
 								disabled={
-									formData.code.length !== 6 ||
-									!formData.newPassword ||
-									!formData.confirmPassword ||
-									formData.newPassword !==
-										formData.confirmPassword
+									values.code.length !== 6 ||
+									!values.newPassword ||
+									!values.confirmPassword ||
+									values.newPassword !==
+										values.confirmPassword
 								}
 							>
-								{loading
+								{isSubmitting
 									? 'Réinitialisation...'
 									: 'Réinitialiser le mot de passe'}
 							</Button>
@@ -316,9 +316,12 @@ export const ResetPasswordForm: React.FC = () => {
 							<button
 								type="button"
 								onClick={() =>
-									router.push('/auth/forgot-password')
+									router.push(
+										Features.Auth.AUTH_ROUTES
+											.FORGOT_PASSWORD,
+									)
 								}
-								className="text-cyan-600 hover:text-cyan-500 text-sm font-medium"
+								className="text-brand hover:text-brand text-sm font-medium"
 							>
 								Code non reçu ? Réessayer
 							</button>
@@ -327,7 +330,9 @@ export const ResetPasswordForm: React.FC = () => {
 						<div>
 							<button
 								type="button"
-								onClick={() => router.push('/auth/login')}
+								onClick={() =>
+									router.push(Features.Auth.AUTH_ROUTES.LOGIN)
+								}
 								className="text-gray-600 hover:text-gray-500 text-sm"
 							>
 								Retour à la connexion

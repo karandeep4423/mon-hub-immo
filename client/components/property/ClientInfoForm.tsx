@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Input, Select, NumberInput } from '@/components/ui';
+import { Input, NumberInput } from '@/components/ui';
+import { Select } from '@/components/ui/CustomSelect';
 import type { Property } from '@/lib/api/propertyApi';
 
 interface ClientInfoFormProps {
@@ -58,7 +59,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								)
 							}
 							disabled={disabled}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand/20"
 							rows={3}
 							placeholder="Lumière naturelle, proximité transports, rénovation récente..."
 						/>
@@ -81,7 +82,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								)
 							}
 							disabled={disabled}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand/20"
 							rows={3}
 							placeholder="Travaux à prévoir, nuisances sonores..."
 						/>
@@ -92,7 +93,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 						value={
 							clientInfo.commercialDetails?.occupancyStatus || ''
 						}
-						onChange={(value) =>
+						onChange={(value: string) =>
 							handleNestedChange(
 								'commercialDetails',
 								'occupancyStatus',
@@ -123,7 +124,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								)
 							}
 							disabled={disabled}
-							className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+							className="h-4 w-4 text-brand focus:ring-brand/20 border-gray-300 rounded"
 						/>
 						<label
 							htmlFor="openToLowerOffers"
@@ -212,7 +213,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								)
 							}
 							disabled={disabled}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand/20"
 							rows={3}
 							placeholder="Retours des visiteurs précédents..."
 						/>
@@ -235,7 +236,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								)
 							}
 							disabled={disabled}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand/20"
 							rows={3}
 							placeholder="Historique des modifications de prix..."
 						/>
@@ -268,7 +269,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								)
 							}
 							disabled={disabled}
-							className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+							className="h-4 w-4 text-brand focus:ring-brand/20 border-gray-300 rounded"
 						/>
 						<label
 							htmlFor="urgentToSell"
@@ -293,7 +294,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								)
 							}
 							disabled={disabled}
-							className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+							className="h-4 w-4 text-brand focus:ring-brand/20 border-gray-300 rounded"
 						/>
 						<label
 							htmlFor="openToNegotiation"
@@ -307,7 +308,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 					<Select
 						label="Y a-t-il un mandat exclusif, simple ou partagé ?"
 						value={clientInfo.ownerInfo?.mandateType || ''}
-						onChange={(value) =>
+						onChange={(value: string) =>
 							handleNestedChange(
 								'ownerInfo',
 								'mandateType',
@@ -338,7 +339,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								)
 							}
 							disabled={disabled}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand/20"
 							rows={3}
 							placeholder="Raisons de la vente..."
 						/>
@@ -360,7 +361,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								)
 							}
 							disabled={disabled}
-							className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+							className="h-4 w-4 text-brand focus:ring-brand/20 border-gray-300 rounded"
 						/>
 						<label
 							htmlFor="presentDuringVisits"
@@ -386,7 +387,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								)
 							}
 							disabled={disabled}
-							className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+							className="h-4 w-4 text-brand focus:ring-brand/20 border-gray-300 rounded"
 						/>
 						<label
 							htmlFor="flexibleSchedule"
@@ -412,7 +413,7 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								)
 							}
 							disabled={disabled}
-							className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+							className="h-4 w-4 text-brand focus:ring-brand/20 border-gray-300 rounded"
 						/>
 						<label
 							htmlFor="acceptConditionalOffers"

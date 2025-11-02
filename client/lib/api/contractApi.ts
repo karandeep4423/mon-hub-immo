@@ -1,4 +1,5 @@
 import { api } from '../api';
+import { handleApiError } from '../utils/errorHandler';
 
 export interface ContractData {
 	id: string;
@@ -33,46 +34,87 @@ export interface UpdateContractRequest {
 	additionalTerms: string;
 }
 
-export const contractApi = {
-	// Get contract details
-	getContract: async (
+/**
+ * Contract API Service
+ * Manages collaboration contract operations
+ */
+export class ContractApi {
+	/**
+	 * Get contract details for collaboration
+	 */
+	static async getContract(
 		collaborationId: string,
-	): Promise<{ contract: ContractData }> => {
-		const response = await api.get(`/contract/${collaborationId}`);
-		// Backend returns { success: true, contract: {...} }
-		return { contract: response.data.contract };
-	},
+	): Promise<{ contract: ContractData }> {
+		try {
+			const response = await api.get(`/contract/${collaborationId}`);
+			return { contract: response.data.contract };
+		} catch (error) {
+			throw handleApiError(
+				error,
+				'ContractApi.getContract',
+				'Erreur lors de la récupération du contrat',
+			);
+		}
+	}
 
-	// Update contract content
-	updateContract: async (
+	/**
+	 * Update contract content
+	 */
+	static async updateContract(
 		collaborationId: string,
 		data: UpdateContractRequest,
 	): Promise<{
 		contract: ContractData;
 		requiresResigning: boolean;
 		message: string;
-	}> => {
-		const response = await api.put(`/contract/${collaborationId}`, data);
-		// Backend returns { success: true, contract: {...}, requiresResigning: boolean, message: string }
-		return {
-			contract: response.data.contract,
-			requiresResigning: response.data.requiresResigning,
-			message: response.data.message,
-		};
-	},
+	}> {
+		try {
+			const response = await api.put(
+				`/contract/${collaborationId}`,
+				data,
+			);
+			return {
+				contract: response.data.contract,
+				requiresResigning: response.data.requiresResigning,
+				message: response.data.message,
+			};
+		} catch (error) {
+			throw handleApiError(
+				error,
+				'ContractApi.updateContract',
+				'Erreur lors de la mise à jour du contrat',
+			);
+		}
+	}
 
-	// Sign contract
-	signContract: async (
-		collaborationId: string,
-	): Promise<{
+	/**
+	 * Sign contract for collaboration
+	 */
+	static async signContract(collaborationId: string): Promise<{
 		contract: ContractData;
 		message: string;
-	}> => {
-		const response = await api.post(`/contract/${collaborationId}/sign`);
-		// Backend returns { success: true, contract: {...}, message: string }
-		return {
-			contract: response.data.contract,
-			message: response.data.message,
-		};
-	},
+	}> {
+		try {
+			const response = await api.post(
+				`/contract/${collaborationId}/sign`,
+			);
+			return {
+				contract: response.data.contract,
+				message: response.data.message,
+			};
+		} catch (error) {
+			throw handleApiError(
+				error,
+				'ContractApi.signContract',
+				'Erreur lors de la signature du contrat',
+			);
+		}
+	}
+}
+
+// Backward compatibility
+export const contractApi = {
+	getContract: ContractApi.getContract.bind(ContractApi),
+	updateContract: ContractApi.updateContract.bind(ContractApi),
+	signContract: ContractApi.signContract.bind(ContractApi),
 };

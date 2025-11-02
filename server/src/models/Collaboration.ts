@@ -99,6 +99,18 @@ export interface ICollaboration extends Document {
 	updatedAt: Date;
 	completedAt?: Date;
 
+	// Completion/Termination details
+	completionReason?:
+		| 'vente_conclue_collaboration'
+		| 'vente_conclue_seul'
+		| 'bien_retire'
+		| 'mandat_expire'
+		| 'client_desiste'
+		| 'vendu_tiers'
+		| 'sans_suite';
+	completedBy?: Types.ObjectId; // User who marked it as completed
+	completedByRole?: 'owner' | 'collaborator'; // Role of user who completed
+
 	// Methods
 	addActivity(
 		type: string,
@@ -341,6 +353,35 @@ const collaborationSchema = new Schema<ICollaboration>(
 		],
 		completedAt: {
 			type: Date,
+		},
+		completionReason: {
+			type: String,
+			enum: {
+				values: [
+					'vente_conclue_collaboration',
+					'vente_conclue_seul',
+					'bien_retire',
+					'mandat_expire',
+					'client_desiste',
+					'vendu_tiers',
+					'sans_suite',
+				],
+				message: 'Invalid completion reason',
+			},
+			required: false,
+		},
+		completedBy: {
+			type: Schema.Types.ObjectId,
+			ref: 'User',
+			required: false,
+		},
+		completedByRole: {
+			type: String,
+			enum: {
+				values: ['owner', 'collaborator'],
+				message: 'Invalid completed by role',
+			},
+			required: false,
 		},
 	},
 	{

@@ -1,6 +1,10 @@
 export { AgentCard } from './AgentCard';
 export { BookAppointmentModal } from './BookAppointmentModal';
 export { AgentFilters } from './AgentFilters';
-export { AgentAppointments } from './AgentAppointments';
-export { ApporteurAppointments } from './ApporteurAppointments';
 export { AvailabilityManager } from './AvailabilityManager';
+export { AppointmentsManager } from './AppointmentsManager';
+export { AppointmentCard } from './AppointmentCard';
+export { AppointmentFilters } from './AppointmentFilters';
+export { BookingStep1 } from './BookingStep1';
+export { BookingStep2 } from './BookingStep2';
+export { BookingStep3 } from './BookingStep3';

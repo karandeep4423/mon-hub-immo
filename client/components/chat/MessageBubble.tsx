@@ -8,6 +8,7 @@ import { MessageTime } from './ui';
 import { formatTimeOnly, formatFileSize } from './utils/messageUtils';
 import { getIconForMime } from './ui/FileTypeIcons';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -75,7 +76,7 @@ const getBubbleClasses = (isMyMessage: boolean): string => {
 		'max-w-[70%] sm:max-w-[85%] rounded-lg px-4 py-2 shadow-sm';
 
 	if (isMyMessage) {
-		return `${baseClasses} bg-[#00b4d8] text-white rounded-br-sm`;
+		return `${baseClasses} bg-brand text-white rounded-br-sm`;
 	}
 
 	return `${baseClasses} bg-white text-gray-800 border border-gray-200 rounded-bl-sm`;
@@ -93,7 +94,7 @@ const getContainerClasses = (isMyMessage: boolean): string => {
  */
 const handleImageClick = (imageUrl: string): void => {
 	// Could implement image preview/modal here
-	console.log('Image clicked:', imageUrl);
+	logger.debug('Image clicked:', imageUrl);
 };
 
 // ============================================================================
@@ -166,21 +167,21 @@ const DocTile: React.FC<{
 					: mime;
 
 	const badgeBg = isPdf
-		? 'bg-red-600'
+		? 'bg-error'
 		: isWord
-			? 'bg-blue-600'
+			? 'bg-info'
 			: isExcel
-				? 'bg-green-600'
+				? 'bg-success'
 				: isPpt
-					? 'bg-orange-600'
+					? 'bg-accent'
 					: 'bg-gray-600';
 
-	// Brand-colored container using project accent #00b4d8
+	// Brand-colored container using project accent
 	return (
-		<div className="mt-2 w-full max-w-[420px] rounded-xl border border-[#0094b3] bg-[#00b4d8] text-white shadow-sm">
+		<div className="mt-2 w-full max-w-[420px] rounded-xl border border-brand bg-brand text-white shadow-card">
 			<div className="flex items-center gap-3 px-4 pt-3">
 				<div
-					className={`h-12 w-12 ${badgeBg} rounded-md flex items-center justify-center select-none`}
+					className={`h-12 w-12 ${badgeBg} rounded-xl flex items-center justify-center select-none`}
 					aria-hidden
 				>
 					{(() => {
@@ -192,7 +193,7 @@ const DocTile: React.FC<{
 					<div className="truncate font-semibold leading-tight">
 						{name || 'Document'}
 					</div>
-					<div className="text-white/85 text-sm">
+					<div className="text-white/90 text-sm">
 						{fileSize ? `${fileSize}, ${docLabel}` : docLabel}
 					</div>
 				</div>
@@ -320,7 +321,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
 			try {
 				await chatStore.deleteMessage(message._id);
 			} catch (e) {
-				console.error('Failed to delete message', e);
+				logger.error('Failed to delete message', e);
 			} finally {
 				setDeleting(false);
 				setConfirmOpen(false);

@@ -1,20 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import searchAdApi from '@/lib/api/searchAdApi';
+import { useState } from 'react';
 import { SearchAd } from '@/types/searchAd';
 import { SearchAdCard } from '@/components/search-ads/SearchAdCard';
+import { PageLoader } from '@/components/ui/LoadingSpinner';
 import Link from 'next/link';
 import { LocationSearchWithRadius } from '@/components/ui';
 import type { LocationItem } from '@/components/ui/LocationSearchWithRadius';
 import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/lib/api/authApi';
+import { useSearchAds } from '@/hooks/useSearchAds';
+import { logger } from '@/lib/utils/logger';
+import { Features } from '@/lib/constants';
 
 export default function SearchAdsPage() {
 	const { user } = useAuth();
-	const [searchAds, setSearchAds] = useState<SearchAd[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
+
+	// Fetch search ads using SWR
+	const { data: searchAds = [], isLoading: loading } = useSearchAds();
+
 	const [selectedLocations, setSelectedLocations] = useState<LocationItem[]>(
 		[],
 	);
@@ -31,27 +35,10 @@ export default function SearchAdsPage() {
 					preferredRadius: newRadius,
 				});
 			} catch (error) {
-				console.error('Error saving radius preference:', error);
+				logger.error('Error saving radius preference', { error });
 			}
 		}
 	};
-
-	useEffect(() => {
-		const fetchSearchAds = async () => {
-			try {
-				setLoading(true);
-				const ads = await searchAdApi.getAllSearchAds();
-				setSearchAds(ads);
-			} catch (err) {
-				setError('Impossible de charger les recherches.');
-				console.error(err);
-			} finally {
-				setLoading(false);
-			}
-		};
-
-		fetchSearchAds();
-	}, []);
 
 	// Filter search ads by selected locations
 	const filteredSearchAds =
@@ -82,17 +69,7 @@ export default function SearchAdsPage() {
 
 	if (loading) {
 		return (
-			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-				<div className="text-center">Chargement des recherches...</div>
-			</div>
-		);
-	}
-
-	if (error) {
-		return (
-			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-				<div className="text-red-500 text-center">{error}</div>
-			</div>
+			<PageLoader message={Features.SearchAds.SEARCH_AD_LOADING.PAGE} />
 		);
 	}
 

@@ -4,10 +4,12 @@ import { useNotifications } from '@/store/notifications';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ProfileAvatar } from '../ui/ProfileAvatar';
+import { logger } from '@/lib/utils/logger';
 
 export const NotificationBell = () => {
 	const router = useRouter();
-	const { state, markAllRead, markRead, remove } = useNotifications();
+	const { state, markAllRead, markRead, remove, refresh } =
+		useNotifications();
 	const [open, setOpen] = useState(false);
 	const ref = useRef<HTMLDivElement | null>(null);
 
@@ -36,9 +38,21 @@ export const NotificationBell = () => {
 		}
 	}, [open, state.unreadCount, markAllRead]);
 
+	// Refresh notifications when bell is opened to get latest actor data
+	useEffect(() => {
+		if (open) {
+			refresh().catch(() => {
+				// Silently fail - user still sees cached data
+			});
+		}
+	}, [open, refresh]);
+
 	const handleItemClick = async (
 		id: string,
-		entity: { type: 'chat' | 'collaboration'; id: string },
+		entity: {
+			type: 'chat' | 'collaboration' | 'appointment';
+			id: string;
+		},
 		actorId: string,
 	) => {
 		try {
@@ -48,13 +62,15 @@ export const NotificationBell = () => {
 				router.push(`/chat?userId=${encodeURIComponent(actorId)}`);
 			} else if (entity.type === 'collaboration') {
 				router.push(`/collaboration/${encodeURIComponent(entity.id)}`);
+			} else if (entity.type === 'appointment') {
+				router.push('/dashboard');
 			}
 		} catch {
 			// ignore navigation errors
 		}
 	};
 
-	console.log('Notifications state:', state);
+	logger.debug('Notifications state:', state);
 	return (
 		<div ref={ref} className="relative">
 			<button
@@ -83,7 +99,7 @@ export const NotificationBell = () => {
 				)}
 			</button>
 			{open && (
-				<div className="absolute right-0 mt-2 w-80 bg-white shadow-lg rounded-lg border border-gray-200 max-h-96 overflow-auto z-50">
+				<div className="fixed left-1/2 -translate-x-1/2 top-16 w-[95vw] max-w-[420px] bg-white shadow-lg rounded-lg border border-gray-200 max-h-[70vh] overflow-auto z-50 md:absolute md:top-full md:left-1/2 md:-translate-x-1/2 md:right-auto md:mt-2 md:w-96 md:max-h-[400px]">
 					<div className="py-2">
 						{state?.items?.length === 0 ? (
 							<div className="p-4 text-sm text-gray-500 text-center">
@@ -115,7 +131,7 @@ export const NotificationBell = () => {
 												meta?.actorAvatar;
 
 											// Debug logging
-											console.log(
+											logger.debug(
 												'Notification avatar data:',
 												{
 													notificationId: n.id,

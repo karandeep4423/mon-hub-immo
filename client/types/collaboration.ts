@@ -54,6 +54,19 @@ export interface Collaboration {
 	activities: CollaborationActivity[];
 	createdAt: string;
 	updatedAt: string;
+	completedAt?: string;
+
+	// Completion/Termination details
+	completionReason?:
+		| 'vente_conclue_collaboration'
+		| 'vente_conclue_seul'
+		| 'bien_retire'
+		| 'mandat_expire'
+		| 'client_desiste'
+		| 'vendu_tiers'
+		| 'sans_suite';
+	completedBy?: string; // User ID who marked it as completed
+	completedByRole?: 'owner' | 'collaborator'; // Role of user who completed
 }
 
 export interface StepNote {

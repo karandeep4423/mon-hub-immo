@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
-import { useSocket } from '@/context/SocketContext';
+import { useCallback } from 'react';
+import { useSocketListeners } from './useSocketListener';
 import { useNotification } from './useNotification';
 import { useAuth } from './useAuth';
 import { Appointment } from '@/types/appointment';
@@ -13,7 +13,6 @@ interface UseAppointmentNotificationsOptions {
 export const useAppointmentNotifications = (
 	options?: UseAppointmentNotificationsOptions,
 ) => {
-	const { socket } = useSocket();
 	const { showNotification } = useNotification();
 	const { user } = useAuth();
 	const { onUpdate } = options || {};
@@ -188,26 +187,14 @@ export const useAppointmentNotifications = (
 		[user, showNotification, onUpdate],
 	);
 
-	useEffect(() => {
-		if (!socket || !user) return;
-
-		socket.on('appointment:new', handleNewAppointment);
-		socket.on('appointment:status_updated', handleStatusUpdate);
-		socket.on('appointment:cancelled', handleCancellation);
-		socket.on('appointment:rescheduled', handleReschedule);
-
-		return () => {
-			socket.off('appointment:new', handleNewAppointment);
-			socket.off('appointment:status_updated', handleStatusUpdate);
-			socket.off('appointment:cancelled', handleCancellation);
-			socket.off('appointment:rescheduled', handleReschedule);
-		};
-	}, [
-		socket,
-		user,
-		handleNewAppointment,
-		handleStatusUpdate,
-		handleCancellation,
-		handleReschedule,
-	]);
+	// Set up socket listeners using reusable pattern
+	// Type casting to handle specific event types
+	useSocketListeners({
+		'appointment:new': handleNewAppointment as (data: unknown) => void,
+		'appointment:status_updated': handleStatusUpdate as (
+			data: unknown,
+		) => void,
+		'appointment:cancelled': handleCancellation as (data: unknown) => void,
+		'appointment:rescheduled': handleReschedule as (data: unknown) => void,
+	});
 };

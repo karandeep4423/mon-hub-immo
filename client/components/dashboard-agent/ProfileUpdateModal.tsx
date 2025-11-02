@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { toast } from 'react-toastify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -8,11 +8,21 @@ import { ProfileImageUploader } from '../ui/ProfileImageUploader';
 import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/lib/api/authApi';
 import { User } from '@/types/auth';
+import { useForm } from '@/hooks/useForm';
+import { handleFormSubmitError } from '@/lib/utils/formErrors';
+import { AUTH_TOAST_MESSAGES } from '@/lib/constants/features/auth';
 
 interface ProfileUpdateModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	user: User;
+}
+
+interface ProfileFormData extends Record<string, unknown> {
+	firstName: string;
+	lastName: string;
+	phone: string;
+	profileImage: string;
 }
 
 export const ProfileUpdateModal: React.FC<ProfileUpdateModalProps> = ({
@@ -21,149 +31,107 @@ export const ProfileUpdateModal: React.FC<ProfileUpdateModalProps> = ({
 	user,
 }) => {
 	const { updateUser } = useAuth();
-	const [loading, setLoading] = useState(false);
-	const [formData, setFormData] = useState({
-		firstName: user.firstName,
-		lastName: user.lastName,
-		phone: user.phone || '',
-		profileImage: user.profileImage || '',
-	});
-	const [errors, setErrors] = useState<Record<string, string>>({});
 
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const { name, value } = e.target;
-		setFormData((prev) => ({
-			...prev,
-			[name]: value,
-		}));
-		// Clear error when user starts typing
-		if (errors[name]) {
-			setErrors((prev) => ({
-				...prev,
-				[name]: '',
-			}));
-		}
-	};
+	const {
+		values: formData,
+		errors,
+		isSubmitting,
+		setFieldValue,
+		setErrors,
+		resetForm,
+		handleSubmit,
+	} = useForm<ProfileFormData>({
+		initialValues: {
+			firstName: user.firstName,
+			lastName: user.lastName,
+			phone: user.phone || '',
+			profileImage: user.profileImage || '',
+		},
+		onSubmit: async (values) => {
+			// Validation
+			const newErrors: Record<string, string> = {};
 
-	const handleImageUploaded = (imageUrl: string) => {
-		setFormData((prev) => ({
-			...prev,
-			profileImage: imageUrl,
-		}));
-		// Clear error when image is uploaded
-		if (errors.profileImage) {
-			setErrors((prev) => ({
-				...prev,
-				profileImage: '',
-			}));
-		}
-	};
+			if (!values.firstName.trim()) {
+				newErrors.firstName = 'First name is required';
+			} else if (values.firstName.trim().length < 2) {
+				newErrors.firstName =
+					'First name must be at least 2 characters';
+			}
 
-	const handleImageRemove = () => {
-		setFormData((prev) => ({
-			...prev,
-			profileImage: '',
-		}));
-	};
+			if (!values.lastName.trim()) {
+				newErrors.lastName = 'Last name is required';
+			} else if (values.lastName.trim().length < 2) {
+				newErrors.lastName = 'Last name must be at least 2 characters';
+			}
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setErrors({});
+			if (values.profileImage && !isValidUrl(values.profileImage)) {
+				newErrors.profileImage = 'Please enter a valid image URL';
+			}
 
-		// Basic validation
-		const newErrors: Record<string, string> = {};
-
-		if (!formData.firstName.trim()) {
-			newErrors.firstName = 'First name is required';
-		} else if (formData.firstName.trim().length < 2) {
-			newErrors.firstName = 'First name must be at least 2 characters';
-		}
-
-		if (!formData.lastName.trim()) {
-			newErrors.lastName = 'Last name is required';
-		} else if (formData.lastName.trim().length < 2) {
-			newErrors.lastName = 'Last name must be at least 2 characters';
-		}
-
-		if (formData.profileImage && !isValidUrl(formData.profileImage)) {
-			newErrors.profileImage = 'Please enter a valid image URL';
-		}
-
-		if (Object.keys(newErrors).length > 0) {
-			setErrors(newErrors);
-			return;
-		}
-
-		try {
-			setLoading(true);
+			if (Object.keys(newErrors).length > 0) {
+				setErrors(newErrors);
+				return;
+			}
 
 			// Only send changed fields
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const changedFields: any = {};
-			if (formData.firstName !== user.firstName)
-				changedFields.firstName = formData.firstName.trim();
-			if (formData.lastName !== user.lastName)
-				changedFields.lastName = formData.lastName.trim();
-			if (formData.phone !== (user.phone || ''))
-				changedFields.phone = formData.phone.trim();
-			if (formData.profileImage !== (user.profileImage || ''))
-				changedFields.profileImage = formData.profileImage.trim();
+			const changedFields: Partial<ProfileFormData> = {};
+			if (values.firstName !== user.firstName)
+				changedFields.firstName = values.firstName.trim();
+			if (values.lastName !== user.lastName)
+				changedFields.lastName = values.lastName.trim();
+			if (values.phone !== (user.phone || ''))
+				changedFields.phone = values.phone.trim();
+			if (values.profileImage !== (user.profileImage || ''))
+				changedFields.profileImage = values.profileImage.trim();
 
 			if (Object.keys(changedFields).length === 0) {
-				toast.info('No changes detected');
+				toast.info(AUTH_TOAST_MESSAGES.NO_CHANGES_DETECTED);
 				onClose();
 				return;
 			}
 
-			const response = await authService.updateProfile(changedFields);
+			try {
+				const response = await authService.updateProfile(changedFields);
 
-			if (response.success && response.user) {
-				updateUser(response.user);
-				toast.success(
-					response.message || 'Profile updated successfully',
-				);
-				onClose();
-			} else {
-				toast.error(response.message || 'Failed to update profile');
+				if (response.success && response.user) {
+					updateUser(response.user);
+					toast.success(
+						response.message || AUTH_TOAST_MESSAGES.PROFILE_UPDATED,
+					);
+					onClose();
+				} else {
+					toast.error(
+						response.message ||
+							AUTH_TOAST_MESSAGES.PROFILE_UPDATE_ERROR,
+					);
+				}
+			} catch (error) {
+				handleFormSubmitError(error, setErrors, 'ProfileUpdateModal');
+				throw error;
 			}
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		} catch (error: any) {
-			if (error.response?.data?.errors) {
-				const validationErrors: Record<string, string> = {};
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				error.response.data.errors.forEach((err: any) => {
-					validationErrors[err.path || err.param] =
-						err.msg || err.message;
-				});
-				setErrors(validationErrors);
-			} else {
-				toast.error(
-					error.response?.data?.message || 'Something went wrong',
-				);
-			}
-		} finally {
-			setLoading(false);
-		}
+		},
+	});
+
+	const handleImageUploaded = (imageUrl: string) => {
+		setFieldValue('profileImage', imageUrl);
+	};
+
+	const handleImageRemove = () => {
+		setFieldValue('profileImage', '');
 	};
 
 	const isValidUrl = (string: string) => {
 		try {
 			new URL(string);
 			return true;
-		} catch (_) {
+		} catch {
 			return false;
 		}
 	};
 
 	const handleClose = () => {
-		if (!loading) {
-			setFormData({
-				firstName: user.firstName,
-				lastName: user.lastName,
-				phone: user.phone || '',
-				profileImage: user.profileImage || '',
-			});
-			setErrors({});
+		if (!isSubmitting) {
+			resetForm();
 			onClose();
 		}
 	};
@@ -180,7 +148,7 @@ export const ProfileUpdateModal: React.FC<ProfileUpdateModalProps> = ({
 					</h2>
 					<button
 						onClick={handleClose}
-						disabled={loading}
+						disabled={isSubmitting}
 						className="text-gray-400 hover:text-gray-600 transition-colors"
 					>
 						<svg
@@ -207,22 +175,26 @@ export const ProfileUpdateModal: React.FC<ProfileUpdateModalProps> = ({
 							type="text"
 							name="firstName"
 							value={formData.firstName}
-							onChange={handleChange}
+							onChange={(e) =>
+								setFieldValue('firstName', e.target.value)
+							}
 							error={errors.firstName}
 							placeholder="John"
 							required
-							disabled={loading}
+							disabled={isSubmitting}
 						/>
 						<Input
 							label="Last Name"
 							type="text"
 							name="lastName"
 							value={formData.lastName}
-							onChange={handleChange}
+							onChange={(e) =>
+								setFieldValue('lastName', e.target.value)
+							}
 							error={errors.lastName}
 							placeholder="Doe"
 							required
-							disabled={loading}
+							disabled={isSubmitting}
 						/>
 					</div>
 
@@ -231,17 +203,17 @@ export const ProfileUpdateModal: React.FC<ProfileUpdateModalProps> = ({
 						type="tel"
 						name="phone"
 						value={formData.phone}
-						onChange={handleChange}
+						onChange={(e) => setFieldValue('phone', e.target.value)}
 						error={errors.phone}
 						placeholder="+1234567890"
-						disabled={loading}
+						disabled={isSubmitting}
 					/>
 
 					<ProfileImageUploader
 						currentImageUrl={formData.profileImage}
 						onImageUploaded={handleImageUploaded}
 						onRemove={handleImageRemove}
-						disabled={loading}
+						disabled={isSubmitting}
 						size="medium"
 						uploadingText="Uploading profile image..."
 					/>
@@ -300,14 +272,14 @@ export const ProfileUpdateModal: React.FC<ProfileUpdateModalProps> = ({
 							type="button"
 							variant="outline"
 							onClick={handleClose}
-							disabled={loading}
+							disabled={isSubmitting}
 							className="flex-1"
 						>
 							Cancel
 						</Button>
 						<Button
 							type="submit"
-							loading={loading}
+							loading={isSubmitting}
 							className="flex-1"
 						>
 							Save Changes

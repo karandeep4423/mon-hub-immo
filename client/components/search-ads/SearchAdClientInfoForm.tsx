@@ -1,8 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Input, Select } from '@/components/ui';
+import { Input } from '@/components/ui';
+import { Select } from '@/components/ui/CustomSelect';
 import type { SearchAd } from '@/types/searchAd';
+import { Features } from '@/lib/constants';
 
 interface SearchAdClientInfoFormProps {
 	clientInfo: SearchAd['clientInfo'];
@@ -53,30 +55,30 @@ export const SearchAdClientInfoForm: React.FC<SearchAdClientInfoFormProps> = ({
 							)
 						}
 						name="clientName"
-						placeholder="Nom et prénom du client"
+						placeholder={
+							Features.SearchAds.SEARCH_AD_PLACEHOLDERS
+								.CLIENT_NAME
+						}
 						disabled={disabled}
-					/>
-
+					/>{' '}
 					<Select
 						label="Statut (particulier, investisseur, entreprise)"
 						value={clientInfo.qualificationInfo?.clientStatus || ''}
-						onChange={(value) =>
+						onChange={(value: string) =>
 							handleNestedChange(
 								'qualificationInfo',
 								'clientStatus',
 								value,
 							)
 						}
-						name="clientStatus"
 						options={[
-							{ value: '', label: 'Sélectionner...' },
 							{ value: 'particulier', label: 'Particulier' },
 							{ value: 'investisseur', label: 'Investisseur' },
 							{ value: 'entreprise', label: 'Entreprise' },
 						]}
+						placeholder="Sélectionner..."
 						disabled={disabled}
 					/>
-
 					<Input
 						label="Profession / Situation professionnelle"
 						type="text"
@@ -89,16 +91,29 @@ export const SearchAdClientInfoForm: React.FC<SearchAdClientInfoFormProps> = ({
 							)
 						}
 						name="profession"
-						placeholder="Profession du client"
+						placeholder={
+							Features.SearchAds.SEARCH_AD_PLACEHOLDERS.PROFESSION
+						}
 						disabled={disabled}
-					/>
-
+					/>{' '}
 					<div className="space-y-2">
 						<label className="block text-sm font-medium text-gray-700">
 							Projet réalisé en couple ou seul ?
 						</label>
-						<div className="flex items-center space-x-6">
-							<label className="flex items-center space-x-2">
+						<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+							{/* En couple */}
+							<label
+								className={`
+									relative overflow-hidden rounded-xl cursor-pointer h-full
+									transition-all duration-300 ease-in-out
+									${
+										clientInfo.qualificationInfo
+											?.projectType === 'couple'
+											? 'ring-2 ring-cyan-500 shadow-lg shadow-cyan-200'
+											: 'ring-1 ring-gray-200 hover:ring-cyan-300 hover:shadow-md'
+									}
+								`}
+							>
 								<input
 									type="radio"
 									name="projectType"
@@ -115,13 +130,47 @@ export const SearchAdClientInfoForm: React.FC<SearchAdClientInfoFormProps> = ({
 										)
 									}
 									disabled={disabled}
-									className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+									className="sr-only"
 								/>
-								<span className="text-sm text-gray-700">
-									Couple
-								</span>
+								<div
+									className={`
+									bg-gradient-to-br ${clientInfo.qualificationInfo?.projectType === 'couple' ? 'from-pink-50 to-rose-50' : 'from-gray-50 to-slate-50'}
+									p-3 sm:p-4 transition-all duration-300 h-full
+									${clientInfo.qualificationInfo?.projectType === 'couple' ? 'bg-opacity-100' : 'bg-opacity-60 hover:bg-opacity-80'}
+								`}
+								>
+									<div className="flex items-center gap-2 h-full">
+										<div className="text-xl sm:text-2xl">
+											👫
+										</div>
+										<span
+											className={`text-sm font-medium transition-colors duration-300 ${clientInfo.qualificationInfo?.projectType === 'couple' ? 'text-brand' : 'text-gray-700'}`}
+										>
+											Couple
+										</span>
+										{clientInfo.qualificationInfo
+											?.projectType === 'couple' && (
+											<div className="text-brand text-sm sm:text-base absolute top-1 right-3">
+												✓
+											</div>
+										)}
+									</div>
+								</div>
 							</label>
-							<label className="flex items-center space-x-2">
+
+							{/* Seul */}
+							<label
+								className={`
+									relative overflow-hidden rounded-xl cursor-pointer h-full
+									transition-all duration-300 ease-in-out
+									${
+										clientInfo.qualificationInfo
+											?.projectType === 'seul'
+											? 'ring-2 ring-cyan-500 shadow-lg shadow-cyan-200'
+											: 'ring-1 ring-gray-200 hover:ring-cyan-300 hover:shadow-md'
+									}
+								`}
+							>
 								<input
 									type="radio"
 									name="projectType"
@@ -138,64 +187,146 @@ export const SearchAdClientInfoForm: React.FC<SearchAdClientInfoFormProps> = ({
 										)
 									}
 									disabled={disabled}
-									className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+									className="sr-only"
 								/>
-								<span className="text-sm text-gray-700">
-									Seul
-								</span>
+								<div
+									className={`
+									bg-gradient-to-br ${clientInfo.qualificationInfo?.projectType === 'seul' ? 'from-amber-50 to-yellow-50' : 'from-gray-50 to-slate-50'}
+									p-3 sm:p-4 transition-all duration-300 h-full
+									${clientInfo.qualificationInfo?.projectType === 'seul' ? 'bg-opacity-100' : 'bg-opacity-60 hover:bg-opacity-80'}
+								`}
+								>
+									<div className="flex items-center gap-2 h-full">
+										<div className="text-xl sm:text-2xl">
+											👤
+										</div>
+										<span
+											className={`text-sm font-medium transition-colors duration-300 ${clientInfo.qualificationInfo?.projectType === 'seul' ? 'text-brand' : 'text-gray-700'}`}
+										>
+											Seul
+										</span>
+										{clientInfo.qualificationInfo
+											?.projectType === 'seul' && (
+											<div className="text-brand text-sm sm:text-base absolute top-1 right-3">
+												✓
+											</div>
+										)}
+									</div>
+								</div>
 							</label>
 						</div>
 					</div>
-
-					<div className="flex items-center space-x-2">
-						<input
-							type="checkbox"
-							id="hasRealEstateAgent"
-							checked={
-								clientInfo.qualificationInfo
-									?.hasRealEstateAgent || false
-							}
-							onChange={(e) =>
-								handleNestedChange(
-									'qualificationInfo',
-									'hasRealEstateAgent',
-									e.target.checked,
-								)
-							}
-							disabled={disabled}
-							className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-						/>
+					<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+						{/* Déjà un agent immobilier ? */}
 						<label
-							htmlFor="hasRealEstateAgent"
-							className="text-sm font-medium text-gray-700"
+							className={`
+								relative overflow-hidden rounded-xl cursor-pointer h-full
+								transition-all duration-300 ease-in-out
+								${
+									clientInfo.qualificationInfo
+										?.hasRealEstateAgent
+										? 'ring-2 ring-cyan-500 shadow-lg shadow-cyan-200'
+										: 'ring-1 ring-gray-200 hover:ring-cyan-300 hover:shadow-md'
+								}
+							`}
 						>
-							Avez-vous déjà un agent immobilier ?
+							<input
+								type="checkbox"
+								id="hasRealEstateAgent"
+								checked={
+									clientInfo.qualificationInfo
+										?.hasRealEstateAgent || false
+								}
+								onChange={(e) =>
+									handleNestedChange(
+										'qualificationInfo',
+										'hasRealEstateAgent',
+										e.target.checked,
+									)
+								}
+								disabled={disabled}
+								className="sr-only"
+							/>
+							<div
+								className={`
+								bg-gradient-to-br ${clientInfo.qualificationInfo?.hasRealEstateAgent ? 'from-indigo-50 to-blue-50' : 'from-gray-50 to-slate-50'}
+								p-3 sm:p-4 transition-all duration-300 h-full
+								${clientInfo.qualificationInfo?.hasRealEstateAgent ? 'bg-opacity-100' : 'bg-opacity-60 hover:bg-opacity-80'}
+							`}
+							>
+								<div className="flex items-center gap-2 h-full">
+									<div className="text-xl sm:text-2xl">
+										🧑‍💼
+									</div>
+									<span
+										className={`text-sm font-medium transition-colors duration-300 ${clientInfo.qualificationInfo?.hasRealEstateAgent ? 'text-brand' : 'text-gray-700'}`}
+									>
+										Avez-vous déjà un agent immobilier ?
+									</span>
+									{clientInfo.qualificationInfo
+										?.hasRealEstateAgent && (
+										<div className="text-brand text-sm sm:text-base absolute top-1 right-3">
+											✓
+										</div>
+									)}
+								</div>
+							</div>
 						</label>
-					</div>
 
-					<div className="flex items-center space-x-2">
-						<input
-							type="checkbox"
-							id="hasVisitedProperties"
-							checked={
-								clientInfo.qualificationInfo
-									?.hasVisitedProperties || false
-							}
-							onChange={(e) =>
-								handleNestedChange(
-									'qualificationInfo',
-									'hasVisitedProperties',
-									e.target.checked,
-								)
-							}
-							disabled={disabled}
-							className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-						/>
+						{/* Déjà visité des biens ? */}
 						<label
-							htmlFor="hasVisitedProperties"
-							className="text-sm font-medium text-gray-700"
+							className={`
+								relative overflow-hidden rounded-xl cursor-pointer h-full
+								transition-all duration-300 ease-in-out
+								${
+									clientInfo.qualificationInfo
+										?.hasVisitedProperties
+										? 'ring-2 ring-cyan-500 shadow-lg shadow-cyan-200'
+										: 'ring-1 ring-gray-200 hover:ring-cyan-300 hover:shadow-md'
+								}
+							`}
 						>
-							Avez-vous déjà visité des biens ?
+							<input
+								type="checkbox"
+								id="hasVisitedProperties"
+								checked={
+									clientInfo.qualificationInfo
+										?.hasVisitedProperties || false
+								}
+								onChange={(e) =>
+									handleNestedChange(
+										'qualificationInfo',
+										'hasVisitedProperties',
+										e.target.checked,
+									)
+								}
+								disabled={disabled}
+								className="sr-only"
+							/>
+							<div
+								className={`
+								bg-gradient-to-br ${clientInfo.qualificationInfo?.hasVisitedProperties ? 'from-green-50 to-emerald-50' : 'from-gray-50 to-slate-50'}
+								p-3 sm:p-4 transition-all duration-300 h-full
+								${clientInfo.qualificationInfo?.hasVisitedProperties ? 'bg-opacity-100' : 'bg-opacity-60 hover:bg-opacity-80'}
+							`}
+							>
+								<div className="flex items-center gap-2 h-full">
+									<div className="text-xl sm:text-2xl">
+										🔎
+									</div>
+									<span
+										className={`text-sm font-medium transition-colors duration-300 ${clientInfo.qualificationInfo?.hasVisitedProperties ? 'text-brand' : 'text-gray-700'}`}
+									>
+										Avez-vous déjà visité des biens ?
+									</span>
+									{clientInfo.qualificationInfo
+										?.hasVisitedProperties && (
+										<div className="text-brand text-sm sm:text-base absolute top-1 right-3">
+											✓
+										</div>
+									)}
+								</div>
+							</div>
 						</label>
 					</div>
 				</div>
@@ -214,10 +345,9 @@ export const SearchAdClientInfoForm: React.FC<SearchAdClientInfoFormProps> = ({
 					<Select
 						label="Urgence du projet ? (immédiat / 3 mois / 6 mois / pas pressé)"
 						value={clientInfo.timelineInfo?.urgency || ''}
-						onChange={(value) =>
+						onChange={(value: string) =>
 							handleNestedChange('timelineInfo', 'urgency', value)
 						}
-						name="urgency"
 						options={[
 							{ value: '', label: 'Sélectionner...' },
 							{ value: 'immediat', label: 'Immédiat' },
@@ -227,7 +357,6 @@ export const SearchAdClientInfoForm: React.FC<SearchAdClientInfoFormProps> = ({
 						]}
 						disabled={disabled}
 					/>
-
 					<div>
 						<label className="block text-sm font-medium text-gray-700 mb-1">
 							Disponibilités pour les visites ?
@@ -244,12 +373,14 @@ export const SearchAdClientInfoForm: React.FC<SearchAdClientInfoFormProps> = ({
 								)
 							}
 							disabled={disabled}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand/20"
 							rows={3}
-							placeholder="Ex: En semaine après 18h, le samedi toute la journée..."
+							placeholder={
+								Features.SearchAds.SEARCH_AD_PLACEHOLDERS
+									.AVAILABILITY_PREFERENCE
+							}
 						/>
-					</div>
-
+					</div>{' '}
 					<Input
 						label="Date idéale d'emménagement ?"
 						type="text"

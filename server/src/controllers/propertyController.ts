@@ -2,6 +2,12 @@ import { Request, Response } from 'express';
 import { Property } from '../models/Property';
 import { s3Service } from '../services/s3Service';
 import mongoose from 'mongoose';
+import {
+	sanitizeInput,
+	createSafeRegex,
+	isValidObjectId,
+} from '../utils/sanitize';
+import { logger } from '../utils/logger';
 
 // Interface for authenticated request
 interface AuthenticatedRequest extends Request {
@@ -161,18 +167,20 @@ export const getProperties = async (
 		const filter: any = { status: 'active' };
 
 		if (propertyType) {
-			filter.propertyType = propertyType;
+			// Sanitize to prevent injection
+			filter.propertyType = sanitizeInput(propertyType);
 		}
 
 		if (city) {
-			filter.city = new RegExp(city as string, 'i');
+			// Use safe regex to prevent ReDoS attacks
+			filter.city = createSafeRegex(city as string);
 		}
 
 		if (postalCode) {
 			// Support both single postal code and comma-separated list
 			const postalCodes = (postalCode as string)
 				.split(',')
-				.map((pc) => pc.trim());
+				.map((pc) => sanitizeInput(pc.trim()));
 			if (postalCodes.length === 1) {
 				filter.postalCode = postalCodes[0];
 			} else {
@@ -197,7 +205,8 @@ export const getProperties = async (
 		}
 
 		if (search) {
-			filter.$text = { $search: search as string };
+			// Sanitize search input
+			filter.$text = { $search: sanitizeInput(search) as string };
 		}
 
 		// Build sort object
@@ -244,21 +253,28 @@ export const getProperties = async (
 			},
 		});
 	} catch (error) {
-		console.error('Error fetching properties:', error);
+		logger.error('[PropertyController] Error fetching properties', error);
 		res.status(500).json({
 			success: false,
 			message: 'Erreur lors de la récupération des biens',
 		});
 	}
-};
-
-// Get a single property by ID
+}; // Get a single property by ID
 export const getPropertyById = async (
 	req: Request,
 	res: Response,
 ): Promise<void> => {
 	try {
 		const { id } = req.params;
+
+		// Validate ObjectId format
+		if (!isValidObjectId(id)) {
+			res.status(400).json({
+				success: false,
+				message: 'Invalid property ID format',
+			});
+			return;
+		}
 
 		if (!mongoose.Types.ObjectId.isValid(id)) {
 			res.status(400).json({
@@ -291,28 +307,18 @@ export const getPropertyById = async (
 			data: property,
 		});
 	} catch (error) {
-		console.error('Error fetching property:', error);
+		logger.error('[PropertyController] Error fetching property', error);
 		res.status(500).json({
 			success: false,
 			message: 'Erreur lors de la récupération du bien',
 		});
 	}
-};
-
-// Create property with images
+}; // Create property with images
 export const createProperty = async (
 	req: AuthenticatedRequest,
 	res: Response,
 ): Promise<void> => {
 	try {
-		if (!req.user) {
-			res.status(401).json({
-				success: false,
-				message: 'Authentification requise',
-			});
-			return;
-		}
-
 		// Validate property data
 		const validationResult = validatePropertyData(req.body);
 		if (!validationResult.success) {
@@ -339,7 +345,7 @@ export const createProperty = async (
 				const mainImageVariants = await s3Service.uploadImage({
 					buffer: files.mainImage[0].buffer,
 					originalName: files.mainImage[0].originalname,
-					userId: req.user.id,
+					userId: req.user!.id,
 					folder: 'properties',
 					isMainImage: true,
 				});
@@ -355,7 +361,7 @@ export const createProperty = async (
 					const galleryImageVariants = await s3Service.uploadImage({
 						buffer: file.buffer,
 						originalName: file.originalname,
-						userId: req.user.id,
+						userId: req.user!.id,
 						folder: 'properties',
 						isMainImage: false,
 					});
@@ -382,7 +388,7 @@ export const createProperty = async (
 			...validationResult.data,
 			mainImage: mainImageData,
 			galleryImages: galleryImagesData,
-			owner: req.user.id,
+			owner: req.user!.id,
 		};
 
 		// Parse clientInfo if it's a JSON string
@@ -393,7 +399,10 @@ export const createProperty = async (
 			try {
 				propertyData.clientInfo = JSON.parse(propertyData.clientInfo);
 			} catch (e) {
-				console.error('Failed to parse clientInfo:', e);
+				logger.error(
+					'[PropertyController] Failed to parse clientInfo',
+					e,
+				);
 			}
 		}
 
@@ -439,7 +448,7 @@ export const createProperty = async (
 			data: property,
 		});
 	} catch (error) {
-		console.error('Property creation error:', error);
+		logger.error('[PropertyController] Property creation error', error);
 
 		// Include more error details in development
 		const errorDetails =
@@ -450,7 +459,7 @@ export const createProperty = async (
 					}
 				: error;
 
-		console.error('Detailed error:', errorDetails);
+		logger.error('[PropertyController] Detailed error', errorDetails);
 
 		res.status(500).json({
 			success: false,
@@ -460,14 +469,14 @@ export const createProperty = async (
 			}),
 		});
 	}
-};
-
-// Update property with images
+}; // Update property with images
 export const updateProperty = async (
 	req: AuthenticatedRequest,
 	res: Response,
 ): Promise<void> => {
 	try {
+		const { id } = req.params;
+
 		if (!req.user) {
 			res.status(401).json({
 				success: false,
@@ -475,8 +484,6 @@ export const updateProperty = async (
 			});
 			return;
 		}
-
-		const { id } = req.params;
 
 		if (!mongoose.Types.ObjectId.isValid(id)) {
 			res.status(400).json({
@@ -497,7 +504,7 @@ export const updateProperty = async (
 		}
 
 		// Check ownership
-		if (existingProperty.owner.toString() !== req.user.id) {
+		if (existingProperty.owner.toString() !== req.user!.id) {
 			res.status(403).json({
 				success: false,
 				message: "Vous n'êtes pas autorisé à modifier ce bien",
@@ -550,7 +557,7 @@ export const updateProperty = async (
 			const mainImageVariants = await s3Service.uploadImage({
 				buffer: files.mainImage[0].buffer,
 				originalName: files.mainImage[0].originalname,
-				userId: req.user.id,
+				userId: req.user!.id,
 				folder: 'properties',
 				propertyId: id,
 				isMainImage: true,
@@ -593,7 +600,7 @@ export const updateProperty = async (
 				const galleryImageVariants = await s3Service.uploadImage({
 					buffer: file.buffer,
 					originalName: file.originalname,
-					userId: req.user.id,
+					userId: req.user!.id,
 					folder: 'properties',
 					propertyId: id,
 					isMainImage: false,
@@ -609,16 +616,17 @@ export const updateProperty = async (
 		if (imagesToDelete.length > 0) {
 			try {
 				await s3Service.deleteMultipleImages(imagesToDelete);
-				console.log(
-					`Deleted ${imagesToDelete.length} images from S3 for property ${id}`,
+				logger.debug(
+					`[PropertyController] Deleted ${imagesToDelete.length} images from S3 for property ${id}`,
 				);
 			} catch (error) {
-				console.error('Error deleting images from S3:', error);
+				logger.error(
+					'[PropertyController] Error deleting images from S3',
+					error,
+				);
 				// Continue with property update even if S3 cleanup fails
 			}
-		}
-
-		// Ensure main image is provided
+		} // Ensure main image is provided
 		if (!mainImageData) {
 			res.status(400).json({
 				success: false,
@@ -642,7 +650,10 @@ export const updateProperty = async (
 			try {
 				propertyData.clientInfo = JSON.parse(propertyData.clientInfo);
 			} catch (e) {
-				console.error('Failed to parse clientInfo:', e);
+				logger.error(
+					'[PropertyController] Failed to parse clientInfo',
+					e,
+				);
 			}
 		}
 
@@ -693,29 +704,22 @@ export const updateProperty = async (
 			data: existingProperty,
 		});
 	} catch (error) {
-		console.error('Error updating property with images:', error);
+		logger.error(
+			'[PropertyController] Error updating property with images',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Erreur lors de la mise à jour du bien',
 		});
 	}
-};
-
-// Delete a property (only owner can delete)
+}; // Delete a property (only owner can delete)
 export const deleteProperty = async (
 	req: AuthenticatedRequest,
 	res: Response,
 ): Promise<void> => {
 	try {
 		const { id } = req.params;
-
-		if (!req.user) {
-			res.status(401).json({
-				success: false,
-				message: 'Authentification requise',
-			});
-			return;
-		}
 
 		if (!mongoose.Types.ObjectId.isValid(id)) {
 			res.status(400).json({
@@ -736,7 +740,7 @@ export const deleteProperty = async (
 		}
 
 		// Check if user is the owner
-		if (property.owner.toString() !== req.user.id) {
+		if (property.owner.toString() !== req.user!.id) {
 			res.status(403).json({
 				success: false,
 				message: "Vous n'êtes pas autorisé à supprimer ce bien",
@@ -765,44 +769,36 @@ export const deleteProperty = async (
 		if (imagesToDelete.length > 0) {
 			try {
 				await s3Service.deleteMultipleImages(imagesToDelete);
-				console.log(
-					`Deleted ${imagesToDelete.length} images from S3 for property ${id}`,
+				logger.debug(
+					`[PropertyController] Deleted ${imagesToDelete.length} images from S3 for property ${id}`,
 				);
 			} catch (error) {
-				console.error('Error deleting images from S3:', error);
+				logger.error(
+					'[PropertyController] Error deleting images from S3',
+					error,
+				);
 				// Continue with property deletion even if S3 cleanup fails
 			}
 		}
 
 		await Property.findByIdAndDelete(id);
-
 		res.status(200).json({
 			success: true,
 			message: 'Bien supprimé avec succès',
 		});
 	} catch (error) {
-		console.error('Error deleting property:', error);
+		logger.error('[PropertyController] Error deleting property', error);
 		res.status(500).json({
 			success: false,
 			message: 'Erreur lors de la suppression du bien',
 		});
 	}
-};
-
-// Get properties by owner (for dashboard)
+}; // Get properties by owner (for dashboard)
 export const getMyProperties = async (
 	req: AuthenticatedRequest,
 	res: Response,
 ): Promise<void> => {
 	try {
-		if (!req.user) {
-			res.status(401).json({
-				success: false,
-				message: 'Authentification requise',
-			});
-			return;
-		}
-
 		const {
 			page = 1,
 			limit = 10,
@@ -813,7 +809,7 @@ export const getMyProperties = async (
 
 		// Build filter
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const filter: any = { owner: req.user.id };
+		const filter: any = { owner: req.user!.id };
 
 		if (status) {
 			filter.status = status;
@@ -853,15 +849,16 @@ export const getMyProperties = async (
 			},
 		});
 	} catch (error) {
-		console.error('Error fetching user properties:', error);
+		logger.error(
+			'[PropertyController] Error fetching user properties',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Erreur lors de la récupération de vos biens',
 		});
 	}
-};
-
-// Update property status
+}; // Update property status
 export const updatePropertyStatus = async (
 	req: AuthenticatedRequest,
 	res: Response,
@@ -869,14 +866,6 @@ export const updatePropertyStatus = async (
 	try {
 		const { id } = req.params;
 		const { status } = req.body;
-
-		if (!req.user) {
-			res.status(401).json({
-				success: false,
-				message: 'Authentification requise',
-			});
-			return;
-		}
 
 		if (!mongoose.Types.ObjectId.isValid(id)) {
 			res.status(400).json({
@@ -907,7 +896,7 @@ export const updatePropertyStatus = async (
 		}
 
 		// Check if user is the owner
-		if (property.owner.toString() !== req.user.id) {
+		if (property.owner.toString() !== req.user!.id) {
 			res.status(403).json({
 				success: false,
 				message: "Vous n'êtes pas autorisé à modifier ce bien",
@@ -924,30 +913,23 @@ export const updatePropertyStatus = async (
 			data: property,
 		});
 	} catch (error) {
-		console.error('Error updating property status:', error);
+		logger.error(
+			'[PropertyController] Error updating property status',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Erreur lors de la mise à jour du statut',
 		});
 	}
-};
-
-// Get property statistics (for dashboard)
+}; // Get property statistics (for dashboard)
 export const getPropertyStats = async (
 	req: AuthenticatedRequest,
 	res: Response,
 ): Promise<void> => {
 	try {
-		if (!req.user) {
-			res.status(401).json({
-				success: false,
-				message: 'Authentification requise',
-			});
-			return;
-		}
-
 		const stats = await Property.aggregate([
-			{ $match: { owner: new mongoose.Types.ObjectId(req.user.id) } },
+			{ $match: { owner: new mongoose.Types.ObjectId(req.user!.id) } },
 			{
 				$group: {
 					_id: '$status',
@@ -959,15 +941,15 @@ export const getPropertyStats = async (
 		]);
 
 		const totalProperties = await Property.countDocuments({
-			owner: req.user.id,
+			owner: req.user!.id,
 		});
 		const totalViews = await Property.aggregate([
-			{ $match: { owner: new mongoose.Types.ObjectId(req.user.id) } },
+			{ $match: { owner: new mongoose.Types.ObjectId(req.user!.id) } },
 			{ $group: { _id: null, total: { $sum: '$viewCount' } } },
 		]);
 
 		const totalValueAgg = await Property.aggregate([
-			{ $match: { owner: new mongoose.Types.ObjectId(req.user.id) } },
+			{ $match: { owner: new mongoose.Types.ObjectId(req.user!.id) } },
 			{ $group: { _id: null, total: { $sum: '$price' } } },
 		]);
 
@@ -981,7 +963,10 @@ export const getPropertyStats = async (
 			},
 		});
 	} catch (error) {
-		console.error('Error fetching property stats:', error);
+		logger.error(
+			'[PropertyController] Error fetching property stats',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Erreur lors de la récupération des statistiques',

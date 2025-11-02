@@ -3,6 +3,7 @@ export interface AuthResponse {
 	message: string;
 	user?: User;
 	token?: string;
+	refreshToken?: string; // JWT refresh token for token renewal
 	requiresVerification?: boolean;
 	codeSent?: boolean;
 	requiresProfileCompletion?: boolean; // Add this
@@ -11,8 +12,7 @@ export interface AuthResponse {
 
 // Update User interface
 export interface User {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	id: any;
+	id: string;
 	_id: string;
 	firstName: string;
 	lastName: string;
@@ -38,6 +38,11 @@ export interface User {
 		independentAgent?: boolean;
 		alertsEnabled?: boolean;
 		alertFrequency?: 'quotidien' | 'hebdomadaire';
+		identityCard?: {
+			url: string;
+			key: string;
+			uploadedAt: string;
+		};
 	};
 
 	searchPreferences?: {
@@ -56,21 +61,12 @@ export interface User {
 	updatedAt?: string;
 }
 
-export interface AuthResponse {
-	success: boolean;
-	message: string;
-	user?: User;
-	token?: string;
-	requiresVerification?: boolean;
-	codeSent?: boolean;
-}
-
 export interface ValidationError {
 	field: string;
 	message: string;
 }
 
-export type SignUpData = {
+export interface SignUpData {
 	firstName: string;
 	lastName: string;
 	email: string;
@@ -84,7 +80,7 @@ export type SignUpData = {
 	sirenNumber?: string;
 	rsacNumber?: string;
 	collaboratorCertificate?: string;
-};
+}
 
 export interface LoginData {
 	email: string;

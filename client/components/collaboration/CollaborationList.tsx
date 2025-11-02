@@ -1,12 +1,22 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Card } from '../ui/Card';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { CollaborationCard } from './CollaborationCard';
-import { Collaboration } from '../../types/collaboration';
-import { collaborationApi } from '../../lib/api/collaborationApi';
-import { ConfirmDialog } from '../ui/ConfirmDialog';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { LoadingSpinner, Pagination } from '@/components/ui';
+import { CollaborationCard } from '@/components/collaboration/CollaborationCard';
+import { Collaboration } from '@/types/collaboration';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { toast } from 'react-toastify';
+import {
+	useMyCollaborations,
+	useCollaborationMutations,
+} from '@/hooks/useCollaborations';
+import { Features } from '@/lib/constants';
+import { usePageState } from '@/hooks/usePageState';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
+import { Select } from '@/components/ui/CustomSelect';
+import type { Property } from '@/lib/api/propertyApi';
+import type { SearchAd } from '@/types/searchAd';
 
 interface CollaborationListProps {
 	currentUserId: string;
@@ -17,12 +27,11 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 	currentUserId,
 	onClose,
 }) => {
-	const [collaborations, setCollaborations] = useState<Collaboration[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
 	const [searchTerm, setSearchTerm] = useState('');
 	const [statusFilter, setStatusFilter] = useState<string>('all');
 	const [roleFilter, setRoleFilter] = useState<string>('all');
+	const [currentPage, setCurrentPage] = useState(1);
+	const itemsPerPage = 6;
 	const [confirmOpen, setConfirmOpen] = useState(false);
 	const [confirmMode, setConfirmMode] = useState<'cancel' | 'terminate'>(
 		'cancel',
@@ -30,24 +39,83 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 	const [targetCollab, setTargetCollab] = useState<Collaboration | null>(
 		null,
 	);
+
+	// Fetch collaborations using SWR
+	const {
+		data: collabData,
+		isLoading,
+		error: fetchError,
+		refetch: fetchCollaborations,
+	} = useMyCollaborations(currentUserId);
+
+	// Mutations via SWR
+	const { cancelCollaboration, completeCollaboration } =
+		useCollaborationMutations(currentUserId);
 	const [confirmLoading, setConfirmLoading] = useState(false);
 
-	const fetchCollaborations = async () => {
-		try {
-			setIsLoading(true);
-			const response = await collaborationApi.getUserCollaborations();
-			setCollaborations(response.collaborations);
-		} catch (err) {
-			console.error('Error fetching collaborations:', err);
-			setError('Erreur lors du chargement des collaborations');
-		} finally {
-			setIsLoading(false);
-		}
-	};
+	const error = fetchError?.message || null;
+
+	const collaborations = useMemo(
+		() => collabData?.collaborations || [],
+		[collabData],
+	);
+
+	// Persist filters/search/pagination and scroll
+	const {
+		key: pageKey,
+		savedState,
+		save,
+		urlOverrides,
+	} = usePageState({
+		key: 'collaboration-list',
+		getCurrentState: () => ({
+			filters: {
+				searchTerm,
+				statusFilter,
+				roleFilter,
+			} as unknown as Record<string, unknown>,
+			currentPage,
+		}),
+	});
 
 	useEffect(() => {
-		fetchCollaborations();
+		const savedFilters =
+			(savedState?.filters as Record<string, unknown>) || undefined;
+		if (savedFilters) {
+			if (typeof savedFilters.searchTerm === 'string')
+				setSearchTerm(savedFilters.searchTerm);
+			if (typeof savedFilters.statusFilter === 'string')
+				setStatusFilter(savedFilters.statusFilter);
+			if (typeof savedFilters.roleFilter === 'string')
+				setRoleFilter(savedFilters.roleFilter);
+		}
+		if (typeof urlOverrides.currentPage === 'number') {
+			setCurrentPage(urlOverrides.currentPage);
+		} else if (typeof savedState?.currentPage === 'number') {
+			setCurrentPage(savedState.currentPage);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+	useEffect(() => {
+		save({
+			filters: {
+				searchTerm,
+				statusFilter,
+				roleFilter,
+			} as unknown as Record<string, unknown>,
+		});
+	}, [searchTerm, statusFilter, roleFilter, save]);
+
+	useEffect(() => {
+		save({ currentPage });
+	}, [currentPage, save]);
+
+	// Scroll restoration (window scroll)
+	useScrollRestoration({
+		key: pageKey,
+		ready: !isLoading,
+	});
 
 	const openConfirm = (
 		mode: 'cancel' | 'terminate',
@@ -60,31 +128,31 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 
 	const handleConfirmAction = async () => {
 		if (!targetCollab) return;
-		try {
-			setConfirmLoading(true);
-			if (confirmMode === 'cancel') {
-				await collaborationApi.cancel(targetCollab._id);
-				toast.success('Collaboration annulée');
-			} else {
-				await collaborationApi.complete(targetCollab._id);
-				toast.success('Collaboration terminée');
+		setConfirmLoading(true);
+		const id = targetCollab._id;
+		const res =
+			confirmMode === 'cancel'
+				? await cancelCollaboration(id)
+				: await completeCollaboration(id);
+		setConfirmLoading(false);
+		if (res.success) {
+			// Toast already shown by mutation hook for cancel
+			if (confirmMode === 'terminate') {
+				toast.success(
+					Features.Collaboration.COLLABORATION_TOAST_MESSAGES
+						.COMPLETE_SUCCESS,
+				);
 			}
 			setConfirmOpen(false);
 			setTargetCollab(null);
 			await fetchCollaborations();
-		} catch (err) {
-			console.error('Error updating collaboration status:', err);
-			const msg =
-				err instanceof Error
-					? err.message
-					: 'Action impossible sur la collaboration';
-			toast.error(msg);
-		} finally {
-			setConfirmLoading(false);
+		} else {
+			toast.error(
+				Features.Collaboration.COLLABORATION_TOAST_MESSAGES
+					.STATUS_UPDATE_ERROR,
+			);
 		}
-	};
-
-	// Filter and search collaborations
+	}; // Filter and search collaborations
 	const filteredCollaborations = useMemo(() => {
 		return collaborations.filter((collaboration) => {
 			// Skip collaborations with missing participant data
@@ -118,15 +186,77 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 				const collaborationId = collaboration._id.toLowerCase();
 				const searchLower = searchTerm.toLowerCase();
 
-				return (
+				let matchesSearch =
 					partnerName.includes(searchLower) ||
-					collaborationId.includes(searchLower)
-				);
+					collaborationId.includes(searchLower);
+
+				// Also search in property/search ad data if populated
+				if (
+					!matchesSearch &&
+					typeof collaboration.postId === 'object' &&
+					collaboration.postId !== null
+				) {
+					const post = collaboration.postId as Partial<
+						Property & SearchAd
+					>;
+
+					// Search in Property fields
+					if (collaboration.postType === 'Property') {
+						const propertyTitle = post.title?.toLowerCase() || '';
+						const propertyCity = post.city?.toLowerCase() || '';
+						const propertyType =
+							post.propertyType?.toLowerCase() || '';
+						const propertyDescription =
+							post.description?.toLowerCase() || '';
+
+						matchesSearch =
+							propertyTitle.includes(searchLower) ||
+							propertyCity.includes(searchLower) ||
+							propertyType.includes(searchLower) ||
+							propertyDescription.includes(searchLower);
+					}
+					// Search in SearchAd fields
+					else if (collaboration.postType === 'SearchAd') {
+						const description =
+							post.description?.toLowerCase() || '';
+						const cities = post.location?.cities || [];
+						const citiesMatch = cities.some((city: string) =>
+							city.toLowerCase().includes(searchLower),
+						);
+
+						matchesSearch =
+							description.includes(searchLower) || citiesMatch;
+					}
+				}
+
+				if (!matchesSearch) {
+					return false;
+				}
 			}
 
 			return true;
 		});
 	}, [collaborations, statusFilter, roleFilter, searchTerm, currentUserId]);
+
+	// Paginated collaborations
+	const paginatedCollaborations = useMemo(() => {
+		const startIndex = (currentPage - 1) * itemsPerPage;
+		return filteredCollaborations.slice(
+			startIndex,
+			startIndex + itemsPerPage,
+		);
+	}, [filteredCollaborations, currentPage, itemsPerPage]);
+
+	// Reset to page 1 when filters change
+	const handleFilterChange = (
+		filterType: 'status' | 'role' | 'search',
+		value: string,
+	) => {
+		setCurrentPage(1);
+		if (filterType === 'status') setStatusFilter(value);
+		else if (filterType === 'role') setRoleFilter(value);
+		else if (filterType === 'search') setSearchTerm(value);
+	};
 
 	// Statistics
 	const stats = useMemo(() => {
@@ -137,16 +267,24 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 
 		const total = validCollaborations.length;
 		const pending = validCollaborations.filter(
-			(c) => c.status === 'pending',
+			(c) =>
+				c.status ===
+				Features.Collaboration.COLLABORATION_STATUS_VALUES.PENDING,
 		).length;
 		const accepted = validCollaborations.filter(
-			(c) => c.status === 'accepted',
+			(c) =>
+				c.status ===
+				Features.Collaboration.COLLABORATION_STATUS_VALUES.ACCEPTED,
 		).length;
 		const active = validCollaborations.filter(
-			(c) => c.status === 'active',
+			(c) =>
+				c.status ===
+				Features.Collaboration.COLLABORATION_STATUS_VALUES.ACTIVE,
 		).length;
 		const completed = validCollaborations.filter(
-			(c) => c.status === 'completed',
+			(c) =>
+				c.status ===
+				Features.Collaboration.COLLABORATION_STATUS_VALUES.COMPLETED,
 		).length;
 		const asOwner = validCollaborations.filter(
 			(c) => c.postOwnerId?._id === currentUserId,
@@ -167,7 +305,7 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 	if (isLoading) {
 		return (
 			<div className="flex items-center justify-center py-8">
-				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+				<LoadingSpinner size="lg" />
 			</div>
 		);
 	}
@@ -212,40 +350,56 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 	}
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-6" id="collaborations-section">
 			<ConfirmDialog
 				isOpen={confirmOpen}
 				title={
 					confirmMode === 'cancel'
-						? 'Annuler la collaboration ?'
-						: 'Terminer la collaboration ?'
+						? Features.Collaboration
+								.COLLABORATION_CONFIRMATION_DIALOGS.CANCEL_TITLE
+						: Features.Collaboration
+								.COLLABORATION_CONFIRMATION_DIALOGS
+								.COMPLETE_TITLE
 				}
 				description={
 					confirmMode === 'cancel'
-						? 'Cette action annulera la collaboration en attente. Voulez-vous continuer ?'
-						: 'Cette action marquera la collaboration comme terminée. Voulez-vous continuer ?'
+						? Features.Collaboration
+								.COLLABORATION_CONFIRMATION_DIALOGS
+								.CANCEL_PENDING_DESCRIPTION
+						: Features.Collaboration
+								.COLLABORATION_CONFIRMATION_DIALOGS
+								.COMPLETE_DESCRIPTION
 				}
 				onCancel={() => setConfirmOpen(false)}
 				onConfirm={handleConfirmAction}
 				confirmText={
-					confirmMode === 'cancel' ? 'Oui, annuler' : 'Oui, terminer'
+					confirmMode === 'cancel'
+						? Features.Collaboration
+								.COLLABORATION_CONFIRMATION_DIALOGS
+								.CANCEL_CONFIRM
+						: Features.Collaboration
+								.COLLABORATION_CONFIRMATION_DIALOGS
+								.COMPLETE_CONFIRM
 				}
-				cancelText="Non, revenir"
+				cancelText={
+					Features.Collaboration.COLLABORATION_CONFIRMATION_DIALOGS
+						.CANCEL_CANCEL
+				}
 				variant={confirmMode === 'cancel' ? 'warning' : 'danger'}
 				loading={confirmLoading}
 			/>
 			{/* Statistics Dashboard */}
 			<div className="grid grid-cols-2 md:grid-cols-7 gap-4">
-				<div className="bg-blue-50 p-4 rounded-lg text-center">
+				<div className="bg-brand-50 p-4 rounded-lg text-center">
 					<div className="flex items-center justify-center mb-1">
-						<span className="text-blue-600" aria-hidden>
+						<span className="text-brand" aria-hidden>
 							📊
 						</span>
 					</div>
-					<div className="text-2xl font-bold text-blue-600">
+					<div className="text-2xl font-bold text-brand">
 						{stats.total}
 					</div>
-					<div className="text-sm text-blue-600">Total</div>
+					<div className="text-sm text-brand">Total</div>
 				</div>
 				<div className="bg-yellow-50 p-4 rounded-lg text-center">
 					<div className="flex items-center justify-center mb-1">
@@ -289,7 +443,7 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 					<div className="text-2xl font-bold text-gray-600">
 						{stats.completed}
 					</div>
-					<div className="text-sm text-gray-600">Terminées</div>
+					<div className="text-sm text-gray-600">Complétées</div>
 				</div>
 				<div className="bg-purple-50 p-4 rounded-lg text-center">
 					<div className="flex items-center justify-center mb-1">
@@ -324,41 +478,55 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 						</label>
 						<Input
 							type="text"
-							placeholder="Nom du partenaire ou ID..."
+							placeholder="Nom, ville, type de bien..."
 							value={searchTerm}
-							onChange={(e) => setSearchTerm(e.target.value)}
+							onChange={(e) =>
+								handleFilterChange('search', e.target.value)
+							}
 						/>
 					</div>
 					<div>
 						<label className="block text-sm font-medium text-gray-700 mb-2">
 							Statut
 						</label>
-						<select
+						<Select
+							label=""
 							value={statusFilter}
-							onChange={(e) => setStatusFilter(e.target.value)}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-						>
-							<option value="all">Tous les statuts</option>
-							<option value="pending">En attente</option>
-							<option value="accepted">Acceptée</option>
-							<option value="active">Active</option>
-							<option value="completed">Terminée</option>
-							<option value="rejected">Rejetée</option>
-						</select>
+							onChange={(value) =>
+								handleFilterChange('status', value)
+							}
+							name="statusFilter"
+							options={[
+								{ value: 'all', label: 'Tous les statuts' },
+								{ value: 'pending', label: 'En attente' },
+								{ value: 'accepted', label: 'Acceptée' },
+								{ value: 'active', label: 'Active' },
+								{ value: 'completed', label: 'Complétée' },
+								{ value: 'cancelled', label: 'Annulée' },
+								{ value: 'rejected', label: 'Rejetée' },
+							]}
+						/>
 					</div>
 					<div>
 						<label className="block text-sm font-medium text-gray-700 mb-2">
 							Rôle
 						</label>
-						<select
+						<Select
+							label=""
 							value={roleFilter}
-							onChange={(e) => setRoleFilter(e.target.value)}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-						>
-							<option value="all">Tous les rôles</option>
-							<option value="owner">Propriétaire</option>
-							<option value="collaborator">Collaborateur</option>
-						</select>
+							onChange={(value) =>
+								handleFilterChange('role', value)
+							}
+							name="roleFilter"
+							options={[
+								{ value: 'all', label: 'Tous les rôles' },
+								{ value: 'owner', label: 'Propriétaire' },
+								{
+									value: 'collaborator',
+									label: 'Collaborateur',
+								},
+							]}
+						/>
 					</div>
 					<div className="flex items-end">
 						<Button
@@ -367,6 +535,7 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 								setSearchTerm('');
 								setStatusFilter('all');
 								setRoleFilter('all');
+								setCurrentPage(1);
 							}}
 							className="w-full"
 						>
@@ -395,16 +564,24 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 						</p>
 					</div>
 				) : (
-					filteredCollaborations.map((collaboration) => (
+					paginatedCollaborations.map((collaboration) => (
 						<CollaborationCard
 							key={collaboration._id}
 							collaboration={collaboration}
 							currentUserId={currentUserId}
 							onClose={onClose}
 							onCancel={() => {
-								if (collaboration.status === 'pending') {
+								if (
+									collaboration.status ===
+									Features.Collaboration
+										.COLLABORATION_STATUS_VALUES.PENDING
+								) {
 									openConfirm('cancel', collaboration);
-								} else if (collaboration.status === 'active') {
+								} else if (
+									collaboration.status ===
+									Features.Collaboration
+										.COLLABORATION_STATUS_VALUES.ACTIVE
+								) {
 									openConfirm('terminate', collaboration);
 								}
 							}}
@@ -412,6 +589,17 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 					))
 				)}
 			</div>
+
+			{/* Pagination */}
+			{filteredCollaborations.length > 0 && (
+				<Pagination
+					currentPage={currentPage}
+					totalItems={filteredCollaborations.length}
+					pageSize={itemsPerPage}
+					onPageChange={setCurrentPage}
+					scrollTargetId="collaborations-section"
+				/>
+			)}
 		</div>
 	);
 };

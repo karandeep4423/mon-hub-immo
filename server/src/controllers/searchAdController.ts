@@ -1,20 +1,21 @@
 import { Request, Response } from 'express';
 import { SearchAd } from '../models/SearchAd';
-import { AuthRequest } from '../types/auth'; // Corrected import
+import { AuthRequest } from '../types/auth';
+import { logger } from '../utils/logger'; // Corrected import
 
 export const createSearchAd = async (
 	req: AuthRequest,
 	res: Response,
 ): Promise<void> => {
 	try {
-		// Ensure user is attached to the request
-		if (!req.user) {
+		if (!req.user?.id) {
 			res.status(401).json({
 				success: false,
 				message: 'Authentication required',
 			});
 			return;
 		}
+
 		const adData = {
 			...req.body,
 			authorId: req.user.id,
@@ -40,9 +41,53 @@ export const getAllSearchAds = async (
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const filter: any = { status: 'active' };
 
-		// Add location filtering support (cities or postal codes)
-		const { city, postalCode } = req.query;
+		// Extract all filter parameters
+		const {
+			city,
+			postalCode,
+			propertyType,
+			authorType,
+			search,
+			minBudget,
+			maxBudget,
+		} = req.query;
 
+		// Filter by author type (profile filter: agent or apporteur)
+		if (authorType) {
+			filter.authorType = authorType;
+		}
+
+		// Filter by property types
+		if (propertyType) {
+			// Map from Property types to SearchAd types
+			const typeMapping: Record<string, string[]> = {
+				Appartement: ['apartment'],
+				Maison: ['house'],
+				Terrain: ['land'],
+				'Local commercial': ['commercial'],
+				Bureaux: ['building', 'commercial'],
+				Parking: ['parking', 'garage'],
+				Autre: ['other'],
+			};
+			const mappedTypes = typeMapping[propertyType as string] || [
+				propertyType,
+			];
+			filter.propertyTypes = {
+				$in: mappedTypes.map((t) => new RegExp(`^${t}$`, 'i')),
+			};
+		}
+
+		// Text search across title, description, and cities
+		if (search) {
+			const searchRegex = new RegExp(search as string, 'i');
+			filter.$or = [
+				{ title: searchRegex },
+				{ description: searchRegex },
+				{ 'location.cities': searchRegex },
+			];
+		}
+
+		// Location filtering by cities
 		if (city) {
 			// Support comma-separated cities
 			const cities = (city as string).split(',').map((c) => c.trim());
@@ -51,12 +96,24 @@ export const getAllSearchAds = async (
 			};
 		}
 
+		// Location filtering by postal codes
 		if (postalCode) {
 			// Support comma-separated postal codes
 			const postalCodes = (postalCode as string)
 				.split(',')
 				.map((pc) => pc.trim());
 			filter['location.postalCodes'] = { $in: postalCodes };
+		}
+
+		// Budget filtering (compare against budget.max)
+		if (minBudget || maxBudget) {
+			filter['budget.max'] = {};
+			if (minBudget) {
+				filter['budget.max'].$gte = Number(minBudget);
+			}
+			if (maxBudget) {
+				filter['budget.max'].$lte = Number(maxBudget);
+			}
 		}
 
 		const searchAds = await SearchAd.find(filter)
@@ -77,18 +134,23 @@ export const getMySearchAds = async (
 	res: Response,
 ): Promise<void> => {
 	try {
-		if (!req.user) {
+		if (!req.user?.id) {
 			res.status(401).json({
 				success: false,
 				message: 'Authentication required',
 			});
 			return;
 		}
+
 		const searchAds = await SearchAd.find({ authorId: req.user.id })
 			.populate('authorId', 'firstName lastName profileImage userType')
 			.sort({ createdAt: -1 });
 		res.status(200).json({ success: true, data: searchAds });
 	} catch (error) {
+		logger.error('[SearchAdController] Error fetching my search ads', {
+			error: error instanceof Error ? error.message : String(error),
+			userId: req.user?.id,
+		});
 		res.status(500).json({
 			success: false,
 			message: 'Error fetching search ads',
@@ -128,14 +190,11 @@ export const updateSearchAd = async (
 	res: Response,
 ): Promise<void> => {
 	try {
-		if (!req.user) {
-			res.status(401).json({
-				success: false,
-				message: 'Authentication required',
-			});
-			return;
-		}
-		const searchAd = await SearchAd.findById(req.params.id);
+		// Middleware has already verified authentication and ownership
+		// Resource is attached to req.resource by requireOwnership middleware
+		const searchAd =
+			req.resource || (await SearchAd.findById(req.params.id));
+
 		if (!searchAd) {
 			res.status(404).json({
 				success: false,
@@ -143,13 +202,7 @@ export const updateSearchAd = async (
 			});
 			return;
 		}
-		if (searchAd.authorId.toString() !== req.user.id.toString()) {
-			res.status(403).json({
-				success: false,
-				message: 'User not authorized to update this ad',
-			});
-			return;
-		}
+
 		Object.assign(searchAd, req.body);
 		await searchAd.save();
 		res.status(200).json({ success: true, data: searchAd });
@@ -167,14 +220,10 @@ export const deleteSearchAd = async (
 	res: Response,
 ): Promise<void> => {
 	try {
-		if (!req.user) {
-			res.status(401).json({
-				success: false,
-				message: 'Authentication required',
-			});
-			return;
-		}
-		const searchAd = await SearchAd.findById(req.params.id);
+		// Middleware has already verified authentication and ownership
+		const searchAd =
+			req.resource || (await SearchAd.findById(req.params.id));
+
 		if (!searchAd) {
 			res.status(404).json({
 				success: false,
@@ -182,13 +231,7 @@ export const deleteSearchAd = async (
 			});
 			return;
 		}
-		if (searchAd.authorId.toString() !== req.user.id.toString()) {
-			res.status(403).json({
-				success: false,
-				message: 'User not authorized to delete this ad',
-			});
-			return;
-		}
+
 		await searchAd.deleteOne();
 		res.status(200).json({ success: true, message: 'Search ad deleted' });
 	} catch (error) {
@@ -202,13 +245,7 @@ export const deleteSearchAd = async (
 
 export const updateSearchAdStatus = async (req: AuthRequest, res: Response) => {
 	try {
-		if (!req.user) {
-			res.status(401).json({
-				success: false,
-				message: 'Authentication required',
-			});
-			return;
-		}
+		// Middleware has already verified authentication and ownership
 		const { status } = req.body;
 		if (!status) {
 			res.status(400).json({
@@ -217,7 +254,10 @@ export const updateSearchAdStatus = async (req: AuthRequest, res: Response) => {
 			});
 			return;
 		}
-		const searchAd = await SearchAd.findById(req.params.id);
+
+		const searchAd =
+			req.resource || (await SearchAd.findById(req.params.id));
+
 		if (!searchAd) {
 			res.status(404).json({
 				success: false,
@@ -225,13 +265,7 @@ export const updateSearchAdStatus = async (req: AuthRequest, res: Response) => {
 			});
 			return;
 		}
-		if (searchAd.authorId.toString() !== req.user.id.toString()) {
-			res.status(403).json({
-				success: false,
-				message: 'User not authorized to update this ad',
-			});
-			return;
-		}
+
 		searchAd.status = status;
 		await searchAd.save();
 		res.status(200).json({

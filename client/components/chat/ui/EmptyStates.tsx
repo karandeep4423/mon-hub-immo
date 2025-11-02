@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { getUserDisplayName } from '../utils/userUtils';
-import { CHAT_TEXT } from '@/lib/constants/text';
+import { Features } from '@/lib/constants';
 
 // ============================================================================
 // EMPTY STATE COMPONENTS
@@ -35,7 +36,7 @@ interface NoConversationSelectedProps {
 const ChatIcon: React.FC<{ className?: string }> = React.memo(
 	({ className = '' }) => (
 		<svg
-			className={`w-8 h-8 text-[#00b4d8] ${className}`}
+			className={`w-8 h-8 text-brand ${className}`}
 			fill="none"
 			stroke="currentColor"
 			viewBox="0 0 24 24"
@@ -58,7 +59,7 @@ ChatIcon.displayName = 'ChatIcon';
 const MessageIcon: React.FC<{ className?: string }> = React.memo(
 	({ className = '' }) => (
 		<svg
-			className={`w-8 h-8 text-[#00b4d8] ${className}`}
+			className={`w-8 h-8 text-brand ${className}`}
 			fill="none"
 			stroke="currentColor"
 			viewBox="0 0 24 24"
@@ -149,10 +150,10 @@ export const LoadingMessages: React.FC<{ className?: string }> = React.memo(
 		<div
 			className={`flex-1 flex items-center justify-center bg-gray-50 ${className}`}
 		>
-			<div className="text-center">
-				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00b4d8] mx-auto mb-2"></div>
-				<p className="text-gray-500">{CHAT_TEXT.loadingMessages}</p>
-			</div>
+			<LoadingSpinner
+				size="lg"
+				message={Features.Chat.CHAT_UI_TEXT.loadingMessages}
+			/>
 		</div>
 	),
 );
@@ -169,10 +170,10 @@ export const LoadingUsers: React.FC<{ className?: string }> = React.memo(
 		<div
 			className={`h-full bg-white border-r border-gray-200 flex items-center justify-center ${className}`}
 		>
-			<div className="text-center">
-				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00b4d8] mx-auto"></div>
-				<p className="text-gray-500 mt-2">{CHAT_TEXT.loadingUsers}</p>
-			</div>
+			<LoadingSpinner
+				size="lg"
+				message={Features.Chat.CHAT_UI_TEXT.loadingUsers}
+			/>
 		</div>
 	),
 );

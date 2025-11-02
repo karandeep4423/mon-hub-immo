@@ -97,8 +97,8 @@ export const updateAvailabilitySchema = z.object({
 			}),
 		)
 		.optional(),
-	defaultDuration: z.number().min(15).max(480).optional(),
+	defaultDuration: z.number().min(0).max(480).optional(),
 	bufferTime: z.number().min(0).max(60).optional(),
-	maxAppointmentsPerDay: z.number().min(1).max(20).optional(),
-	advanceBookingDays: z.number().min(1).max(365).optional(),
+	maxAppointmentsPerDay: z.number().min(0).max(20).optional(),
+	advanceBookingDays: z.number().min(0).max(365).optional(),
 });

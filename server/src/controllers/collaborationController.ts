@@ -3,9 +3,11 @@ import { Collaboration } from '../models/Collaboration';
 import { Property } from '../models/Property';
 import { SearchAd } from '../models/SearchAd';
 import { Types } from 'mongoose';
+import mongoose from 'mongoose';
 import { User } from '../models/User';
 import { notificationService } from '../services/notificationService';
 import { collabTexts } from '../utils/notificationTexts';
+import { logger } from '../utils/logger';
 
 interface AuthenticatedRequest extends Request {
 	user?: {
@@ -28,9 +30,20 @@ export const proposeCollaboration = async (
 			compensationAmount,
 		} = req.body;
 		const userId = req.user?.id;
+		const userType = req.user?.userType;
 
 		if (!userId) {
 			res.status(401).json({ success: false, message: 'Unauthorized' });
+			return;
+		}
+
+		// Only agents can propose collaborations
+		if (userType === 'apporteur') {
+			res.status(403).json({
+				success: false,
+				message:
+					'Apporteurs cannot propose collaborations. Only agents can propose collaborations.',
+			});
 			return;
 		}
 
@@ -163,75 +176,93 @@ export const proposeCollaboration = async (
 			activityMessage = `Collaboration proposée avec ${commissionPercentage || 0}% de commission`;
 		}
 
-		const collaboration = new Collaboration({
-			postId,
-			postType,
-			postOwnerId, // Post owner receives the collaboration request
-			collaboratorId: userId, // Current authenticated user becomes the collaborator
-			proposedCommission: commissionPercentage || 0,
-			proposalMessage: message,
-			...(isApporteurPost && {
-				compensationType,
-				compensationAmount,
-			}),
-			status: 'pending',
-			currentStep: 'proposal',
-			activities: [
-				{
-					type: 'proposal',
-					message: activityMessage,
-					createdBy: new Types.ObjectId(userId),
-					createdAt: new Date(),
-				},
-			],
-			ownerSigned: false,
-			collaboratorSigned: false,
-		});
+		// Use MongoDB transaction for atomic collaboration creation
+		const session = await mongoose.startSession();
+		session.startTransaction();
 
-		await collaboration.save();
-
-		// Notify post owner about new proposal
-		const actor = await User.findById(userId).select(
-			'firstName lastName email profileImage',
-		);
-		const actorName = actor
-			? actor.firstName
-				? `${actor.firstName} ${actor.lastName}`
-				: actor.firstName || actor.email
-			: 'Someone';
-		await notificationService.create({
-			recipientId: postOwnerId,
-			actorId: userId,
-			type: 'collab:proposal_received',
-			entity: { type: 'collaboration', id: collaboration._id },
-			title: collabTexts.proposalReceivedTitle,
-			message: collabTexts.proposalReceivedBody({
-				actorName,
-				commission: commissionPercentage,
-			}),
-			data: {
-				postId: postId.toString(),
+		try {
+			const collaboration = new Collaboration({
+				postId,
 				postType,
-				commissionPercentage,
-				actorName,
-				actorAvatar: actor?.profileImage || undefined,
-			},
-		});
+				postOwnerId, // Post owner receives the collaboration request
+				collaboratorId: userId, // Current authenticated user becomes the collaborator
+				proposedCommission: commissionPercentage || 0,
+				proposalMessage: message,
+				...(isApporteurPost && {
+					compensationType,
+					compensationAmount,
+				}),
+				status: 'pending',
+				currentStep: 'proposal',
+				activities: [
+					{
+						type: 'proposal',
+						message: activityMessage,
+						createdBy: new Types.ObjectId(userId),
+						createdAt: new Date(),
+					},
+				],
+				ownerSigned: false,
+				collaboratorSigned: false,
+			});
 
-		res.status(201).json({
-			success: true,
-			message: 'Collaboration proposed successfully',
-			collaboration,
-		});
+			await collaboration.save({ session });
+
+			// Notify post owner about new proposal
+			const actor = await User.findById(userId)
+				.select('firstName lastName email profileImage')
+				.session(session);
+			const actorName = actor
+				? actor.firstName
+					? `${actor.firstName} ${actor.lastName}`
+					: actor.firstName || actor.email
+				: 'Someone';
+
+			await notificationService.create({
+				recipientId: postOwnerId,
+				actorId: userId,
+				type: 'collab:proposal_received',
+				entity: { type: 'collaboration', id: collaboration._id },
+				title: collabTexts.proposalReceivedTitle,
+				message: collabTexts.proposalReceivedBody({
+					actorName,
+					commission: commissionPercentage,
+				}),
+				data: {
+					postId: postId.toString(),
+					postType,
+					commissionPercentage,
+					actorName,
+					actorAvatar: actor?.profileImage || undefined,
+				},
+			});
+
+			// Commit the transaction
+			await session.commitTransaction();
+
+			res.status(201).json({
+				success: true,
+				message: 'Collaboration proposed successfully',
+				collaboration,
+			});
+		} catch (txError) {
+			// Rollback on error
+			await session.abortTransaction();
+			throw txError;
+		} finally {
+			session.endSession();
+		}
 	} catch (error) {
-		console.error('Error proposing collaboration:', error);
+		logger.error(
+			'[CollaborationController] Error proposing collaboration',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',
 		});
 	}
 };
-
 export const getUserCollaborations = async (
 	req: AuthenticatedRequest,
 	res: Response,
@@ -261,14 +292,16 @@ export const getUserCollaborations = async (
 			collaborations,
 		});
 	} catch (error) {
-		console.error('Error getting collaborations:', error);
+		logger.error(
+			'[CollaborationController] Error getting collaborations',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',
 		});
 	}
 };
-
 export const respondToCollaboration = async (
 	req: AuthenticatedRequest,
 	res: Response,
@@ -308,55 +341,73 @@ export const respondToCollaboration = async (
 			return;
 		}
 
-		collaboration.status =
-			response === 'accepted' ? 'accepted' : 'rejected';
-		await collaboration.save();
+		// Use MongoDB transaction for atomic collaboration response
+		const session = await mongoose.startSession();
+		session.startTransaction();
 
-		// Notify collaborator about decision
-		const actor = await User.findById(userId).select(
-			'firstName lastName email profileImage',
-		);
-		const actorName = actor
-			? actor.firstName
-				? `${actor.firstName} ${actor.lastName}`
-				: actor.firstName || actor.email
-			: 'Someone';
-		await notificationService.create({
-			recipientId: collaboration.collaboratorId,
-			actorId: userId,
-			type:
-				response === 'accepted'
-					? 'collab:proposal_accepted'
-					: 'collab:proposal_rejected',
-			entity: { type: 'collaboration', id: collaboration._id },
-			title:
-				response === 'accepted'
-					? collabTexts.proposalAcceptedTitle({ actorName })
-					: collabTexts.proposalRejectedTitle({ actorName }),
-			message:
-				response === 'accepted'
-					? collabTexts.proposalAcceptedBody({ actorName })
-					: collabTexts.proposalRejectedBody({ actorName }),
-			data: {
-				actorName,
-				actorAvatar: actor?.profileImage || undefined,
-			},
-		});
+		try {
+			collaboration.status =
+				response === 'accepted' ? 'accepted' : 'rejected';
+			await collaboration.save({ session });
 
-		res.status(200).json({
-			success: true,
-			message: `Collaboration ${response}`,
-			collaboration,
-		});
+			// Notify collaborator about decision
+			const actor = await User.findById(userId)
+				.select('firstName lastName email profileImage')
+				.session(session);
+			const actorName = actor
+				? actor.firstName
+					? `${actor.firstName} ${actor.lastName}`
+					: actor.firstName || actor.email
+				: 'Someone';
+
+			await notificationService.create({
+				recipientId: collaboration.collaboratorId,
+				actorId: userId,
+				type:
+					response === 'accepted'
+						? 'collab:proposal_accepted'
+						: 'collab:proposal_rejected',
+				entity: { type: 'collaboration', id: collaboration._id },
+				title:
+					response === 'accepted'
+						? collabTexts.proposalAcceptedTitle({ actorName })
+						: collabTexts.proposalRejectedTitle({ actorName }),
+				message:
+					response === 'accepted'
+						? collabTexts.proposalAcceptedBody({ actorName })
+						: collabTexts.proposalRejectedBody({ actorName }),
+				data: {
+					actorName,
+					actorAvatar: actor?.profileImage || undefined,
+				},
+			});
+
+			// Commit the transaction
+			await session.commitTransaction();
+
+			res.status(200).json({
+				success: true,
+				message: `Collaboration ${response}`,
+				collaboration,
+			});
+		} catch (txError) {
+			// Rollback on error
+			await session.abortTransaction();
+			throw txError;
+		} finally {
+			session.endSession();
+		}
 	} catch (error) {
-		console.error('Error responding to collaboration:', error);
+		logger.error(
+			'[CollaborationController] Error responding to collaboration',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',
 		});
 	}
 };
-
 export const addCollaborationNote = async (
 	req: AuthenticatedRequest,
 	res: Response,
@@ -442,14 +493,13 @@ export const addCollaborationNote = async (
 			});
 		}
 	} catch (error) {
-		console.error('Error adding note:', error);
+		logger.error('[CollaborationController] Error adding note', error);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',
 		});
 	}
 };
-
 export const getCollaborationsByProperty = async (
 	req: AuthenticatedRequest,
 	res: Response,
@@ -476,14 +526,16 @@ export const getCollaborationsByProperty = async (
 			collaborations,
 		});
 	} catch (error) {
-		console.error('Error getting property collaborations:', error);
+		logger.error(
+			'[CollaborationController] Error getting property collaborations',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',
 		});
 	}
 };
-
 export const cancelCollaboration = async (
 	req: AuthenticatedRequest,
 	res: Response,
@@ -572,14 +624,16 @@ export const cancelCollaboration = async (
 			},
 		});
 	} catch (error) {
-		console.error('Error cancelling collaboration:', error);
+		logger.error(
+			'[CollaborationController] Error cancelling collaboration',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',
 		});
 	}
 };
-
 export const updateProgressStatus = async (
 	req: AuthenticatedRequest,
 	res: Response,
@@ -728,14 +782,16 @@ export const updateProgressStatus = async (
 			},
 		});
 	} catch (error) {
-		console.error('Error updating progress status:', error);
+		logger.error(
+			'[CollaborationController] Error updating progress status',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',
 		});
 	}
 };
-
 export const signCollaboration = async (
 	req: AuthenticatedRequest,
 	res: Response,
@@ -818,24 +874,46 @@ export const signCollaboration = async (
 			});
 		}
 	} catch (error) {
-		console.error('Error signing collaboration:', error);
+		logger.error(
+			'[CollaborationController] Error signing collaboration',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',
 		});
 	}
 };
-
 export const completeCollaboration = async (
 	req: AuthenticatedRequest,
 	res: Response,
 ): Promise<void> => {
 	try {
 		const { id } = req.params;
+		const { completionReason } = req.body;
 		const userId = req.user?.id;
 
 		if (!userId) {
 			res.status(401).json({ success: false, message: 'Unauthorized' });
+			return;
+		}
+
+		// Validate completion reason
+		const validReasons = [
+			'vente_conclue_collaboration',
+			'vente_conclue_seul',
+			'bien_retire',
+			'mandat_expire',
+			'client_desiste',
+			'vendu_tiers',
+			'sans_suite',
+		];
+
+		if (!completionReason || !validReasons.includes(completionReason)) {
+			res.status(400).json({
+				success: false,
+				message: 'Invalid or missing completion reason',
+			});
 			return;
 		}
 
@@ -876,10 +954,31 @@ export const completeCollaboration = async (
 			return;
 		}
 
+		// Check if "Affaire conclue" is validated by BOTH users
+		const affaireConclueStep = collaboration.progressSteps.find(
+			(step) => step.id === 'affaire_conclue',
+		);
+
+		if (
+			!affaireConclueStep ||
+			!affaireConclueStep.ownerValidated ||
+			!affaireConclueStep.collaboratorValidated
+		) {
+			res.status(400).json({
+				success: false,
+				message:
+					'Cannot complete: "Affaire conclue" must be validated by both users',
+			});
+			return;
+		}
+
 		// Update status to completed
 		collaboration.status = 'completed';
 		collaboration.currentStep = 'completed';
 		collaboration.completedAt = new Date();
+		collaboration.completionReason = completionReason;
+		collaboration.completedBy = new Types.ObjectId(userId);
+		collaboration.completedByRole = isOwner ? 'owner' : 'collaborator';
 
 		// Mark all progress steps as completed
 		collaboration.progressSteps.forEach((step) => {
@@ -898,13 +997,14 @@ export const completeCollaboration = async (
 			createdAt: new Date(),
 		});
 
+		// Save the collaboration to persist changes
+		await collaboration.save();
+
 		res.status(200).json({
 			success: true,
 			message: 'Collaboration completed successfully',
 			collaboration,
-		});
-
-		// Notify the other party about completion
+		}); // Notify the other party about completion
 		const completeRecipientId = isOwner
 			? collaboration.collaboratorId
 			: collaboration.postOwnerId;
@@ -929,14 +1029,16 @@ export const completeCollaboration = async (
 			},
 		});
 	} catch (error) {
-		console.error('Error completing collaboration:', error);
+		logger.error(
+			'[CollaborationController] Error completing collaboration',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',
 		});
 	}
 };
-
 export const getCollaborationsBySearchAd = async (
 	req: AuthenticatedRequest,
 	res: Response,
@@ -963,7 +1065,10 @@ export const getCollaborationsBySearchAd = async (
 			collaborations,
 		});
 	} catch (error) {
-		console.error('Error getting search ad collaborations:', error);
+		logger.error(
+			'[CollaborationController] Error getting search ad collaborations',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',

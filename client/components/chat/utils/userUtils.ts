@@ -3,7 +3,8 @@
  * Functions for user display, status, and validation
  */
 
-import { CHAT_TEXT } from '@/lib/constants/text';
+import { Features } from '@/lib/constants';
+
 import type { ChatUser as User } from '@/types/chat';
 
 /**
@@ -78,7 +79,7 @@ export const getDetailedUserPresenceText = (
 	if (!selectedUser) return '';
 
 	const isOnline = onlineUsers.includes(selectedUser._id);
-	if (isOnline) return CHAT_TEXT.online;
+	if (isOnline) return Features.Chat.CHAT_UI_TEXT.online;
 
 	const lastSeen = selectedUser._id
 		? userStatuses[selectedUser._id]?.lastSeen ||
@@ -86,7 +87,7 @@ export const getDetailedUserPresenceText = (
 			users.find((u) => u._id === selectedUser._id)?.lastSeen
 		: undefined;
 
-	if (!lastSeen) return CHAT_TEXT.offline;
+	if (!lastSeen) return Features.Chat.CHAT_UI_TEXT.offline;
 
 	// Build a French phrase using our formatter without duplicating "il y a"
 	const base = formatLastSeen(lastSeen); // e.g., "Il y a 3h" or "À l'instant"
@@ -102,17 +103,17 @@ export const getDetailedUserPresenceText = (
  * Get user status text for display
  */
 export const getUserStatusText = (user: User | null): string => {
-	if (!user) return CHAT_TEXT.selectUserToChat;
+	if (!user) return Features.Chat.CHAT_UI_TEXT.selectUserToChat;
 
 	const displayName = getUserDisplayName(user);
 
 	if (user.isOnline) {
-		return `${displayName} ${CHAT_TEXT.online}`;
+		return `${displayName} ${Features.Chat.CHAT_UI_TEXT.online}`;
 	}
 
 	if (user.lastSeen) {
 		const lastSeenText = formatLastSeen(user.lastSeen);
-		return `${displayName} ${CHAT_TEXT.lastSeen} ${lastSeenText}`;
+		return `${displayName} ${Features.Chat.CHAT_UI_TEXT.lastSeen} ${lastSeenText}`;
 	}
 
 	return `Prêt à discuter avec ${displayName}`;

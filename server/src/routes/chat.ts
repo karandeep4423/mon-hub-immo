@@ -8,23 +8,46 @@ import {
 	deleteMessage,
 } from '../controllers/chatController';
 import { authenticateToken } from '../middleware/auth';
+import { generalLimiter } from '../middleware/rateLimiter';
 
 const router: Router = express.Router();
 
-router.get('/users', authenticateToken, getUsersForSidebar as RequestHandler);
-router.get('/user/:id', authenticateToken, getUserById as RequestHandler);
-router.get('/:id', authenticateToken, getMessages as RequestHandler);
-router.post('/send/:id', authenticateToken, sendMessage as RequestHandler);
-router.put(
-	'/read/:id',
-	authenticateToken,
-	markMessagesAsRead as RequestHandler,
-);
+// ============================================================================
+// PROTECTED ROUTES (All chat routes require authentication)
+// ============================================================================
 
-router.delete(
-	'/:messageId',
-	authenticateToken,
-	deleteMessage as unknown as RequestHandler,
-);
+// Apply rate limiting and authentication to all routes
+router.use(generalLimiter);
+router.use(authenticateToken);
+
+// @route   GET api/message/users
+// @desc    Get users for sidebar (contacts)
+// @access  Private (authenticated users)
+router.get('/users', getUsersForSidebar as RequestHandler);
+
+// @route   GET api/message/user/:id
+// @desc    Get user by ID
+// @access  Private (authenticated users)
+router.get('/user/:id', getUserById as RequestHandler);
+
+// @route   GET api/message/:id
+// @desc    Get messages with a specific user
+// @access  Private (authenticated users)
+router.get('/:id', getMessages as RequestHandler);
+
+// @route   POST api/message/send/:id
+// @desc    Send a message to a user
+// @access  Private (authenticated users)
+router.post('/send/:id', sendMessage as RequestHandler);
+
+// @route   PUT api/message/read/:id
+// @desc    Mark messages as read
+// @access  Private (authenticated users)
+router.put('/read/:id', markMessagesAsRead as RequestHandler);
+
+// @route   DELETE api/message/:messageId
+// @desc    Delete a message
+// @access  Private (authenticated users)
+router.delete('/:messageId', deleteMessage as unknown as RequestHandler);
 
 export default router;

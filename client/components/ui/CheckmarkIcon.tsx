@@ -1,4 +1,5 @@
 import React from 'react';
+import { UI } from '@/lib/constants/components';
 
 interface CheckmarkIconProps {
 	className?: string;
@@ -9,25 +10,19 @@ export const CheckmarkIcon: React.FC<CheckmarkIconProps> = ({
 	className = '',
 	size = 'md',
 }) => {
-	const sizeClasses = {
-		sm: 'w-4 h-4',
-		md: 'w-5 h-5',
-		lg: 'w-6 h-6',
-	};
-
 	return (
 		<svg
-			className={`${sizeClasses[size]} ${className}`}
+			className={`${UI.ICON_SIZE_CLASSES[size]} ${className}`}
 			fill="none"
 			stroke="currentColor"
-			viewBox="0 0 24 24"
-			aria-label="Completed"
+			viewBox={UI.CHECKMARK_ICON.viewBox}
+			aria-label={UI.CHECKMARK_ICON.ariaLabel}
 		>
 			<path
 				strokeLinecap="round"
 				strokeLinejoin="round"
-				strokeWidth="2"
-				d="M5 13l4 4L19 7"
+				strokeWidth={UI.CHECKMARK_ICON.strokeWidth}
+				d={UI.CHECKMARK_ICON.path}
 			/>
 		</svg>
 	);

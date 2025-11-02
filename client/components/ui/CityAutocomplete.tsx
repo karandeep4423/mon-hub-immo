@@ -6,8 +6,10 @@
 
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { searchMunicipalities } from '@/lib/services/frenchAddressApi';
+import { useAutocomplete } from '@/hooks/useAutocomplete';
+import { LoadingSpinner } from './LoadingSpinner';
 
 interface CityAutocompleteSuggestion {
 	name: string;
@@ -35,89 +37,52 @@ export const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
 	label,
 	required = false,
 }) => {
-	const [inputValue, setInputValue] = useState(value);
-	const [suggestions, setSuggestions] = useState<
-		CityAutocompleteSuggestion[]
-	>([]);
-	const [showDropdown, setShowDropdown] = useState(false);
-	const [loading, setLoading] = useState(false);
-	const dropdownRef = useRef<HTMLDivElement>(null);
-	const inputRef = useRef<HTMLInputElement>(null);
+	const [isAnimating, setIsAnimating] = useState(false);
+	const [shouldRenderDropdown, setShouldRenderDropdown] = useState(false);
+
+	const {
+		inputRef,
+		dropdownRef,
+		inputValue,
+		setInputValue,
+		suggestions,
+		loading,
+		showDropdown,
+		setShowDropdown,
+		handleInputChange,
+		handleFocus,
+	} = useAutocomplete<CityAutocompleteSuggestion>({
+		debounceMs: 300,
+		minLength: 2,
+		fetchSuggestions: searchMunicipalities,
+		limit: 8,
+	});
+
+	// Handle dropdown animations
+	useEffect(() => {
+		if (showDropdown && suggestions.length > 0) {
+			setShouldRenderDropdown(true);
+			setTimeout(() => setIsAnimating(true), 10);
+		} else {
+			setIsAnimating(false);
+			const timer = setTimeout(() => setShouldRenderDropdown(false), 200);
+			return () => clearTimeout(timer);
+		}
+	}, [showDropdown, suggestions.length]);
 
 	// Update input value when prop changes
 	useEffect(() => {
 		setInputValue(value);
-	}, [value]);
+	}, [value, setInputValue]);
 
-	// Fetch suggestions from API
-	useEffect(() => {
-		const fetchSuggestions = async () => {
-			const trimmedInput = inputValue.trim();
-
-			// City names need at least 2 characters
-			if (!trimmedInput || trimmedInput.length < 2) {
-				setSuggestions([]);
-				setLoading(false);
-				return;
-			}
-
-			setLoading(true);
-			try {
-				const municipalities = await searchMunicipalities(
-					inputValue,
-					8,
-				);
-
-				setSuggestions(municipalities);
-				setShowDropdown(municipalities.length > 0);
-			} catch (error) {
-				console.error('Error fetching city suggestions:', error);
-				setSuggestions([]);
-			} finally {
-				setLoading(false);
-			}
-		};
-
-		const debounceTimer = setTimeout(fetchSuggestions, 300);
-		return () => clearTimeout(debounceTimer);
-	}, [inputValue]);
-
-	// Close dropdown when clicking outside
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			if (
-				dropdownRef.current &&
-				!dropdownRef.current.contains(event.target as Node) &&
-				inputRef.current &&
-				!inputRef.current.contains(event.target as Node)
-			) {
-				setShowDropdown(false);
-			}
-		};
-
-		document.addEventListener('mousedown', handleClickOutside);
-		return () =>
-			document.removeEventListener('mousedown', handleClickOutside);
-	}, []);
-
-	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const newValue = e.target.value;
-		setInputValue(newValue);
-		setShowDropdown(true);
-	};
-
-	const handleSuggestionClick = (suggestion: CityAutocompleteSuggestion) => {
-		setInputValue(suggestion.name);
-		onCitySelect(suggestion.name, suggestion.postcode);
-		setShowDropdown(false);
-		setSuggestions([]);
-	};
-
-	const handleFocus = () => {
-		if (suggestions.length > 0) {
-			setShowDropdown(true);
-		}
-	};
+	const handleSuggestionClick = useCallback(
+		(suggestion: CityAutocompleteSuggestion) => {
+			setInputValue(suggestion.name);
+			onCitySelect(suggestion.name, suggestion.postcode);
+			setShowDropdown(false);
+		},
+		[onCitySelect, setInputValue, setShowDropdown],
+	);
 
 	return (
 		<div className="relative">
@@ -135,7 +100,7 @@ export const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
 					onChange={handleInputChange}
 					onFocus={handleFocus}
 					placeholder={placeholder}
-					className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-all ${
+					className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-smooth ${
 						error ? 'border-red-500' : 'border-gray-300'
 					} ${className}`}
 					autoComplete="off"
@@ -143,15 +108,19 @@ export const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
 
 				{loading && (
 					<div className="absolute right-3 top-1/2 -translate-y-1/2">
-						<div className="animate-spin h-4 w-4 border-2 border-brand border-t-transparent rounded-full"></div>
+						<LoadingSpinner size="sm" />
 					</div>
 				)}
 
 				{/* Suggestions Dropdown */}
-				{showDropdown && suggestions.length > 0 && (
+				{shouldRenderDropdown && (
 					<div
 						ref={dropdownRef}
-						className="absolute z-[9999] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto"
+						className={`absolute z-[9999] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto transition-all duration-200 ${
+							isAnimating
+								? 'opacity-100 translate-y-0'
+								: 'opacity-0 -translate-y-2'
+						}`}
 					>
 						{suggestions.map((suggestion, index) => (
 							<button
@@ -160,7 +129,7 @@ export const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
 								onClick={() =>
 									handleSuggestionClick(suggestion)
 								}
-								className="w-full px-4 py-2.5 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 flex items-start gap-2"
+								className="w-full px-4 py-2.5 text-left hover:bg-gray-50 transition-colors-smooth border-b border-gray-100 last:border-b-0 flex items-start gap-2"
 							>
 								<div className="flex-shrink-0 mt-0.5">
 									<svg

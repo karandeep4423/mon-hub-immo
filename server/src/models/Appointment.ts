@@ -2,7 +2,8 @@ import { Schema, model, Document, Types } from 'mongoose';
 
 export interface IAppointment extends Document {
 	agentId: Types.ObjectId;
-	clientId: Types.ObjectId;
+	clientId?: Types.ObjectId; // Optional for guest bookings
+	isGuestBooking: boolean; // True if booked without login
 
 	// Appointment details
 	appointmentType: 'estimation' | 'vente' | 'achat' | 'conseil';
@@ -32,6 +33,12 @@ export interface IAppointment extends Document {
 	// Additional information
 	notes?: string;
 
+	// Reschedule tracking
+	isRescheduled?: boolean;
+	rescheduleReason?: string;
+	originalScheduledDate?: Date;
+	originalScheduledTime?: string;
+
 	// Cancellation/Rejection
 	cancellationReason?: string;
 	cancelledBy?: Types.ObjectId;
@@ -56,7 +63,12 @@ const AppointmentSchema = new Schema<IAppointment>(
 		clientId: {
 			type: Schema.Types.ObjectId,
 			ref: 'User',
-			required: true,
+			required: false,
+			index: true,
+		},
+		isGuestBooking: {
+			type: Boolean,
+			default: false,
 			index: true,
 		},
 		appointmentType: {
@@ -124,6 +136,21 @@ const AppointmentSchema = new Schema<IAppointment>(
 			type: String,
 			trim: true,
 			maxlength: 2000,
+		},
+		isRescheduled: {
+			type: Boolean,
+			default: false,
+		},
+		rescheduleReason: {
+			type: String,
+			trim: true,
+			maxlength: 500,
+		},
+		originalScheduledDate: {
+			type: Date,
+		},
+		originalScheduledTime: {
+			type: String,
 		},
 		cancellationReason: {
 			type: String,

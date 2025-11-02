@@ -48,6 +48,10 @@ export interface Appointment {
 	cancelledAt?: string;
 	agentNotes?: string;
 	respondedAt?: string;
+	isRescheduled?: boolean;
+	rescheduleReason?: string;
+	originalScheduledDate?: string;
+	originalScheduledTime?: string;
 	createdAt: string;
 	updatedAt: string;
 }

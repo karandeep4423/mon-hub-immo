@@ -1,5 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { PROPERTY_BADGES, getBadgeConfig } from '@/lib/constants/badges';
+import React, { useState, useRef } from 'react';
+import { Features } from '@/lib/constants';
+import { useClickOutside } from '@/hooks/useClickOutside';
 
 interface BadgeSelectorProps {
 	selectedBadges: string[];
@@ -15,21 +16,7 @@ const BadgeSelector: React.FC<BadgeSelectorProps> = ({
 	const [isOpen, setIsOpen] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			if (
-				dropdownRef.current &&
-				!dropdownRef.current.contains(event.target as Node)
-			) {
-				setIsOpen(false);
-			}
-		};
-
-		document.addEventListener('mousedown', handleClickOutside);
-		return () => {
-			document.removeEventListener('mousedown', handleClickOutside);
-		};
-	}, []);
+	useClickOutside([dropdownRef], () => setIsOpen(false));
 
 	const toggleBadge = (badgeValue: string) => {
 		if (selectedBadges.includes(badgeValue)) {
@@ -53,7 +40,8 @@ const BadgeSelector: React.FC<BadgeSelectorProps> = ({
 			{selectedBadges.length > 0 && (
 				<div className="flex flex-wrap gap-2 mb-2">
 					{selectedBadges.map((badgeValue) => {
-						const config = getBadgeConfig(badgeValue);
+						const config =
+							Features.Properties.getBadgeConfig(badgeValue);
 						if (!config) return null;
 
 						return (
@@ -97,7 +85,7 @@ const BadgeSelector: React.FC<BadgeSelectorProps> = ({
 				{/* Dropdown Menu */}
 				{isOpen && (
 					<div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-						{PROPERTY_BADGES.map((badge) => {
+						{Features.Properties.PROPERTY_BADGES.map((badge) => {
 							const isSelected = selectedBadges.includes(
 								badge.value,
 							);

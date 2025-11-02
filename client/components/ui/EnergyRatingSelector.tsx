@@ -37,7 +37,7 @@ export const EnergyRatingSelector = ({
 							key={option.value}
 							type="button"
 							onClick={() => onChange(option.value)}
-							className={`relative px-3 py-2 rounded-md font-medium transition-all duration-200 ${
+							className={`relative px-3 py-2 rounded-md font-medium transition-smooth ${
 								option.color
 							} ${
 								isSelected

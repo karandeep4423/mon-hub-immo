@@ -1,77 +1,245 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { CityAutocomplete } from '../ui/CityAutocomplete';
 import { ProfileImageUploader } from '../ui/ProfileImageUploader';
+import { FileUpload } from '../ui/FileUpload';
+import { RichTextEditor } from '../ui/RichTextEditor';
 import { useAuth } from '@/hooks/useAuth';
+import { useRequireAuth } from '@/hooks';
 import { authService } from '@/lib/api/authApi';
+import { useForm } from '@/hooks/useForm';
+import { PageLoader } from '../ui/LoadingSpinner';
+import { Features } from '@/lib/constants';
+import { Select } from '@/components/ui/CustomSelect';
+import {
+	handleAuthError,
+	showProfileCompletionSuccess,
+	authToastError,
+	authToastSuccess,
+} from '@/lib/utils/authToast';
 
-export const ProfileCompletion: React.FC = () => {
+interface ProfileCompletionFormData extends Record<string, unknown> {
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone: string;
+	profileImage: string;
+	postalCode: string;
+	city: string;
+	interventionRadius: number;
+	coveredCities: string;
+	network: string;
+	siretNumber: string;
+	mandateTypes: string[];
+	yearsExperience: string;
+	personalPitch: string;
+	collaborateWithAgents: boolean;
+	shareCommission: boolean;
+	independentAgent: boolean;
+	alertsEnabled: boolean;
+	alertFrequency: 'quotidien' | 'hebdomadaire';
+	acceptTerms: boolean;
+}
+
+interface ProfileCompletionProps {
+	editMode?: boolean;
+}
+
+export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
+	editMode = false,
+}) => {
 	const router = useRouter();
 	const { user, updateUser } = useAuth();
+	const [identityCardFile, setIdentityCardFile] = useState<File | null>(null);
+	const [isUploadingFile, setIsUploadingFile] = useState(false);
+	// Ensure authenticated users only; redirects to login if not
+	useRequireAuth();
 
-	const [loading, setLoading] = useState(false);
-	const [formData, setFormData] = useState({
-		// Personal info (pre-filled from user)
-		firstName: user?.firstName || '',
-		lastName: user?.lastName || '',
-		email: user?.email || '',
-		phone: user?.phone || '',
-		profileImage: user?.profileImage || '',
+	const { values, errors, isSubmitting, setFieldValue, handleSubmit } =
+		useForm<ProfileCompletionFormData>({
+			initialValues: {
+				firstName: user?.firstName || '',
+				lastName: user?.lastName || '',
+				email: user?.email || '',
+				phone: user?.phone || '',
+				profileImage: user?.profileImage || '',
+				postalCode: user?.professionalInfo?.postalCode || '',
+				city: user?.professionalInfo?.city || '',
+				interventionRadius:
+					user?.professionalInfo?.interventionRadius || 20,
+				coveredCities:
+					user?.professionalInfo?.coveredCities?.join(', ') || '',
+				network: user?.professionalInfo?.network || '',
+				siretNumber: user?.professionalInfo?.siretNumber || '',
+				mandateTypes: user?.professionalInfo?.mandateTypes || [],
+				yearsExperience:
+					user?.professionalInfo?.yearsExperience?.toString() || '',
+				personalPitch: user?.professionalInfo?.personalPitch || '',
+				collaborateWithAgents:
+					user?.professionalInfo?.collaborateWithAgents ?? true,
+				shareCommission:
+					user?.professionalInfo?.shareCommission ?? false,
+				independentAgent:
+					user?.professionalInfo?.independentAgent ?? false,
+				alertsEnabled: user?.professionalInfo?.alertsEnabled ?? false,
+				alertFrequency:
+					user?.professionalInfo?.alertFrequency || 'quotidien',
+				acceptTerms: editMode ? true : false,
+			},
+			onSubmit: async (data) => {
+				try {
+					let identityCardData;
 
-		// Professional info
-		postalCode: '',
-		city: '',
-		interventionRadius: 20,
-		coveredCities: '',
-		network: 'IAD',
-		siretNumber: '',
-		mandateTypes: [] as string[],
-		yearsExperience: '',
-		personalPitch: '',
-		collaborateWithAgents: true,
-		shareCommission: false,
-		independentAgent: false,
-		alertsEnabled: false,
-		alertFrequency: 'quotidien' as 'quotidien' | 'hebdomadaire',
-		acceptTerms: false,
-	});
-	const [errors, setErrors] = useState<Record<string, string>>({});
+					// Upload identity card file if provided (only in initial setup, not edit mode)
+					if (identityCardFile && !editMode) {
+						setIsUploadingFile(true);
+						const uploadResponse =
+							await authService.uploadIdentityCard(
+								identityCardFile,
+							);
+						if (uploadResponse.success) {
+							identityCardData = {
+								url: uploadResponse.data.url,
+								key: uploadResponse.data.key,
+							};
+						} else {
+							authToastError(
+								Features.Auth.AUTH_TOAST_MESSAGES
+									.IDENTITY_CARD_UPLOAD_ERROR,
+							);
+						}
+						setIsUploadingFile(false);
+					}
+
+					// Use updateProfile in edit mode, completeProfile in initial setup
+					const response = editMode
+						? await authService.updateProfile({
+								firstName: data.firstName,
+								lastName: data.lastName,
+								phone: data.phone,
+								profileImage: data.profileImage,
+								professionalInfo: {
+									postalCode: data.postalCode,
+									city: data.city,
+									interventionRadius:
+										typeof data.interventionRadius ===
+										'string'
+											? parseInt(
+													data.interventionRadius,
+													10,
+												)
+											: data.interventionRadius,
+									coveredCities: data.coveredCities
+										? data.coveredCities
+												.split(',')
+												.map((c: string) => c.trim())
+												.filter(Boolean)
+										: [],
+									network: data.network,
+									siretNumber: data.siretNumber,
+									mandateTypes: data.mandateTypes as Array<
+										'simple' | 'exclusif' | 'co-mandat'
+									>,
+									yearsExperience:
+										typeof data.yearsExperience === 'string'
+											? parseInt(data.yearsExperience, 10)
+											: data.yearsExperience,
+									personalPitch: data.personalPitch,
+									collaborateWithAgents:
+										data.collaborateWithAgents,
+									shareCommission: data.shareCommission,
+									independentAgent: data.independentAgent,
+									alertsEnabled: data.alertsEnabled,
+									alertFrequency: data.alertFrequency,
+								},
+							})
+						: await authService.completeProfile({
+								professionalInfo: {
+									postalCode: data.postalCode,
+									city: data.city,
+									interventionRadius:
+										typeof data.interventionRadius ===
+										'string'
+											? parseInt(
+													data.interventionRadius,
+													10,
+												)
+											: data.interventionRadius,
+									coveredCities: data.coveredCities
+										? data.coveredCities
+												.split(',')
+												.map((c: string) => c.trim())
+												.filter(Boolean)
+										: [],
+									network: data.network,
+									siretNumber: data.siretNumber,
+									mandateTypes: data.mandateTypes as Array<
+										'simple' | 'exclusif' | 'co-mandat'
+									>,
+									yearsExperience:
+										typeof data.yearsExperience === 'string'
+											? parseInt(data.yearsExperience, 10)
+											: data.yearsExperience,
+									personalPitch: data.personalPitch,
+									collaborateWithAgents:
+										data.collaborateWithAgents,
+									shareCommission: data.shareCommission,
+									independentAgent: data.independentAgent,
+									alertsEnabled: data.alertsEnabled,
+									alertFrequency: data.alertFrequency,
+								},
+								profileImage: data.profileImage,
+								identityCard: identityCardData,
+							});
+
+					if (response.success && response.user) {
+						updateUser(response.user);
+						if (editMode) {
+							authToastSuccess(
+								'✅ Profil mis à jour avec succès',
+							);
+							router.push(
+								Features.Dashboard.DASHBOARD_ROUTES.BASE,
+							);
+						} else {
+							showProfileCompletionSuccess();
+							router.push(Features.Auth.AUTH_ROUTES.WELCOME);
+						}
+					} else {
+						handleAuthError(new Error(response.message));
+					}
+				} catch (error) {
+					setIsUploadingFile(false);
+					handleAuthError(error);
+				}
+			},
+		});
 
 	useEffect(() => {
-		if (!user && !loading) {
-			router.push('/auth/login');
-			return;
-		}
+		// Only proceed with role/completion checks when we have a user
+		if (!user || isSubmitting) return;
 
 		// Allow access if user is logged in and is an agent (regardless of profile completion status)
-		if (user && user.userType !== 'agent') {
-			toast.error('Cette page est réservée aux agents');
-			router.push('/dashboard');
+		if (user.userType !== 'agent') {
+			authToastError(Features.Auth.AUTH_TOAST_MESSAGES.AGENT_ONLY_ACCESS);
+			router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
 			return;
 		}
 
-		// If profile is already completed, redirect to dashboard
-		if (user && user.profileCompleted) {
-			router.push('/dashboard');
+		// In edit mode, allow editing even if profile is completed
+		if (!editMode && user.profileCompleted) {
+			router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
 			return;
 		}
-	}, [user, loading, router]);
+	}, [user, isSubmitting, router, editMode]);
 
-	// Update the loading condition
-	if (loading) {
-		return (
-			<div className="min-h-screen bg-gray-50 flex items-center justify-center">
-				<div className="text-center">
-					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600 mx-auto mb-4"></div>
-					<p className="text-gray-600">Loading...</p>
-				</div>
-			</div>
-		);
+	// Update the isSubmitting condition
+	if (isSubmitting) {
+		return <PageLoader message="isSubmitting..." />;
 	}
 
 	if (!user) {
@@ -88,119 +256,65 @@ export const ProfileCompletion: React.FC = () => {
 		if (type === 'checkbox') {
 			const checked = (e.target as HTMLInputElement).checked;
 			if (name === 'mandateTypes') {
-				setFormData((prev) => ({
-					...prev,
-					mandateTypes: checked
-						? [...prev.mandateTypes, value]
-						: prev.mandateTypes.filter((t) => t !== value),
-				}));
+				const currentMandates = values.mandateTypes || [];
+				setFieldValue(
+					'mandateTypes',
+					checked
+						? [...currentMandates, value]
+						: currentMandates.filter((t) => t !== value),
+				);
 			} else {
-				setFormData((prev) => ({ ...prev, [name]: checked }));
+				setFieldValue(name, checked);
 			}
 		} else {
-			setFormData((prev) => ({ ...prev, [name]: value }));
-		}
-
-		if (errors[name]) {
-			setErrors((prev) => ({ ...prev, [name]: '' }));
+			setFieldValue(name, value);
 		}
 	};
 
 	const handleImageUploaded = (imageUrl: string) => {
-		setFormData((prev) => ({
-			...prev,
-			profileImage: imageUrl,
-		}));
-		// Clear error when image is uploaded
-		if (errors.profileImage) {
-			setErrors((prev) => ({
-				...prev,
-				profileImage: '',
-			}));
-		}
+		setFieldValue('profileImage', imageUrl);
 	};
 
 	const handleImageRemove = () => {
-		setFormData((prev) => ({
-			...prev,
-			profileImage: '',
-		}));
+		setFieldValue('profileImage', '');
 	};
-
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setErrors({});
-
-		if (!formData.acceptTerms) {
-			setErrors({ acceptTerms: 'Vous devez accepter les conditions' });
-			return;
-		}
-
-		try {
-			setLoading(true);
-
-			const response = await authService.completeProfile({
-				professionalInfo: {
-					postalCode: formData.postalCode,
-					city: formData.city,
-					interventionRadius: Number(formData.interventionRadius),
-					coveredCities: formData.coveredCities
-						.split(',')
-						.map((c) => c.trim()),
-					network: formData.network,
-					siretNumber: formData.siretNumber,
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					mandateTypes: formData.mandateTypes as any,
-					yearsExperience: Number(formData.yearsExperience),
-					personalPitch: formData.personalPitch,
-					collaborateWithAgents: formData.collaborateWithAgents,
-					shareCommission: formData.shareCommission,
-					independentAgent: formData.independentAgent,
-					alertsEnabled: formData.alertsEnabled,
-					alertFrequency: formData.alertFrequency,
-				},
-				profileImage: formData.profileImage,
-			});
-
-			if (response.success && response.user) {
-				// CRITICAL: Update the auth context with the complete user data
-				updateUser(response.user);
-				toast.success('Profil complété avec succès !');
-				router.push('/dashboard');
-			} else {
-				toast.error(response.message);
-			}
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		} catch (error: any) {
-			toast.error(
-				error.response?.data?.message ||
-					'Erreur lors de la création du profil',
-			);
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	if (!user) {
-		return <div>Loading...</div>;
-	}
 
 	return (
 		<div className="min-h-screen bg-gray-50">
 			<div className="max-w-2xl mx-auto px-4 py-8">
 				{/* Header */}
 				<div className="text-center mb-8">
+					<div className="inline-flex items-center justify-center w-16 h-16 bg-brand rounded-2xl mb-6 shadow-brand transition-all duration-200 hover:scale-105">
+						<svg
+							className="w-8 h-8 text-white"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								strokeWidth="2"
+								d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+							/>
+						</svg>
+					</div>
+
 					<h1 className="text-2xl font-bold text-gray-900 mb-2">
-						hub<span className="text-cyan-500">immo</span>
+						{editMode
+							? 'Modifier le profil Agent'
+							: 'Création du profil Agent'}
 					</h1>
-					<h2 className="text-xl font-semibold text-gray-800 mb-4">
-						Création du profil Agent
-					</h2>
+					<p className="text-sm text-gray-600">
+						{editMode
+							? 'Mettez à jour vos informations professionnelles'
+							: 'Complétez votre profil pour commencer'}
+					</p>
 				</div>
 
 				<form
 					onSubmit={handleSubmit}
-					className="bg-white rounded-xl shadow-sm p-6 space-y-8"
+					className="bg-white rounded-2xl shadow-card border border-gray-200 p-8 space-y-8"
 				>
 					{/* Personal Information */}
 					<div>
@@ -212,18 +326,18 @@ export const ProfileCompletion: React.FC = () => {
 							<Input
 								label="Prénom"
 								name="firstName"
-								value={formData.firstName}
+								value={values.firstName}
 								onChange={handleChange}
 								error={errors.firstName}
-								disabled
+								disabled={!editMode}
 							/>
 
 							<div className="md:col-start-2 flex items-center justify-center">
 								<ProfileImageUploader
-									currentImageUrl={formData.profileImage}
+									currentImageUrl={values.profileImage}
 									onImageUploaded={handleImageUploaded}
 									onRemove={handleImageRemove}
-									disabled={loading}
+									disabled={isSubmitting}
 									size="medium"
 									uploadingText="Uploading profile image..."
 								/>
@@ -232,10 +346,10 @@ export const ProfileCompletion: React.FC = () => {
 							<Input
 								label="Nom"
 								name="lastName"
-								value={formData.lastName}
+								value={values.lastName}
 								onChange={handleChange}
 								error={errors.lastName}
-								disabled
+								disabled={!editMode}
 							/>
 						</div>
 
@@ -243,7 +357,7 @@ export const ProfileCompletion: React.FC = () => {
 							<Input
 								label="Email"
 								name="email"
-								value={formData.email}
+								value={values.email}
 								onChange={handleChange}
 								error={errors.email}
 								disabled
@@ -252,10 +366,12 @@ export const ProfileCompletion: React.FC = () => {
 							<Input
 								label="Téléphone pro"
 								name="phone"
-								value={formData.phone}
+								value={values.phone}
 								onChange={handleChange}
 								error={errors.phone}
-								placeholder="0123456789"
+								placeholder={
+									Features.Auth.AUTH_PLACEHOLDERS.PHONE
+								}
 							/>
 						</div>
 					</div>
@@ -269,7 +385,7 @@ export const ProfileCompletion: React.FC = () => {
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<CityAutocomplete
 								label="Ville principale"
-								value={formData.city}
+								value={values.city}
 								onCitySelect={(cityName, postalCode) => {
 									handleChange({
 										target: {
@@ -284,17 +400,21 @@ export const ProfileCompletion: React.FC = () => {
 										},
 									} as React.ChangeEvent<HTMLInputElement>);
 								}}
-								placeholder="Rechercher une ville..."
+								placeholder={
+									Features.Auth.AUTH_PLACEHOLDERS.SEARCH_CITY
+								}
 								error={errors.city}
 							/>
 
 							<Input
 								label="Code postal"
 								name="postalCode"
-								value={formData.postalCode}
+								value={values.postalCode}
 								onChange={handleChange}
 								error={errors.postalCode}
-								placeholder="22100"
+								placeholder={
+									Features.Auth.AUTH_PLACEHOLDERS.POSTAL_CODE
+								}
 								disabled
 							/>
 
@@ -302,18 +422,30 @@ export const ProfileCompletion: React.FC = () => {
 								<label className="block text-sm font-medium text-gray-700 mb-1">
 									Rayon d&apos;intervention
 								</label>
-								<select
+								<Select
+									label=""
+									value={
+										values.interventionRadius?.toString() ||
+										''
+									}
+									onChange={(value) => {
+										const event = {
+											target: {
+												name: 'interventionRadius',
+												value,
+											},
+										} as React.ChangeEvent<HTMLSelectElement>;
+										handleChange(event);
+									}}
 									name="interventionRadius"
-									value={formData.interventionRadius}
-									onChange={handleChange}
-									className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-								>
-									<option value={10}>10 km</option>
-									<option value={20}>20 km</option>
-									<option value={30}>30 km</option>
-									<option value={50}>50 km</option>
-									<option value={100}>100 km</option>
-								</select>
+									options={[
+										{ value: '10', label: '10 km' },
+										{ value: '20', label: '20 km' },
+										{ value: '30', label: '30 km' },
+										{ value: '50', label: '50 km' },
+										{ value: '100', label: '100 km' },
+									]}
+								/>
 							</div>
 						</div>
 
@@ -323,11 +455,13 @@ export const ProfileCompletion: React.FC = () => {
 							</label>
 							<textarea
 								name="coveredCities"
-								value={formData.coveredCities}
+								value={values.coveredCities}
 								onChange={handleChange}
 								rows={3}
-								className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-								placeholder="Dinan, Saint-Malo, Dinard..."
+								className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
+								placeholder={
+									Features.Auth.AUTH_PLACEHOLDERS.CITIES
+								}
 							/>
 						</div>
 					</div>
@@ -339,34 +473,33 @@ export const ProfileCompletion: React.FC = () => {
 						</h3>
 
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-1">
-									Réseau ou statut
-								</label>
-								<select
-									name="network"
-									value={formData.network}
-									onChange={handleChange}
-									className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-								>
-									<option value="IAD">IAD</option>
-									<option value="Century21">
-										Century 21
-									</option>
-									<option value="Orpi">Orpi</option>
-									<option value="Independant">
-										Indépendant
-									</option>
-								</select>
-							</div>
+							<Input
+								label="Réseau ou statut"
+								name="network"
+								value={values.network}
+								onChange={handleChange}
+								error={errors.network}
+								placeholder="Ex: IAD, Century 21, Orpi, Indépendant..."
+							/>
 
 							<Input
 								label="Numéro SIRET"
 								name="siretNumber"
-								value={formData.siretNumber}
+								value={values.siretNumber}
 								onChange={handleChange}
 								error={errors.siretNumber}
-								placeholder="12345678901234"
+								placeholder={
+									Features.Auth.AUTH_PLACEHOLDERS.SIRET
+								}
+							/>
+						</div>
+
+						<div className="mt-4">
+							<FileUpload
+								label="Carte d'identité (optionnel)"
+								onChange={(file) => setIdentityCardFile(file)}
+								value={identityCardFile}
+								helperText="Photo ou PDF de votre carte d'identité pour vérification"
 							/>
 						</div>
 
@@ -389,11 +522,11 @@ export const ProfileCompletion: React.FC = () => {
 												type="checkbox"
 												name="mandateTypes"
 												value={mandate.id}
-												checked={formData.mandateTypes.includes(
+												checked={values.mandateTypes.includes(
 													mandate.id,
 												)}
 												onChange={handleChange}
-												className="rounded border-gray-300 text-cyan-600 shadow-sm focus:border-cyan-300 focus:ring focus:ring-offset-0 focus:ring-cyan-200 focus:ring-opacity-50"
+												className="rounded border-gray-300 text-brand shadow-sm focus:border-brand focus:ring focus:ring-offset-0 focus:ring-brand/20 focus:ring-opacity-50"
 											/>
 											<span className="ml-2 text-sm text-gray-700">
 												{mandate.label}
@@ -407,57 +540,57 @@ export const ProfileCompletion: React.FC = () => {
 								label="Années d'expérience"
 								name="yearsExperience"
 								type="number"
-								value={formData.yearsExperience}
+								value={values.yearsExperience}
 								onChange={handleChange}
 								error={errors.yearsExperience}
-								placeholder="5"
+								placeholder={
+									Features.Auth.AUTH_PLACEHOLDERS
+										.YEARS_EXPERIENCE
+								}
 							/>
 						</div>
 					</div>
 
 					{/* Personal Pitch */}
-					<div>
-						<h3 className="text-lg font-semibold text-gray-900 mb-4">
-							Petite bio (pitch personnel)
-						</h3>
+					<RichTextEditor
+						label="Petite bio (pitch personnel)"
+						value={values.personalPitch}
+						onChange={(value) =>
+							handleChange({
+								target: { name: 'personalPitch', value },
+							} as React.ChangeEvent<HTMLInputElement>)
+						}
+						placeholder={Features.Auth.AUTH_PLACEHOLDERS.BIO}
+						minHeight="120px"
+						showCharCount
+					/>
 
-						<textarea
-							name="personalPitch"
-							value={formData.personalPitch}
-							onChange={handleChange}
-							rows={4}
-							className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-							placeholder="Présentez-vous en quelques mots..."
-						/>
+					<div className="mt-4 space-y-3">
+						<label className="flex items-center">
+							<input
+								type="checkbox"
+								name="collaborateWithAgents"
+								checked={values.collaborateWithAgents}
+								onChange={handleChange}
+								className="rounded border-gray-300 text-brand shadow-sm focus:border-brand focus:ring focus:ring-offset-0 focus:ring-brand/20 focus:ring-opacity-50"
+							/>
+							<span className="ml-2 text-sm text-gray-700">
+								Je souhaite collaborer avec d&apos;autres agents
+							</span>
+						</label>
 
-						<div className="mt-4 space-y-3">
-							<label className="flex items-center">
-								<input
-									type="checkbox"
-									name="collaborateWithAgents"
-									checked={formData.collaborateWithAgents}
-									onChange={handleChange}
-									className="rounded border-gray-300 text-cyan-600 shadow-sm focus:border-cyan-300 focus:ring focus:ring-offset-0 focus:ring-cyan-200 focus:ring-opacity-50"
-								/>
-								<span className="ml-2 text-sm text-gray-700">
-									Je souhaite collaborer avec d&apos;autres
-									agents
-								</span>
-							</label>
-
-							<label className="flex items-center">
-								<input
-									type="checkbox"
-									name="shareCommission"
-									checked={formData.shareCommission}
-									onChange={handleChange}
-									className="rounded border-gray-300 text-cyan-600 shadow-sm focus:border-cyan-300 focus:ring focus:ring-offset-0 focus:ring-cyan-200 focus:ring-opacity-50"
-								/>
-								<span className="ml-2 text-sm text-gray-700">
-									Je suis ouvert à partager ma commission
-								</span>
-							</label>
-						</div>
+						<label className="flex items-center">
+							<input
+								type="checkbox"
+								name="shareCommission"
+								checked={values.shareCommission}
+								onChange={handleChange}
+								className="rounded border-gray-300 text-brand shadow-sm focus:border-brand focus:ring focus:ring-offset-0 focus:ring-brand/20 focus:ring-opacity-50"
+							/>
+							<span className="ml-2 text-gray-700">
+								Je suis ouvert à partager ma commission
+							</span>
+						</label>
 					</div>
 
 					{/* Alerts */}
@@ -476,9 +609,9 @@ export const ProfileCompletion: React.FC = () => {
 								<input
 									type="checkbox"
 									name="independentAgent"
-									checked={formData.independentAgent}
+									checked={values.independentAgent}
 									onChange={handleChange}
-									className="rounded border-gray-300 text-cyan-600 shadow-sm focus:border-cyan-300 focus:ring focus:ring-offset-0 focus:ring-cyan-200 focus:ring-opacity-50"
+									className="rounded border-gray-300 text-brand shadow-sm focus:border-brand focus:ring focus:ring-offset-0 focus:ring-brand/20 focus:ring-opacity-50"
 								/>
 								<span className="ml-2 text-sm text-gray-700">
 									Je certifie être un agent immobilier
@@ -490,11 +623,11 @@ export const ProfileCompletion: React.FC = () => {
 								<input
 									type="checkbox"
 									name="acceptTerms"
-									checked={formData.acceptTerms}
+									checked={values.acceptTerms}
 									onChange={handleChange}
-									className="rounded border-gray-300 text-cyan-600 shadow-sm focus:border-cyan-300 focus:ring focus:ring-offset-0 focus:ring-cyan-200 focus:ring-opacity-50"
+									className="rounded border-gray-300 text-brand shadow-sm focus:border-brand focus:ring focus:ring-offset-0 focus:ring-brand/20 focus:ring-opacity-50"
 								/>
-								<span className="ml-2 text-sm text-cyan-600">
+								<span className="ml-2 text-sm text-brand">
 									J&apos;accepte les conditions
 									d&apos;utilisation
 								</span>
@@ -511,11 +644,15 @@ export const ProfileCompletion: React.FC = () => {
 					<div className="pt-6">
 						<Button
 							type="submit"
-							loading={loading}
-							className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
+							loading={isSubmitting || isUploadingFile}
+							className="w-full bg-brand hover:bg-brand-600 text-white"
 							size="lg"
 						>
-							Valider mon profil et accéder à Hubimmo
+							{isUploadingFile
+								? "Upload de la carte d'identité..."
+								: editMode
+									? 'Enregistrer les modifications'
+									: 'Valider mon profil et accéder à Hubimmo'}
 						</Button>
 					</div>
 				</form>

@@ -1,15 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import ChatPage from '../../components/chat/ChatPage';
 import { useChat } from '../../hooks/useChat';
+import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
 import type { Property } from '@/lib/api/propertyApi';
 import { SearchAd } from '@/types/searchAd';
 import searchAdApi from '@/lib/api/searchAdApi';
+import { logger } from '@/lib/utils/logger';
+import { Features } from '@/lib/constants';
 
 export const ChatPageContent = () => {
+	const router = useRouter();
+	const { user, loading: authLoading } = useAuth();
 	const searchParams = useSearchParams();
 	const { users, getUsers, getUserById, setSelectedUser, selectedUser } =
 		useChat();
@@ -28,10 +33,17 @@ export const ChatPageContent = () => {
 	} | null>(null);
 
 	const userId = searchParams?.get('userId');
-	console.log('ChatPageContent - userId from URL:', userId);
+	logger.debug('[ChatPageContent] userId from URL', userId);
 	const propertyId = searchParams?.get('propertyId');
 	const collaborationType = searchParams?.get('type');
 	const searchAdId = searchParams?.get('searchAdId');
+
+	// Redirect to login if not authenticated
+	useEffect(() => {
+		if (!authLoading && !user) {
+			router.push(Features.Auth.AUTH_ROUTES.LOGIN);
+		}
+	}, [user, authLoading, router]);
 
 	useEffect(() => {
 		// Initialize users list
@@ -48,29 +60,32 @@ export const ChatPageContent = () => {
 				const existingUser = users.find((user) => user._id === userId);
 
 				if (existingUser) {
-					console.log(
-						'Found user in existing conversations:',
+					logger.debug(
+						'[ChatPageContent] Found user in existing conversations',
 						existingUser,
 					);
 					setSelectedUser(existingUser);
 					setIsInitialized(true);
 				} else {
 					// If not found in existing conversations, fetch user by ID
-					console.log(
-						'User not in conversations, fetching by ID:',
+					logger.debug(
+						'[ChatPageContent] User not in conversations, fetching by ID',
 						userId,
 					);
 					const fetchedUser = await getUserById(userId);
 
 					if (fetchedUser) {
-						console.log(
-							'Fetched user for new conversation:',
+						logger.debug(
+							'[ChatPageContent] Fetched user for new conversation',
 							fetchedUser,
 						);
 						setSelectedUser(fetchedUser);
 						setIsInitialized(true);
 					} else {
-						console.error('Failed to fetch user by ID:', userId);
+						logger.error(
+							'[ChatPageContent] Failed to fetch user by ID',
+							userId,
+						);
 					}
 				}
 
@@ -86,10 +101,13 @@ export const ChatPageContent = () => {
 							propertyDetails: data.data,
 							collaborationType: collaborationType || undefined,
 						});
-						console.log('Property context set:', data.data.title);
+						logger.debug(
+							'[ChatPageContent] Property context set',
+							data.data.title,
+						);
 					} catch (error) {
-						console.error(
-							'Failed to fetch property details:',
+						logger.error(
+							'[ChatPageContent] Failed to fetch property details',
 							error,
 						);
 						// Set context without property details
@@ -111,10 +129,13 @@ export const ChatPageContent = () => {
 							searchAdId,
 							searchAdDetails: adDetails,
 						});
-						console.log('Search ad context set:', adDetails.title);
+						logger.debug(
+							'[ChatPageContent] Search ad context set',
+							adDetails.title,
+						);
 					} catch (error) {
-						console.error(
-							'Failed to fetch search ad details:',
+						logger.error(
+							'[ChatPageContent] Failed to fetch search ad details',
 							error,
 						);
 						setSearchAdContext({
@@ -192,10 +213,10 @@ export const ChatPageContent = () => {
 
 			if (contextCollaborationType === 'contact') {
 				return (
-					<div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+					<div className="bg-info-light border border-brand-200 rounded-lg p-4 mb-4">
 						<div className="flex items-center space-x-2">
 							<svg
-								className="w-5 h-5 text-blue-600"
+								className="w-5 h-5 text-brand"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -207,11 +228,11 @@ export const ChatPageContent = () => {
 									d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
 								/>
 							</svg>
-							<span className="text-sm font-medium text-blue-800">
+							<span className="text-sm font-medium text-brand-800">
 								Demande de contact
 							</span>
 						</div>
-						<p className="text-sm text-blue-700 mt-1">
+						<p className="text-sm text-brand-700 mt-1">
 							Vous souhaitez obtenir plus d&apos;informations sur
 							cette annonce
 							{propertyDetails && (
@@ -299,6 +320,25 @@ export const ChatPageContent = () => {
 
 	// Component to display property context information in the chat
 	const ContextMessage = getContextMessage();
+
+	// Show loader while checking authentication
+	if (authLoading) {
+		return (
+			<div className="flex h-screen items-center justify-center bg-gray-50">
+				<div className="text-center">
+					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto mb-4"></div>
+					<p className="text-gray-600">
+						Vérification de l&apos;authentification...
+					</p>
+				</div>
+			</div>
+		);
+	}
+
+	// Don't render anything if not authenticated (will redirect)
+	if (!user) {
+		return null;
+	}
 
 	return (
 		<div className="h-screen flex flex-col">

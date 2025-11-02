@@ -6,10 +6,15 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { LoadingSpinner } from './LoadingSpinner';
+import { logger } from '@/lib/utils/logger';
+import { Features } from '@/lib/constants';
 import {
 	searchMunicipalities,
 	getMunicipalitiesByPostalPrefix,
 } from '@/lib/services/frenchAddressApi';
+import { useClickOutside } from '@/hooks/useClickOutside';
+import { Select } from '@/components/ui/CustomSelect';
 
 export interface LocationItem {
 	name: string;
@@ -53,8 +58,8 @@ export const LocationSearchWithRadius: React.FC<
 	);
 	const [showNearbyCities, setShowNearbyCities] = useState(false);
 	const [showDropdown, setShowDropdown] = useState(false);
-	const [loading, setLoading] = useState(false);
-	const [loadingNearby, setLoadingNearby] = useState(false);
+	const [isFetching, setIsFetching] = useState(false);
+	const [isFetchingNearby, setIsFetchingNearby] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
 
@@ -69,11 +74,11 @@ export const LocationSearchWithRadius: React.FC<
 
 			if (!trimmedInput || trimmedInput.length < minLength) {
 				setSuggestions([]);
-				setLoading(false);
+				setIsFetching(false);
 				return;
 			}
 
-			setLoading(true);
+			setIsFetching(true);
 			try {
 				const municipalities = await searchMunicipalities(
 					inputValue,
@@ -95,37 +100,26 @@ export const LocationSearchWithRadius: React.FC<
 
 				setSuggestions(locationItems);
 			} catch (error) {
-				console.error('Error fetching municipalities:', error);
+				logger.error('Error fetching municipalities:', error);
 				setSuggestions([]);
 			} finally {
-				setLoading(false);
+				setIsFetching(false);
 			}
 		};
 
-		const debounceTimer = setTimeout(fetchSuggestions, 300);
+		const debounceTimer = setTimeout(
+			fetchSuggestions,
+			Features.Common.DEBOUNCE.AUTOCOMPLETE,
+		);
 		return () => clearTimeout(debounceTimer);
 	}, [inputValue, selectedLocations]);
 
 	// Handle click outside
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			if (
-				dropdownRef.current &&
-				!dropdownRef.current.contains(event.target as Node) &&
-				!inputRef.current?.contains(event.target as Node)
-			) {
-				setShowDropdown(false);
-			}
-		};
-
-		document.addEventListener('mousedown', handleClickOutside);
-		return () =>
-			document.removeEventListener('mousedown', handleClickOutside);
-	}, []);
+	useClickOutside([dropdownRef, inputRef], () => setShowDropdown(false));
 
 	const handleSelectLocation = async (location: LocationItem) => {
 		// Fetch nearby cities with same postal code prefix
-		setLoadingNearby(true);
+		setIsFetchingNearby(true);
 		setShowNearbyCities(true);
 
 		try {
@@ -154,7 +148,7 @@ export const LocationSearchWithRadius: React.FC<
 				setSuggestions([]);
 				setShowDropdown(false);
 				setShowNearbyCities(false);
-				setLoadingNearby(false);
+				setIsFetchingNearby(false);
 				return;
 			}
 
@@ -164,11 +158,11 @@ export const LocationSearchWithRadius: React.FC<
 			// Pre-select the main location
 			setSelectedNearby(new Set([location.value]));
 		} catch (error) {
-			console.error('Error fetching nearby cities:', error);
+			logger.error('Error fetching nearby cities:', error);
 			// Fallback: just add the selected location
 			onLocationsChange([location]);
 		} finally {
-			setLoadingNearby(false);
+			setIsFetchingNearby(false);
 		}
 	};
 
@@ -262,9 +256,9 @@ export const LocationSearchWithRadius: React.FC<
 				</div>
 			)}
 
-			<div className="flex gap-3">
+			<div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
 				{/* Location search input */}
-				<div className="flex-1 relative">
+				<div className="flex-1 relative min-w-0">
 					<div className="relative">
 						<div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
 							<svg
@@ -296,31 +290,12 @@ export const LocationSearchWithRadius: React.FC<
 							placeholder={placeholder}
 							className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand text-sm"
 						/>
-						{loading && (
+						{isFetching && (
 							<div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-								<svg
-									className="animate-spin h-5 w-5 text-gray-400"
-									fill="none"
-									viewBox="0 0 24 24"
-								>
-									<circle
-										className="opacity-25"
-										cx="12"
-										cy="12"
-										r="10"
-										stroke="currentColor"
-										strokeWidth="4"
-									/>
-									<path
-										className="opacity-75"
-										fill="currentColor"
-										d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-									/>
-								</svg>
+								<LoadingSpinner size="sm" />
 							</div>
 						)}
-					</div>
-
+					</div>{' '}
 					{/* Dropdown - two modes: nearby cities selection or initial suggestions */}
 					{showDropdown &&
 						(showNearbyCities ? (
@@ -334,28 +309,9 @@ export const LocationSearchWithRadius: React.FC<
 										Sélectionnez les communes (
 										{nearbyCities.length})
 									</div>
-									{loadingNearby && (
+									{isFetchingNearby && (
 										<div className="text-sm text-gray-500 flex items-center">
-											<svg
-												className="animate-spin h-4 w-4 mr-2 text-brand"
-												xmlns="http://www.w3.org/2000/svg"
-												fill="none"
-												viewBox="0 0 24 24"
-											>
-												<circle
-													className="opacity-25"
-													cx="12"
-													cy="12"
-													r="10"
-													stroke="currentColor"
-													strokeWidth="4"
-												/>
-												<path
-													className="opacity-75"
-													fill="currentColor"
-													d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-												/>
-											</svg>
+											<LoadingSpinner size="sm" />
 											Chargement...
 										</div>
 									)}
@@ -365,7 +321,7 @@ export const LocationSearchWithRadius: React.FC<
 									{nearbyCities.map((city) => (
 										<label
 											key={city.value}
-											className="flex items-center px-3 py-2.5 hover:bg-brand-50 rounded cursor-pointer transition-colors"
+											className="flex items-center px-3 py-2.5 hover:bg-brand-50 rounded cursor-pointer transition-colors-smooth"
 										>
 											<input
 												type="checkbox"
@@ -388,11 +344,11 @@ export const LocationSearchWithRadius: React.FC<
 									))}
 								</div>
 
-								<div className="sticky bottom-0 bg-white border-t border-gray-200 p-3 flex gap-2">
+								<div className="sticky bottom-0 bg-white border-t border-gray-200 p-3 flex flex-col sm:flex-row gap-2">
 									<button
 										type="button"
 										onClick={handleSelectAllNearby}
-										className="flex-1 px-3 py-2 text-sm font-medium text-brand border border-brand rounded-lg hover:bg-brand-50 transition-colors"
+										className="flex-1 px-3 py-2 text-sm font-medium text-brand border border-brand rounded-lg hover:bg-brand-50 transition-colors-smooth"
 									>
 										Tout sélectionner ({nearbyCities.length}
 										)
@@ -400,7 +356,7 @@ export const LocationSearchWithRadius: React.FC<
 									<button
 										type="button"
 										onClick={handleConfirmSelection}
-										className="flex-1 px-3 py-2 text-sm font-medium text-white bg-brand rounded-lg hover:bg-brand/90 transition-colors"
+										className="flex-1 px-3 py-2 text-sm font-medium text-white bg-brand rounded-lg hover:bg-brand/90 transition-colors-smooth"
 									>
 										Confirmer ({selectedNearby.size}{' '}
 										sélectionnée
@@ -409,7 +365,7 @@ export const LocationSearchWithRadius: React.FC<
 									<button
 										type="button"
 										onClick={handleCancelNearby}
-										className="px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+										className="sm:flex-none px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors-smooth"
 									>
 										Annuler
 									</button>
@@ -429,7 +385,7 @@ export const LocationSearchWithRadius: React.FC<
 											onClick={() =>
 												handleSelectLocation(suggestion)
 											}
-											className="w-full px-4 py-2.5 text-left hover:bg-brand-50 focus:bg-brand-50 focus:outline-none transition-colors border-b border-gray-100 last:border-b-0"
+											className="w-full px-4 py-2.5 text-left hover:bg-brand-50 focus:bg-brand-50 focus:outline-none transition-colors-smooth border-b border-gray-100 last:border-b-0"
 										>
 											<div className="flex items-center">
 												<svg
@@ -463,18 +419,15 @@ export const LocationSearchWithRadius: React.FC<
 				</div>
 
 				{/* Radius selector */}
-				<div className="w-40">
-					<select
-						value={radiusKm}
-						onChange={(e) => onRadiusChange(Number(e.target.value))}
-						className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand text-sm bg-white"
-					>
-						{RADIUS_OPTIONS.map((radius) => (
-							<option key={radius} value={radius}>
-								{radius} km
-							</option>
-						))}
-					</select>
+				<div className="w-full sm:w-32">
+					<Select
+						value={String(radiusKm)}
+						onChange={(value) => onRadiusChange(Number(value))}
+						options={RADIUS_OPTIONS.map((radius) => ({
+							value: String(radius),
+							label: `${radius} km`,
+						}))}
+					/>
 				</div>
 			</div>
 

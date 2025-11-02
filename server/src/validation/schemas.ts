@@ -1,8 +1,41 @@
 import { z } from 'zod';
+import {
+	validatePasswordStrength,
+	meetsBasicRequirements,
+} from '../utils/passwordValidator';
 
 // Shared helpers
 const mongoId = z.string().regex(/^[a-f\d]{24}$/i, 'ID invalide');
 const frenchPostalCode = z.string().regex(/^\d{5}$/i, 'Code postal invalide');
+
+// Enhanced password validation with zxcvbn
+const strongPassword = z
+	.string()
+	.min(12, 'Le mot de passe doit contenir au moins 12 caractères')
+	.max(128, 'Le mot de passe ne doit pas dépasser 128 caractères')
+	.regex(
+		/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&_\-+=]).*$/,
+		'Le mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un caractère spécial (@$!%*?&_-+=)',
+	)
+	.refine(
+		(password) => {
+			const basicCheck = meetsBasicRequirements(password);
+			return basicCheck.isValid;
+		},
+		{
+			message: 'Le mot de passe ne respecte pas les exigences minimales',
+		},
+	)
+	.refine(
+		(password) => {
+			const strengthCheck = validatePasswordStrength(password);
+			return strengthCheck.isValid;
+		},
+		{
+			message:
+				'Le mot de passe est trop faible ou trop couramment utilisé. Veuillez choisir un mot de passe plus fort.',
+		},
+	);
 
 // Auth
 export const loginSchema = z.object({
@@ -10,12 +43,125 @@ export const loginSchema = z.object({
 	password: z.string().min(1),
 });
 
+export const verifyEmailSchema = z.object({
+	email: z.string().email().toLowerCase().trim(),
+	code: z
+		.string()
+		.length(6)
+		.regex(
+			/^[0-9A-Z]+$/,
+			'Le code doit contenir uniquement des chiffres et des lettres majuscules',
+		),
+});
+
+export const resendVerificationSchema = z.object({
+	email: z.string().email().toLowerCase().trim(),
+});
+
+export const forgotPasswordSchema = z.object({
+	email: z.string().email().toLowerCase().trim(),
+});
+
+export const resetPasswordSchema = z.object({
+	email: z.string().email().toLowerCase().trim(),
+	code: z
+		.string()
+		.length(6)
+		.regex(
+			/^[0-9A-Z]+$/,
+			'Le code doit contenir uniquement des chiffres et des lettres majuscules',
+		),
+	newPassword: strongPassword,
+});
+
+export const updateProfileSchema = z.object({
+	firstName: z.string().min(2).max(50).trim().optional(),
+	lastName: z.string().min(2).max(50).trim().optional(),
+	phone: z
+		.string()
+		.regex(/^(?:(?:\+33|0)[1-9])(?:[0-9]{8})$/)
+		.optional()
+		.or(z.literal('')),
+	profileImage: z.string().url().max(500).optional().or(z.literal('')),
+	professionalInfo: z
+		.object({
+			postalCode: frenchPostalCode.optional(),
+			city: z
+				.string()
+				.min(2)
+				.max(100)
+				.regex(
+					/^[a-zA-ZÀ-ÿ\u0100-\u017F\s'-]+$/,
+					'Format de ville invalide',
+				)
+				.optional(),
+			interventionRadius: z.number().int().min(1).max(200).optional(),
+			network: z.string().trim().optional(),
+			siretNumber: z
+				.string()
+				.regex(/^[0-9]{14}$/, 'Format SIRET invalide (14 chiffres)')
+				.optional(),
+			yearsExperience: z.number().int().min(0).max(50).optional(),
+			personalPitch: z.string().max(1000).optional(),
+			mandateTypes: z
+				.array(z.enum(['simple', 'exclusif', 'co-mandat']))
+				.optional(),
+			coveredCities: z.array(z.string().min(2).max(100)).optional(),
+			collaborateWithAgents: z.boolean().optional(),
+			shareCommission: z.boolean().optional(),
+			independentAgent: z.boolean().optional(),
+			alertsEnabled: z.boolean().optional(),
+			alertFrequency: z.enum(['quotidien', 'hebdomadaire']).optional(),
+		})
+		.optional(),
+});
+
+export const completeProfileSchema = z.object({
+	professionalInfo: z.object({
+		// Required fields for profile completion
+		postalCode: frenchPostalCode,
+		city: z
+			.string()
+			.min(2, 'La ville est requise')
+			.max(100)
+			.regex(
+				/^[a-zA-ZÀ-ÿ\u0100-\u017F\s'-]+$/,
+				'Format de ville invalide',
+			),
+		network: z.string().trim().min(1, 'Le réseau est requis'),
+		// Optional fields
+		interventionRadius: z.number().int().min(1).max(200).optional(),
+		siretNumber: z
+			.string()
+			.regex(/^[0-9]{14}$/, 'Format SIRET invalide (14 chiffres)')
+			.optional(),
+		yearsExperience: z.number().int().min(0).max(50).optional(),
+		personalPitch: z.string().max(1000).optional(),
+		mandateTypes: z
+			.array(z.enum(['simple', 'exclusif', 'co-mandat']))
+			.optional(),
+		coveredCities: z.array(z.string().min(2).max(100)).optional(),
+		collaborateWithAgents: z.boolean().optional(),
+		shareCommission: z.boolean().optional(),
+		independentAgent: z.boolean().optional(),
+		alertsEnabled: z.boolean().optional(),
+		alertFrequency: z.enum(['quotidien', 'hebdomadaire']).optional(),
+	}),
+	profileImage: z.string().url().optional().or(z.literal('')),
+	identityCard: z
+		.object({
+			url: z.string().url(),
+			key: z.string(),
+		})
+		.optional(),
+});
+
 export const signupSchema = z
 	.object({
 		firstName: z.string().min(2).max(50).trim(),
 		lastName: z.string().min(2).max(50).trim(),
 		email: z.string().email().toLowerCase().trim(),
-		password: z.string().min(8).max(128),
+		password: strongPassword,
 		phone: z
 			.string()
 			.regex(/^(?:(?:\+33|0)[1-9])(?:[0-9]{8})$/)
@@ -28,7 +174,7 @@ export const signupSchema = z
 		(data) =>
 			!data.confirmPassword || data.password === data.confirmPassword,
 		{
-			message: "Passwords don't match",
+			message: 'Les mots de passe ne correspondent pas',
 			path: ['confirmPassword'],
 		},
 	);

@@ -2,8 +2,17 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
-import { appointmentApi } from '@/lib/api/appointmentApi';
+import { Modal } from '@/components/ui/Modal';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import type { Appointment } from '@/types/appointment';
+import { toast } from 'react-toastify';
+import { APPOINTMENT_TOAST_MESSAGES } from '@/lib/constants/features/appointments';
+import { formatDateShort } from '@/lib/utils/date';
+import {
+	useAvailableSlots,
+	useAppointmentMutations,
+} from '@/hooks/useAppointments';
+import { useAuth } from '@/hooks/useAuth';
 
 interface RescheduleAppointmentModalProps {
 	isOpen: boolean;
@@ -15,11 +24,10 @@ interface RescheduleAppointmentModalProps {
 export const RescheduleAppointmentModal: React.FC<
 	RescheduleAppointmentModalProps
 > = ({ isOpen, onClose, appointment, onSuccess }) => {
-	const [loading, setLoading] = useState(false);
-	const [availableSlots, setAvailableSlots] = useState<string[]>([]);
-	const [loadingSlots, setLoadingSlots] = useState(false);
 	const [newDate, setNewDate] = useState('');
 	const [newTime, setNewTime] = useState('');
+	const [rescheduleReason, setRescheduleReason] = useState('');
+	const [loading, setLoading] = useState(false);
 
 	const agentId =
 		typeof appointment.agentId === 'object'
@@ -31,10 +39,24 @@ export const RescheduleAppointmentModal: React.FC<
 			? `${appointment.agentId.firstName} ${appointment.agentId.lastName}`
 			: 'Agent';
 
+	const { user } = useAuth();
+
+	// Use SWR to fetch available slots
+	const { data: slotsData, isLoading: loadingSlots } = useAvailableSlots(
+		agentId,
+		newDate || undefined,
+	);
+
+	// Extract slots array from API response - slotsData is already { slots, isAvailable, duration }
+	const availableSlots = slotsData?.slots || [];
+
+	// Get mutation function
+	const { rescheduleAppointment } = useAppointmentMutations(user?._id);
+
 	const resetForm = useCallback(() => {
 		setNewDate('');
 		setNewTime('');
-		setAvailableSlots([]);
+		setRescheduleReason('');
 	}, []);
 
 	useEffect(() => {
@@ -43,54 +65,25 @@ export const RescheduleAppointmentModal: React.FC<
 		}
 	}, [isOpen, resetForm]);
 
-	const fetchAvailableSlots = useCallback(async () => {
-		if (!newDate) return;
-
-		try {
-			setLoadingSlots(true);
-			const response = await appointmentApi.getAvailableSlots(
-				agentId,
-				newDate,
-			);
-			setAvailableSlots(response.slots || []);
-		} catch (error) {
-			console.error('Error fetching slots:', error);
-			setAvailableSlots([]);
-		} finally {
-			setLoadingSlots(false);
-		}
-	}, [agentId, newDate]);
-
-	useEffect(() => {
-		if (newDate) {
-			fetchAvailableSlots();
-		}
-	}, [newDate, fetchAvailableSlots]);
-
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
 		if (!newDate || !newTime) {
-			alert('Veuillez sélectionner une date et une heure');
+			toast.error(APPOINTMENT_TOAST_MESSAGES.SELECT_DATE_TIME);
 			return;
 		}
 
-		try {
-			setLoading(true);
-			await appointmentApi.rescheduleAppointment(appointment._id, {
-				scheduledDate: newDate,
-				scheduledTime: newTime,
-			});
-			alert('Rendez-vous reprogrammé avec succès !');
+		setLoading(true);
+		const result = await rescheduleAppointment(appointment._id, {
+			scheduledDate: newDate,
+			scheduledTime: newTime,
+			rescheduleReason: rescheduleReason || undefined,
+		});
+		setLoading(false);
+
+		if (result.success) {
 			onSuccess();
 			onClose();
-		} catch (error) {
-			console.error('Error rescheduling appointment:', error);
-			alert(
-				'Une erreur est survenue lors de la reprogrammation du rendez-vous',
-			);
-		} finally {
-			setLoading(false);
 		}
 	};
 
@@ -109,10 +102,15 @@ export const RescheduleAppointmentModal: React.FC<
 	if (!isOpen) return null;
 
 	return (
-		<div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4">
-			<div className="bg-white rounded-2xl max-w-2xl w-full max-h-[95vh] flex flex-col shadow-2xl animate-fadeIn">
+		<Modal
+			isOpen={isOpen}
+			onClose={onClose}
+			size="xl"
+			className="max-w-2xl"
+		>
+			<div className="flex flex-col max-h-[90vh]">
 				{/* Header */}
-				<div className="bg-white px-4 md:px-6 py-4 md:py-5 rounded-t-2xl flex-shrink-0 border-b-2 border-gray-100">
+				<div className="px-4 md:px-6 py-4 md:py-5 flex-shrink-0 border-b-2 border-gray-100">
 					<div className="flex justify-between items-center">
 						<div className="flex-1 min-w-0">
 							<h2 className="text-lg md:text-xl font-bold text-gray-900 truncate">
@@ -124,11 +122,11 @@ export const RescheduleAppointmentModal: React.FC<
 						</div>
 						<button
 							onClick={onClose}
-							className="ml-3 text-gray-500 hover:text-gray-700 transition-colors flex-shrink-0 p-2 hover:bg-gray-100 rounded-full"
+							className="ml-4 text-gray-400 hover:text-gray-600 transition-colors"
 							aria-label="Fermer"
 						>
 							<svg
-								className="w-5 h-5 md:w-6 md:h-6"
+								className="w-6 h-6"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -136,7 +134,7 @@ export const RescheduleAppointmentModal: React.FC<
 								<path
 									strokeLinecap="round"
 									strokeLinejoin="round"
-									strokeWidth="2"
+									strokeWidth={2}
 									d="M6 18L18 6M6 6l12 12"
 								/>
 							</svg>
@@ -144,11 +142,11 @@ export const RescheduleAppointmentModal: React.FC<
 					</div>
 
 					{/* Current Appointment Info */}
-					<div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-						<p className="text-xs text-blue-800 font-medium mb-1">
+					<div className="mt-4 p-3 bg-info-light rounded-lg border border-info">
+						<p className="text-xs text-info font-medium mb-1">
 							Rendez-vous actuel:
 						</p>
-						<div className="flex items-center gap-2 text-sm text-blue-900">
+						<div className="flex items-center gap-2 text-sm text-info">
 							<svg
 								className="w-4 h-4"
 								fill="none"
@@ -216,7 +214,7 @@ export const RescheduleAppointmentModal: React.FC<
 						/>
 						<p className="text-xs text-gray-500 mt-1.5">
 							Disponible de demain à{' '}
-							{new Date(getMaxDate()).toLocaleDateString('fr-FR')}
+							{formatDateShort(getMaxDate())}
 						</p>
 					</div>
 
@@ -243,10 +241,10 @@ export const RescheduleAppointmentModal: React.FC<
 							</label>
 							{loadingSlots ? (
 								<div className="text-center py-12">
-									<div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-brand border-t-transparent mb-3"></div>
-									<p className="text-sm text-gray-600 font-medium">
-										Chargement des créneaux...
-									</p>
+									<LoadingSpinner
+										size="lg"
+										message="Chargement des créneaux..."
+									/>
 								</div>
 							) : availableSlots.length === 0 ? (
 								<div className="text-center py-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border-2 border-dashed border-gray-300">
@@ -318,6 +316,44 @@ export const RescheduleAppointmentModal: React.FC<
 							)}
 						</div>
 					)}
+
+					{/* Reschedule Reason (Optional) */}
+					{newDate && newTime && (
+						<div>
+							<label className="block text-sm font-semibold text-gray-800 mb-2.5">
+								<div className="flex items-center">
+									<svg
+										className="w-4 h-4 mr-1.5 text-brand"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth="2"
+											d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+										/>
+									</svg>
+									Raison du report (optionnel)
+								</div>
+							</label>
+							<textarea
+								value={rescheduleReason}
+								onChange={(e) =>
+									setRescheduleReason(e.target.value)
+								}
+								maxLength={500}
+								rows={3}
+								placeholder="Ex: Conflit d'agenda, rendez-vous imprévu..."
+								className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-all text-sm md:text-base resize-none"
+							/>
+							<p className="text-xs text-gray-500 mt-1.5">
+								Cette raison sera communiquée au client par
+								email (500 caractères max)
+							</p>
+						</div>
+					)}
 				</form>
 
 				{/* Footer Actions */}
@@ -335,39 +371,15 @@ export const RescheduleAppointmentModal: React.FC<
 						<Button
 							type="submit"
 							onClick={handleSubmit}
-							disabled={loading || !newDate || !newTime}
+							loading={loading}
+							disabled={!newDate || !newTime}
 							className="flex-1 bg-brand hover:bg-brand-dark text-white font-semibold"
 						>
-							{loading ? (
-								<span className="flex items-center justify-center">
-									<svg
-										className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-										fill="none"
-										viewBox="0 0 24 24"
-									>
-										<circle
-											className="opacity-25"
-											cx="12"
-											cy="12"
-											r="10"
-											stroke="currentColor"
-											strokeWidth="4"
-										></circle>
-										<path
-											className="opacity-75"
-											fill="currentColor"
-											d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-										></path>
-									</svg>
-									Envoi en cours...
-								</span>
-							) : (
-								'✓ Confirmer la reprogrammation'
-							)}
+							✓ Confirmer la reprogrammation
 						</Button>
 					</div>
 				</div>
 			</div>
-		</div>
+		</Modal>
 	);
 };

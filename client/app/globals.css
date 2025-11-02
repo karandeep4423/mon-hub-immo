@@ -5,6 +5,7 @@
   Centralized brand palette and simple utilities to avoid hex duplication.
 */
 :root {
+	/* Brand Colors - Primary Cyan */
 	--brand: #00b4d8;
 	--brand-dark: #0094b3;
 	--brand-deep: #034752;
@@ -13,11 +14,103 @@
 	--brand-50: #e6f7ff;
 	--brand-100: #cceeff;
 	--brand-200: #99ddff;
-	--brand-600: var(--brand);
-	--brand-700: var(--brand-dark);
-	--brand-800: var(--brand-deep);
+	--brand-300: #4dd4ed;
+	--brand-400: #26cae9;
+	--brand-500: var(--brand);
+	--brand-600: #00a5c8;
+	--brand-700: #0093b5;
+	--brand-800: #0081a3;
+	--brand-900: #006182;
+
+	/* Accent Colors - Coral */
+	--accent: #ff6b6b;
+	--accent-50: #fff4ed;
+	--accent-100: #ffe4d1;
+	--accent-200: #ffc9a3;
+	--accent-300: #ffa76a;
+	--accent-400: #ff7a2f;
+	--accent-500: #ff5a07;
+	--accent-600: #f04000;
+	--accent-700: #c72d02;
+	--accent-800: #9e260b;
+	--accent-900: #7f220c;
+
+	/* Secondary Colors - Purple */
+	--secondary: #8b5cf6;
+	--secondary-50: #f5f3ff;
+	--secondary-100: #ede9fe;
+	--secondary-200: #ddd6fe;
+	--secondary-300: #c4b5fd;
+	--secondary-400: #a78bfa;
+	--secondary-500: #8b5cf6;
+	--secondary-600: #7c3aed;
+	--secondary-700: #6d28d9;
+	--secondary-800: #5b21b6;
+	--secondary-900: #4c1d95;
+
+	/* Semantic Colors */
+	--success: #51cf66;
+	--success-light: #d3f9d8;
+	--warning: #ffd93d;
+	--warning-light: #fff4cc;
+	--error: #ff6b6b;
+	--error-light: #ffe0e0;
+	--info: #3b82f6;
+	--info-light: #dbeafe;
+
+	/* Neutral Grays */
+	--gray-50: #fafbfc;
+	--gray-100: #f3f4f6;
+	--gray-200: #e5e7eb;
+	--gray-300: #d1d5db;
+	--gray-400: #9ca3af;
+	--gray-500: #6b7280;
+	--gray-600: #4b5563;
+	--gray-700: #374151;
+	--gray-800: #1f2937;
+	--gray-900: #111827;
+
+	/* Background Colors */
+	--bg-primary: #ffffff;
+	--bg-secondary: #fafbfc;
+	--bg-tertiary: #f3f4f6;
 	--bg-muted: #f9f9f9;
-	--text-muted: #333333;
+	--bg-hover: #e5e7eb;
+	--bg-brand-subtle: rgba(0, 180, 216, 0.03);
+
+	/* Text Colors */
+	--text-primary: #111827;
+	--text-secondary: #4b5563;
+	--text-muted: #6b7280;
+	--text-disabled: #9ca3af;
+
+	/* Shadows */
+	--shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+	--shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+	--shadow-md: 0 4px 20px rgba(0, 180, 216, 0.08);
+	--shadow-lg: 0 8px 30px rgba(0, 180, 216, 0.15);
+	--shadow-xl: 0 20px 40px rgba(0, 180, 216, 0.2);
+	--shadow-brand: 0 8px 24px -4px rgba(0, 180, 216, 0.2);
+	--shadow-brand-lg: 0 12px 32px -6px rgba(0, 180, 216, 0.25);
+
+	/* Border Radius */
+	--radius-xs: 0.25rem;
+	--radius-sm: 0.5rem;
+	--radius-md: 0.75rem;
+	--radius-lg: 1rem;
+	--radius-xl: 1.25rem;
+	--radius-2xl: 1.5rem;
+	--radius-3xl: 2rem;
+	--radius-full: 9999px;
+
+	/* Spacing */
+	--space-xs: 0.25rem;
+	--space-sm: 0.5rem;
+	--space-md: 1rem;
+	--space-lg: 1.5rem;
+	--space-xl: 2rem;
+	--space-2xl: 3rem;
+	--space-3xl: 4rem;
 }
 
 /* Brand color utilities */
@@ -36,18 +129,126 @@
 .bg-brand-200 {
 	background-color: var(--brand-200);
 }
+.bg-brand-300 {
+	background-color: var(--brand-300);
+}
+.bg-brand-400 {
+	background-color: var(--brand-400);
+}
+.bg-brand-500 {
+	background-color: var(--brand-500);
+}
 .bg-brand-600 {
 	background-color: var(--brand-600);
 }
 .bg-brand-700 {
 	background-color: var(--brand-700);
 }
+.bg-brand-800 {
+	background-color: var(--brand-800);
+}
+.bg-brand-900 {
+	background-color: var(--brand-900);
+}
 .bg-muted {
 	background-color: var(--bg-muted);
 }
 
+/* Accent utilities */
+.bg-accent {
+	background-color: var(--accent);
+}
+.text-accent {
+	color: var(--accent);
+}
+.border-accent {
+	border-color: var(--accent);
+}
+
+/* Secondary utilities */
+.bg-secondary {
+	background-color: var(--secondary);
+}
+.text-secondary {
+	color: var(--secondary);
+}
+.border-secondary {
+	border-color: var(--secondary);
+}
+
+/* Semantic color utilities */
+.bg-success {
+	background-color: var(--success);
+}
+.bg-success-light {
+	background-color: var(--success-light);
+}
+.text-success {
+	color: var(--success);
+}
+.bg-warning {
+	background-color: var(--warning);
+}
+.bg-warning-light {
+	background-color: var(--warning-light);
+}
+.text-warning {
+	color: var(--warning);
+}
+.bg-error {
+	background-color: var(--error);
+}
+.text-error {
+	color: var(--error);
+}
+.bg-info {
+	background-color: var(--info);
+}
+.text-info {
+	color: var(--info);
+}
+
+/* Gray utilities */
+.bg-gray-50 {
+	background-color: var(--gray-50);
+}
+.bg-gray-100 {
+	background-color: var(--gray-100);
+}
+.bg-gray-200 {
+	background-color: var(--gray-200);
+}
+.text-gray-400 {
+	color: var(--gray-400);
+}
+.text-gray-500 {
+	color: var(--gray-500);
+}
+.text-gray-600 {
+	color: var(--gray-600);
+}
+.text-gray-700 {
+	color: var(--gray-700);
+}
+.text-gray-900 {
+	color: var(--gray-900);
+}
+.border-gray-200 {
+	border-color: var(--gray-200);
+}
+.border-gray-300 {
+	border-color: var(--gray-300);
+}
+
 /* Brand gradients */
 .bg-brand-gradient {
+	background: linear-gradient(
+		135deg,
+		var(--brand) 0%,
+		var(--brand-dark) 100%
+	);
+}
+.bg-brand-gradient-vertical {
 	background: linear-gradient(
 		180deg,
 		var(--brand) 0%,
@@ -56,6 +257,23 @@
 }
 .bg-brand-gradient-horizontal {
 	background: linear-gradient(90deg, var(--brand) 0%, var(--brand-dark) 100%);
+}
+.bg-brand-subtle {
+	background-color: var(--bg-brand-subtle);
+}
+
+/* Shadow utilities */
+.shadow-brand {
+	box-shadow: var(--shadow-brand);
+}
+.shadow-brand-lg {
+	box-shadow: var(--shadow-brand-lg);
+}
+.shadow-card {
+	box-shadow: var(--shadow-md);
+}
+.shadow-card-hover {
+	box-shadow: var(--shadow-lg);
 }
 
 .text-brand {
@@ -94,11 +312,29 @@
 .hover\:bg-brand-dark:hover {
 	background-color: var(--brand-dark);
 }
+.hover\:bg-brand-600:hover {
+	background-color: var(--brand-600);
+}
 .hover\:bg-brand-700:hover {
 	background-color: var(--brand-700);
 }
+.hover\:bg-gray-50:hover {
+	background-color: var(--gray-50);
+}
+.hover\:bg-gray-100:hover {
+	background-color: var(--gray-100);
+}
 .hover\:text-brand:hover {
 	color: var(--brand);
+}
+.hover\:shadow-card-hover:hover {
+	box-shadow: var(--shadow-lg);
+}
+.hover\:scale-102:hover {
+	transform: scale(1.02);
+}
+.active\:scale-98:active {
+	transform: scale(0.98);
 }
 
 /* Focus utilities */
@@ -108,6 +344,9 @@
 .focus\:border-brand:focus {
 	border-color: var(--brand);
 }
+.focus\:border-brand-500:focus {
+	border-color: var(--brand-500);
+}
 .focus\:border-brand-600:focus {
 	border-color: var(--brand-600);
 }
@@ -115,7 +354,24 @@
 /* Focus ring helper (for inputs/buttons needing brand ring) */
 .focus-ring-brand:focus {
 	outline: none;
-	box-shadow: 0 0 0 2px var(--brand);
+	box-shadow: 0 0 0 4px rgba(0, 180, 216, 0.1);
+}
+
+/* Transition utilities */
+.transition-all {
+	transition: all 200ms ease;
+}
+.transition-colors {
+	transition:
+		color 150ms ease,
+		background-color 150ms ease,
+		border-color 150ms ease;
+}
+.transition-shadow {
+	transition: box-shadow 300ms ease;
+}
+.transition-transform {
+	transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 :root {
 	--font-family-sans: Inter, ui-sans-serif, system-ui, sans-serif;
@@ -123,17 +379,96 @@
 	/* Custom breakpoints */
 	--breakpoint-xs: 475px;
 
-	/* Custom colors */
+	/* Custom colors (legacy - migrating to new system) */
 	--color-cyan-50: #eff6ff;
 	--color-cyan-100: #dbeafe;
 	--color-cyan-500: #00bcd4;
 	--color-cyan-600: #00acc1;
 	--color-cyan-700: #0097a7;
 
-	/* Custom border radius */
-	--radius-xl: 0.75rem;
-	--radius-2xl: 1rem;
-	--radius-3xl: 1.5rem;
+	/* Border radius shortcuts */
+	--radius-button: 0.75rem;
+	--radius-card: 1rem;
+	--radius-modal: 1.25rem;
+	--radius-input: 0.625rem;
+}
+
+/* Animation keyframes */
+@keyframes shimmer {
+	0% {
+		background-position: -1000px 0;
+	}
+	100% {
+		background-position: 1000px 0;
+	}
+}
+
+@keyframes slideUp {
+	0% {
+		transform: translateY(10px);
+		opacity: 0;
+	}
+	100% {
+		transform: translateY(0);
+		opacity: 1;
+	}
+}
+
+@keyframes scaleIn {
+	0% {
+		transform: scale(0.95);
+		opacity: 0;
+	}
+	100% {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+
+@keyframes fadeIn {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
+@keyframes spin {
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+/* Animation utilities */
+.animate-shimmer {
+	animation: shimmer 2s infinite;
+	background: linear-gradient(
+		90deg,
+		var(--gray-200) 0%,
+		var(--gray-100) 50%,
+		var(--gray-200) 100%
+	);
+	background-size: 1000px 100%;
+}
+
+.animate-slide-up {
+	animation: slideUp 0.15s ease-out;
+}
+
+.animate-scale-in {
+	animation: scaleIn 0.2s ease-out;
+}
+
+.animate-fade-in {
+	animation: fadeIn 0.2s ease-out;
+}
+
+.animate-spin {
+	animation: spin 1s linear infinite;
 }
 
 /* Custom utilities */
@@ -164,4 +499,615 @@
 	right: 0;
 	bottom: -1px;
 	line-height: 0;
+}
+
+/* Rich Text Editor styles */
+[contenteditable] {
+	outline: none;
+}
+
+/* ContentEditable - no outline, parent handles it */
+[contenteditable] {
+	outline: none !important;
+}
+
+[contenteditable]:empty:before {
+	content: attr(data-placeholder);
+	color: #9ca3af;
+	pointer-events: none;
+}
+
+[contenteditable] ul,
+[contenteditable] ol {
+	padding-left: 1.5rem;
+	margin: 0.5rem 0;
+}
+
+[contenteditable] ul {
+	list-style-type: disc;
+}
+
+[contenteditable] ol {
+	list-style-type: decimal;
+}
+
+[contenteditable] li {
+	margin: 0.25rem 0;
+}
+
+[contenteditable] p {
+	margin: 0.5rem 0;
+}
+
+[contenteditable] b,
+[contenteditable] strong {
+	font-weight: 700;
+}
+
+[contenteditable] i,
+[contenteditable] em {
+	font-style: italic;
+}
+
+[contenteditable] u {
+	text-decoration: underline;
+}
+
+/* Global Input & Textarea Focus Styles - Brand Color */
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='number'],
+input[type='tel'],
+input[type='url'],
+input[type='search'],
+input[type='date'],
+input[type='time'],
+input[type='datetime-local'],
+textarea,
+select {
+	outline: none;
+}
+
+input[type='text']:focus,
+input[type='email']:focus,
+input[type='password']:focus,
+input[type='number']:focus,
+input[type='tel']:focus,
+input[type='url']:focus,
+input[type='search']:focus,
+input[type='date']:focus,
+input[type='time']:focus,
+input[type='datetime-local']:focus,
+textarea:focus,
+select:focus {
+	outline: 2px solid var(--brand) !important;
+	outline-offset: 0px !important;
+	border-color: var(--brand) !important;
+	box-shadow: 0 0 0 3px rgba(0, 180, 216, 0.1) !important;
+}
+
+/* For inputs with border classes, ensure brand color on focus */
+input:focus,
+textarea:focus,
+select:focus {
+	--tw-ring-color: rgba(0, 180, 216, 0.1) !important;
+	--tw-ring-opacity: 1 !important;
+}
+
+/* Override any default focus outlines */
+*:focus-visible {
+	outline: 2px solid var(--brand);
+	outline-offset: 2px;
+}
+
+/* But keep input/textarea/select with specific styling */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+	outline-offset: 0px;
+}
+
+/* ============================================
+   GLOBAL DROPDOWN/SELECT STYLING
+   Brand-consistent design for all dropdowns
+   ============================================ */
+
+/* Base select styling */
+select {
+	appearance: none;
+	background-color: white;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2300b4d8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+	background-position: right 0.75rem center;
+	background-repeat: no-repeat;
+	background-size: 1.25rem 1.25rem;
+	padding-right: 2.5rem;
+	border: 1px solid var(--gray-300);
+	border-radius: var(--radius-lg);
+	padding: 0.625rem 2.5rem 0.625rem 0.875rem;
+	font-size: 0.875rem;
+	line-height: 1.5;
+	color: var(--text-primary);
+	transition:
+		border-color 150ms ease,
+		box-shadow 150ms ease,
+		background-color 150ms ease;
+	cursor: pointer;
+}
+
+/* Select hover state */
+select:hover:not(:disabled) {
+	border-color: var(--brand-300);
+	background-color: var(--gray-50);
+}
+
+/* Select focus state - brand colors */
+select:focus {
+	outline: none;
+	border-color: var(--brand) !important;
+	box-shadow: 0 0 0 3px rgba(0, 180, 216, 0.1) !important;
+	background-color: white;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2300b4d8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+}
+
+/* Select disabled state */
+select:disabled {
+	background-color: var(--gray-100);
+	color: var(--text-disabled);
+	cursor: not-allowed;
+	opacity: 0.6;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+}
+
+/* Select with error state */
+select.error,
+select[aria-invalid='true'] {
+	border-color: var(--error) !important;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23ff6b6b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+}
+
+select.error:focus,
+select[aria-invalid='true']:focus {
+	box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1) !important;
+}
+
+/* Select success state */
+select.success {
+	border-color: var(--success);
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2351cf66' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+}
+
+/* Option styling - Force brand colors */
+select option {
+	padding: 0.5rem 0.875rem;
+	color: var(--text-primary) !important;
+	background-color: white !important;
+}
+
+select option:hover,
+select option:focus {
+	background-color: var(--brand-50) !important;
+	background: var(--brand-50) !important;
+	color: var(--brand-800) !important;
+}
+
+select option:checked,
+select option[selected] {
+	background-color: var(--brand) !important;
+	background: var(--brand) !important;
+	color: white !important;
+	font-weight: 600 !important;
+}
+
+select option:disabled {
+	color: var(--text-disabled) !important;
+	background-color: var(--gray-50) !important;
+	background: var(--gray-50) !important;
+}
+
+/* Multiple select styling */
+select[multiple] {
+	padding: 0.5rem;
+	background-image: none;
+}
+
+select[multiple] option {
+	padding: 0.5rem 0.875rem;
+	border-radius: var(--radius-sm);
+	margin-bottom: 0.25rem;
+}
+
+select[multiple] option:checked {
+	background: linear-gradient(
+		90deg,
+		var(--brand-50) 0%,
+		var(--brand-100) 100%
+	);
+	color: var(--brand-800);
+	font-weight: 500;
+}
+
+/* Size variants */
+select.select-sm {
+	padding: 0.5rem 2.25rem 0.5rem 0.75rem;
+	font-size: 0.8125rem;
+	background-size: 1rem 1rem;
+	background-position: right 0.625rem center;
+}
+
+select.select-lg {
+	padding: 0.875rem 2.75rem 0.875rem 1rem;
+	font-size: 1rem;
+	background-size: 1.5rem 1.5rem;
+	background-position: right 0.875rem center;
+}
+
+/* Modern dropdown with brand accent */
+select.select-brand {
+	border: 2px solid var(--brand-200);
+	background-color: var(--brand-50);
+	color: var(--brand-800);
+	font-weight: 500;
+}
+
+select.select-brand:hover:not(:disabled) {
+	border-color: var(--brand-400);
+	background-color: var(--brand-100);
+}
+
+select.select-brand:focus {
+	border-color: var(--brand-600);
+	background-color: white;
+	box-shadow: 0 0 0 4px rgba(0, 180, 216, 0.15) !important;
+}
+
+/* Custom dropdown for React Select / Headless UI compatibility */
+[role='listbox'],
+[role='combobox'] {
+	border: 1px solid var(--gray-300);
+	border-radius: var(--radius-lg);
+	background-color: white;
+	box-shadow: var(--shadow-md);
+}
+
+[role='option'] {
+	padding: 0.625rem 0.875rem;
+	cursor: pointer;
+	transition:
+		background-color 100ms ease,
+		color 100ms ease;
+	color: var(--text-primary);
+}
+
+[role='option']:hover,
+[role='option'][data-focus],
+[role='option'][aria-selected='true'] {
+	background-color: var(--brand-50);
+	color: var(--brand-800);
+}
+
+[role='option'][aria-disabled='true'] {
+	color: var(--text-disabled);
+	cursor: not-allowed;
+	opacity: 0.5;
+}
+
+/* Dropdown animations */
+@keyframes dropdownSlide {
+	from {
+		opacity: 0;
+		transform: translateY(-8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+[role='listbox'] {
+	animation: dropdownSlide 150ms ease-out;
+}
+
+/* ============================================
+   BROWSER-SPECIFIC DROPDOWN OVERRIDES
+   Force brand colors across all browsers
+   ============================================ */
+
+/* Firefox - option colors */
+@-moz-document url-prefix() {
+	select option:checked,
+	select option[selected] {
+		background: var(--brand) !important;
+		color: white !important;
+	}
+
+	select option:hover {
+		background: var(--brand-50) !important;
+		color: var(--brand-800) !important;
+	}
+}
+
+/* WebKit/Chrome/Safari - option colors */
+select option:checked {
+	background: linear-gradient(
+		0deg,
+		var(--brand) 0%,
+		var(--brand) 100%
+	) !important;
+	color: white !important;
+}
+
+select:focus option:checked {
+	background: linear-gradient(
+		0deg,
+		var(--brand) 0%,
+		var(--brand) 100%
+	) !important;
+}
+
+/* Override any system blue colors */
+select option::selection {
+	background: var(--brand) !important;
+	color: white !important;
+}
+
+/* Additional WebKit specific */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+	select option {
+		background-color: white;
+		color: var(--text-primary);
+	}
+
+	select option:hover {
+		background-color: var(--brand-50) !important;
+		color: var(--brand-800) !important;
+	}
+
+	select option:checked {
+		background: var(--brand) !important;
+		background-color: var(--brand) !important;
+		color: white !important;
+	}
+}
+
+/* Fallback for older browsers */
+select::-webkit-scrollbar {
+	width: 8px;
+}
+
+select::-webkit-scrollbar-track {
+	background: var(--gray-100);
+	border-radius: 4px;
+}
+
+select::-webkit-scrollbar-thumb {
+	background: var(--brand-300);
+	border-radius: 4px;
+}
+
+select::-webkit-scrollbar-thumb:hover {
+	background: var(--brand-500);
+}
+
+/* ============================================================================
+   SMOOTH TRANSITIONS & ANIMATIONS
+   ============================================================================ */
+
+/* Transition timing variables */
+:root {
+	--transition-fast: 150ms;
+	--transition-base: 250ms;
+	--transition-smooth: 300ms;
+	--transition-slow: 400ms;
+
+	--ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+	--ease-in-smooth: cubic-bezier(0.4, 0, 1, 1);
+	--ease-out-smooth: cubic-bezier(0, 0, 0.2, 1);
+	--ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Base transition classes */
+.transition-smooth {
+	transition-property: all;
+	transition-timing-function: var(--ease-smooth);
+	transition-duration: var(--transition-base);
+}
+
+.transition-smooth-fast {
+	transition-property: all;
+	transition-timing-function: var(--ease-smooth);
+	transition-duration: var(--transition-fast);
+}
+
+.transition-smooth-slow {
+	transition-property: all;
+	transition-timing-function: var(--ease-smooth);
+	transition-duration: var(--transition-smooth);
+}
+
+/* Specific property transitions */
+.transition-colors-smooth {
+	transition-property: color, background-color, border-color;
+	transition-timing-function: var(--ease-smooth);
+	transition-duration: var(--transition-base);
+}
+
+.transition-transform-smooth {
+	transition-property: transform;
+	transition-timing-function: var(--ease-smooth);
+	transition-duration: var(--transition-base);
+}
+
+.transition-opacity-smooth {
+	transition-property: opacity;
+	transition-timing-function: var(--ease-smooth);
+	transition-duration: var(--transition-base);
+}
+
+/* Keyframe animations */
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes fadeOut {
+	from {
+		opacity: 1;
+	}
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes slideDown {
+	from {
+		opacity: 0;
+		transform: translateY(-10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes slideUp {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes scaleIn {
+	from {
+		opacity: 0;
+		transform: scale(0.95);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+@keyframes scaleOut {
+	from {
+		opacity: 1;
+		transform: scale(1);
+	}
+	to {
+		opacity: 0;
+		transform: scale(0.95);
+	}
+}
+
+@keyframes slideInLeft {
+	from {
+		opacity: 0;
+		transform: translateX(-20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+@keyframes slideInRight {
+	from {
+		opacity: 0;
+		transform: translateX(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+@keyframes backdropFade {
+	from {
+		opacity: 0;
+		backdrop-filter: blur(0px);
+	}
+	to {
+		opacity: 1;
+		backdrop-filter: blur(4px);
+	}
+}
+
+/* Animation utility classes */
+.animate-fade-in {
+	animation: fadeIn var(--transition-base) var(--ease-smooth);
+}
+
+.animate-fade-out {
+	animation: fadeOut var(--transition-base) var(--ease-smooth);
+}
+
+.animate-slide-down {
+	animation: slideDown var(--transition-smooth) var(--ease-out-smooth);
+}
+
+.animate-slide-up {
+	animation: slideUp var(--transition-smooth) var(--ease-out-smooth);
+}
+
+.animate-scale-in {
+	animation: scaleIn var(--transition-smooth) var(--ease-out-smooth);
+}
+
+.animate-scale-out {
+	animation: scaleOut var(--transition-base) var(--ease-in-smooth);
+}
+
+.animate-slide-in-left {
+	animation: slideInLeft var(--transition-smooth) var(--ease-out-smooth);
+}
+
+.animate-slide-in-right {
+	animation: slideInRight var(--transition-smooth) var(--ease-out-smooth);
+}
+
+.animate-backdrop-fade {
+	animation: backdropFade var(--transition-smooth) var(--ease-smooth);
+}
+
+/* Tab transition utilities */
+.tab-content-enter {
+	opacity: 0;
+	transform: translateY(10px);
+}
+
+.tab-content-enter-active {
+	opacity: 1;
+	transform: translateY(0);
+	transition:
+		opacity var(--transition-base) var(--ease-smooth),
+		transform var(--transition-base) var(--ease-smooth);
+}
+
+.tab-content-exit {
+	opacity: 1;
+}
+
+.tab-content-exit-active {
+	opacity: 0;
+	transition: opacity var(--transition-fast) var(--ease-smooth);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
 }

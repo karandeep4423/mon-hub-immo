@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { SearchAd } from '@/types/searchAd';
-import { ProfileAvatar } from '../ui/ProfileAvatar';
-import { collaborationApi } from '@/lib/api/collaborationApi';
+import { ProfileAvatar, FavoriteButton, RichTextDisplay } from '../ui';
 import { useAuth } from '@/hooks/useAuth';
-import { getSearchAdBadgeConfig } from '@/lib/constants/badges';
+import { useCollaborationsBySearchAd } from '@/hooks/useCollaborations';
+import { Features, Components } from '@/lib/constants';
+import { formatDateShort } from '@/lib/utils/date';
 
 interface HomeSearchAdCardProps {
 	searchAd: SearchAd;
@@ -17,37 +18,17 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 	searchAd,
 }) => {
 	const { user } = useAuth();
-	const [collaborationStatus, setCollaborationStatus] = useState<
-		'pending' | 'accepted' | 'active' | null
-	>(null);
 
-	useEffect(() => {
-		// Only check collaboration status if user is authenticated
-		if (!user) return;
+	// Use SWR to get collaboration status (optional)
+	const { data: collaborationsData } = useCollaborationsBySearchAd(
+		user ? searchAd._id : undefined,
+		{ skip: !user },
+	);
 
-		const checkCollaboration = async () => {
-			try {
-				const { collaborations } =
-					await collaborationApi.getSearchAdCollaborations(
-						searchAd._id,
-					);
-				const blocking = collaborations.find((c) =>
-					['pending', 'accepted', 'active'].includes(
-						c.status as string,
-					),
-				);
-				if (blocking) {
-					setCollaborationStatus(
-						blocking.status as 'pending' | 'accepted' | 'active',
-					);
-				}
-			} catch {
-				// Silently fail - collaboration status is optional
-			}
-		};
-
-		checkCollaboration();
-	}, [searchAd._id, user]);
+	// Find blocking collaboration status
+	const collaborationStatus = collaborationsData.find((c) =>
+		['pending', 'accepted', 'active'].includes(c.status as string),
+	)?.status as 'pending' | 'accepted' | 'active' | undefined;
 
 	const formatPropertyTypes = (types: string[]) => {
 		const typeMap: Record<string, string> = {
@@ -65,12 +46,12 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 
 	return (
 		<Link href={`/search-ads/${searchAd._id}`} className="block">
-			<div className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 h-full flex flex-col">
+			<div className="bg-white shadow-card rounded-2xl overflow-hidden hover:shadow-card-hover transition-all duration-300 hover:scale-102 border border-gray-200 h-full flex flex-col">
 				{/* Header section with image and badges */}
 				<div className="relative h-48 overflow-hidden">
 					<Image
 						src="/recherches-des-biens.png"
-						alt="Recherche de bien"
+						alt={Components.UI.IMAGE_ALT_TEXT.searchAdImage}
 						fill
 						className="object-cover"
 					/>
@@ -80,7 +61,9 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 							searchAd.badges.length > 0 &&
 							searchAd.badges.slice(0, 4).map((badgeValue) => {
 								const config =
-									getSearchAdBadgeConfig(badgeValue);
+									Features.Properties.getSearchAdBadgeConfig(
+										badgeValue,
+									);
 								if (!config) return null;
 
 								return (
@@ -93,6 +76,14 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 								);
 							})}
 					</div>
+					{/* Favorite Button */}
+					<div className="absolute top-2 right-2">
+						<FavoriteButton
+							itemId={searchAd._id}
+							itemType="searchAd"
+							size="md"
+						/>
+					</div>
 				</div>
 
 				{/* Content section */}
@@ -102,20 +93,19 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 					</h3>
 
 					{searchAd.description && (
-						<p className="text-gray-600 text-sm mb-3 line-clamp-2">
-							{searchAd.description}
-						</p>
+						<div className="text-gray-600 text-sm mb-3 line-clamp-2">
+							<RichTextDisplay content={searchAd.description} />
+						</div>
 					)}
 
 					<div className="flex flex-wrap gap-2 mb-3">
 						{collaborationStatus && (
-							<span className="bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded">
+							<span className="bg-brand text-white text-xs font-semibold px-2 py-1 rounded">
 								ℹ️ En collaboration (
-								{collaborationStatus === 'pending'
-									? 'en attente'
-									: collaborationStatus === 'accepted'
-										? 'acceptée'
-										: 'active'}
+								{Features.Collaboration
+									.COLLABORATION_STATUS_CONFIG[
+									collaborationStatus
+								]?.label || collaborationStatus}
 								)
 							</span>
 						)}
@@ -155,9 +145,7 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 
 						<div className="text-right">
 							<p className="text-xs text-gray-500">
-								{new Date(
-									searchAd.createdAt,
-								).toLocaleDateString('fr-FR')}
+								{formatDateShort(searchAd.createdAt)}
 							</p>
 						</div>
 					</div>

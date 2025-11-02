@@ -1,12 +1,8 @@
-import type { Metadata } from 'next';
+'use client';
+
 import { Suspense } from 'react';
 import { VerifyEmailForm } from '@/components/auth/VerifyEmailForm';
 import { AuthLayout } from '@/components/auth/AuthLayout';
-
-export const metadata: Metadata = {
-	title: 'Verify Email - HubImmo',
-	description: 'Verify your email address',
-};
 
 export default function VerifyEmailPage() {
 	return (

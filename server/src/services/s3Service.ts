@@ -2,10 +2,12 @@ import {
 	S3Client,
 	PutObjectCommand,
 	DeleteObjectCommand,
+	CopyObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import sharp from 'sharp';
 import crypto from 'crypto';
+import { logger } from '../utils/logger';
 
 interface UploadOptions {
 	buffer: Buffer;
@@ -106,7 +108,7 @@ export class S3Service {
 
 			return variants;
 		} catch (error) {
-			console.error('Error creating image variants:', error);
+			logger.error('[S3Service] Error creating image variants', error);
 			throw new Error('Failed to process image');
 		}
 	}
@@ -152,14 +154,13 @@ export class S3Service {
 					size: 'optimized',
 				});
 			} catch (error) {
-				console.error(`Error uploading image:`, error);
+				logger.error('[S3Service] Error uploading image', error);
 				throw new Error(`Failed to upload image`);
 			}
 		}
 
 		return uploadedVariants;
 	}
-
 	async deleteImage(key: string): Promise<void> {
 		try {
 			await s3Client.send(
@@ -169,7 +170,7 @@ export class S3Service {
 				}),
 			);
 		} catch (error) {
-			console.error('Error deleting image:', error);
+			logger.error('[S3Service] Error deleting image', error);
 			throw new Error('Failed to delete image');
 		}
 	}
@@ -177,6 +178,28 @@ export class S3Service {
 	async deleteMultipleImages(keys: string[]): Promise<void> {
 		const deletePromises = keys.map((key) => this.deleteImage(key));
 		await Promise.all(deletePromises);
+	}
+
+	async copyObject(
+		sourceKey: string,
+		destinationKey: string,
+	): Promise<{ key: string; url: string }> {
+		try {
+			await s3Client.send(
+				new CopyObjectCommand({
+					Bucket: BUCKET_NAME,
+					CopySource: `${BUCKET_NAME}/${sourceKey}`,
+					Key: destinationKey,
+					CacheControl: 'max-age=31536000',
+				}),
+			);
+
+			const url = `https://${BUCKET_NAME}.s3.amazonaws.com/${destinationKey}`;
+			return { key: destinationKey, url };
+		} catch (error) {
+			logger.error('[S3Service] Error copying object', error);
+			throw new Error('Failed to copy object');
+		}
 	}
 
 	async generatePresignedUploadUrl(
@@ -202,7 +225,7 @@ export class S3Service {
 
 			return { url, key };
 		} catch (error) {
-			console.error('Error generating presigned URL:', error);
+			logger.error('[S3Service] Error generating presigned URL', error);
 			throw new Error('Failed to generate upload URL');
 		}
 	}

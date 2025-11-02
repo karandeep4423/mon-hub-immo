@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
+import { useDropzone, FileRejection } from 'react-dropzone';
+import { Components } from '@/lib/constants';
 
 interface ImageFile {
 	file: File;
@@ -28,24 +29,36 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 	const [uploadError, setUploadError] = useState<string>('');
 
 	const onDrop = useCallback(
-		(acceptedFiles: File[], rejectedFiles: unknown[]) => {
+		(acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
 			setUploadError('');
 
 			if (rejectedFiles.length > 0) {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const error = (rejectedFiles[0] as any).errors[0];
+				const error = rejectedFiles[0].errors[0];
 				if (error.code === 'file-too-large') {
-					setUploadError('Le fichier est trop volumineux (max 5MB)');
+					setUploadError(
+						Components.UI.IMAGE_UPLOADER_MESSAGES
+							.fileTooLargeWithSize,
+					);
 				} else if (error.code === 'file-invalid-type') {
-					setUploadError('Type de fichier non supporté');
+					setUploadError(
+						Components.UI.IMAGE_UPLOADER_MESSAGES
+							.fileTypeNotSupported,
+					);
 				} else {
-					setUploadError('Erreur lors du téléchargement');
+					setUploadError(
+						Components.UI.IMAGE_UPLOADER_MESSAGES
+							.uploadGenericError,
+					);
 				}
 				return;
 			}
 
 			if (images.length + acceptedFiles.length > maxImages) {
-				setUploadError(`Maximum ${maxImages} images autorisées`);
+				setUploadError(
+					Components.UI.IMAGE_UPLOADER_MESSAGES.maxImagesReached(
+						maxImages,
+					),
+				);
 				return;
 			}
 
@@ -137,7 +150,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 							<div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
 								<img
 									src={image.preview}
-									alt="Preview"
+									alt={Components.UI.IMAGE_ALT_TEXT.preview}
 									className="w-full h-full object-cover"
 								/>
 							</div>

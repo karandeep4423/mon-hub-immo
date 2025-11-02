@@ -98,8 +98,9 @@ const professionalInfoRules = {
 
 	network: body('professionalInfo.network')
 		.optional()
-		.isIn(['IAD', 'Century21', 'Orpi', 'Independant', 'Autre'])
-		.withMessage('Réseau invalide'),
+		.trim()
+		.isString()
+		.withMessage('Le réseau doit être une chaîne de caractères'),
 
 	siretNumber: body('professionalInfo.siretNumber')
 		.optional()

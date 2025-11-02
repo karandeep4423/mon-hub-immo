@@ -1,15 +1,10 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { Collaboration } from '../models/Collaboration';
 import { notificationService } from '../services/notificationService';
 import { Types } from 'mongoose';
 import { User } from '../models/User';
-
-interface AuthenticatedRequest extends Request {
-	user?: {
-		id: string;
-		userType: string;
-	};
-}
+import { logger } from '../utils/logger';
+import { AuthRequest } from '../types/auth';
 
 interface PopulatedUser {
 	_id: Types.ObjectId;
@@ -20,7 +15,7 @@ interface PopulatedUser {
 }
 
 export const signContract = async (
-	req: AuthenticatedRequest,
+	req: AuthRequest,
 	res: Response,
 ): Promise<void> => {
 	try {
@@ -28,19 +23,25 @@ export const signContract = async (
 		const userId = req.user?.id;
 
 		if (!userId) {
-			res.status(401).json({ success: false, message: 'Unauthorized' });
+			res.status(401).json({
+				success: false,
+				message: 'Authentication required',
+			});
 			return;
 		}
 
-		const collaboration = await Collaboration.findById(id)
-			.populate(
-				'postOwnerId',
-				'firstName lastName email profileImage',
-			)
-			.populate(
-				'collaboratorId',
-				'firstName lastName email profileImage',
-			);
+		// Middleware has already verified authentication and collaboration access
+		const collaboration =
+			req.resource ||
+			(await Collaboration.findById(id)
+				.populate(
+					'postOwnerId',
+					'firstName lastName email profileImage',
+				)
+				.populate(
+					'collaboratorId',
+					'firstName lastName email profileImage',
+				));
 
 		if (!collaboration) {
 			res.status(404).json({
@@ -58,17 +59,20 @@ export const signContract = async (
 			return;
 		}
 
-		const isOwner = collaboration.postOwnerId._id.toString() === userId;
-		const isCollaborator =
-			collaboration.collaboratorId._id.toString() === userId;
+		// Determine if user is owner or collaborator
+		const postOwnerId =
+			typeof collaboration.postOwnerId === 'object' &&
+			'_id' in collaboration.postOwnerId
+				? collaboration.postOwnerId._id.toString()
+				: collaboration.postOwnerId?.toString();
+		const collaboratorId =
+			typeof collaboration.collaboratorId === 'object' &&
+			'_id' in collaboration.collaboratorId
+				? collaboration.collaboratorId._id.toString()
+				: collaboration.collaboratorId?.toString();
 
-		if (!isOwner && !isCollaborator) {
-			res.status(403).json({
-				success: false,
-				message: 'Not authorized to sign this contract',
-			});
-			return;
-		}
+		const isOwner = postOwnerId === userId;
+		const isCollaborator = collaboratorId === userId;
 
 		// Sign the contract
 		const signedAt = new Date();
@@ -120,9 +124,8 @@ export const signContract = async (
 			propertyOwner: {
 				id: collaboration.postOwnerId._id,
 				name: `${(collaboration.postOwnerId as unknown as PopulatedUser).firstName} ${(collaboration.postOwnerId as unknown as PopulatedUser).lastName}`,
-				email: (
-					collaboration.postOwnerId as unknown as PopulatedUser
-				).email,
+				email: (collaboration.postOwnerId as unknown as PopulatedUser)
+					.email,
 				profileImage:
 					(collaboration.postOwnerId as unknown as PopulatedUser)
 						.profileImage || null,
@@ -195,7 +198,7 @@ export const signContract = async (
 			});
 		}
 	} catch (error) {
-		console.error('Error signing contract:', error);
+		logger.error('[ContractController] Error signing contract', error);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',
@@ -204,7 +207,7 @@ export const signContract = async (
 };
 
 export const updateContract = async (
-	req: AuthenticatedRequest,
+	req: AuthRequest,
 	res: Response,
 ): Promise<void> => {
 	try {
@@ -218,10 +221,7 @@ export const updateContract = async (
 		}
 
 		const collaboration = await Collaboration.findById(id)
-			.populate(
-				'postOwnerId',
-				'firstName lastName email profileImage',
-			)
+			.populate('postOwnerId', 'firstName lastName email profileImage')
 			.populate(
 				'collaboratorId',
 				'firstName lastName email profileImage',
@@ -304,9 +304,8 @@ export const updateContract = async (
 			propertyOwner: {
 				id: collaboration.postOwnerId._id,
 				name: `${(collaboration.postOwnerId as unknown as PopulatedUser).firstName} ${(collaboration.postOwnerId as unknown as PopulatedUser).lastName}`,
-				email: (
-					collaboration.postOwnerId as unknown as PopulatedUser
-				).email,
+				email: (collaboration.postOwnerId as unknown as PopulatedUser)
+					.email,
 				profileImage:
 					(collaboration.postOwnerId as unknown as PopulatedUser)
 						.profileImage || null,
@@ -366,7 +365,7 @@ export const updateContract = async (
 			});
 		}
 	} catch (error) {
-		console.error('Error updating contract:', error);
+		logger.error('[ContractController] Error updating contract', error);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',
@@ -375,7 +374,7 @@ export const updateContract = async (
 };
 
 export const getContract = async (
-	req: AuthenticatedRequest,
+	req: AuthRequest,
 	res: Response,
 ): Promise<void> => {
 	try {
@@ -383,15 +382,15 @@ export const getContract = async (
 		const userId = req.user?.id;
 
 		if (!userId) {
-			res.status(401).json({ success: false, message: 'Unauthorized' });
+			res.status(401).json({
+				success: false,
+				message: 'Authentication required',
+			});
 			return;
 		}
 
 		const collaboration = await Collaboration.findById(id)
-			.populate(
-				'postOwnerId',
-				'firstName lastName email profileImage',
-			)
+			.populate('postOwnerId', 'firstName lastName email profileImage')
 			.populate(
 				'collaboratorId',
 				'firstName lastName email profileImage',
@@ -492,9 +491,8 @@ Date : ${new Date().toLocaleDateString('fr-FR')}`;
 			propertyOwner: {
 				id: collaboration.postOwnerId._id,
 				name: `${(collaboration.postOwnerId as unknown as PopulatedUser).firstName} ${(collaboration.postOwnerId as unknown as PopulatedUser).lastName}`,
-				email: (
-					collaboration.postOwnerId as unknown as PopulatedUser
-				).email,
+				email: (collaboration.postOwnerId as unknown as PopulatedUser)
+					.email,
 				profileImage:
 					(collaboration.postOwnerId as unknown as PopulatedUser)
 						.profileImage || null,
@@ -522,7 +520,7 @@ Date : ${new Date().toLocaleDateString('fr-FR')}`;
 			contract: contractData,
 		});
 	} catch (error) {
-		console.error('Error fetching contract:', error);
+		logger.error('[ContractController] Error fetching contract', error);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',

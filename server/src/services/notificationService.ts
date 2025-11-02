@@ -4,9 +4,11 @@ import {
 	INotification,
 	NotificationType,
 } from '../models/Notification';
+import { User } from '../models/User';
 import { getSocketService } from '../server';
+import { logger } from '../utils/logger';
 
-type EntityType = 'chat' | 'collaboration';
+type EntityType = 'chat' | 'collaboration' | 'appointment';
 
 export interface CreateNotificationInput {
 	recipientId: string | Types.ObjectId;
@@ -47,7 +49,7 @@ export const notificationService = {
 		});
 
 		await doc.save();
-		console.log('✅ Notification created:', {
+		logger.debug('[NotificationService] Notification created::', {
 			id: String(doc._id),
 			type: doc.type,
 			recipientId: String(doc.recipientId),
@@ -56,22 +58,38 @@ export const notificationService = {
 		// Skip socket side-effects in tests to keep unit tests deterministic
 		if (process.env.NODE_ENV !== 'test') {
 			try {
+				// Fetch fresh actor data for real-time notification
+				const actor = await User.findById(doc.actorId)
+					.select('firstName lastName profileImage')
+					.lean();
+
+				const actorName = actor
+					? `${actor.firstName || ''} ${actor.lastName || ''}`.trim()
+					: undefined;
+				const actorAvatar = actor?.profileImage;
+
 				// Emit socket events
 				const socketService = getSocketService();
 				const recipientId = String(doc.recipientId);
 				const socketId = socketService.getReceiverSocketId(recipientId);
 
 				if (socketId) {
-					console.log('📤 Emitting notification via socket:', {
-						recipientId,
-						socketId,
-						type: doc.type,
-					});
+					logger.debug(
+						'[NotificationService] Emitting notification via socket: via socket:',
+						{
+							recipientId,
+							socketId,
+							type: doc.type,
+						},
+					);
 				} else {
-					console.log('⚠️ Recipient not connected via socket:', {
-						recipientId,
-						type: doc.type,
-					});
+					logger.warn(
+						'[NotificationService] Recipient not connected via socket: via socket:',
+						{
+							recipientId,
+							type: doc.type,
+						},
+					);
 				}
 
 				socketService.emitToUser(recipientId, 'notification:new', {
@@ -84,7 +102,11 @@ export const notificationService = {
 							type: doc.entity.type,
 							id: String(doc.entity.id),
 						},
-						data: doc.data || {},
+						data: {
+							...(doc.data || {}),
+							actorName,
+							actorAvatar,
+						},
 						actorId: String(doc.actorId),
 						read: doc.read,
 						createdAt: doc.createdAt,
@@ -100,8 +122,9 @@ export const notificationService = {
 					unreadCount: unread,
 				});
 			} catch (err) {
-				console.error(
-					'❌ Failed to emit notification via socket:',
+				logger.error(
+					'[NotificationService]',
+					'? Failed to emit notification via socket:',
 					err,
 				);
 			}
@@ -124,6 +147,10 @@ export const notificationService = {
 		const items = await Notification.find(query)
 			.sort({ createdAt: -1 })
 			.limit(limit + 1)
+			.populate({
+				path: 'actorId',
+				select: 'firstName lastName profileImage',
+			})
 			.lean();
 
 		const hasMore = items.length > limit;
@@ -133,17 +160,47 @@ export const notificationService = {
 			: null;
 
 		return {
-			items: sliced.map((n) => ({
-				id: String(n._id),
-				type: n.type,
-				title: n.title,
-				message: n.message,
-				entity: { type: n.entity.type, id: String(n.entity.id) },
-				data: n.data || {},
-				actorId: String(n.actorId),
-				read: !!n.read,
-				createdAt: n.createdAt,
-			})),
+			items: sliced.map((n) => {
+				const actor = n.actorId as
+					| {
+							_id: Types.ObjectId;
+							firstName?: string;
+							lastName?: string;
+							profileImage?: string;
+					  }
+					| Types.ObjectId
+					| undefined;
+				const actorName =
+					actor && typeof actor === 'object' && 'firstName' in actor
+						? `${actor.firstName || ''} ${actor.lastName || ''}`.trim()
+						: undefined;
+				const actorAvatar =
+					actor &&
+					typeof actor === 'object' &&
+					'profileImage' in actor
+						? actor.profileImage
+						: undefined;
+
+				return {
+					id: String(n._id),
+					type: n.type,
+					title: n.title,
+					message: n.message,
+					entity: { type: n.entity.type, id: String(n.entity.id) },
+					data: {
+						...(n.data || {}),
+						actorName,
+						actorAvatar,
+					},
+					actorId: String(
+						typeof n.actorId === 'object' && '_id' in n.actorId
+							? n.actorId._id
+							: n.actorId,
+					),
+					read: !!n.read,
+					createdAt: n.createdAt,
+				};
+			}),
 			nextCursor,
 		};
 	},

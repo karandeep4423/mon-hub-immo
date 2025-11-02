@@ -154,7 +154,7 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
 			{/* Close button */}
 			<button
 				onClick={onClose}
-				className="absolute top-4 right-4 z-60 text-white hover:text-gray-300 transition-colors"
+				className="absolute top-4 right-4 z-60 text-white hover:text-gray-300 transition-colors-smooth"
 				aria-label="Fermer"
 			>
 				<svg

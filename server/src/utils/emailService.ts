@@ -1,4 +1,6 @@
 import nodemailer from 'nodemailer';
+import * as brevo from '@getbrevo/brevo';
+import { logger } from './logger';
 
 interface EmailOptions {
 	to: string;
@@ -6,22 +8,94 @@ interface EmailOptions {
 	html: string;
 }
 
-class EmailService {
-	private transporter: nodemailer.Transporter;
+const isDevelopment = process.env.NODE_ENV === 'development';
 
-	constructor() {
-		this.transporter = nodemailer.createTransport({
-			host: process.env.EMAIL_HOST,
-			port: parseInt(process.env.EMAIL_PORT || '465'),
-			secure: true,
-			auth: {
-				user: process.env.EMAIL_USER,
-				pass: process.env.EMAIL_PASS,
-			},
-		});
+const createMailtrapTransporter = (): nodemailer.Transporter => {
+	const port = parseInt(process.env.EMAIL_PORT || '2525');
+	const secure = port === 465;
+
+	return nodemailer.createTransport({
+		host: process.env.EMAIL_HOST,
+		port,
+		secure,
+		auth: {
+			user: process.env.EMAIL_USER,
+			pass: process.env.EMAIL_PASS,
+		},
+	});
+};
+
+const createBrevoClient = (): brevo.TransactionalEmailsApi => {
+	const client = new brevo.TransactionalEmailsApi();
+	client.setApiKey(
+		brevo.TransactionalEmailsApiApiKeys.apiKey,
+		process.env.BREVO_API_KEY || '',
+	);
+	return client;
+};
+
+let transporter: nodemailer.Transporter | null = null;
+let brevoClient: brevo.TransactionalEmailsApi | null = null;
+
+const getTransporter = (): nodemailer.Transporter => {
+	if (!transporter) {
+		transporter = createMailtrapTransporter();
 	}
+	return transporter;
+};
 
-	async sendEmail(options: EmailOptions): Promise<void> {
+const getBrevoClient = (): brevo.TransactionalEmailsApi => {
+	if (!brevoClient) {
+		brevoClient = createBrevoClient();
+	}
+	return brevoClient;
+};
+
+const getResponsiveStyles = (): string => `
+	@media (max-width: 600px) {
+		.container {
+			width: 100% !important;
+			border-radius: 0 !important;
+		}
+		.header {
+			padding: 20px 15px !important;
+		}
+		.header h1 {
+			font-size: 20px !important;
+		}
+		.content {
+			padding: 20px 15px !important;
+		}
+		.code {
+			font-size: 24px !important;
+			letter-spacing: 2px !important;
+		}
+		.logo {
+			font-size: 24px !important;
+		}
+	}
+	@media (max-width: 480px) {
+		.code {
+			font-size: 20px !important;
+		}
+		.header h1 {
+			font-size: 18px !important;
+		}
+	}
+`;
+
+export const sendEmail = async (options: EmailOptions): Promise<void> => {
+	logger.info('========================================');
+	logger.info('[EmailService] 📨 Sending email...');
+	logger.info('[EmailService] To:', options.to);
+	logger.info('[EmailService] Subject:', options.subject);
+	logger.info(
+		'[EmailService] Environment:',
+		isDevelopment ? 'DEVELOPMENT (Mailtrap)' : 'PRODUCTION (Brevo)',
+	);
+	logger.info('========================================');
+
+	if (isDevelopment) {
 		const mailOptions = {
 			from: process.env.EMAIL_FROM,
 			to: options.to,
@@ -29,342 +103,594 @@ class EmailService {
 			html: options.html,
 		};
 
-		await this.transporter.sendMail(mailOptions);
-	}
+		logger.info('[EmailService] Using Mailtrap for development');
+		logger.info('[EmailService] From:', process.env.EMAIL_FROM);
 
-	generateVerificationCode(): string {
-		return Math.floor(100000 + Math.random() * 900000).toString();
-	}
+		try {
+			const result = await getTransporter().sendMail(mailOptions);
+			logger.info(
+				'[EmailService] ✅ Email sent successfully via Mailtrap',
+			);
+			logger.info('[EmailService] Message ID:', result.messageId);
+			logger.info(
+				'[EmailService] Preview URL:',
+				nodemailer.getTestMessageUrl(result),
+			);
+			logger.info('========================================');
+		} catch (error) {
+			logger.error(
+				'[EmailService] ❌ Failed to send email via Mailtrap:',
+				error,
+			);
+			logger.error('========================================');
+			throw error;
+		}
+	} else {
+		// Production: Use Brevo API
+		if (!process.env.BREVO_API_KEY) {
+			logger.error('[EmailService] ❌ BREVO_API_KEY is not set!');
+			throw new Error(
+				'BREVO_API_KEY is not set in environment variables. Please add it to your .env file.',
+			);
+		}
 
-	getVerificationCodeTemplate(name: string, code: string): string {
-		return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>Email Verification Code</title>
-        <style>
-          body { 
-            font-family: Arial, sans-serif; 
-            line-height: 1.6; 
-            color: #333;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-          }
-          .container { 
-            max-width: 600px; 
-            margin: 0 auto; 
-            background-color: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-          }
-          .header { 
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            color: white; 
-            padding: 30px 20px; 
-            text-align: center; 
-          }
-          .header h1 {
-            margin: 0;
-            font-size: 24px;
-          }
-          .content { 
-            padding: 30px 20px; 
-            background: white;
-          }
-          .code-container {
-            background: #f8f9fa;
-            border: 2px dashed #007bff;
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            margin: 20px 0;
-          }
-          .code { 
-            font-size: 32px; 
-            font-weight: bold; 
-            color: #007bff;
-            letter-spacing: 4px;
-            font-family: 'Courier New', monospace;
-          }
-          .instructions {
-            background: #e3f2fd;
-            border-left: 4px solid #007bff;
-            padding: 15px;
-            margin: 20px 0;
-          }
-          .footer { 
-            text-align: center; 
-            padding: 20px; 
-            font-size: 12px; 
-            color: #666;
-            background: #f8f9fa;
-          }
-          .warning {
-            color: #dc3545;
-            font-size: 14px;
-            margin-top: 20px;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1>Email Verification</h1>
-          </div>
-          <div class="content">
-            <h2>Hello ${name},</h2>
-            <p>Thank you for registering with us! To complete your registration, please use the verification code below:</p>
-            
-            <div class="code-container">
-              <div class="code">${code}</div>
-            </div>
-            
-            <div class="instructions">
-              <strong>Instructions:</strong>
-              <ul>
-                <li>Enter this code in the verification form</li>
-                <li>This code will expire in 24 hours</li>
-                <li>Do not share this code with anyone</li>
-              </ul>
-            </div>
-            
-            <p>Once verified, you'll be able to access your account and all our features.</p>
-            
-            <div class="warning">
-              <strong>Security Note:</strong> If you didn't create this account, please ignore this email.
-            </div>
-          </div>
-          <div class="footer">
-            <p>&copy; 2024 Your Company. All rights reserved.</p>
-            <p>This is an automated message, please do not reply.</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
-	}
+		const sendSmtpEmail = new brevo.SendSmtpEmail();
+		sendSmtpEmail.sender = {
+			name: 'MonHubImmo',
+			email: process.env.EMAIL_FROM || 'contact@monhubimmo.fr',
+		};
+		sendSmtpEmail.to = [{ email: options.to }];
+		sendSmtpEmail.subject = options.subject;
+		sendSmtpEmail.htmlContent = options.html;
 
-	getPasswordResetTemplate(name: string, code: string): string {
-		return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <title>Password Reset Code</title>
-      <style>
-        body { 
-          font-family: Arial, sans-serif; 
-          line-height: 1.6; 
-          color: #333;
-          margin: 0;
-          padding: 0;
-          background-color: #f4f4f4;
-        }
-        .container { 
-          max-width: 600px; 
-          margin: 0 auto; 
-          background-color: white;
-          border-radius: 8px;
-          overflow: hidden;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .header { 
-          background: linear-gradient(135deg, #dc3545, #a71e2a);
-          color: white; 
-          padding: 30px 20px; 
-          text-align: center; 
-        }
-        .header h1 {
-          margin: 0;
-          font-size: 24px;
-        }
-        .content { 
-          padding: 30px 20px; 
-          background: white;
-        }
-        .code-container {
-          background: #f8f9fa;
-          border: 2px dashed #dc3545;
-          border-radius: 8px;
-          padding: 20px;
-          text-align: center;
-          margin: 20px 0;
-        }
-        .code { 
-          font-size: 32px; 
-          font-weight: bold; 
-          color: #dc3545;
-          letter-spacing: 4px;
-          font-family: 'Courier New', monospace;
-        }
-        .instructions {
-          background: #fff3cd;
-          border-left: 4px solid #ffc107;
-          padding: 15px;
-          margin: 20px 0;
-        }
-        .footer { 
-          text-align: center; 
-          padding: 20px; 
-          font-size: 12px; 
-          color: #666;
-          background: #f8f9fa;
-        }
-        .warning {
-          color: #dc3545;
-          font-size: 14px;
-          margin-top: 20px;
-          padding: 15px;
-          background: #f8d7da;
-          border-radius: 4px;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h1>🔒 Password Reset</h1>
-        </div>
-        <div class="content">
-          <h2>Hello ${name},</h2>
-          <p>We received a request to reset your password. Use the code below to set your new password:</p>
-          
-          <div class="code-container">
-            <div class="code">${code}</div>
-          </div>
-          
-          <div class="instructions">
-            <strong>⚠️ Important Instructions:</strong>
-            <ul>
-              <li>This code will expire in <strong>1 hour</strong></li>
-              <li>Enter this code along with your new password</li>
-              <li>Keep this code confidential</li>
-              <li>If you didn't request this, please ignore this email</li>
-            </ul>
-          </div>
-          
-          <p>After entering the code, you'll be able to create a new secure password for your account.</p>
-          
-          <div class="warning">
-            <strong>🔐 Security Alert:</strong> If you didn't request a password reset, please ignore this email and ensure your account is secure.
-          </div>
-        </div>
-        <div class="footer">
-          <p>&copy; 2024 HubImmo. All rights reserved.</p>
-          <p>This is an automated message, please do not reply.</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-	}
+		logger.info('[EmailService] Using Brevo for production');
+		logger.info('[EmailService] Sender:', sendSmtpEmail.sender);
 
-	getPasswordResetConfirmationTemplate(name: string): string {
-		return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <title>Password Successfully Reset</title>
-      <style>
-        body { 
-          font-family: Arial, sans-serif; 
-          line-height: 1.6; 
-          color: #333;
-          margin: 0;
-          padding: 0;
-          background-color: #f4f4f4;
-        }
-        .container { 
-          max-width: 600px; 
-          margin: 0 auto; 
-          background-color: white;
-          border-radius: 8px;
-          overflow: hidden;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .header { 
-          background: linear-gradient(135deg, #28a745, #1e7e34);
-          color: white; 
-          padding: 30px 20px; 
-          text-align: center; 
-        }
-        .header h1 {
-          margin: 0;
-          font-size: 24px;
-        }
-        .content { 
-          padding: 30px 20px; 
-          background: white;
-        }
-        .success-box {
-          background: #d4edda;
-          border: 1px solid #c3e6cb;
-          border-radius: 8px;
-          padding: 20px;
-          text-align: center;
-          margin: 20px 0;
-        }
-        .checkmark {
-          font-size: 48px;
-          color: #28a745;
-          margin-bottom: 10px;
-        }
-        .footer { 
-          text-align: center; 
-          padding: 20px; 
-          font-size: 12px; 
-          color: #666;
-          background: #f8f9fa;
-        }
-        .security-tips {
-          background: #e3f2fd;
-          border-left: 4px solid #007bff;
-          padding: 15px;
-          margin: 20px 0;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h1>✅ Password Reset Successful</h1>
-        </div>
-        <div class="content">
-          <h2>Hello ${name},</h2>
-          
-          <div class="success-box">
-            <div class="checkmark">✓</div>
-            <h3>Your password has been successfully reset!</h3>
-            <p>You can now log in with your new password.</p>
-          </div>
-          
-          <p>Your HubImmo account password has been successfully changed. You are now automatically logged in to your account.</p>
-          
-          <div class="security-tips">
-            <strong>🔒 Security Tips:</strong>
-            <ul>
-              <li>Keep your password secure and don't share it with anyone</li>
-              <li>Use a unique password for your HubImmo account</li>
-              <li>Consider enabling two-factor authentication</li>
-              <li>If you notice any suspicious activity, contact support immediately</li>
-            </ul>
-          </div>
-          
-          <p>If you did not make this change, please contact our support team immediately.</p>
-        </div>
-        <div class="footer">
-          <p>&copy; 2024 HubImmo. All rights reserved.</p>
-          <p>This is an automated message, please do not reply.</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
+		try {
+			const result =
+				await getBrevoClient().sendTransacEmail(sendSmtpEmail);
+			logger.info('[EmailService] ✅ Email sent successfully via Brevo');
+			logger.info('[EmailService] Brevo Response:', result);
+			logger.info('========================================');
+		} catch (error: unknown) {
+			const err = error as {
+				message?: string;
+				response?: { data?: unknown; status?: number };
+			};
+			logger.error('[EmailService] ❌ Failed to send email via Brevo');
+			console.error('[Brevo Email Error]:', {
+				message: err?.message,
+				response: err?.response?.data,
+				status: err?.response?.status,
+			});
+			throw new Error(
+				`Failed to send email via Brevo: ${err?.message || 'Unknown error'}`,
+			);
+		}
 	}
-}
+};
 
-export const emailService = new EmailService();
+export const generateVerificationCode = (): string =>
+	Math.floor(100000 + Math.random() * 900000).toString();
+
+export const getVerificationCodeTemplate = (
+	name: string,
+	code: string,
+): string => `
+	<!DOCTYPE html>
+	<html lang="fr">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Code de vérification email</title>
+		<style>
+			body { 
+				font-family: Arial, sans-serif; 
+				line-height: 1.6; 
+				color: #333;
+				margin: 0;
+				padding: 0;
+				background-color: #f4f4f4;
+			}
+			.container { 
+				max-width: 600px; 
+				margin: 0 auto; 
+				background-color: white;
+				border-radius: 8px;
+				overflow: hidden;
+				box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+			}
+			.header { 
+				background: linear-gradient(135deg, #6AD1E3, #3BA8BB);
+				color: white; 
+				padding: 30px 20px; 
+				text-align: center; 
+			}
+			.header h1 {
+				margin: 0;
+				font-size: 24px;
+			}
+			.content { 
+				padding: 30px 20px; 
+				background: white;
+			}
+			.code-container {
+				background: #E0F7FA;
+				border: 2px dashed #6AD1E3;
+				border-radius: 8px;
+				padding: 20px;
+				text-align: center;
+				margin: 20px 0;
+			}
+			.code { 
+				font-size: 32px; 
+				font-weight: bold; 
+				color: #6AD1E3;
+				letter-spacing: 4px;
+				font-family: 'Courier New', monospace;
+				word-break: break-all;
+			}
+			.instructions {
+				background: #E0F7FA;
+				border-left: 4px solid #6AD1E3;
+				padding: 15px;
+				margin: 20px 0;
+			}
+			.footer { 
+				text-align: center; 
+				padding: 20px; 
+				font-size: 12px; 
+				color: #666;
+				background: #f8f9fa;
+			}
+			.warning {
+				color: #dc3545;
+				font-size: 14px;
+				margin-top: 20px;
+			}
+			.logo {
+				font-size: 28px;
+				font-weight: bold;
+				margin-bottom: 10px;
+			}
+			.logo-accent {
+				color: #1F2937;
+			}
+			${getResponsiveStyles()}
+		</style>
+	</head>
+	<body>
+		<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 0;">
+			<tr>
+				<td style="padding: 20px 0;">
+					<div class="container">
+						<div class="header">
+							<div class="logo">Mon<span class="logo-accent">HubImmo</span></div>
+							<h1>📧 Vérification de l'email</h1>
+						</div>
+						<div class="content">
+							<h2>Bonjour ${name},</h2>
+							<p>Merci de vous être inscrit ! Pour compléter votre inscription, veuillez utiliser le code de vérification ci-dessous :</p>
+							
+							<div class="code-container">
+								<div class="code">${code}</div>
+							</div>
+							
+							<div class="instructions">
+								<strong>📋 Instructions :</strong>
+								<ul>
+									<li>Entrez ce code dans le formulaire de vérification</li>
+									<li>Ce code expirera dans <strong>24 heures</strong></li>
+									<li>Ne partagez ce code avec personne</li>
+								</ul>
+							</div>
+							
+							<p>Une fois vérifié, vous pourrez accéder à votre compte et à toutes nos fonctionnalités.</p>
+							
+							<div class="warning">
+								<strong>🔒 Note de sécurité :</strong> Si vous n'avez pas créé ce compte, veuillez ignorer cet email.
+							</div>
+						</div>
+						<div class="footer">
+							<p>&copy; 2025 MonHubImmo. Tous droits réservés.</p>
+							<p>Ceci est un message automatique, merci de ne pas y répondre.</p>
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</body>
+	</html>
+`;
+
+export const getPasswordResetTemplate = (
+	name: string,
+	code: string,
+): string => `
+	<!DOCTYPE html>
+	<html lang="fr">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Code de réinitialisation du mot de passe</title>
+		<style>
+			body { 
+				font-family: Arial, sans-serif; 
+				line-height: 1.6; 
+				color: #333;
+				margin: 0;
+				padding: 0;
+				background-color: #f4f4f4;
+			}
+			.container { 
+				max-width: 600px; 
+				margin: 0 auto; 
+				background-color: white;
+				border-radius: 8px;
+				overflow: hidden;
+				box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+			}
+			.header { 
+				background: linear-gradient(135deg, #F59E0B, #D97706);
+				color: white; 
+				padding: 30px 20px; 
+				text-align: center; 
+			}
+			.header h1 {
+				margin: 0;
+				font-size: 24px;
+			}
+			.content { 
+				padding: 30px 20px; 
+				background: white;
+			}
+			.code-container {
+				background: #fff7ed;
+				border: 2px dashed #F59E0B;
+				border-radius: 8px;
+				padding: 20px;
+				text-align: center;
+				margin: 20px 0;
+			}
+			.code { 
+				font-size: 32px; 
+				font-weight: bold; 
+				color: #F59E0B;
+				letter-spacing: 4px;
+				font-family: 'Courier New', monospace;
+				word-break: break-all;
+			}
+			.instructions {
+				background: #fff7ed;
+				border-left: 4px solid #F59E0B;
+				padding: 15px;
+				margin: 20px 0;
+			}
+			.footer { 
+				text-align: center; 
+				padding: 20px; 
+				font-size: 12px; 
+				color: #666;
+				background: #f8f9fa;
+			}
+			.warning {
+				color: #dc3545;
+				font-size: 14px;
+				margin-top: 20px;
+				padding: 15px;
+				background: #f8d7da;
+				border-radius: 4px;
+			}
+			.logo {
+				font-size: 28px;
+				font-weight: bold;
+				margin-bottom: 10px;
+			}
+			.logo-accent {
+				color: #1F2937;
+			}
+			${getResponsiveStyles()}
+		</style>
+	</head>
+	<body>
+		<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 0;">
+			<tr>
+				<td style="padding: 20px 0;">
+					<div class="container">
+						<div class="header">
+							<div class="logo">Mon<span class="logo-accent">HubImmo</span></div>
+							<h1>🔒 Réinitialisation du mot de passe</h1>
+						</div>
+						<div class="content">
+							<h2>Bonjour ${name},</h2>
+							<p>Nous avons reçu une demande de réinitialisation de votre mot de passe. Utilisez le code ci-dessous pour définir votre nouveau mot de passe :</p>
+							
+							<div class="code-container">
+								<div class="code">${code}</div>
+							</div>
+							
+							<div class="instructions">
+								<strong>⚠️ Instructions importantes :</strong>
+								<ul>
+									<li>Ce code expirera dans <strong>1 heure</strong></li>
+									<li>Entrez ce code avec votre nouveau mot de passe</li>
+									<li>Gardez ce code confidentiel</li>
+									<li>Si vous n'avez pas demandé ceci, ignorez cet email</li>
+								</ul>
+							</div>
+							
+							<p>Après avoir entré le code, vous pourrez créer un nouveau mot de passe sécurisé pour votre compte.</p>
+							
+							<div class="warning">
+								<strong>⚠️ Alerte de sécurité :</strong> Si vous n'avez pas demandé de réinitialisation, ignorez cet email et assurez-vous que votre compte est sécurisé.
+							</div>
+						</div>
+						<div class="footer">
+							<p>&copy; 2025 MonHubImmo. Tous droits réservés.</p>
+							<p>Ceci est un message automatique, merci de ne pas y répondre.</p>
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</body>
+	</html>
+`;
+
+export const getPasswordResetConfirmationTemplate = (name: string): string => `
+	<!DOCTYPE html>
+	<html lang="fr">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Mot de passe réinitialisé avec succès</title>
+		<style>
+			body { 
+				font-family: Arial, sans-serif; 
+				line-height: 1.6; 
+				color: #333;
+				margin: 0;
+				padding: 0;
+				background-color: #f4f4f4;
+			}
+			.container { 
+				max-width: 600px; 
+				margin: 0 auto; 
+				background-color: white;
+				border-radius: 8px;
+				overflow: hidden;
+				box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+			}
+			.header { 
+				background: linear-gradient(135deg, #10B981, #059669);
+				color: white; 
+				padding: 30px 20px; 
+				text-align: center; 
+			}
+			.header h1 {
+				margin: 0;
+				font-size: 24px;
+			}
+			.content { 
+				padding: 30px 20px; 
+				background: white;
+			}
+			.success-box {
+				background: #d1fae5;
+				border: 1px solid #10B981;
+				border-radius: 8px;
+				padding: 20px;
+				text-align: center;
+				margin: 20px 0;
+			}
+			.checkmark {
+				font-size: 48px;
+				color: #10B981;
+				margin-bottom: 10px;
+			}
+			.footer { 
+				text-align: center; 
+				padding: 20px; 
+				font-size: 12px; 
+				color: #666;
+				background: #f8f9fa;
+			}
+			.security-tips {
+				background: #E0F7FA;
+				border-left: 4px solid #6AD1E3;
+				padding: 15px;
+				margin: 20px 0;
+			}
+			.logo {
+				font-size: 28px;
+				font-weight: bold;
+				margin-bottom: 10px;
+			}
+			.logo-accent {
+				color: #1F2937;
+			}
+			${getResponsiveStyles()}
+		</style>
+	</head>
+	<body>
+		<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 0;">
+			<tr>
+				<td style="padding: 20px 0;">
+					<div class="container">
+						<div class="header">
+							<div class="logo">Mon<span class="logo-accent">HubImmo</span></div>
+							<h1>✅ Réinitialisation réussie</h1>
+						</div>
+						<div class="content">
+							<h2>Bonjour ${name},</h2>
+							
+							<div class="success-box">
+								<div class="checkmark">✓</div>
+								<h3>Votre mot de passe a été réinitialisé avec succès !</h3>
+								<p>Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.</p>
+							</div>
+							
+							<p>Le mot de passe de votre compte MonHubImmo a été modifié avec succès. Vous êtes maintenant automatiquement connecté à votre compte.</p>
+							
+							<div class="security-tips">
+								<strong>🔒 Conseils de sécurité :</strong>
+								<ul>
+									<li>Gardez votre mot de passe sécurisé et ne le partagez avec personne</li>
+									<li>Utilisez un mot de passe unique pour votre compte MonHubImmo</li>
+									<li>Envisagez d'activer l'authentification à deux facteurs</li>
+									<li>Si vous remarquez une activité suspecte, contactez immédiatement le support</li>
+								</ul>
+							</div>
+							
+							<p>Si vous n'avez pas effectué ce changement, veuillez contacter notre équipe de support immédiatement.</p>
+						</div>
+						<div class="footer">
+							<p>&copy; 2025 MonHubImmo. Tous droits réservés.</p>
+							<p>Ceci est un message automatique, merci de ne pas y répondre.</p>
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</body>
+	</html>
+`;
+
+export const getAccountLockedTemplate = (
+	name: string,
+	lockDurationMinutes: number,
+	unlockTime: string,
+): string => `
+	<!DOCTYPE html>
+	<html lang="fr">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Alerte de sécurité - Verrouillage temporaire</title>
+		<style>
+			body { 
+				font-family: Arial, sans-serif; 
+				line-height: 1.6; 
+				color: #333;
+				margin: 0;
+				padding: 0;
+				background-color: #f4f4f4;
+			}
+			.container { 
+				max-width: 600px; 
+				margin: 0 auto; 
+				background-color: white;
+				border-radius: 8px;
+				overflow: hidden;
+				box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+			}
+			.header { 
+				background: linear-gradient(135deg, #dc3545, #a71e2a);
+				color: white; 
+				padding: 30px 20px; 
+				text-align: center; 
+			}
+			.header h1 {
+				margin: 0;
+				font-size: 24px;
+			}
+			.content { 
+				padding: 30px 20px; 
+				background: white;
+			}
+			.alert-box {
+				background: #f8d7da;
+				border: 2px solid #dc3545;
+				border-radius: 8px;
+				padding: 20px;
+				text-align: center;
+				margin: 20px 0;
+			}
+			.lock-icon {
+				font-size: 48px;
+				color: #dc3545;
+				margin-bottom: 10px;
+			}
+			.lock-info {
+				background: #fff3cd;
+				border-left: 4px solid #ffc107;
+				padding: 15px;
+				margin: 20px 0;
+			}
+			.footer { 
+				text-align: center; 
+				padding: 20px; 
+				font-size: 12px; 
+				color: #666;
+				background: #f8f9fa;
+			}
+			.security-tips {
+				background: #E0F7FA;
+				border-left: 4px solid #6AD1E3;
+				padding: 15px;
+				margin: 20px 0;
+			}
+			.logo {
+				font-size: 28px;
+				font-weight: bold;
+				margin-bottom: 10px;
+			}
+			.logo-accent {
+				color: #1F2937;
+			}
+			${getResponsiveStyles()}
+		</style>
+	</head>
+	<body>
+		<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin: 0; padding: 0;">
+			<tr>
+				<td style="padding: 20px 0;">
+					<div class="container">
+						<div class="header">
+							<div class="logo">Mon<span class="logo-accent">HubImmo</span></div>
+							<h1>🔐 Alerte de sécurité : Compte temporairement verrouillé</h1>
+						</div>
+						<div class="content">
+							<h2>Bonjour ${name},</h2>
+							
+							<div class="alert-box">
+								<div class="lock-icon">🔒</div>
+								<h3>Votre compte a été temporairement verrouillé</h3>
+								<p>Suite à plusieurs tentatives de connexion infructueuses</p>
+							</div>
+							
+							<p>Pour des raisons de sécurité, votre compte MonHubImmo a été temporairement verrouillé après plusieurs tentatives de connexion avec un mot de passe incorrect.</p>
+							
+							<div class="lock-info">
+								<strong>⏱️ Informations de verrouillage :</strong>
+								<ul>
+									<li>Durée du verrouillage : <strong>${lockDurationMinutes} minutes</strong></li>
+									<li>Déverrouillage automatique à : <strong>${unlockTime}</strong></li>
+									<li>Vous pourrez vous reconnecter après ce délai</li>
+								</ul>
+							</div>
+							
+							<div class="security-tips">
+								<strong>🔒 Que faire maintenant :</strong>
+								<ul>
+									<li>Attendez la fin du délai de verrouillage</li>
+									<li>Si ce n'était pas vous, changez immédiatement votre mot de passe</li>
+									<li>Assurez-vous d'utiliser un mot de passe fort et unique</li>
+									<li>Vérifiez l'activité récente de votre compte</li>
+								</ul>
+							</div>
+							
+							<p><strong>C'était vous ?</strong> Attendez simplement le délai et réessayez avec le bon mot de passe.</p>
+							<p><strong>Ce n'était pas vous ?</strong> Contactez immédiatement notre support pour sécuriser votre compte.</p>
+						</div>
+						<div class="footer">
+							<p>&copy; 2025 MonHubImmo. Tous droits réservés.</p>
+							<p>Ceci est un message automatique, merci de ne pas y répondre.</p>
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</body>
+	</html>
+`;

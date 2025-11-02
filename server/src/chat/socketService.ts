@@ -1,6 +1,7 @@
 import { Server } from 'socket.io';
 import { createSocketManager } from './socketManager';
 import { createMessageHandler } from './messageHandler';
+import { logger } from '../utils/logger';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -40,7 +41,7 @@ export const createSocketService = (io: Server): SocketServiceAPI => {
 	const socketManager = createSocketManager(io);
 	const messageHandler = createMessageHandler(io, socketManager);
 
-	console.log('🔌 Socket service initialized');
+	logger.debug('[SocketService] Socket service initialized');
 
 	// Return composed API using function delegation
 	return {

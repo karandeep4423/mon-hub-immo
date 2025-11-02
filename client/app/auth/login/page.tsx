@@ -1,14 +1,19 @@
 // app/auth/login/page.tsx
-import type { Metadata } from 'next';
+'use client';
+
 import { Suspense } from 'react';
 import { LoginWithUserType } from '@/components/auth/LoginForm';
-
-export const metadata: Metadata = {
-	title: 'Connexion - HubImmo',
-	description: 'Connectez-vous à votre compte HubImmo',
-};
+import { useAuthRedirect } from '@/hooks/useAuthRedirect';
 
 export default function LoginPage() {
+	const { loading } = useAuthRedirect();
+
+	if (loading) {
+		return (
+			<div className="animate-pulse bg-gray-100 h-64 rounded-lg"></div>
+		);
+	}
+
 	return (
 		<Suspense
 			fallback={

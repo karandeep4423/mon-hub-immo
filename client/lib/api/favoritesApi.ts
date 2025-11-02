@@ -1,6 +1,7 @@
 import { api } from '../api';
 import { Property } from './propertyApi';
 import { SearchAd } from '@/types/searchAd';
+import { handleApiError } from '../utils/errorHandler';
 
 export interface FavoritesResponse {
 	success: boolean;
@@ -53,20 +54,36 @@ export class FavoritesService {
 	static async toggleFavorite(
 		propertyId: string,
 	): Promise<ToggleFavoriteResponse> {
-		const response = await api.post(
-			`/favorites/properties/${propertyId}/toggle`,
-		);
-		return response.data;
+		try {
+			const response = await api.post(
+				`/favorites/properties/${propertyId}/toggle`,
+			);
+			return response.data;
+		} catch (error) {
+			throw handleApiError(
+				error,
+				'favoritesService.toggleFavorite',
+				'Erreur lors de la gestion du favori',
+			);
+		}
 	}
 
 	/** Toggle favorite status for a search ad */
 	static async toggleSearchAdFavorite(
 		searchAdId: string,
 	): Promise<ToggleFavoriteResponse> {
-		const response = await api.post(
-			`/favorites/search-ads/${searchAdId}/toggle`,
-		);
-		return response.data;
+		try {
+			const response = await api.post(
+				`/favorites/search-ads/${searchAdId}/toggle`,
+			);
+			return response.data;
+		} catch (error) {
+			throw handleApiError(
+				error,
+				'favoritesService.toggleSearchAdFavorite',
+				"Erreur lors de la gestion du favori d'annonce",
+			);
+		}
 	}
 
 	/**
@@ -76,10 +93,18 @@ export class FavoritesService {
 		page: number = 1,
 		limit: number = 12,
 	): Promise<FavoritesResponse> {
-		const response = await api.get(`/favorites`, {
-			params: { page, limit },
-		});
-		return response.data;
+		try {
+			const response = await api.get(`/favorites`, {
+				params: { page, limit },
+			});
+			return response.data;
+		} catch (error) {
+			throw handleApiError(
+				error,
+				'favoritesService.getUserFavorites',
+				'Erreur lors de la récupération des favoris',
+			);
+		}
 	}
 
 	/**
@@ -88,22 +113,46 @@ export class FavoritesService {
 	static async checkFavoriteStatus(
 		propertyId: string,
 	): Promise<FavoriteStatusResponse> {
-		const response = await api.get(`/favorites/status/${propertyId}`);
-		return response.data;
+		try {
+			const response = await api.get(`/favorites/status/${propertyId}`);
+			return response.data;
+		} catch (error) {
+			throw handleApiError(
+				error,
+				'favoritesService.checkFavoriteStatus',
+				'Erreur lors de la vérification du statut favori',
+			);
+		}
 	}
 
 	/**
 	 * Get user's favorite property IDs (for bulk status checks)
 	 */
 	static async getUserFavoriteIds(): Promise<FavoriteIdsResponse> {
-		const response = await api.get('/favorites/ids');
-		return response.data;
+		try {
+			const response = await api.get('/favorites/ids');
+			return response.data;
+		} catch (error) {
+			throw handleApiError(
+				error,
+				'favoritesService.getUserFavoriteIds',
+				'Erreur lors de la récupération des IDs favoris',
+			);
+		}
 	}
 
 	/** Get user's favorite search ad IDs */
 	static async getUserFavoriteSearchAdIds(): Promise<FavoriteIdsResponse> {
-		const response = await api.get('/favorites/search-ads/ids');
-		return response.data;
+		try {
+			const response = await api.get('/favorites/search-ads/ids');
+			return response.data;
+		} catch (error) {
+			throw handleApiError(
+				error,
+				'favoritesService.getUserFavoriteSearchAdIds',
+				"Erreur lors de la récupération des IDs favoris d'annonces",
+			);
+		}
 	}
 
 	/** Get user's mixed favorites */
@@ -111,10 +160,18 @@ export class FavoritesService {
 		page: number = 1,
 		limit: number = 12,
 	): Promise<MixedFavoritesResponse> {
-		const response = await api.get('/favorites/mixed', {
-			params: { page, limit },
-		});
-		return response.data;
+		try {
+			const response = await api.get('/favorites/mixed', {
+				params: { page, limit },
+			});
+			return response.data;
+		} catch (error) {
+			throw handleApiError(
+				error,
+				'favoritesService.getUserMixedFavorites',
+				'Erreur lors de la récupération des favoris mixtes',
+			);
+		}
 	}
 }
 

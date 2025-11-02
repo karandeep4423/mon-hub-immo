@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '../ui/Button';
-import { StepIndicator } from '../ui/StepIndicator';
+import { StepStatusIndicator } from '../ui/StepStatusIndicator';
 import { ProgressStatusModal } from './progress-tracking/ProgressStatusModal';
 import {
 	PROGRESS_STEPS_CONFIG,
@@ -8,7 +8,7 @@ import {
 	ProgressStatusUpdate,
 	ProgressStepData,
 } from './progress-tracking/types';
-import { STEP_ORDER } from '../../lib/constants/stepOrder';
+import { Features } from '@/lib/constants';
 
 interface ProgressTrackingDisplayProps {
 	collaborationId: string;
@@ -32,7 +32,8 @@ export const ProgressTrackingDisplay: React.FC<
 }) => {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
-	const currentStepIndex = STEP_ORDER.indexOf(currentProgressStep);
+	const currentStepIndex =
+		Features.Collaboration.STEP_ORDER.indexOf(currentProgressStep);
 
 	const getStepData = (stepId: ProgressStep): ProgressStepData => {
 		const foundStep = progressSteps.find((step) => step.id === stepId);
@@ -68,13 +69,14 @@ export const ProgressTrackingDisplay: React.FC<
 						Suivi de la collaboration
 					</h3>
 					<p className="text-sm text-gray-600 mt-1">
-						{currentStepIndex + 1} / {STEP_ORDER.length} étapes
+						{currentStepIndex + 1} /{' '}
+						{Features.Collaboration.STEP_ORDER.length} étapes
 					</p>
 				</div>
 				{canUpdate && (
 					<Button
 						onClick={() => setIsModalOpen(true)}
-						className="bg-blue-600 hover:bg-blue-700 text-white"
+						className="bg-brand hover:bg-brand-600 text-white"
 					>
 						✏️ Modifier le statut
 					</Button>
@@ -87,7 +89,7 @@ export const ProgressTrackingDisplay: React.FC<
 					Progression de la collaboration entre agents
 				</div>
 
-				{STEP_ORDER.map((stepId, index) => {
+				{Features.Collaboration.STEP_ORDER.map((stepId, index) => {
 					const stepData = getStepData(stepId);
 					const config = PROGRESS_STEPS_CONFIG[stepId];
 					const status = getStepStatus(stepId, index);
@@ -96,8 +98,8 @@ export const ProgressTrackingDisplay: React.FC<
 						status === 'completed'
 							? 'completed'
 							: status === 'current'
-								? 'current'
-								: 'upcoming';
+								? 'active'
+								: 'pending';
 
 					return (
 						<div
@@ -105,13 +107,15 @@ export const ProgressTrackingDisplay: React.FC<
 							className="flex items-start space-x-4"
 						>
 							{/* Step indicator */}
-							<StepIndicator
+							<StepStatusIndicator
 								state={stepState}
 								icon={config.icon}
 							/>
 
 							{/* Connector line */}
-							{index < STEP_ORDER.length - 1 && (
+							{index <
+								Features.Collaboration.STEP_ORDER.length -
+									1 && (
 								<div className="absolute left-5 mt-10 w-0.5 h-8 bg-gray-300" />
 							)}
 
@@ -123,7 +127,7 @@ export const ProgressTrackingDisplay: React.FC<
 											<span
 												className={`font-medium ${
 													status === 'current'
-														? 'text-blue-600'
+														? 'text-brand'
 														: status === 'completed'
 															? 'text-green-600'
 															: 'text-gray-600'
@@ -132,7 +136,7 @@ export const ProgressTrackingDisplay: React.FC<
 												{config.title}
 											</span>
 											{status === 'current' && (
-												<span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+												<span className="text-xs bg-brand-100 text-brand-800 px-2 py-1 rounded-full">
 													Étape actuelle
 												</span>
 											)}

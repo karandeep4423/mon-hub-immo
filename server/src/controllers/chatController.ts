@@ -7,6 +7,7 @@ import { Types } from 'mongoose';
 import { s3Service } from '../services/s3Service';
 import { notificationService } from '../services/notificationService';
 import { chatTexts } from '../utils/notificationTexts';
+import { logger } from '../utils/logger';
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -34,8 +35,8 @@ const sortConversationsByActivity = (conversations: ConversationLike[]) => {
 		const aTimestamp = new Date(aTime).getTime();
 		const bTimestamp = new Date(bTime).getTime();
 
-		console.log(
-			`Sorting: ${a.firstName || a.email} (${aTimestamp}) vs ${b.firstName || b.email} (${bTimestamp})`,
+		logger.debug(
+			`[ChatController] Sorting: ${a.firstName || a.email} (${aTimestamp}) vs ${b.firstName || b.email} (${bTimestamp})`,
 		);
 
 		return bTimestamp - aTimestamp; // Most recent first
@@ -88,8 +89,8 @@ export const getUsersForSidebar = async (req: AuthRequest, res: Response) => {
 		const conversationUserIds = messagesWithOthers.map((item) => item._id);
 
 		if (conversationUserIds.length === 0) {
-			console.log(
-				'No existing conversations found for user:',
+			logger.debug(
+				'[ChatController] No existing conversations found for user',
 				req.userId,
 			);
 			return res.status(200).json([]);
@@ -118,8 +119,8 @@ export const getUsersForSidebar = async (req: AuthRequest, res: Response) => {
 					isRead: false,
 				});
 
-				console.log(
-					`User ${user.firstName || user.email}: unreadCount = ${unreadCount}`,
+				logger.debug(
+					`[ChatController] User ${user.firstName || user.email}: unreadCount = ${unreadCount}`,
 				);
 
 				return {
@@ -141,8 +142,8 @@ export const getUsersForSidebar = async (req: AuthRequest, res: Response) => {
 			conversationsWithUsers,
 		);
 
-		console.log(
-			'Returning existing conversations with unread counts:',
+		logger.debug(
+			'[ChatController] Returning existing conversations with unread counts',
 			sortedConversations.map((u) => ({
 				name: u.firstName || u.email,
 				unreadCount: u.unreadCount,
@@ -153,7 +154,7 @@ export const getUsersForSidebar = async (req: AuthRequest, res: Response) => {
 		res.status(200).json(sortedConversations);
 	} catch (error: unknown) {
 		const msg = error instanceof Error ? error.message : String(error);
-		console.error('Error in getUsersForSidebar: ', msg);
+		logger.error('[ChatController] Error in getUsersForSidebar', msg);
 		res.status(500).json({ error: 'Internal server error' });
 	}
 };
@@ -178,7 +179,13 @@ export const getMessages = async (req: AuthRequest, res: Response) => {
 		const myId = new Types.ObjectId(req.userId);
 
 		// Build query for messages between the two users
-		const query: Record<string, unknown> = {
+		const query: {
+			$or: Array<{
+				senderId: Types.ObjectId | string;
+				receiverId: Types.ObjectId | string;
+			}>;
+			createdAt?: { $lt: Date };
+		} = {
 			$or: [
 				{ senderId: myId, receiverId: userToChatId },
 				{ senderId: userToChatId, receiverId: myId },
@@ -187,8 +194,7 @@ export const getMessages = async (req: AuthRequest, res: Response) => {
 
 		// Add pagination filter if 'before' timestamp provided
 		if (before) {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			(query as any).createdAt = { $lt: new Date(before) };
+			query.createdAt = { $lt: new Date(before) };
 		}
 
 		// Validate and set limit (1-100 messages per request)
@@ -203,7 +209,7 @@ export const getMessages = async (req: AuthRequest, res: Response) => {
 		res.status(200).json(messagesAsc);
 	} catch (error: unknown) {
 		const msg = error instanceof Error ? error.message : String(error);
-		console.log('Error in getMessages controller: ', msg);
+		logger.error('[ChatController] Error in getMessages controller', msg);
 		res.status(500).json({ error: 'Internal server error' });
 	}
 };
@@ -343,7 +349,10 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
 							},
 						});
 					} catch (e) {
-						console.warn('Failed to create chat notification:', e);
+						logger.warn(
+							'[ChatController] Failed to create chat notification',
+							e,
+						);
 					}
 				}
 			}
@@ -352,7 +361,7 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
 		res.status(201).json(newMessage);
 	} catch (error: unknown) {
 		const msg = error instanceof Error ? error.message : String(error);
-		console.log('Error in sendMessage controller: ', msg);
+		logger.error('[ChatController] Error in sendMessage controller', msg);
 		res.status(500).json({ error: 'Internal server error' });
 	}
 };
@@ -372,10 +381,10 @@ export const markMessagesAsRead = async (req: AuthRequest, res: Response) => {
 		const { id: senderId } = req.params;
 		const receiverId = new Types.ObjectId(req.userId);
 
-		console.log(
-			'📖 Marking messages as read from:',
+		logger.debug(
+			'[ChatController] Marking messages as read from',
 			senderId,
-			'to:',
+			'to',
 			receiverId.toString(),
 		);
 
@@ -392,7 +401,11 @@ export const markMessagesAsRead = async (req: AuthRequest, res: Response) => {
 			},
 		);
 
-		console.log('✅ Marked', result.modifiedCount, 'messages as read');
+		logger.debug(
+			'[ChatController] Marked',
+			result.modifiedCount,
+			'messages as read',
+		);
 
 		// Emit read receipt via socket service if messages were marked as read
 		if (result.modifiedCount > 0) {
@@ -405,7 +418,7 @@ export const markMessagesAsRead = async (req: AuthRequest, res: Response) => {
 			count: result.modifiedCount,
 		});
 	} catch (error: unknown) {
-		console.error('Error marking messages as read:', error);
+		logger.error('[ChatController] Error marking messages as read', error);
 		res.status(500).json({ error: 'Internal server error' });
 	}
 };
@@ -446,15 +459,15 @@ export const getUserById = async (req: AuthRequest, res: Response) => {
 			unreadCount: 0,
 		};
 
-		console.log(
-			'User details fetched for new conversation:',
+		logger.debug(
+			'[ChatController] User details fetched for new conversation',
 			userForChat.firstName || userForChat.email,
 		);
 
 		res.status(200).json(userForChat);
 	} catch (error: unknown) {
 		const msg = error instanceof Error ? error.message : String(error);
-		console.error('Error in getUserById:', msg);
+		logger.error('[ChatController] Error in getUserById', msg);
 		res.status(500).json({ error: 'Internal server error' });
 	}
 };
@@ -503,8 +516,8 @@ export const deleteMessage = async (req: AuthRequest, res: Response) => {
 			try {
 				await s3Service.deleteMultipleImages(keys);
 			} catch (e) {
-				console.warn(
-					'Warning deleting S3 objects for message:',
+				logger.warn(
+					'[ChatController] Warning deleting S3 objects for message',
 					messageId,
 					e,
 				);
@@ -525,7 +538,7 @@ export const deleteMessage = async (req: AuthRequest, res: Response) => {
 		return res.status(200).json({ success: true });
 	} catch (error: unknown) {
 		const msg = error instanceof Error ? error.message : String(error);
-		console.error('Error in deleteMessage:', msg);
+		logger.error('[ChatController] Error in deleteMessage', msg);
 		return res.status(500).json({ error: 'Internal server error' });
 	}
 };

@@ -1,6 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFavoritesStore } from '@/store/favoritesStore';
+import { useSWRConfig } from 'swr';
+import { swrKeys } from '@/lib/swrKeys';
+import { LoadingSpinner } from './LoadingSpinner';
+import { logger } from '@/lib/utils/logger';
+import { Features } from '@/lib/constants';
 
 interface FavoriteButtonProps {
 	itemId: string;
@@ -33,7 +38,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
 		initializeFavorites,
 		isInitialized,
 	} = useFavoritesStore();
-
+	const { mutate } = useSWRConfig();
 	const [isLoading, setIsLoading] = useState(false);
 
 	// Check if user is authenticated
@@ -72,20 +77,46 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
 
 		if (!isAuthenticated) {
 			// Redirect to login or show auth modal
-			window.location.href = '/auth/login';
+			window.location.href = Features.Auth.AUTH_ROUTES.LOGIN;
 			return;
 		}
 
 		setIsLoading(true);
+
 		try {
+			// Toggle favorite via Zustand store (handles API call)
 			const newIsFavorite =
 				actualItemType === 'property'
 					? await toggleFavorite(actualItemId)
 					: await toggleSearchAdFavorite(actualItemId);
+
+			// Invalidate SWR caches for affected resources
+			if (user) {
+				// Invalidate favorites list
+				mutate(swrKeys.favorites.list(user._id));
+
+				// Invalidate the specific resource (property or search ad)
+				if (actualItemType === 'property') {
+					mutate(swrKeys.properties.detail(actualItemId));
+					mutate(
+						(key) => Array.isArray(key) && key[0] === 'properties',
+					);
+				} else {
+					mutate(swrKeys.searchAds.detail(actualItemId));
+					mutate(
+						(key) => Array.isArray(key) && key[0] === 'searchAds',
+					);
+				}
+
+				logger.debug(
+					`[FavoriteButton] Cache invalidated for ${actualItemType} ${actualItemId}`,
+				);
+			}
+
+			// Call onToggle callback if provided
 			onToggle?.(newIsFavorite);
 		} catch (error) {
-			console.error('Error toggling favorite:', error);
-			// Show error toast/notification here if needed
+			logger.error('[FavoriteButton] Toggle failed:', error);
 		} finally {
 			setIsLoading(false);
 		}
@@ -101,7 +132,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
 				${className}
 				inline-flex items-center justify-center
 				rounded-full
-				transition-all duration-200
+				transition-smooth
 				hover:scale-110
 				focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50
 				${
@@ -110,7 +141,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
 						: 'bg-white/80 text-gray-600 hover:text-red-500 hover:bg-white shadow-sm border border-gray-200'
 				}
 				${isLoading ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}
-				${!isAuthenticated ? 'hover:bg-blue-50 hover:text-blue-500 hover:border-blue-200' : ''}
+				${!isAuthenticated ? 'hover:bg-brand-50 hover:text-brand hover:border-brand-200' : ''}
 			`}
 			title={
 				!isAuthenticated
@@ -121,16 +152,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
 			}
 		>
 			{isLoading ? (
-				<div className={`animate-spin ${iconSizeClasses[size]}`}>
-					<svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path
-							strokeLinecap="round"
-							strokeLinejoin="round"
-							strokeWidth="2"
-							d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-						/>
-					</svg>
-				</div>
+				<LoadingSpinner size="sm" />
 			) : (
 				<svg
 					className={iconSizeClasses[size]}

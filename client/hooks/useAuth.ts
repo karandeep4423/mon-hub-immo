@@ -1,29 +1,23 @@
 'use client';
 
-import { useContext } from 'react';
-import { AuthContext } from '@/context/AuthContext';
+import { useAuthStore } from '@/store/authStore';
 
-// Custom hook to use the Auth context
+// Custom hook to use the Auth store
 export const useAuth = () => {
-	const context = useContext(AuthContext);
-
-	if (context === undefined) {
-		throw new Error('useAuth must be used within an AuthProvider');
-	}
-
-	return context;
-};
-
-// Additional auth-related hooks
-export const useRequireAuth = () => {
-	const { user, loading, refreshUser } = useAuth();
+	const user = useAuthStore((state) => state.user);
+	const loading = useAuthStore((state) => state.loading);
+	const login = useAuthStore((state) => state.login);
+	const logout = useAuthStore((state) => state.logout);
+	const updateUser = useAuthStore((state) => state.updateUser);
+	const refreshUser = useAuthStore((state) => state.refreshUser);
 
 	return {
 		user,
 		loading,
+		login,
+		logout,
+		updateUser,
 		refreshUser,
-		isAuthenticated: !!user && !loading,
-		isLoading: loading,
 	};
 };
 
@@ -40,55 +34,5 @@ export const useProtectedRoute = () => {
 		refreshUser,
 		isAuthenticated,
 		shouldRedirect,
-	};
-};
-
-// Hook for profile status checks
-export const useProfileStatus = () => {
-	const { user } = useAuth();
-
-	const isAgent = user?.userType === 'agent';
-	const profileCompleted = user?.profileCompleted || false;
-	const needsProfileCompletion = isAgent && !profileCompleted;
-
-	return {
-		isAgent,
-		profileCompleted,
-		needsProfileCompletion,
-		hasProfile: !!user,
-	};
-};
-
-// Hook for user type specific functionality
-export const useUserTypeHelpers = () => {
-	const { user } = useAuth();
-
-	const getUserTypeDisplay = (userType?: string) => {
-		switch (userType || user?.userType) {
-			case 'agent':
-				return 'Agent Immobilier';
-			case 'apporteur':
-				return "Apporteur d'affaires";
-			case 'partenaire':
-				return 'Partenaire';
-			default:
-				return userType || 'Utilisateur';
-		}
-	};
-
-	const getUserPermissions = () => {
-		const userType = user?.userType;
-		return {
-			canAddProperties: ['agent', 'apporteur'].includes(userType || ''),
-			canViewListings: ['agent', 'apporteur'].includes(userType || ''),
-			canManageProfile: !!user,
-			canCollaborate: userType === 'agent' && user?.profileCompleted,
-		};
-	};
-
-	return {
-		getUserTypeDisplay,
-		getUserPermissions,
-		currentUserType: user?.userType,
 	};
 };

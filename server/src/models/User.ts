@@ -7,8 +7,9 @@ export interface IUser extends Document {
 	email: string;
 	password: string;
 	phone?: string;
-	userType: 'agent' | 'apporteur';
+	userType: 'agent' | 'apporteur' | 'guest';
 	isEmailVerified: boolean;
+	isGuest: boolean; // True for guest users created from anonymous bookings
 	profileImage?: string;
 	lastSeen?: Date;
 
@@ -31,6 +32,11 @@ export interface IUser extends Document {
 		independentAgent?: boolean;
 		alertsEnabled?: boolean;
 		alertFrequency?: 'quotidien' | 'hebdomadaire';
+		identityCard?: {
+			url: string;
+			key: string;
+			uploadedAt: Date;
+		};
 	};
 
 	// Search preferences
@@ -53,6 +59,16 @@ export interface IUser extends Document {
 	// Password reset
 	passwordResetCode?: string;
 	passwordResetExpires?: Date;
+
+	// Account security
+	failedLoginAttempts?: number;
+	accountLockedUntil?: Date;
+
+	// Password history (store last 5 password hashes)
+	passwordHistory?: Array<{
+		hash: string;
+		changedAt: Date;
+	}>;
 
 	createdAt: Date;
 	updatedAt: Date;
@@ -85,10 +101,16 @@ const userSchema = new Schema<IUser>(
 		},
 		userType: {
 			type: String,
+			enum: ['agent', 'apporteur', 'guest'],
 		},
 		isEmailVerified: {
 			type: Boolean,
 			default: false,
+		},
+		isGuest: {
+			type: Boolean,
+			default: false,
+			index: true,
 		},
 		profileImage: {
 			type: String,
@@ -152,17 +174,7 @@ const userSchema = new Schema<IUser>(
 			],
 			network: {
 				type: String,
-				enum: {
-					values: [
-						'IAD',
-						'Century21',
-						'Orpi',
-						'Independant',
-						'Autre',
-					],
-					message: 'Réseau invalide',
-				},
-				default: 'IAD',
+				trim: true,
 			},
 			siretNumber: {
 				type: String,
@@ -217,6 +229,34 @@ const userSchema = new Schema<IUser>(
 				},
 				default: 'quotidien',
 			},
+			identityCard: {
+				url: {
+					type: String,
+					trim: true,
+					validate: {
+						validator: function (url: string) {
+							if (!url) return true;
+							try {
+								new URL(url);
+								return (
+									url.startsWith('http://') ||
+									url.startsWith('https://')
+								);
+							} catch {
+								return false;
+							}
+						},
+						message: "URL de carte d'identité invalide",
+					},
+				},
+				key: {
+					type: String,
+					trim: true,
+				},
+				uploadedAt: {
+					type: Date,
+				},
+			},
 		},
 		searchPreferences: {
 			preferredRadius: {
@@ -268,6 +308,32 @@ const userSchema = new Schema<IUser>(
 			type: Date,
 			select: false,
 		},
+		failedLoginAttempts: {
+			type: Number,
+			default: 0,
+			select: false,
+		},
+		accountLockedUntil: {
+			type: Date,
+			select: false,
+		},
+		passwordHistory: {
+			type: [
+				{
+					hash: {
+						type: String,
+						required: true,
+					},
+					changedAt: {
+						type: Date,
+						required: true,
+						default: Date.now,
+					},
+				},
+			],
+			select: false,
+			default: [],
+		},
 	},
 	{
 		timestamps: true,
@@ -284,6 +350,7 @@ userSchema.index({ userType: 1 });
 userSchema.index({ profileCompleted: 1 });
 userSchema.index({ 'professionalInfo.postalCode': 1 });
 userSchema.index({ 'professionalInfo.city': 1 });
+userSchema.index({ accountLockedUntil: 1 });
 
 // Compound indexes
 userSchema.index({
@@ -300,9 +367,18 @@ userSchema.index({
 
 // Pre-save middleware for password hashing
 userSchema.pre('save', async function (next) {
-	if (!this.isModified('password')) return next();
+	// Skip if password not modified or if it's a guest user with no password
+	if (!this.isModified('password') || !this.password || this.isGuest) {
+		return next();
+	}
 
 	try {
+		// Avoid double-hashing if password is already a bcrypt hash (e.g., migrated from PendingVerification)
+		const isBcryptHash = /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/;
+		if (isBcryptHash.test(this.password)) {
+			return next();
+		}
+
 		const salt = await bcrypt.genSalt(12);
 		this.password = await bcrypt.hash(this.password, salt);
 		next();

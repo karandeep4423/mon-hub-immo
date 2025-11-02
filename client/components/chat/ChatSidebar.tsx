@@ -7,7 +7,10 @@ import { getUserDisplayName, formatLastSeen } from './utils/userUtils';
 import { formatMessageTime, truncateMessage } from './utils/messageUtils';
 import { LoadingUsers, UnreadBadge } from './ui';
 import { ProfileAvatar } from '../ui';
-import { CHAT_TEXT } from '@/lib/constants/text';
+import { Features } from '@/lib/constants';
+
+import type { ChatUser, ChatMessage } from '@/types/chat';
+import { logger } from '@/lib/utils/logger';
 
 interface ChatSidebarProps {
 	onClose?: () => void;
@@ -29,31 +32,30 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
 		getUsers();
 	}, [getUsers]);
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const handleUserSelect = (user: any) => {
+	const handleUserSelect = (user: ChatUser) => {
 		setSelectedUser(user);
 		if (onClose) onClose();
 	};
 
 	// All utility functions moved to messageUtils - using imports now
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const formatLastMessage = (lastMessage: any) => {
-		if (!lastMessage) return CHAT_TEXT.noMessagesYet;
+	const formatLastMessage = (
+		lastMessage?: ChatMessage | ChatUser['lastMessage'],
+	) => {
+		if (!lastMessage) return Features.Chat.CHAT_UI_TEXT.noMessagesYet;
 		return truncateMessage(lastMessage.text || '', 30);
 	};
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const getLastSeenText = (userId: string, userObj?: any) => {
+	const getLastSeenText = (userId: string, userObj?: ChatUser) => {
 		const status = userStatuses[userId];
 		const isOnline = onlineUsers.includes(userId);
 
 		if (isOnline) {
-			return CHAT_TEXT.online;
+			return Features.Chat.CHAT_UI_TEXT.online;
 		}
 
 		const effectiveLastSeen = status?.lastSeen || userObj?.lastSeen;
-		if (!effectiveLastSeen) return CHAT_TEXT.offline;
+		if (!effectiveLastSeen) return Features.Chat.CHAT_UI_TEXT.offline;
 
 		return formatLastSeen(effectiveLastSeen);
 	};
@@ -73,13 +75,13 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
 			<div className="p-4 border-b border-gray-200">
 				<div className="flex items-center justify-between mb-4">
 					<h2 className="text-xl font-semibold text-gray-900">
-						{CHAT_TEXT.title}
+						{Features.Chat.CHAT_UI_TEXT.title}
 					</h2>
 					<div className="flex items-center space-x-2">
 						{/* Refresh button */}
 						<button
 							onClick={() => {
-								console.log(
+								logger.debug(
 									'🔄 Manual refresh of conversations...',
 								);
 								getUsers();
@@ -128,10 +130,10 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
 				<div className="relative">
 					<input
 						type="text"
-						placeholder={CHAT_TEXT.searchUsers}
+						placeholder={Features.Chat.CHAT_UI_TEXT.searchUsers}
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
-						className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00b4d8] focus:border-[#00b4d8] outline-none"
+						className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none"
 					/>
 					<svg
 						className="absolute left-3 top-2.5 w-5 h-5 text-gray-400"
@@ -154,8 +156,8 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
 				{filteredUsers.length === 0 ? (
 					<div className="p-4 text-center text-gray-500">
 						{searchQuery
-							? CHAT_TEXT.noUsersFound
-							: CHAT_TEXT.noConversation}
+							? Features.Chat.CHAT_UI_TEXT.noUsersFound
+							: Features.Chat.CHAT_UI_TEXT.noConversation}
 					</div>
 				) : (
 					<div className="divide-y divide-gray-200">
@@ -170,7 +172,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
 									onClick={() => handleUserSelect(user)}
 									className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
 										isSelected
-											? 'bg-[#e6f7ff] border-r-4 border-[#00b4d8]'
+											? 'bg-brand-50 border-r-4 border-brand'
 											: ''
 									}`}
 								>

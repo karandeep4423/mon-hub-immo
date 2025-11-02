@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { ImageUploader } from './ImageUploader';
+import { LoadingSpinner } from './LoadingSpinner';
 import Image from 'next/image';
 import { api } from '@/lib/api';
+import { logger } from '@/lib/utils/logger';
+import { useMutation } from '@/hooks/useMutation';
+import { UI } from '@/lib/constants/components';
 
 interface ImageFile {
 	file: File;
@@ -30,64 +34,30 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 	onRemove,
 	uploadingText = 'Uploading...',
 }) => {
-	const [uploading, setUploading] = useState(false);
 	const [uploadError, setUploadError] = useState<string>('');
 
-	// Extract S3 key from URL
-	const extractS3KeyFromUrl = (url: string): string | null => {
-		try {
-			const urlObj = new URL(url);
-			let pathname = urlObj.pathname;
-
-			// Remove leading slash
-			if (pathname.startsWith('/')) {
-				pathname = pathname.substring(1);
-			}
-
-			// Handle different S3 URL formats:
-			// 1. s3.amazonaws.com/bucket/key
-			// 2. bucket.s3.amazonaws.com/key
-			// 3. CloudFront URLs with key in path
-
-			console.log('Extracting S3 key from URL:', url);
-			console.log('Extracted pathname:', pathname);
-
-			return pathname || null;
-		} catch (error) {
-			console.error('Failed to extract S3 key from URL:', url, error);
-			return null;
-		}
-	};
-
-	const sizeClasses = {
-		small: 'w-16 h-16',
-		medium: 'w-20 h-20',
-		large: 'w-32 h-32',
-	};
-
-	const handleImageSelection = (images: ImageFile[]) => {
-		setUploadError('');
-
-		if (images.length > 0) {
-			uploadImage(images[0].file);
-		}
-	};
-
-	const uploadImage = async (file: File) => {
-		setUploading(true);
-		setUploadError('');
-
-		try {
+	// Upload mutation
+	const { mutate: uploadImage, loading: isUploading } = useMutation<
+		string,
+		File
+	>(
+		async (file: File) => {
 			// First, delete the old image if it exists
 			if (currentImageUrl) {
-				console.log('Current image URL to delete:', currentImageUrl);
+				logger.debug(
+					'[ProfileImageUploader] Deleting old image',
+					currentImageUrl,
+				);
 				const oldImageKey = extractS3KeyFromUrl(currentImageUrl);
-				console.log('Extracted S3 key for deletion:', oldImageKey);
+				logger.debug(
+					'[ProfileImageUploader] Extracted S3 key for deletion',
+					oldImageKey,
+				);
 
 				if (oldImageKey) {
 					try {
-						console.log(
-							'Attempting to delete S3 object with key:',
+						logger.debug(
+							'[ProfileImageUploader] Attempting S3 deletion',
 							oldImageKey,
 						);
 						const deleteResponse = await api.delete(
@@ -96,23 +66,19 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 								data: { keys: [oldImageKey] },
 							},
 						);
-						console.log(
-							'S3 deletion response:',
+						logger.debug(
+							'[ProfileImageUploader] S3 deletion success',
 							deleteResponse.data,
 						);
-						console.log(
-							'Old profile image deleted from S3:',
-							oldImageKey,
-						);
 					} catch (deleteError) {
-						console.error(
-							'Failed to delete old profile image:',
+						logger.error(
+							'[ProfileImageUploader] Failed to delete old image',
 							deleteError,
 						);
 						// Continue with upload even if delete fails
 					}
 				} else {
-					console.warn(
+					logger.warn(
 						'Could not extract S3 key from URL:',
 						currentImageUrl,
 					);
@@ -130,18 +96,61 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 			});
 
 			if (response.data.success && response.data.data) {
-				onImageUploaded(response.data.data.url);
+				return response.data.data.url;
 			} else {
 				throw new Error(response.data.message || 'Upload failed');
 			}
+		},
+		{
+			onSuccess: (imageUrl) => {
+				onImageUploaded(imageUrl);
+				setUploadError('');
+			},
+			onError: (error) => {
+				setUploadError(error.message);
+			},
+			successMessage: UI.IMAGE_UPLOADER_MESSAGES.uploadSuccess,
+			errorMessage: UI.IMAGE_UPLOADER_MESSAGES.uploadError,
+			context: 'ProfileImageUploader',
+		},
+	);
+
+	// Extract S3 key from URL
+	const extractS3KeyFromUrl = (url: string): string | null => {
+		try {
+			const urlObj = new URL(url);
+			let pathname = urlObj.pathname;
+
+			// Remove leading slash
+			if (pathname.startsWith('/')) {
+				pathname = pathname.substring(1);
+			}
+
+			// Handle different S3 URL formats:
+			// 1. s3.amazonaws.com/bucket/key
+			// 2. bucket.s3.amazonaws.com/key
+			// 3. CloudFront URLs with key in path
+
+			logger.debug('[ProfileImageUploader] Extracting S3 key', {
+				url,
+				pathname,
+			});
+
+			return pathname || null;
 		} catch (error) {
-			console.error('Image upload failed:', error);
-			const errorMessage =
-				(error as { response?: { data?: { message?: string } } })
-					?.response?.data?.message || 'Failed to upload image';
-			setUploadError(errorMessage);
-		} finally {
-			setUploading(false);
+			logger.error('[ProfileImageUploader] Failed to extract S3 key', {
+				url,
+				error,
+			});
+			return null;
+		}
+	};
+
+	const handleImageSelection = (images: ImageFile[]) => {
+		setUploadError('');
+
+		if (images.length > 0) {
+			uploadImage(images[0].file);
 		}
 	};
 
@@ -161,11 +170,11 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 							Current Profile Image:
 						</p>
 						<div
-							className={`${sizeClasses[size]} bg-gray-200 rounded-full overflow-hidden relative mx-auto`}
+							className={`${UI.IMAGE_UPLOADER_SIZE_CLASSES[size]} bg-gray-200 rounded-full overflow-hidden relative mx-auto`}
 						>
 							<Image
 								src={currentImageUrl}
-								alt="Current profile"
+								alt={UI.IMAGE_ALT_TEXT.profileImage}
 								width={
 									size === 'small'
 										? 64
@@ -190,7 +199,7 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 								<button
 									type="button"
 									onClick={handleRemoveImage}
-									disabled={disabled || uploading}
+									disabled={disabled || isUploading}
 									className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 disabled:opacity-50"
 								>
 									×
@@ -200,28 +209,20 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 					</div>
 				</div>
 			)}
-
 			{/* Upload Status */}
-			{uploading && (
+			{isUploading && (
 				<div className="text-center">
-					<div className="inline-flex items-center space-x-2">
-						<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-cyan-600"></div>
-						<span className="text-sm text-gray-600">
-							{uploadingText}
-						</span>
-					</div>
+					<LoadingSpinner size="sm" message={uploadingText} />
 				</div>
 			)}
-
 			{/* Upload Error */}
 			{uploadError && (
 				<div className="text-center">
 					<p className="text-sm text-red-600">{uploadError}</p>
 				</div>
 			)}
-
 			{/* Image Uploader */}
-			{!uploading && (
+			{!isUploading && (
 				<div>
 					<p className="text-sm font-medium text-gray-700 mb-2">
 						{currentImageUrl
@@ -231,12 +232,11 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 					<ImageUploader
 						onImagesChange={handleImageSelection}
 						maxImages={1}
-						className="border-cyan-600 border-2"
-						disabled={disabled || uploading}
+						className="border-brand-600 border-2"
+						disabled={disabled || isUploading}
 					/>
 				</div>
-			)}
-
+			)}{' '}
 			{/* Help Text */}
 			<div className="text-xs text-gray-500 text-center">
 				<p>Supported formats: JPG, PNG, WebP</p>

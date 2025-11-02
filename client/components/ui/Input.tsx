@@ -4,6 +4,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 	label?: string;
 	error?: string;
 	helperText?: string;
+	icon?: React.ReactNode;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -12,6 +13,7 @@ export const Input: React.FC<InputProps> = ({
 	helperText,
 	className = '',
 	id,
+	icon,
 	...props
 }) => {
 	const generatedId = useId();
@@ -22,29 +24,30 @@ export const Input: React.FC<InputProps> = ({
 			{label && (
 				<label
 					htmlFor={inputId}
-					className="block text-sm font-semibold text-gray-700 mb-2"
+					className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2"
 				>
+					{icon}
 					{label}
 				</label>
 			)}
 			<input
 				id={inputId}
 				className={`
-          block w-full px-4 py-3 sm:py-2 text-base sm:text-sm
-          border-2 rounded-xl shadow-sm 
-          transition-all duration-200
+          block w-full px-4 py-3 sm:py-2.5 text-base
+          border-2 rounded-xl
+          transition-smooth
           outline-none
           ${
 				error
-					? 'border-red-300 text-red-900 placeholder-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
-					: 'border-gray-200 hover:border-gray-300 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20'
+					? 'border-error text-error placeholder-red-400 focus:border-error focus:ring-4 focus:ring-red-100'
+					: 'border-gray-300 hover:border-gray-400 focus:border-brand focus:ring-4 focus:ring-brand/10'
 			}
           ${className}
         `}
 				{...props}
 			/>
 			{error && (
-				<p className="mt-2 text-sm text-red-600 flex items-center">
+				<p className="mt-2 text-sm text-error font-medium flex items-center">
 					<svg
 						className="w-4 h-4 mr-1"
 						fill="currentColor"

@@ -1,12 +1,17 @@
 // app/auth/signup/page.tsx
-import type { Metadata } from 'next';
-import { SignUpForm } from '@/components/auth/SignUpForm';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Inscription - HubImmo',
-  description: 'Demandez votre accès à HubImmo',
-};
+import { SignUpForm } from '@/components/auth/SignUpForm';
+import { useAuthRedirect } from '@/hooks/useAuthRedirect';
 
 export default function SignupPage() {
-  return <SignUpForm />;
+	const { loading } = useAuthRedirect();
+
+	if (loading) {
+		return (
+			<div className="animate-pulse bg-gray-100 h-64 rounded-lg"></div>
+		);
+	}
+
+	return <SignUpForm />;
 }
