@@ -7,7 +7,7 @@ import {
 import { getSocketService } from '../server';
 import { logger } from '../utils/logger';
 
-type EntityType = 'chat' | 'collaboration';
+type EntityType = 'chat' | 'collaboration' | 'appointment';
 
 export interface CreateNotificationInput {
 	recipientId: string | Types.ObjectId;

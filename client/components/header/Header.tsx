@@ -19,7 +19,11 @@ export default function Header() {
 				<div className="flex justify-between items-center py-4">
 					<div className="flex-shrink-0">
 						<Link
-							href="/"
+							href={
+								user
+									? Features.Landing.LANDING_ROUTES.HOME_PAGE
+									: '/'
+							}
 							className="inline-flex items-baseline text-2xl font-bold hover:opacity-90 transition-opacity duration-200"
 						>
 							<span className="text-gray-900">mon</span>
@@ -57,7 +61,13 @@ export default function Header() {
 								<>
 									{pathname === '/monagentimmo' ? (
 										<Link
-											href="/"
+											href={
+												user
+													? Features.Landing
+															.LANDING_ROUTES
+															.HOME_PAGE
+													: '/'
+											}
 											className="px-4 py-2 rounded-xl bg-brand text-white text-sm font-semibold hover:bg-brand-600 shadow-md hover:shadow-brand transition-all duration-200 active:scale-98"
 										>
 											Vous êtes agent immobilier ?
@@ -160,7 +170,13 @@ export default function Header() {
 							<div className="grid grid-cols-2 gap-2">
 								{pathname === '/monagentimmo' ? (
 									<Link
-										href="/"
+										href={
+											user
+												? Features.Landing
+														.LANDING_ROUTES
+														.HOME_PAGE
+												: '/'
+										}
 										className="col-span-2 px-4 py-2 rounded-xl bg-brand text-white text-sm text-center font-semibold hover:bg-brand-600 shadow-md transition-all duration-200"
 										onClick={() =>
 											setIsMobileMenuOpen(false)

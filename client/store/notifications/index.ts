@@ -9,7 +9,7 @@ import { logger } from '@/lib/utils/logger';
 const OS_NOTIFY_COOLDOWN_MS = 3000;
 
 export interface NotificationEntity {
-	type: 'chat' | 'collaboration';
+	type: 'chat' | 'collaboration' | 'appointment';
 	id: string;
 }
 
@@ -26,7 +26,12 @@ export interface NotificationItem {
 		| 'collab:progress_updated'
 		| 'collab:cancelled'
 		| 'collab:completed'
-		| 'collab:note_added';
+		| 'collab:note_added'
+		| 'appointment:new'
+		| 'appointment:confirmed'
+		| 'appointment:rejected'
+		| 'appointment:cancelled'
+		| 'appointment:rescheduled';
 	title: string;
 	message: string;
 	entity: NotificationEntity;

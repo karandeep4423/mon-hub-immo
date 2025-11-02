@@ -6,6 +6,8 @@ import { User, IUser } from '../models/User';
 import { getSocketService } from '../server';
 import { AuthRequest } from '../types/auth';
 import { appointmentEmailService } from '../services/appointmentEmailService';
+import { notificationService } from '../services/notificationService';
+import { appointmentTexts } from '../utils/notificationTexts';
 import { logger } from '../utils/logger';
 
 // Create a new appointment (supports both authenticated and anonymous bookings)
@@ -146,16 +148,76 @@ export const createAppointment = async (
 			});
 		}
 
+		// Create persistent notification for agent in notification bell
+		if (process.env.NODE_ENV !== 'test') {
+			try {
+				const formattedDate = new Date(
+					scheduledDate,
+				).toLocaleDateString('fr-FR', {
+					day: 'numeric',
+					month: 'long',
+					year: 'numeric',
+				});
+
+				await notificationService.create({
+					recipientId: agentId,
+					actorId: clientId || agentId, // Use clientId as actor, fallback to agentId for system
+					type: 'appointment:new',
+					entity: {
+						type: 'appointment',
+						id: (appointment._id as Types.ObjectId).toString(),
+					},
+					title: appointmentTexts.newTitle,
+					message: appointmentTexts.newBody({
+						clientName: contactDetails.name,
+						appointmentType,
+						scheduledDate: formattedDate,
+						scheduledTime,
+					}),
+					data: {
+						clientName: contactDetails.name,
+						clientEmail: contactDetails.email,
+						clientPhone: contactDetails.phone,
+						appointmentType,
+						scheduledDate: formattedDate,
+						scheduledTime,
+						isGuestBooking,
+					},
+				});
+			} catch (notifError) {
+				logger.error(
+					'[AppointmentController] Error creating notification',
+					notifError,
+				);
+				// Don't fail the request if notification creation fails
+			}
+		}
+
 		// Send emails
 		try {
-			logger.debug(
-				'[AppointmentController] Attempting to send appointment emails',
+			logger.info('========================================');
+			logger.info(
+				'[AppointmentController] 📧 EMAIL SENDING PROCESS STARTED',
 			);
-			logger.debug('[AppointmentController] Agent email', agent.email);
-			logger.debug(
-				'[AppointmentController] Client email',
-				contactDetails.email,
-			);
+			logger.info('[AppointmentController] Agent details:', {
+				id: String(agent._id),
+				name: `${agent.firstName} ${agent.lastName}`,
+				email: agent.email,
+				userType: agent.userType,
+			});
+			logger.info('[AppointmentController] Client details:', {
+				name: contactDetails.name,
+				email: contactDetails.email,
+				phone: contactDetails.phone,
+				isGuestBooking,
+			});
+			logger.info('[AppointmentController] Appointment details:', {
+				id: String(appointment._id),
+				type: appointmentType,
+				date: scheduledDate,
+				time: scheduledTime,
+			});
+			logger.info('========================================');
 
 			await appointmentEmailService.sendNewAppointmentEmails(
 				appointment,
@@ -163,14 +225,25 @@ export const createAppointment = async (
 				contactDetails.email,
 				contactDetails.name,
 			);
-			logger.debug(
-				'[AppointmentController] All appointment emails sent successfully',
+
+			logger.info('========================================');
+			logger.info(
+				'[AppointmentController] ✅ EMAIL SENDING PROCESS COMPLETED SUCCESSFULLY',
 			);
+			logger.info('[AppointmentController] Summary:');
+			logger.info('  - Client email sent to:', contactDetails.email);
+			logger.info('  - Agent email sent to:', agent.email);
+			logger.info('========================================');
 		} catch (emailError) {
+			logger.error('========================================');
+			logger.error('[AppointmentController] ❌ EMAIL SENDING FAILED');
+			logger.error('[AppointmentController] Error details:', emailError);
+			logger.error('[AppointmentController] Agent email:', agent.email);
 			logger.error(
-				'[AppointmentController] Error sending appointment emails',
-				emailError,
+				'[AppointmentController] Client email:',
+				contactDetails.email,
 			);
+			logger.error('========================================');
 			// Don't fail the request if email fails
 		}
 
@@ -427,6 +500,7 @@ export const updateAppointmentStatus = async (
 					: populatedAppointment.contactDetails.name;
 
 			if (clientEmail) {
+				// Send email notifications
 				if (status === 'confirmed') {
 					await appointmentEmailService.sendAppointmentConfirmedEmail(
 						populatedAppointment,
@@ -448,6 +522,69 @@ export const updateAppointmentStatus = async (
 						clientEmail,
 						clientName,
 					);
+				}
+
+				// Create persistent in-app notifications for client (skip test mode)
+				if (
+					process.env.NODE_ENV !== 'test' &&
+					populatedAppointment.clientId
+				) {
+					try {
+						const agentName = `${agent.firstName} ${agent.lastName}`;
+						let notifType:
+							| 'appointment:confirmed'
+							| 'appointment:rejected'
+							| 'appointment:cancelled';
+						let notifTitle: string;
+						let notifMessage: string;
+
+						if (status === 'confirmed') {
+							notifType = 'appointment:confirmed';
+							notifTitle = appointmentTexts.confirmedTitle;
+							notifMessage = appointmentTexts.confirmedBody({
+								agentName,
+							});
+						} else if (status === 'rejected') {
+							notifType = 'appointment:rejected';
+							notifTitle = appointmentTexts.rejectedTitle;
+							notifMessage = appointmentTexts.rejectedBody({
+								agentName,
+							});
+						} else {
+							// cancelled
+							notifType = 'appointment:cancelled';
+							notifTitle = appointmentTexts.cancelledTitle;
+							notifMessage = appointmentTexts.cancelledBody({
+								agentName,
+							});
+						}
+
+						await notificationService.create({
+							recipientId: populatedAppointment.clientId,
+							actorId: (agent._id as Types.ObjectId).toString(),
+							type: notifType,
+							entity: {
+								type: 'appointment',
+								id: (
+									populatedAppointment._id as Types.ObjectId
+								).toString(),
+							},
+							title: notifTitle,
+							message: notifMessage,
+							data: {
+								agentName,
+								agentAvatar: agent.profileImage,
+								appointmentType:
+									populatedAppointment.appointmentType,
+								status,
+							},
+						});
+					} catch (notifError) {
+						logger.error(
+							'[AppointmentController] Error creating status update notification',
+							notifError,
+						);
+					}
 				}
 			}
 		}
@@ -576,6 +713,55 @@ export const rescheduleAppointment = async (
 					clientEmail,
 					clientName,
 				);
+
+				// Create persistent in-app notification for client (skip test mode)
+				if (
+					process.env.NODE_ENV !== 'test' &&
+					populatedAppointment.clientId
+				) {
+					try {
+						const agentName = `${agent.firstName} ${agent.lastName}`;
+						const formattedDate = new Date(
+							scheduledDate,
+						).toLocaleDateString('fr-FR', {
+							day: 'numeric',
+							month: 'long',
+							year: 'numeric',
+						});
+
+						await notificationService.create({
+							recipientId: populatedAppointment.clientId,
+							actorId: (agent._id as Types.ObjectId).toString(),
+							type: 'appointment:rescheduled',
+							entity: {
+								type: 'appointment',
+								id: (
+									populatedAppointment._id as Types.ObjectId
+								).toString(),
+							},
+							title: appointmentTexts.rescheduledTitle,
+							message: appointmentTexts.rescheduledBody({
+								agentName,
+								scheduledDate: formattedDate,
+								scheduledTime,
+							}),
+							data: {
+								agentName,
+								agentAvatar: agent.profileImage,
+								appointmentType:
+									populatedAppointment.appointmentType,
+								scheduledDate: formattedDate,
+								scheduledTime,
+								rescheduleReason,
+							},
+						});
+					} catch (notifError) {
+						logger.error(
+							'[AppointmentController] Error creating reschedule notification',
+							notifError,
+						);
+					}
+				}
 			}
 		}
 

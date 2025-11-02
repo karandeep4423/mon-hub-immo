@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import * as brevo from '@getbrevo/brevo';
+import { logger } from './logger';
 
 interface EmailOptions {
 	to: string;
@@ -84,6 +85,16 @@ const getResponsiveStyles = (): string => `
 `;
 
 export const sendEmail = async (options: EmailOptions): Promise<void> => {
+	logger.info('========================================');
+	logger.info('[EmailService] 📨 Sending email...');
+	logger.info('[EmailService] To:', options.to);
+	logger.info('[EmailService] Subject:', options.subject);
+	logger.info(
+		'[EmailService] Environment:',
+		isDevelopment ? 'DEVELOPMENT (Mailtrap)' : 'PRODUCTION (Brevo)',
+	);
+	logger.info('========================================');
+
 	if (isDevelopment) {
 		const mailOptions = {
 			from: process.env.EMAIL_FROM,
@@ -92,10 +103,32 @@ export const sendEmail = async (options: EmailOptions): Promise<void> => {
 			html: options.html,
 		};
 
-		await getTransporter().sendMail(mailOptions);
+		logger.info('[EmailService] Using Mailtrap for development');
+		logger.info('[EmailService] From:', process.env.EMAIL_FROM);
+
+		try {
+			const result = await getTransporter().sendMail(mailOptions);
+			logger.info(
+				'[EmailService] ✅ Email sent successfully via Mailtrap',
+			);
+			logger.info('[EmailService] Message ID:', result.messageId);
+			logger.info(
+				'[EmailService] Preview URL:',
+				nodemailer.getTestMessageUrl(result),
+			);
+			logger.info('========================================');
+		} catch (error) {
+			logger.error(
+				'[EmailService] ❌ Failed to send email via Mailtrap:',
+				error,
+			);
+			logger.error('========================================');
+			throw error;
+		}
 	} else {
 		// Production: Use Brevo API
 		if (!process.env.BREVO_API_KEY) {
+			logger.error('[EmailService] ❌ BREVO_API_KEY is not set!');
 			throw new Error(
 				'BREVO_API_KEY is not set in environment variables. Please add it to your .env file.',
 			);
@@ -110,13 +143,21 @@ export const sendEmail = async (options: EmailOptions): Promise<void> => {
 		sendSmtpEmail.subject = options.subject;
 		sendSmtpEmail.htmlContent = options.html;
 
+		logger.info('[EmailService] Using Brevo for production');
+		logger.info('[EmailService] Sender:', sendSmtpEmail.sender);
+
 		try {
-			await getBrevoClient().sendTransacEmail(sendSmtpEmail);
+			const result =
+				await getBrevoClient().sendTransacEmail(sendSmtpEmail);
+			logger.info('[EmailService] ✅ Email sent successfully via Brevo');
+			logger.info('[EmailService] Brevo Response:', result);
+			logger.info('========================================');
 		} catch (error: unknown) {
 			const err = error as {
 				message?: string;
 				response?: { data?: unknown; status?: number };
 			};
+			logger.error('[EmailService] ❌ Failed to send email via Brevo');
 			console.error('[Brevo Email Error]:', {
 				message: err?.message,
 				response: err?.response?.data,

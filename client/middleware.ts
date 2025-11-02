@@ -65,6 +65,11 @@ export function middleware(request: NextRequest) {
 		}
 	}
 
+	// Redirect authenticated users from landing page to home
+	if (pathname === '/' && isAuthenticated) {
+		return NextResponse.redirect(new URL(REDIRECT_PATHS.HOME, request.url));
+	}
+
 	// Allow request to proceed
 	return NextResponse.next();
 }

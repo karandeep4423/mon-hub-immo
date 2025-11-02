@@ -233,6 +233,20 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
 									)}
 								</div>
 							</div>
+
+							{/* Timestamp when appointment was created */}
+							{appointment.createdAt && (
+								<div className="text-xs text-gray-400 flex-shrink-0">
+									Reçu le{' '}
+									{new Intl.DateTimeFormat('fr-FR', {
+										day: '2-digit',
+										month: '2-digit',
+										year: 'numeric',
+										hour: '2-digit',
+										minute: '2-digit',
+									}).format(new Date(appointment.createdAt))}
+								</div>
+							)}
 						</div>
 
 						{/* Appointment Details Grid */}

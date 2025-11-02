@@ -11,7 +11,12 @@ export type NotificationType =
 	| 'collab:progress_updated'
 	| 'collab:cancelled'
 	| 'collab:completed'
-	| 'collab:note_added';
+	| 'collab:note_added'
+	| 'appointment:new'
+	| 'appointment:confirmed'
+	| 'appointment:rejected'
+	| 'appointment:cancelled'
+	| 'appointment:rescheduled';
 
 export interface INotification extends Document {
 	_id: Types.ObjectId;
@@ -19,7 +24,7 @@ export interface INotification extends Document {
 	actorId: Types.ObjectId;
 	type: NotificationType;
 	entity: {
-		type: 'chat' | 'collaboration';
+		type: 'chat' | 'collaboration' | 'appointment';
 		id: Types.ObjectId;
 	};
 	title: string;
@@ -59,6 +64,11 @@ const notificationSchema = new Schema<INotification>(
 				'collab:cancelled',
 				'collab:completed',
 				'collab:note_added',
+				'appointment:new',
+				'appointment:confirmed',
+				'appointment:rejected',
+				'appointment:cancelled',
+				'appointment:rescheduled',
 			],
 			required: true,
 		},
@@ -67,7 +77,7 @@ const notificationSchema = new Schema<INotification>(
 				{
 					type: {
 						type: String,
-						enum: ['chat', 'collaboration'],
+						enum: ['chat', 'collaboration', 'appointment'],
 						required: true,
 					},
 					id: { type: Schema.Types.ObjectId, required: true },

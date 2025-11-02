@@ -32,17 +32,16 @@ export const GeneralSettings = ({
 					</label>
 					<input
 						type="number"
-						min="15"
-						max="180"
-						step="15"
 						value={defaultDuration}
-						onChange={(e) =>
+						onChange={(e) => {
+							const numValue = parseInt(e.target.value);
 							onSettingChange(
 								'defaultDuration',
-								parseInt(e.target.value) || 15,
-							)
-						}
+								isNaN(numValue) ? 0 : numValue,
+							);
+						}}
 						className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20"
+						placeholder="Ex: 60"
 					/>
 				</div>
 				<div>
@@ -51,17 +50,16 @@ export const GeneralSettings = ({
 					</label>
 					<input
 						type="number"
-						min="0"
-						max="60"
-						step="5"
 						value={bufferTime}
-						onChange={(e) =>
+						onChange={(e) => {
+							const numValue = parseInt(e.target.value);
 							onSettingChange(
 								'bufferTime',
-								parseInt(e.target.value) || 0,
-							)
-						}
+								isNaN(numValue) ? 0 : numValue,
+							);
+						}}
 						className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20"
+						placeholder="Ex: 5"
 					/>
 				</div>
 				<div>
@@ -70,16 +68,16 @@ export const GeneralSettings = ({
 					</label>
 					<input
 						type="number"
-						min="1"
-						max="20"
 						value={maxAppointmentsPerDay}
-						onChange={(e) =>
+						onChange={(e) => {
+							const numValue = parseInt(e.target.value);
 							onSettingChange(
 								'maxAppointmentsPerDay',
-								parseInt(e.target.value) || 1,
-							)
-						}
+								isNaN(numValue) ? 0 : numValue,
+							);
+						}}
 						className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20"
+						placeholder="Ex: 8"
 					/>
 				</div>
 				<div>
@@ -88,16 +86,16 @@ export const GeneralSettings = ({
 					</label>
 					<input
 						type="number"
-						min="1"
-						max="90"
 						value={advanceBookingDays}
-						onChange={(e) =>
+						onChange={(e) => {
+							const numValue = parseInt(e.target.value);
 							onSettingChange(
 								'advanceBookingDays',
-								parseInt(e.target.value) || 1,
-							)
-						}
+								isNaN(numValue) ? 0 : numValue,
+							);
+						}}
 						className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/20"
+						placeholder="Ex: 30"
 					/>
 				</div>
 			</div>

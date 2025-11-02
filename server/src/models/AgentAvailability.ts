@@ -136,7 +136,7 @@ const AgentAvailabilitySchema = new Schema<IAgentAvailability>(
 		defaultDuration: {
 			type: Number,
 			default: 60,
-			min: 15,
+			min: 0,
 			max: 480,
 		},
 		bufferTime: {
@@ -148,13 +148,13 @@ const AgentAvailabilitySchema = new Schema<IAgentAvailability>(
 		maxAppointmentsPerDay: {
 			type: Number,
 			default: 8,
-			min: 1,
+			min: 0,
 			max: 20,
 		},
 		advanceBookingDays: {
 			type: Number,
 			default: 60,
-			min: 1,
+			min: 0,
 			max: 365,
 		},
 	},

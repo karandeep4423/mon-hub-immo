@@ -39,7 +39,10 @@ export const NotificationBell = () => {
 
 	const handleItemClick = async (
 		id: string,
-		entity: { type: 'chat' | 'collaboration'; id: string },
+		entity: {
+			type: 'chat' | 'collaboration' | 'appointment';
+			id: string;
+		},
 		actorId: string,
 	) => {
 		try {
@@ -49,6 +52,8 @@ export const NotificationBell = () => {
 				router.push(`/chat?userId=${encodeURIComponent(actorId)}`);
 			} else if (entity.type === 'collaboration') {
 				router.push(`/collaboration/${encodeURIComponent(entity.id)}`);
+			} else if (entity.type === 'appointment') {
+				router.push('/dashboard');
 			}
 		} catch {
 			// ignore navigation errors

@@ -1,11 +1,11 @@
 # Notifications
 
-This system delivers real-time and persisted notifications for cross-user activities (agents and apporteurs).
+This system delivers real-time and persisted notifications for cross-user activities (agents, apporteurs, and clients).
 
 ## Model
 
 - Collection: `notifications`
-- Fields: recipientId, actorId, type, entity { type: 'chat'|'collaboration', id }, title, message, data, read, readAt, createdAt
+- Fields: recipientId, actorId, type, entity { type: 'chat'|'collaboration'|'appointment', id }, title, message, data, read, readAt, createdAt
 - Indexes: (recipientId, createdAt desc), (recipientId, read, createdAt desc)
 
 Types:
@@ -13,6 +13,7 @@ Types:
 - chat:new_message
 - collab:proposal_received|accepted|rejected|progress_updated|cancelled|completed|note_added|activated
 - contract:updated|signed
+- appointment:new|confirmed|rejected|cancelled|rescheduled
 
 ## REST API
 
@@ -44,6 +45,7 @@ Deep links:
 
 - entity.type === 'chat' -> /chat?userId={actorId}
 - entity.type === 'collaboration' -> /collaboration/{entity.id}
+- entity.type === 'appointment' -> /agent/appointments?id={entity.id}
 
 ## Notes
 
@@ -52,7 +54,7 @@ Deep links:
 
 # Notifications
 
-This feature adds persisted + real-time notifications across chat, collaboration, and contract flows.
+This feature adds persisted + real-time notifications across chat, collaboration, contract, and appointment flows.
 
 ## Server
 
@@ -67,7 +69,7 @@ This feature adds persisted + real-time notifications across chat, collaboration
 ## Triggers
 
 - Chat
-  - On message sent: `chat:new_message` to receiver (skip self)
+  - On message sent: `chat:new_message` to receiver (skip self; skip if receiver is viewing that chat)
 - Collaboration
   - proposeCollaboration: `collab:proposal_received` → property owner
   - respondToCollaboration: `collab:proposal_accepted|rejected` → collaborator
@@ -78,6 +80,12 @@ This feature adds persisted + real-time notifications across chat, collaboration
 - Contract
   - updateContract: `contract:updated` → opposite party (and signatures reset)
   - signContract: `contract:signed` → opposite party; when both signed also `collab:activated`
+- Appointments
+  - createAppointment: `appointment:new` → agent (when client/guest books appointment)
+  - updateAppointmentStatus (confirmed): `appointment:confirmed` → client
+  - updateAppointmentStatus (rejected): `appointment:rejected` → client
+  - updateAppointmentStatus (cancelled): `appointment:cancelled` → client
+  - rescheduleAppointment: `appointment:rescheduled` → client (with new date/time)
 
 ## API
 

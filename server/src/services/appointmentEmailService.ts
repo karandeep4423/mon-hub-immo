@@ -19,6 +19,24 @@ export class AppointmentEmailService {
 		clientEmail: string,
 		clientName: string,
 	): Promise<void> {
+		logger.info('========================================');
+		logger.info(
+			'[AppointmentEmailService] 📧 Starting to send appointment booking emails',
+		);
+		logger.info('[AppointmentEmailService] Agent ID:', String(agent._id));
+		logger.info(
+			'[AppointmentEmailService] Agent Name:',
+			`${agent.firstName} ${agent.lastName}`,
+		);
+		logger.info('[AppointmentEmailService] Agent Email:', agent.email);
+		logger.info('[AppointmentEmailService] Client Name:', clientName);
+		logger.info('[AppointmentEmailService] Client Email:', clientEmail);
+		logger.info(
+			'[AppointmentEmailService] Appointment Type:',
+			appointment.appointmentType,
+		);
+		logger.info('========================================');
+
 		const scheduledDate = new Date(
 			appointment.scheduledDate,
 		).toLocaleDateString('fr-FR', {
@@ -28,6 +46,9 @@ export class AppointmentEmailService {
 		});
 
 		// Send email to client
+		logger.info(
+			'[AppointmentEmailService] 📤 Step 1/2: Sending email to CLIENT...',
+		);
 		const clientData: AppointmentEmailData = {
 			clientName,
 			agentName: `${agent.firstName} ${agent.lastName}`,
@@ -36,13 +57,28 @@ export class AppointmentEmailService {
 			scheduledTime: appointment.scheduledTime,
 		};
 
-		await sendEmail({
-			to: clientEmail,
-			subject: 'Demande de rendez-vous envoyée - MonHubImmo',
-			html: getNewAppointmentClientTemplate(clientData),
-		});
+		try {
+			await sendEmail({
+				to: clientEmail,
+				subject: 'Demande de rendez-vous envoyée - MonHubImmo',
+				html: getNewAppointmentClientTemplate(clientData),
+			});
+			logger.info(
+				'[AppointmentEmailService] ✅ CLIENT email sent successfully to:',
+				clientEmail,
+			);
+		} catch (clientEmailError) {
+			logger.error(
+				'[AppointmentEmailService] ❌ Failed to send CLIENT email:',
+				clientEmailError,
+			);
+			throw clientEmailError;
+		}
 
 		// Send email to agent
+		logger.info(
+			'[AppointmentEmailService] 📤 Step 2/2: Sending email to AGENT...',
+		);
 		const agentData: AppointmentEmailData = {
 			clientName,
 			agentName: `${agent.firstName} ${agent.lastName}`,
@@ -54,16 +90,36 @@ export class AppointmentEmailService {
 			notes: appointment.notes,
 		};
 
-		logger.debug(
-			'[AppointmentEmailService] Sending email to agent:',
-			agent.email,
-		);
-		await sendEmail({
+		logger.info('[AppointmentEmailService] Agent email details:', {
 			to: agent.email,
 			subject: 'Nouvelle demande de rendez-vous - MonHubImmo',
-			html: getNewAppointmentAgentTemplate(agentData),
+			clientName,
+			clientEmail: appointment.contactDetails.email,
+			clientPhone: appointment.contactDetails.phone,
 		});
-		logger.debug('[AppointmentEmailService] Agent email sent successfully');
+
+		try {
+			await sendEmail({
+				to: agent.email,
+				subject: 'Nouvelle demande de rendez-vous - MonHubImmo',
+				html: getNewAppointmentAgentTemplate(agentData),
+			});
+			logger.info(
+				'[AppointmentEmailService] ✅ AGENT email sent successfully to:',
+				agent.email,
+			);
+		} catch (agentEmailError) {
+			logger.error(
+				'[AppointmentEmailService] ❌ Failed to send AGENT email:',
+				agentEmailError,
+			);
+			throw agentEmailError;
+		}
+
+		logger.info(
+			'[AppointmentEmailService] 🎉 Both emails sent successfully!',
+		);
+		logger.info('========================================');
 	}
 	async sendAppointmentConfirmedEmail(
 		appointment: IAppointment,
