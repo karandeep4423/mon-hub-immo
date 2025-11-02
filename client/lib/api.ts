@@ -212,12 +212,17 @@ api.interceptors.response.use(
 				},
 			};
 
-			// Show toast notification for unauthenticated users trying to access protected routes
-			const isOnAuthPage =
+			// Only show toast for protected routes - don't annoy users on public pages
+			const isOnPublicPage =
 				typeof window !== 'undefined' &&
-				window.location.pathname.startsWith('/auth');
+				(window.location.pathname === '/' ||
+					window.location.pathname === '/home' ||
+					window.location.pathname.startsWith('/auth') ||
+					window.location.pathname.startsWith('/property') ||
+					window.location.pathname.startsWith('/monagentimmo') ||
+					window.location.pathname === '/search-ads');
 
-			if (!isOnAuthPage) {
+			if (!isOnPublicPage) {
 				toast.error('🔒 Veuillez vous connecter pour continuer');
 			}
 
@@ -229,11 +234,16 @@ api.interceptors.response.use(
 			error.response?.status === 401 &&
 			error.response?.data?.message === 'Authentification requise'
 		) {
-			const isOnAuthPage =
+			const isOnPublicPage =
 				typeof window !== 'undefined' &&
-				window.location.pathname.startsWith('/auth');
+				(window.location.pathname === '/' ||
+					window.location.pathname === '/home' ||
+					window.location.pathname.startsWith('/auth') ||
+					window.location.pathname.startsWith('/property') ||
+					window.location.pathname.startsWith('/monagentimmo') ||
+					window.location.pathname === '/search-ads');
 
-			if (!isOnAuthPage) {
+			if (!isOnPublicPage) {
 				toast.error('🔒 Veuillez vous connecter pour continuer');
 			}
 		}

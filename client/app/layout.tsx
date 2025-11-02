@@ -1,4 +1,3 @@
-// app/layout.tsx
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { AuthInitializer } from '@/components/auth/AuthInitializer';
@@ -15,8 +14,9 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-	title: 'HubImmo - Real Estate Platform',
-	description: 'Your trusted real estate platform',
+	title: 'MonHubImmo - Plateforme Immobilière Collaborative',
+	description:
+		"Plateforme de collaboration entre agents immobiliers et apporteurs d'affaires pour optimiser vos transactions immobilières",
 };
 
 export default function RootLayout({
