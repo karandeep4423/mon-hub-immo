@@ -13,6 +13,7 @@ export interface CookieOptions {
 	maxAge?: number;
 	expires?: Date;
 	path?: string;
+	domain?: string;
 }
 
 export const COOKIE_NAMES = {
@@ -32,7 +33,7 @@ export const COOKIE_MAX_AGE = {
 export const getSecureCookieOptions = (maxAge: number): CookieOptions => {
 	const isProduction = process.env.NODE_ENV === 'production';
 
-	return {
+	const options: CookieOptions = {
 		httpOnly: true, // Prevents XSS attacks by making cookie inaccessible to JavaScript
 		secure: isProduction, // Only send over HTTPS in production
 		sameSite: isProduction ? 'none' : 'lax', // 'none' for cross-site in production, 'lax' for localhost
@@ -40,6 +41,13 @@ export const getSecureCookieOptions = (maxAge: number): CookieOptions => {
 		expires: new Date(Date.now() + maxAge), // Explicit expiration date for persistent cookies
 		path: '/', // Cookie available for entire domain
 	};
+
+	// In production, set domain to allow cross-subdomain cookies
+	if (isProduction) {
+		options.domain = '.monhubimmo.fr';
+	}
+
+	return options;
 };
 
 /**
@@ -96,7 +104,12 @@ export const setAuthCookies = (
  */
 export const clearAccessTokenCookie = (res: Response): void => {
 	try {
-		res.clearCookie(COOKIE_NAMES.ACCESS_TOKEN, { path: '/' });
+		const isProduction = process.env.NODE_ENV === 'production';
+		const clearOptions: CookieOptions = { path: '/' };
+		if (isProduction) {
+			clearOptions.domain = '.monhubimmo.fr';
+		}
+		res.clearCookie(COOKIE_NAMES.ACCESS_TOKEN, clearOptions);
 		logger.debug('[CookieHelper] Access token cookie cleared');
 	} catch (error) {
 		logger.error(
@@ -111,7 +124,12 @@ export const clearAccessTokenCookie = (res: Response): void => {
  */
 export const clearRefreshTokenCookie = (res: Response): void => {
 	try {
-		res.clearCookie(COOKIE_NAMES.REFRESH_TOKEN, { path: '/' });
+		const isProduction = process.env.NODE_ENV === 'production';
+		const clearOptions: CookieOptions = { path: '/' };
+		if (isProduction) {
+			clearOptions.domain = '.monhubimmo.fr';
+		}
+		res.clearCookie(COOKIE_NAMES.REFRESH_TOKEN, clearOptions);
 		logger.debug('[CookieHelper] Refresh token cookie cleared');
 	} catch (error) {
 		logger.error(
