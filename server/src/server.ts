@@ -66,16 +66,17 @@ app.use(
 					'http://localhost:4000',
 					'ws://localhost:4000',
 					'wss://*.vercel.app',
-					process.env.FRONTEND_URL ||
-						'https://mon-hub-immo.vercel.app',
+					'https://www.monhubimmo.fr',
+					'https://mon-hub-immo.vercel.app',
+					...(process.env.FRONTEND_URL
+						? [process.env.FRONTEND_URL]
+						: []),
 				],
 				mediaSrc: ["'self'", 'https://*.amazonaws.com'],
 				objectSrc: ["'none'"],
 				frameSrc: ["'none'"],
 				baseUri: ["'self'"],
 				formAction: ["'self'"],
-				upgradeInsecureRequests:
-					process.env.NODE_ENV === 'production' ? [] : null,
 			},
 		},
 		hsts: {
@@ -116,6 +117,7 @@ app.use(
 		origin: [
 			'http://localhost:3000',
 			'http://localhost:3001',
+			'https://www.monhubimmo.fr',
 			process.env.FRONTEND_URL || 'https://mon-hub-immo.vercel.app',
 		],
 		credentials: true,
