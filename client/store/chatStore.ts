@@ -262,11 +262,23 @@ export const createChatStore = (): ChatStore => {
 	const getState = (): ChatState => state;
 
 	const setState = (newState: Partial<ChatState>): void => {
+		const prevState = { ...state };
 		state = { ...state, ...newState };
+
+		// Debug log state changes
+		if (newState.messages) {
+			logger.debug('[ChatStore] Messages state updated', {
+				previousCount: prevState.messages.length,
+				newCount: state.messages.length,
+				listenerCount: listeners.size,
+			});
+		}
+
 		notify();
 	};
 
 	const notify = (): void => {
+		logger.debug(`[ChatStore] Notifying ${listeners.size} listeners`);
 		listeners.forEach((listener) => listener());
 	};
 

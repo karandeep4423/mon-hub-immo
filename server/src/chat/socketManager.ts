@@ -140,11 +140,25 @@ const handleTyping = (
 	const { receiverId, isTyping } = data;
 	const receiverSocketId = getReceiverSocketId(userSocketMap, receiverId);
 
+	logger.debug(
+		`[SocketManager] Typing event from ${userId} to ${receiverId}, isTyping: ${isTyping}`,
+	);
+	logger.debug(
+		`[SocketManager] Receiver socket ID: ${receiverSocketId || 'NOT FOUND'}`,
+	);
+
 	if (receiverSocketId) {
 		io.to(receiverSocketId).emit(SOCKET_EVENTS.USER_TYPING, {
 			senderId: userId,
 			isTyping,
 		});
+		logger.debug(
+			`[SocketManager] Emitted USER_TYPING to ${receiverSocketId}`,
+		);
+	} else {
+		logger.warn(
+			`[SocketManager] Could not find socket for receiver: ${receiverId}`,
+		);
 	}
 };
 

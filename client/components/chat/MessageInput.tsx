@@ -4,7 +4,6 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useChat } from '../../hooks/useChat';
 import { isValidMessageContent } from './utils/messageUtils';
 import { isEnterKeyPress } from './utils/keyboardUtils';
-import TypingIndicator from './TypingIndicator';
 import { Button } from '@/components/ui/Button';
 import { ChatApi } from '@/lib/api/chatApi';
 import { Features } from '@/lib/constants';
@@ -158,9 +157,7 @@ const MessageInput: React.FC<MessageInputProps> = React.memo(
 			isSendingMessage,
 			handleTyping,
 			stopTyping,
-			typingUsers,
 		} = useChat();
-
 		const [message, setMessage] = useState('');
 		const fileInputRef = useRef<HTMLInputElement | null>(null);
 		const [isUploading, setIsUploading] = useState(false);
@@ -329,12 +326,6 @@ const MessageInput: React.FC<MessageInputProps> = React.memo(
 				onDrop={onDrop}
 				onDragOver={onDragOver}
 			>
-				{/* Typing Indicator - Shows when other users are typing */}
-				<TypingIndicator
-					selectedUser={selectedUser}
-					typingUsers={typingUsers}
-				/>
-
 				{/* Message Form */}
 				<form onSubmit={handleSubmit} className="p-4">
 					<div className="flex items-end space-x-2">

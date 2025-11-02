@@ -94,7 +94,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 				autoConnect: true,
 			});
 
-			newSocket.on(Features.Chat.SOCKET_EVENTS.CONNECTION, () => {
+			newSocket.on('connect', () => {
 				logger.debug('🚀 Socket connected successfully', {
 					socketId: newSocket.id,
 					baseUrl: BASE_URL,
@@ -102,7 +102,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 				setIsConnected(true);
 			});
 
-			newSocket.on(Features.Chat.SOCKET_EVENTS.DISCONNECT, (reason) => {
+			newSocket.on('disconnect', (reason) => {
 				logger.warn('⚠️ Socket disconnected', { reason });
 				setIsConnected(false);
 			});
@@ -143,6 +143,12 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 					setOnlineUsers(users);
 				},
 			);
+
+			// Add test listener to verify socket is receiving events
+			newSocket.onAny((eventName, ...args) => {
+				logger.debug('🎯 Socket received event:', eventName, args);
+			});
+
 			socketRef.current = newSocket;
 		}
 

@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useMemo, useCallback } from 'react';
 import { Features } from '@/lib/constants';
 import { useChat } from '../../hooks/useChat';
 import { useAuth } from '../../hooks/useAuth';
-import { useSocket } from '../../context/SocketContext';
 import { api } from '@/lib/api';
 import MessageBubble from './MessageBubble';
 import { ImageLightbox } from '@/components/ui';
@@ -84,7 +83,6 @@ const ChatMessages: React.FC = () => {
 	} = useChat();
 
 	const { user } = useAuth();
-	const { socket } = useSocket();
 
 	// Refs for scroll management
 	const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -281,32 +279,8 @@ const ChatMessages: React.FC = () => {
 		markAsRead();
 	}, [selectedUser?._id, messages.length]);
 
-	/**
-	 * Listen for read receipts from other users
-	 */
-	useEffect(() => {
-		if (!socket) return;
-
-		const handleMessagesRead = (data: {
-			readBy: string;
-			senderId: string;
-		}) => {
-			logger.debug('Messages read by', { readBy: data.readBy });
-			// You can update the UI to show read receipts here
-		};
-
-		socket.on(
-			Features.Chat.SOCKET_EVENTS.MESSAGES_READ,
-			handleMessagesRead,
-		);
-
-		return () => {
-			socket.off(
-				Features.Chat.SOCKET_EVENTS.MESSAGES_READ,
-				handleMessagesRead,
-			);
-		};
-	}, [socket]);
+	// Note: Read receipts are now handled in useChat hook, not here
+	// This prevents duplicate event listeners and ensures proper state management
 
 	// ============================================================================
 	// COMPUTED VALUES

@@ -34,15 +34,36 @@ const emitNewMessage = (
 ): void => {
 	const { receiverId, senderId } = message;
 
+	logger.debug(
+		`[MessageHandler] Emitting newMessage from ${senderId} to ${receiverId}`,
+		{ messageId: message._id },
+	);
+
 	// Emit to receiver for real-time notification
-	socketManager.emitToUser(receiverId, SOCKET_EVENTS.NEW_MESSAGE, message);
+	const receiverSocketId = socketManager.getReceiverSocketId(receiverId);
+	if (receiverSocketId) {
+		socketManager.emitToUser(
+			receiverId,
+			SOCKET_EVENTS.NEW_MESSAGE,
+			message,
+		);
+		logger.debug(
+			`[MessageHandler] ✅ Emitted to receiver ${receiverId} (socket: ${receiverSocketId})`,
+		);
+	} else {
+		logger.warn(`[MessageHandler] ⚠️ Receiver ${receiverId} not connected`);
+	}
 
 	// Emit to sender for confirmation and real-time sync
-	socketManager.emitToUser(senderId, SOCKET_EVENTS.NEW_MESSAGE, message);
-
-	logger.debug(
-		`📤 Emitted newMessage to receiver ${receiverId} and sender ${senderId}`,
-	);
+	const senderSocketId = socketManager.getReceiverSocketId(senderId);
+	if (senderSocketId) {
+		socketManager.emitToUser(senderId, SOCKET_EVENTS.NEW_MESSAGE, message);
+		logger.debug(
+			`[MessageHandler] ✅ Emitted to sender ${senderId} (socket: ${senderSocketId})`,
+		);
+	} else {
+		logger.warn(`[MessageHandler] ⚠️ Sender ${senderId} not connected`);
+	}
 };
 
 /**
@@ -58,14 +79,25 @@ const emitReadReceipt = (
 		senderId,
 	};
 
-	socketManager.emitToUser(
-		senderId,
-		SOCKET_EVENTS.MESSAGES_READ,
-		readReceipt,
-	);
 	logger.debug(
-		`📤 Emitted read receipt to sender ${senderId} from reader ${readBy}`,
+		`[MessageHandler] Emitting read receipt to sender ${senderId} from reader ${readBy}`,
 	);
+
+	const senderSocketId = socketManager.getReceiverSocketId(senderId);
+	if (senderSocketId) {
+		socketManager.emitToUser(
+			senderId,
+			SOCKET_EVENTS.MESSAGES_READ,
+			readReceipt,
+		);
+		logger.debug(
+			`[MessageHandler] ✅ Emitted read receipt to ${senderId} (socket: ${senderSocketId})`,
+		);
+	} else {
+		logger.warn(
+			`[MessageHandler] ⚠️ Sender ${senderId} not connected for read receipt`,
+		);
+	}
 };
 
 /**
