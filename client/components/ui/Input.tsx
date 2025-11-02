@@ -35,7 +35,7 @@ export const Input: React.FC<InputProps> = ({
 				className={`
           block w-full px-4 py-3 sm:py-2.5 text-base
           border-2 rounded-xl
-          transition-all duration-200
+          transition-smooth
           outline-none
           ${
 				error

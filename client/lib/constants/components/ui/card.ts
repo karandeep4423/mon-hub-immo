@@ -88,7 +88,7 @@ export const CARD_ROUNDED_CLASSES = {
 // ============================================================================
 
 export const CARD_BASE_CLASSES =
-	'bg-white border border-gray-200 transition-all duration-300' as const;
+	'bg-white border border-gray-200 transition-smooth' as const;
 
 // ============================================================================
 // HOVER VARIANTS
@@ -96,8 +96,8 @@ export const CARD_BASE_CLASSES =
 
 export const CARD_HOVER = {
 	none: '',
-	shadow: 'hover:shadow-card-hover transition-shadow cursor-pointer',
-	lift: 'hover:shadow-card-hover hover:-translate-y-1 hover:scale-102 transition-all duration-300 cursor-pointer',
+	shadow: 'hover:shadow-card-hover transition-smooth cursor-pointer',
+	lift: 'hover:shadow-card-hover hover:-translate-y-1 hover:scale-102 transition-smooth cursor-pointer',
 	scale: 'hover:scale-102 hover:shadow-card-hover transition-all duration-300 cursor-pointer',
 } as const;
 

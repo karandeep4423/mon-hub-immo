@@ -15,6 +15,7 @@ interface ConfirmDialogProps {
 	cancelText?: string;
 	variant?: Variant;
 	loading?: boolean;
+	zIndex?: number;
 }
 
 export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
@@ -27,9 +28,16 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 	cancelText = UI.DIALOG_TEXT.cancel,
 	variant = 'primary',
 	loading = false,
+	zIndex = 60,
 }) => {
 	return (
-		<Modal isOpen={isOpen} onClose={onCancel} title={title} size="sm">
+		<Modal
+			isOpen={isOpen}
+			onClose={onCancel}
+			title={title}
+			size="sm"
+			zIndex={zIndex}
+		>
 			<div className="space-y-4">
 				{description && (
 					<p className="text-sm text-gray-600">{description}</p>

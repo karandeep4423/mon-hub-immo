@@ -321,7 +321,7 @@ export const LocationSearchWithRadius: React.FC<
 									{nearbyCities.map((city) => (
 										<label
 											key={city.value}
-											className="flex items-center px-3 py-2.5 hover:bg-brand-50 rounded cursor-pointer transition-colors"
+											className="flex items-center px-3 py-2.5 hover:bg-brand-50 rounded cursor-pointer transition-colors-smooth"
 										>
 											<input
 												type="checkbox"
@@ -348,7 +348,7 @@ export const LocationSearchWithRadius: React.FC<
 									<button
 										type="button"
 										onClick={handleSelectAllNearby}
-										className="flex-1 px-3 py-2 text-sm font-medium text-brand border border-brand rounded-lg hover:bg-brand-50 transition-colors"
+										className="flex-1 px-3 py-2 text-sm font-medium text-brand border border-brand rounded-lg hover:bg-brand-50 transition-colors-smooth"
 									>
 										Tout sélectionner ({nearbyCities.length}
 										)
@@ -356,7 +356,7 @@ export const LocationSearchWithRadius: React.FC<
 									<button
 										type="button"
 										onClick={handleConfirmSelection}
-										className="flex-1 px-3 py-2 text-sm font-medium text-white bg-brand rounded-lg hover:bg-brand/90 transition-colors"
+										className="flex-1 px-3 py-2 text-sm font-medium text-white bg-brand rounded-lg hover:bg-brand/90 transition-colors-smooth"
 									>
 										Confirmer ({selectedNearby.size}{' '}
 										sélectionnée
@@ -365,7 +365,7 @@ export const LocationSearchWithRadius: React.FC<
 									<button
 										type="button"
 										onClick={handleCancelNearby}
-										className="sm:flex-none px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+										className="sm:flex-none px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors-smooth"
 									>
 										Annuler
 									</button>
@@ -385,7 +385,7 @@ export const LocationSearchWithRadius: React.FC<
 											onClick={() =>
 												handleSelectLocation(suggestion)
 											}
-											className="w-full px-4 py-2.5 text-left hover:bg-brand-50 focus:bg-brand-50 focus:outline-none transition-colors border-b border-gray-100 last:border-b-0"
+											className="w-full px-4 py-2.5 text-left hover:bg-brand-50 focus:bg-brand-50 focus:outline-none transition-colors-smooth border-b border-gray-100 last:border-b-0"
 										>
 											<div className="flex items-center">
 												<svg

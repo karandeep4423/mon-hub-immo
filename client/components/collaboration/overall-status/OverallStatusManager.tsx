@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
+import { ConfirmDialog } from '../../ui/ConfirmDialog';
 import { OverallStatusManagerProps, OverallCollaborationStatus } from './types';
 import { OverallStatusBadge } from './OverallStatusBadge';
 import { logger } from '@/lib/utils/logger';
@@ -18,6 +19,19 @@ export const OverallStatusManager: React.FC<OverallStatusManagerProps> = ({
 }) => {
 	const [isUpdating, setIsUpdating] = useState(false);
 	const [showActions, setShowActions] = useState(false);
+	const [confirmDialog, setConfirmDialog] = useState<{
+		isOpen: boolean;
+		status: OverallCollaborationStatus | null;
+		title: string;
+		description: string;
+		variant: 'danger' | 'primary';
+	}>({
+		isOpen: false,
+		status: null,
+		title: '',
+		description: '',
+		variant: 'primary',
+	});
 
 	// Check if "Affaire conclue" is validated by both parties
 	const isAffaireConclueValidated = () => {
@@ -39,11 +53,65 @@ export const OverallStatusManager: React.FC<OverallStatusManagerProps> = ({
 		try {
 			await onStatusUpdate(newStatus);
 			setShowActions(false);
+			setConfirmDialog({
+				isOpen: false,
+				status: null,
+				title: '',
+				description: '',
+				variant: 'primary',
+			});
 		} catch (error) {
 			logger.error('Error updating status:', error);
 		} finally {
 			setIsUpdating(false);
 		}
+	};
+
+	const handleActionClick = (action: {
+		status: OverallCollaborationStatus;
+		label: string;
+		description: string;
+		variant: 'primary' | 'secondary' | 'danger';
+	}) => {
+		// Show confirmation modal for accept and refuse actions
+		if (action.status === 'accepted') {
+			setConfirmDialog({
+				isOpen: true,
+				status: action.status,
+				title: 'Accepter la collaboration',
+				description:
+					'Êtes-vous sûr de vouloir accepter cette collaboration ?',
+				variant: 'primary',
+			});
+		} else if (action.status === 'rejected') {
+			setConfirmDialog({
+				isOpen: true,
+				status: action.status,
+				title: 'Refuser la collaboration',
+				description:
+					'Êtes-vous sûr de vouloir refuser cette collaboration ? Cette action est définitive.',
+				variant: 'danger',
+			});
+		} else {
+			// For other actions, proceed directly
+			handleStatusChange(action.status);
+		}
+	};
+
+	const handleConfirmAction = () => {
+		if (confirmDialog.status) {
+			handleStatusChange(confirmDialog.status);
+		}
+	};
+
+	const handleCancelConfirm = () => {
+		setConfirmDialog({
+			isOpen: false,
+			status: null,
+			title: '',
+			description: '',
+			variant: 'primary',
+		});
 	};
 
 	const getAvailableActions = (): Array<{
@@ -300,9 +368,7 @@ export const OverallStatusManager: React.FC<OverallStatusManagerProps> = ({
 										<Button
 											key={action.status}
 											onClick={() =>
-												handleStatusChange(
-													action.status,
-												)
+												handleActionClick(action)
 											}
 											loading={isUpdating}
 											disabled={shouldDisable}
@@ -337,6 +403,20 @@ export const OverallStatusManager: React.FC<OverallStatusManagerProps> = ({
 					)}
 				</div>
 			)}
+
+			{/* Confirmation Dialog */}
+			<ConfirmDialog
+				isOpen={confirmDialog.isOpen}
+				title={confirmDialog.title}
+				description={confirmDialog.description}
+				onConfirm={handleConfirmAction}
+				onCancel={handleCancelConfirm}
+				confirmText={
+					confirmDialog.variant === 'danger' ? 'Refuser' : 'Accepter'
+				}
+				variant={confirmDialog.variant}
+				loading={isUpdating}
+			/>
 		</Card>
 	);
 };

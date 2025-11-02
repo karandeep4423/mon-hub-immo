@@ -5,11 +5,9 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { RichTextDisplay } from '../ui';
 import { useCollaborationMutations } from '@/hooks/useCollaborations';
-import { toast } from 'react-toastify';
 import type { Property } from '@/lib/api/propertyApi';
 import type { SearchAd } from '@/types/searchAd';
 import { useForm } from '@/hooks/useForm';
-import { Features } from '@/lib/constants';
 
 type PostData =
 	| {
@@ -136,10 +134,7 @@ export const ProposeCollaborationModal: React.FC<
 
 				const res = await proposeCollaboration(payload);
 				if (!res.success) return;
-				toast.success(
-					Features.Collaboration.COLLABORATION_TOAST_MESSAGES
-						.PROPOSE_SUCCESS,
-				);
+				// Toast already shown by mutation hook
 				onSuccess?.();
 				onClose();
 				resetForm();

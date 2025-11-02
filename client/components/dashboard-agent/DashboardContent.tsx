@@ -132,40 +132,46 @@ export const DashboardContent: React.FC = () => {
 				/>
 
 				{/* Tab Content */}
-				{activeTab === 'overview' && (
-					<>
-						{/* Stats Cards */}
-						<DashboardStats
-							kpis={kpis}
-							appointmentStats={appointmentStats}
-							loading={statsLoading}
+				<div className="animate-fade-in">
+					{activeTab === 'overview' && (
+						<>
+							{/* Stats Cards */}
+							<DashboardStats
+								kpis={kpis}
+								appointmentStats={appointmentStats}
+								loading={statsLoading}
+							/>
+
+							{/* Agent Profile Card */}
+							{user.userType === 'agent' && (
+								<AgentProfileCard user={user} />
+							)}
+
+							{/* Quick Actions */}
+							<DashboardQuickActions
+								onCreateProperty={() =>
+									setActiveTab('properties')
+								}
+								onViewProperties={() =>
+									setActiveTab('properties')
+								}
+							/>
+						</>
+					)}
+
+					{/* Property Management Tab */}
+					{activeTab === 'properties' && <PropertyManager />}
+					{activeTab === 'collaborations' && user && (
+						<CollaborationList
+							currentUserId={user._id}
+							onClose={() => {}}
 						/>
-
-						{/* Agent Profile Card */}
-						{user.userType === 'agent' && (
-							<AgentProfileCard user={user} />
-						)}
-
-						{/* Quick Actions */}
-						<DashboardQuickActions
-							onCreateProperty={() => setActiveTab('properties')}
-							onViewProperties={() => setActiveTab('properties')}
-						/>
-					</>
-				)}
-
-				{/* Property Management Tab */}
-				{activeTab === 'properties' && <PropertyManager />}
-				{activeTab === 'collaborations' && user && (
-					<CollaborationList
-						currentUserId={user._id}
-						onClose={() => {}}
-					/>
-				)}
-				{activeTab === 'searches' && <MySearches />}
-				{activeTab === 'appointments' && (
-					<AppointmentsManager userType="agent" />
-				)}
+					)}
+					{activeTab === 'searches' && <MySearches />}
+					{activeTab === 'appointments' && (
+						<AppointmentsManager userType="agent" />
+					)}
+				</div>
 			</main>
 		</div>
 	);

@@ -28,6 +28,12 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 		additionalTerms: '',
 	});
 	const [confirmOpen, setConfirmOpen] = useState(false);
+	const [checkboxes, setCheckboxes] = useState({
+		readContract: false,
+		acceptTerms: false,
+		respectObligations: false,
+		legallyBinding: false,
+	});
 
 	// Fetch contract using useFetch hook
 	const {
@@ -128,6 +134,14 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 	};
 
 	const handleSignContract = () => {
+		// Validate all checkboxes are checked
+		const allChecked = Object.values(checkboxes).every((value) => value);
+		if (!allChecked) {
+			toast.error(
+				"Veuillez cocher toutes les conditions d'acceptation avant de signer",
+			);
+			return;
+		}
 		setConfirmOpen(true);
 	};
 
@@ -493,44 +507,80 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 						<div className="bg-info-light border border-info rounded-lg p-4">
 							<h4 className="font-medium text-gray-900 mb-2">
 								Conditions d&apos;acceptation
+								<span className="text-red-500 ml-1">*</span>
 							</h4>
 							<div className="space-y-2 text-sm text-gray-800">
-								<label className="flex items-center">
+								<label className="flex items-center cursor-pointer">
 									<input
 										type="checkbox"
-										required
-										className="mr-2"
+										checked={checkboxes.readContract}
+										onChange={(e) =>
+											setCheckboxes({
+												...checkboxes,
+												readContract: e.target.checked,
+											})
+										}
+										className="mr-2 w-4 h-4 cursor-pointer"
 									/>
-									Je confirme avoir lu et compris
-									l&apos;intégralité du contrat de
-									collaboration
+									<span>
+										Je confirme avoir lu et compris
+										l&apos;intégralité du contrat de
+										collaboration
+									</span>
 								</label>
-								<label className="flex items-center">
+								<label className="flex items-center cursor-pointer">
 									<input
 										type="checkbox"
-										required
-										className="mr-2"
+										checked={checkboxes.acceptTerms}
+										onChange={(e) =>
+											setCheckboxes({
+												...checkboxes,
+												acceptTerms: e.target.checked,
+											})
+										}
+										className="mr-2 w-4 h-4 cursor-pointer"
 									/>
-									J&apos;accepte les termes et conditions
-									énoncés dans ce contrat
+									<span>
+										J&apos;accepte les termes et conditions
+										énoncés dans ce contrat
+									</span>
 								</label>
-								<label className="flex items-center">
+								<label className="flex items-center cursor-pointer">
 									<input
 										type="checkbox"
-										required
-										className="mr-2"
+										checked={checkboxes.respectObligations}
+										onChange={(e) =>
+											setCheckboxes({
+												...checkboxes,
+												respectObligations:
+													e.target.checked,
+											})
+										}
+										className="mr-2 w-4 h-4 cursor-pointer"
 									/>
-									Je m&apos;engage à respecter mes obligations
-									telles que définies dans le contrat
+									<span>
+										Je m&apos;engage à respecter mes
+										obligations telles que définies dans le
+										contrat
+									</span>
 								</label>
-								<label className="flex items-center">
+								<label className="flex items-center cursor-pointer">
 									<input
 										type="checkbox"
-										required
-										className="mr-2"
+										checked={checkboxes.legallyBinding}
+										onChange={(e) =>
+											setCheckboxes({
+												...checkboxes,
+												legallyBinding:
+													e.target.checked,
+											})
+										}
+										className="mr-2 w-4 h-4 cursor-pointer"
 									/>
-									Je comprends que ce contrat est
-									juridiquement contraignant
+									<span>
+										Je comprends que ce contrat est
+										juridiquement contraignant
+									</span>
 								</label>
 							</div>
 						</div>

@@ -279,13 +279,13 @@ export default function CollaborationPage() {
 				: await completeCollaboration(id);
 		setConfirmLoading(false);
 		if (res.success) {
-			toast.success(
-				pendingAction === 'cancelled'
-					? Features.Collaboration.COLLABORATION_TOAST_MESSAGES
-							.CANCEL_SUCCESS
-					: Features.Collaboration.COLLABORATION_TOAST_MESSAGES
-							.COMPLETE_SUCCESS,
-			);
+			// Toast already shown by mutation hook for cancel
+			if (pendingAction === 'completed') {
+				toast.success(
+					Features.Collaboration.COLLABORATION_TOAST_MESSAGES
+						.COMPLETE_SUCCESS,
+				);
+			}
 			await refetchCollaboration();
 			setConfirmOpen(false);
 			setPendingAction(null);

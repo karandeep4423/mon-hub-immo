@@ -5,6 +5,7 @@ import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 import { Button } from '@/components/ui/Button';
 import { RichTextDisplay } from '@/components/ui';
 import { BookAppointmentModal } from '@/components/appointments/BookAppointmentModal';
+import { useAuth } from '@/hooks/useAuth';
 
 interface AgentCardProps {
 	agent: {
@@ -27,6 +28,9 @@ interface AgentCardProps {
 
 export const AgentCard: React.FC<AgentCardProps> = ({ agent }) => {
 	const [showBookingModal, setShowBookingModal] = useState(false);
+	const { user } = useAuth();
+
+	const isAgent = user?.userType === 'agent';
 
 	return (
 		<>
@@ -138,33 +142,43 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent }) => {
 
 				{/* Footer */}
 				<div className="px-6 pb-6 mt-auto">
-					<Button
-						onClick={() => setShowBookingModal(true)}
-						className="w-full bg-brand hover:bg-brand-dark text-white"
-					>
-						<svg
-							className="w-5 h-5 mr-2"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
+					{isAgent ? (
+						<div className="text-center py-3 px-4 bg-gray-100 rounded-lg">
+							<p className="text-sm text-gray-600">
+								Les agents ne peuvent pas prendre de rendez-vous
+							</p>
+						</div>
+					) : (
+						<Button
+							onClick={() => setShowBookingModal(true)}
+							className="w-full bg-brand hover:bg-brand-dark text-white"
 						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth="2"
-								d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-							/>
-						</svg>
-						Prendre rendez-vous
-					</Button>
+							<svg
+								className="w-5 h-5 mr-2"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									strokeWidth="2"
+									d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+								/>
+							</svg>
+							Prendre rendez-vous
+						</Button>
+					)}
 				</div>
-			</div>{' '}
-			{/* Booking Modal */}
-			<BookAppointmentModal
-				isOpen={showBookingModal}
-				onClose={() => setShowBookingModal(false)}
-				agent={agent}
-			/>
+			</div>
+			{/* Booking Modal - Only render for non-agents */}
+			{!isAgent && (
+				<BookAppointmentModal
+					isOpen={showBookingModal}
+					onClose={() => setShowBookingModal(false)}
+					agent={agent}
+				/>
+			)}
 		</>
 	);
 };

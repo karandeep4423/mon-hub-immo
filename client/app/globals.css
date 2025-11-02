@@ -888,3 +888,226 @@ select::-webkit-scrollbar-thumb {
 select::-webkit-scrollbar-thumb:hover {
 	background: var(--brand-500);
 }
+
+/* ============================================================================
+   SMOOTH TRANSITIONS & ANIMATIONS
+   ============================================================================ */
+
+/* Transition timing variables */
+:root {
+	--transition-fast: 150ms;
+	--transition-base: 250ms;
+	--transition-smooth: 300ms;
+	--transition-slow: 400ms;
+
+	--ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+	--ease-in-smooth: cubic-bezier(0.4, 0, 1, 1);
+	--ease-out-smooth: cubic-bezier(0, 0, 0.2, 1);
+	--ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Base transition classes */
+.transition-smooth {
+	transition-property: all;
+	transition-timing-function: var(--ease-smooth);
+	transition-duration: var(--transition-base);
+}
+
+.transition-smooth-fast {
+	transition-property: all;
+	transition-timing-function: var(--ease-smooth);
+	transition-duration: var(--transition-fast);
+}
+
+.transition-smooth-slow {
+	transition-property: all;
+	transition-timing-function: var(--ease-smooth);
+	transition-duration: var(--transition-smooth);
+}
+
+/* Specific property transitions */
+.transition-colors-smooth {
+	transition-property: color, background-color, border-color;
+	transition-timing-function: var(--ease-smooth);
+	transition-duration: var(--transition-base);
+}
+
+.transition-transform-smooth {
+	transition-property: transform;
+	transition-timing-function: var(--ease-smooth);
+	transition-duration: var(--transition-base);
+}
+
+.transition-opacity-smooth {
+	transition-property: opacity;
+	transition-timing-function: var(--ease-smooth);
+	transition-duration: var(--transition-base);
+}
+
+/* Keyframe animations */
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes fadeOut {
+	from {
+		opacity: 1;
+	}
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes slideDown {
+	from {
+		opacity: 0;
+		transform: translateY(-10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes slideUp {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes scaleIn {
+	from {
+		opacity: 0;
+		transform: scale(0.95);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+@keyframes scaleOut {
+	from {
+		opacity: 1;
+		transform: scale(1);
+	}
+	to {
+		opacity: 0;
+		transform: scale(0.95);
+	}
+}
+
+@keyframes slideInLeft {
+	from {
+		opacity: 0;
+		transform: translateX(-20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+@keyframes slideInRight {
+	from {
+		opacity: 0;
+		transform: translateX(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+@keyframes backdropFade {
+	from {
+		opacity: 0;
+		backdrop-filter: blur(0px);
+	}
+	to {
+		opacity: 1;
+		backdrop-filter: blur(4px);
+	}
+}
+
+/* Animation utility classes */
+.animate-fade-in {
+	animation: fadeIn var(--transition-base) var(--ease-smooth);
+}
+
+.animate-fade-out {
+	animation: fadeOut var(--transition-base) var(--ease-smooth);
+}
+
+.animate-slide-down {
+	animation: slideDown var(--transition-smooth) var(--ease-out-smooth);
+}
+
+.animate-slide-up {
+	animation: slideUp var(--transition-smooth) var(--ease-out-smooth);
+}
+
+.animate-scale-in {
+	animation: scaleIn var(--transition-smooth) var(--ease-out-smooth);
+}
+
+.animate-scale-out {
+	animation: scaleOut var(--transition-base) var(--ease-in-smooth);
+}
+
+.animate-slide-in-left {
+	animation: slideInLeft var(--transition-smooth) var(--ease-out-smooth);
+}
+
+.animate-slide-in-right {
+	animation: slideInRight var(--transition-smooth) var(--ease-out-smooth);
+}
+
+.animate-backdrop-fade {
+	animation: backdropFade var(--transition-smooth) var(--ease-smooth);
+}
+
+/* Tab transition utilities */
+.tab-content-enter {
+	opacity: 0;
+	transform: translateY(10px);
+}
+
+.tab-content-enter-active {
+	opacity: 1;
+	transform: translateY(0);
+	transition:
+		opacity var(--transition-base) var(--ease-smooth),
+		transform var(--transition-base) var(--ease-smooth);
+}
+
+.tab-content-exit {
+	opacity: 1;
+}
+
+.tab-content-exit-active {
+	opacity: 0;
+	transition: opacity var(--transition-fast) var(--ease-smooth);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+}

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { UI } from '@/lib/constants/components';
 
 interface ModalProps {
@@ -8,6 +9,8 @@ interface ModalProps {
 	title?: string;
 	size?: 'sm' | 'md' | 'lg' | 'xl';
 	className?: string;
+	zIndex?: number;
+	usePortal?: boolean;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -17,17 +20,59 @@ export const Modal: React.FC<ModalProps> = ({
 	title,
 	size = 'md',
 	className = '',
+	zIndex = 50,
+	usePortal = true,
 }) => {
-	if (!isOpen) return null;
+	const [isVisible, setIsVisible] = useState(false);
+	const [isAnimating, setIsAnimating] = useState(false);
+	const [mounted, setMounted] = useState(false);
 
-	return (
-		<div className={UI.MODAL_CONTAINER.className}>
+	useEffect(() => {
+		setMounted(true);
+	}, []);
+
+	useEffect(() => {
+		if (isOpen) {
+			setIsVisible(true);
+			// Small delay to trigger enter animation
+			setTimeout(() => setIsAnimating(true), 10);
+		} else {
+			setIsAnimating(false);
+			// Wait for exit animation to complete before unmounting
+			const timer = setTimeout(() => setIsVisible(false), 300);
+			return () => clearTimeout(timer);
+		}
+	}, [isOpen]);
+
+	if (!isVisible || !mounted) return null;
+
+	const backdropZIndex = zIndex - 10;
+	const containerZIndex = zIndex;
+	const contentZIndex = zIndex + 10;
+
+	const modalContent = (
+		<div
+			className={UI.MODAL_CONTAINER.className}
+			style={{ zIndex: containerZIndex }}
+		>
 			{/* Backdrop */}
-			<div className={UI.MODAL_BACKDROP.className} onClick={onClose} />
+			<div
+				className={`${UI.MODAL_BACKDROP.className} transition-opacity duration-300 ${
+					isAnimating ? 'opacity-100' : 'opacity-0'
+				}`}
+				style={{
+					backdropFilter: isAnimating ? 'blur(4px)' : 'blur(0px)',
+					zIndex: backdropZIndex,
+				}}
+				onClick={onClose}
+			/>
 
 			{/* Modal */}
 			<div
-				className={`${UI.MODAL_CONTENT.baseClassName} ${UI.MODAL_SIZE_CLASSES[size]} ${UI.MODAL_CONTAINER.maxHeight} ${UI.MODAL_CONTAINER.overflow} ${className}`}
+				className={`${UI.MODAL_CONTENT.baseClassName} ${UI.MODAL_SIZE_CLASSES[size]} ${UI.MODAL_CONTAINER.maxHeight} ${UI.MODAL_CONTAINER.overflow} ${className} transition-all duration-300 ${
+					isAnimating ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+				}`}
+				style={{ zIndex: contentZIndex, position: 'relative' }}
 			>
 				{title && (
 					<div className={UI.MODAL_CONTENT.headerClassName}>
@@ -68,4 +113,10 @@ export const Modal: React.FC<ModalProps> = ({
 			</div>
 		</div>
 	);
+
+	if (usePortal && typeof window !== 'undefined') {
+		return createPortal(modalContent, document.body);
+	}
+
+	return modalContent;
 };

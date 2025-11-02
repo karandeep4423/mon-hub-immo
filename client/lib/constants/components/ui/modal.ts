@@ -69,7 +69,7 @@ export const MODAL_BACKDROP = {
 // ============================================================================
 
 export const MODAL_CONTAINER = {
-	className: 'fixed inset-0 z-50 flex items-center justify-center p-4',
+	className: 'fixed inset-0 flex items-center justify-center p-4',
 	maxHeight: 'max-h-[90vh]',
 	overflow: 'overflow-y-auto',
 } as const;

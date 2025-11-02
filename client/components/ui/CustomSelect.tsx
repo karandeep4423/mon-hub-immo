@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useClickOutside } from '@/hooks/useClickOutside';
 
 interface SelectOption {
@@ -37,9 +37,23 @@ export const Select = ({
 	error,
 }: SelectProps) => {
 	const [isOpen, setIsOpen] = useState(false);
+	const [isAnimating, setIsAnimating] = useState(false);
+	const [shouldRender, setShouldRender] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	useClickOutside([containerRef], () => setIsOpen(false));
+
+	// Handle open/close animations
+	useEffect(() => {
+		if (isOpen) {
+			setShouldRender(true);
+			setTimeout(() => setIsAnimating(true), 10);
+		} else {
+			setIsAnimating(false);
+			const timer = setTimeout(() => setShouldRender(false), 200);
+			return () => clearTimeout(timer);
+		}
+	}, [isOpen]);
 
 	const selectedOption = options.find((opt) => opt.value === value);
 	const displayText = selectedOption?.label || placeholder;
@@ -124,7 +138,7 @@ export const Select = ({
 							{displayText}
 						</span>
 						<svg
-							className={`w-5 h-5 transition-transform duration-200 ${
+							className={`w-5 h-5 transition-transform-smooth ${
 								isOpen ? 'rotate-180' : ''
 							} ${disabled ? 'text-gray-400' : 'text-brand'}`}
 							fill="none"
@@ -142,9 +156,13 @@ export const Select = ({
 				</button>
 
 				{/* Dropdown menu */}
-				{isOpen && !disabled && (
+				{shouldRender && !disabled && (
 					<div
-						className="absolute z-[9999] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-2xl max-h-60 overflow-auto"
+						className={`absolute z-[9999] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-2xl max-h-60 overflow-auto transition-all duration-200 ${
+							isAnimating
+								? 'opacity-100 translate-y-0'
+								: 'opacity-0 -translate-y-2'
+						}`}
 						role="listbox"
 						style={{ boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)' }}
 					>
@@ -159,7 +177,7 @@ export const Select = ({
 								disabled={option.disabled}
 								className={`
 									w-full text-left px-4 py-2.5
-									transition-colors duration-100
+									transition-colors-smooth
 									${
 										option.value === value
 											? 'bg-brand text-white font-semibold'

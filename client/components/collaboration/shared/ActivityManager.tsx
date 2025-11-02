@@ -136,8 +136,8 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 			{/* Add Activity Form */}
 			{showAddForm && canAddActivity && (
 				<Card className="mb-6 border border-brand-200 bg-brand-50">
-					<div className="p-4">
-						<form onSubmit={handleAddNote} className="space-y-4">
+					<div className="p-1">
+						<form onSubmit={handleAddNote} className="space-y-2">
 							<div>
 								<label className="block text-sm font-medium text-gray-700 mb-2">
 									Nouvelle note
@@ -151,7 +151,7 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 											.ACTIVITY_NOTE
 									}
 									rows={3}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand/20 focus:border-transparent resize-none"
+									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand/20 focus:border-transparent "
 									required
 								/>
 							</div>

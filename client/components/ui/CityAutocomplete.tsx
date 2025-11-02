@@ -6,7 +6,7 @@
 
 'use client';
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { searchMunicipalities } from '@/lib/services/frenchAddressApi';
 import { useAutocomplete } from '@/hooks/useAutocomplete';
 import { LoadingSpinner } from './LoadingSpinner';
@@ -37,6 +37,9 @@ export const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
 	label,
 	required = false,
 }) => {
+	const [isAnimating, setIsAnimating] = useState(false);
+	const [shouldRenderDropdown, setShouldRenderDropdown] = useState(false);
+
 	const {
 		inputRef,
 		dropdownRef,
@@ -54,6 +57,18 @@ export const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
 		fetchSuggestions: searchMunicipalities,
 		limit: 8,
 	});
+
+	// Handle dropdown animations
+	useEffect(() => {
+		if (showDropdown && suggestions.length > 0) {
+			setShouldRenderDropdown(true);
+			setTimeout(() => setIsAnimating(true), 10);
+		} else {
+			setIsAnimating(false);
+			const timer = setTimeout(() => setShouldRenderDropdown(false), 200);
+			return () => clearTimeout(timer);
+		}
+	}, [showDropdown, suggestions.length]);
 
 	// Update input value when prop changes
 	useEffect(() => {
@@ -85,7 +100,7 @@ export const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
 					onChange={handleInputChange}
 					onFocus={handleFocus}
 					placeholder={placeholder}
-					className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-all ${
+					className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-smooth ${
 						error ? 'border-red-500' : 'border-gray-300'
 					} ${className}`}
 					autoComplete="off"
@@ -98,10 +113,14 @@ export const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
 				)}
 
 				{/* Suggestions Dropdown */}
-				{showDropdown && suggestions.length > 0 && (
+				{shouldRenderDropdown && (
 					<div
 						ref={dropdownRef}
-						className="absolute z-[9999] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto"
+						className={`absolute z-[9999] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto transition-all duration-200 ${
+							isAnimating
+								? 'opacity-100 translate-y-0'
+								: 'opacity-0 -translate-y-2'
+						}`}
 					>
 						{suggestions.map((suggestion, index) => (
 							<button
@@ -110,7 +129,7 @@ export const CityAutocomplete: React.FC<CityAutocompleteProps> = ({
 								onClick={() =>
 									handleSuggestionClick(suggestion)
 								}
-								className="w-full px-4 py-2.5 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 flex items-start gap-2"
+								className="w-full px-4 py-2.5 text-left hover:bg-gray-50 transition-colors-smooth border-b border-gray-100 last:border-b-0 flex items-start gap-2"
 							>
 								<div className="flex-shrink-0 mt-0.5">
 									<svg

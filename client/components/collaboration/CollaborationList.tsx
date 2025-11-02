@@ -136,13 +136,13 @@ export const CollaborationList: React.FC<CollaborationListProps> = ({
 				: await completeCollaboration(id);
 		setConfirmLoading(false);
 		if (res.success) {
-			toast.success(
-				confirmMode === 'cancel'
-					? Features.Collaboration.COLLABORATION_TOAST_MESSAGES
-							.CANCEL_SUCCESS
-					: Features.Collaboration.COLLABORATION_TOAST_MESSAGES
-							.COMPLETE_SUCCESS,
-			);
+			// Toast already shown by mutation hook for cancel
+			if (confirmMode === 'terminate') {
+				toast.success(
+					Features.Collaboration.COLLABORATION_TOAST_MESSAGES
+						.COMPLETE_SUCCESS,
+				);
+			}
 			setConfirmOpen(false);
 			setTargetCollab(null);
 			await fetchCollaborations();

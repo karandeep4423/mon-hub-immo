@@ -51,6 +51,19 @@ export const createAppointment = async (
 			return;
 		}
 
+		// Prevent agents from booking appointments (only anonymous users can book)
+		if (loggedInUserId) {
+			const loggedInUser = await User.findById(loggedInUserId);
+			if (loggedInUser && loggedInUser.userType === 'agent') {
+				res.status(403).json({
+					success: false,
+					message:
+						'Les agents ne peuvent pas prendre de rendez-vous. Seuls les utilisateurs anonymes peuvent réserver.',
+				});
+				return;
+			}
+		}
+
 		// Check if time slot is available
 		const scheduledDateTime = new Date(scheduledDate);
 		const existingAppointment = await Appointment.findOne({

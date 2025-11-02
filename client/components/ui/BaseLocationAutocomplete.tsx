@@ -301,7 +301,7 @@ export const BaseLocationAutocomplete: React.FC<
 							key={`${suggestion.citycode || suggestion.name}-${suggestion.postcode}-${index}`}
 							type="button"
 							onClick={() => handleSuggestionClick(suggestion)}
-							className="w-full px-4 py-2 text-left hover:bg-brand-50 focus:bg-brand-50 focus:outline-none transition-colors"
+							className="w-full px-4 py-2 text-left hover:bg-brand-50 focus:bg-brand-50 focus:outline-none transition-colors-smooth"
 						>
 							<div className="font-medium text-gray-900">
 								{suggestion.name}

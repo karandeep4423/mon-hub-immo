@@ -132,7 +132,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
 				${className}
 				inline-flex items-center justify-center
 				rounded-full
-				transition-all duration-200
+				transition-smooth
 				hover:scale-110
 				focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50
 				${

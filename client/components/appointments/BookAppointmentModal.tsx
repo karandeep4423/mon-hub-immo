@@ -38,6 +38,9 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 	const { user } = useAuth();
 	const [step, setStep] = useState(1);
 
+	// Prevent agents from booking appointments
+	const isAgent = user?.userType === 'agent';
+
 	const {
 		values,
 		isSubmitting,
@@ -218,96 +221,138 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 					onSubmit={handleSubmit}
 					className="flex-1 overflow-y-auto px-4 md:px-6 py-4 md:py-5"
 				>
-					{/* Step 1: Type & Date */}
-					{step === 1 && (
-						<BookingStep1
-							appointmentType={values.appointmentType}
-							scheduledDate={values.scheduledDate}
-							onTypeChange={(type) =>
-								setFieldValue('appointmentType', type)
-							}
-							onDateChange={(date) =>
-								setFieldValue('scheduledDate', date)
-							}
-							getMinDate={getMinDate}
-							getMaxDate={getMaxDate}
-						/>
-					)}
+					{/* Agent Restriction Message */}
+					{isAgent ? (
+						<div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+							<div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+								<svg
+									className="w-8 h-8 text-gray-400"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth="2"
+										d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+									/>
+								</svg>
+							</div>
+							<h3 className="text-lg font-semibold text-gray-900 mb-2">
+								Réservation non disponible
+							</h3>
+							<p className="text-gray-600 mb-4">
+								Les agents ne peuvent pas prendre de
+								rendez-vous. Seuls les utilisateurs anonymes
+								peuvent réserver un rendez-vous avec un agent.
+							</p>
+							<Button
+								type="button"
+								onClick={onClose}
+								className="bg-brand hover:bg-brand-dark text-white"
+							>
+								Fermer
+							</Button>
+						</div>
+					) : (
+						<>
+							{/* Step 1: Type & Date */}
+							{step === 1 && (
+								<BookingStep1
+									appointmentType={values.appointmentType}
+									scheduledDate={values.scheduledDate}
+									onTypeChange={(type) =>
+										setFieldValue('appointmentType', type)
+									}
+									onDateChange={(date) =>
+										setFieldValue('scheduledDate', date)
+									}
+									getMinDate={getMinDate}
+									getMaxDate={getMaxDate}
+								/>
+							)}
 
-					{/* Step 2: Time Selection */}
-					{step === 2 && (
-						<BookingStep2
-							availableSlots={availableSlots}
-							loadingSlots={loadingSlots}
-							scheduledTime={values.scheduledTime}
-							onTimeChange={(time) =>
-								setFieldValue('scheduledTime', time)
-							}
-							onBackToStep1={() => setStep(1)}
-						/>
-					)}
+							{/* Step 2: Time Selection */}
+							{step === 2 && (
+								<BookingStep2
+									availableSlots={availableSlots}
+									loadingSlots={loadingSlots}
+									scheduledTime={values.scheduledTime}
+									onTimeChange={(time) =>
+										setFieldValue('scheduledTime', time)
+									}
+									onBackToStep1={() => setStep(1)}
+								/>
+							)}
 
-					{/* Step 3: Contact & Details */}
-					{step === 3 && (
-						<BookingStep3
-							contactDetails={values.contactDetails}
-							propertyDetails={values.propertyDetails || {}}
-							notes={values.notes || ''}
-							onContactChange={(field, value) =>
-								setFieldValue('contactDetails', {
-									...values.contactDetails,
-									[field]: value,
-								})
-							}
-							onPropertyAddressChange={(address) =>
-								setFieldValue('propertyDetails', {
-									...values.propertyDetails,
-									address,
-								})
-							}
-							onNotesChange={(notes) =>
-								setFieldValue('notes', notes)
-							}
-						/>
+							{/* Step 3: Contact & Details */}
+							{step === 3 && (
+								<BookingStep3
+									contactDetails={values.contactDetails}
+									propertyDetails={
+										values.propertyDetails || {}
+									}
+									notes={values.notes || ''}
+									onContactChange={(field, value) =>
+										setFieldValue('contactDetails', {
+											...values.contactDetails,
+											[field]: value,
+										})
+									}
+									onPropertyAddressChange={(address) =>
+										setFieldValue('propertyDetails', {
+											...values.propertyDetails,
+											address,
+										})
+									}
+									onNotesChange={(notes) =>
+										setFieldValue('notes', notes)
+									}
+								/>
+							)}
+						</>
 					)}
 				</form>
 
 				{/* Footer Actions - Fixed at bottom */}
 				<div className="px-4 md:px-6 py-4 bg-gray-50 rounded-b-2xl border-t flex-shrink-0">
-					<div className="flex space-x-3">
-						{step > 1 && (
-							<Button
-								type="button"
-								onClick={() => setStep(step - 1)}
-								variant="outline"
-								className="flex-1"
-							>
-								← Retour
-							</Button>
-						)}
-						{step < 3 ? (
-							<Button
-								type="button"
-								onClick={() => setStep(step + 1)}
-								disabled={
-									(step === 1 && !values.scheduledDate) ||
-									(step === 2 && !values.scheduledTime)
-								}
-								className="flex-1 bg-brand hover:bg-brand-dark text-white font-semibold"
-							>
-								Continuer →
-							</Button>
-						) : (
-							<Button
-								type="submit"
-								onClick={handleSubmit}
-								loading={isSubmitting}
-								className="flex-1 bg-brand hover:bg-brand-dark text-white font-semibold"
-							>
-								✓ Confirmer le rendez-vous
-							</Button>
-						)}
-					</div>
+					{!isAgent && (
+						<div className="flex space-x-3">
+							{step > 1 && (
+								<Button
+									type="button"
+									onClick={() => setStep(step - 1)}
+									variant="outline"
+									className="flex-1"
+								>
+									← Retour
+								</Button>
+							)}
+							{step < 3 ? (
+								<Button
+									type="button"
+									onClick={() => setStep(step + 1)}
+									disabled={
+										(step === 1 && !values.scheduledDate) ||
+										(step === 2 && !values.scheduledTime)
+									}
+									className="flex-1 bg-brand hover:bg-brand-dark text-white font-semibold"
+								>
+									Continuer →
+								</Button>
+							) : (
+								<Button
+									type="submit"
+									onClick={handleSubmit}
+									loading={isSubmitting}
+									className="flex-1 bg-brand hover:bg-brand-dark text-white font-semibold"
+								>
+									✓ Confirmer le rendez-vous
+								</Button>
+							)}
+						</div>
+					)}
 				</div>
 			</div>
 		</Modal>

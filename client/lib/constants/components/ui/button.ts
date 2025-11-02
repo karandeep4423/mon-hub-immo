@@ -67,7 +67,7 @@ export const BUTTON_SIZE_CLASSES = {
 // ============================================================================
 
 export const BUTTON_BASE_CLASSES =
-	'inline-flex items-center justify-center font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-98' as const;
+	'inline-flex items-center justify-center font-semibold transition-smooth focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-98' as const;
 
 // ============================================================================
 // STATES

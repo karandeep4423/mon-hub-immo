@@ -327,7 +327,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
 			<div
 				className={`
-					border-2 rounded-xl overflow-hidden transition-all duration-200
+					border-2 rounded-xl overflow-hidden transition-smooth
 					${error ? 'border-red-300' : isFocused ? 'border-brand ring-2 ring-brand/20' : 'border-gray-200 hover:border-gray-300'}
 				`}
 			>
@@ -398,7 +398,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 												e.preventDefault();
 												applyColor(color);
 											}}
-											className="w-8 h-8 rounded border-2 border-gray-300 hover:border-brand transition-colors"
+											className="w-8 h-8 rounded border-2 border-gray-300 hover:border-brand transition-colors-smooth"
 											style={{ backgroundColor: color }}
 											title={color}
 										/>

@@ -29,9 +29,7 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 	collaboration,
 	currentUserId,
 	onClose,
-	onCancel,
 	showChatButton = true,
-	showCancelButton = true,
 }) => {
 	const router = useRouter();
 
@@ -171,11 +169,6 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 		router.push(`/chat?userId=${ownerUser._id}`);
 	};
 
-	const handleCancel = () => {
-		if (onCancel) {
-			onCancel(collaboration._id);
-		}
-	};
 	return (
 		<Card className="overflow-hidden">
 			{/* Post Header (Property or Search Ad) */}
@@ -232,55 +225,6 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 							className="bg-brand hover:bg-brand-600 text-white flex-1"
 						>
 							💬 Chat
-						</Button>
-					)}
-
-				{collaboration.status ===
-					Features.Collaboration.COLLABORATION_STATUS_VALUES
-						.PENDING &&
-					isOwner && (
-						<Button
-							size="sm"
-							className="bg-green-600 hover:bg-green-700 text-white"
-							onClick={() => {
-								// Handle accept
-								logger.debug('Accept collaboration');
-							}}
-						>
-							✅ Accepter
-						</Button>
-					)}
-
-				{showCancelButton &&
-					collaboration.status ===
-						Features.Collaboration.COLLABORATION_STATUS_VALUES
-							.PENDING &&
-					!isOwner && (
-						<Button
-							size="sm"
-							variant="outline"
-							onClick={handleCancel}
-							className="text-red-600 border-red-300 hover:bg-red-50"
-						>
-							❌ Annuler
-						</Button>
-					)}
-
-				{showCancelButton &&
-					collaboration.status ===
-						Features.Collaboration.COLLABORATION_STATUS_VALUES
-							.ACTIVE &&
-					(isOwner ||
-						collaboration.status ===
-							Features.Collaboration.COLLABORATION_STATUS_VALUES
-								.ACTIVE) && (
-						<Button
-							size="sm"
-							variant="outline"
-							onClick={handleCancel}
-							className="text-red-600 border-red-300 hover:bg-red-50"
-						>
-							❌ Annuler
 						</Button>
 					)}
 			</div>

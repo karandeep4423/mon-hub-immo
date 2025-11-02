@@ -77,7 +77,7 @@ const SearchFiltersPanelComponent = ({
 					value={searchTerm}
 					onChange={(e) => onSearchTermChange(e.target.value)}
 					placeholder="Rechercher par mot-clé..."
-					className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
+					className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand transition-smooth"
 				/>
 			</div>
 
@@ -96,10 +96,10 @@ const SearchFiltersPanelComponent = ({
 			<div className="flex flex-wrap gap-2 mb-4">
 				<button
 					onClick={() => onContentFilterChange('all')}
-					className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm transition-colors whitespace-nowrap ${
+					className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm transition-smooth whitespace-nowrap ${
 						contentFilter === 'all'
-							? 'bg-brand text-white'
-							: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+							? 'bg-brand text-white shadow-md'
+							: 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'
 					}`}
 				>
 					Tout ({filteredPropertiesCount + filteredSearchAdsCount})
@@ -107,10 +107,10 @@ const SearchFiltersPanelComponent = ({
 				{isAuthenticated && hasMyArea && (
 					<button
 						onClick={() => onContentFilterChange('myArea')}
-						className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm transition-colors whitespace-nowrap ${
+						className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm transition-smooth whitespace-nowrap ${
 							contentFilter === 'myArea'
-								? 'bg-brand text-white'
-								: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+								? 'bg-brand text-white shadow-md'
+								: 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'
 						}`}
 					>
 						Mon secteur ({myAreaLocationsCount})
@@ -118,20 +118,20 @@ const SearchFiltersPanelComponent = ({
 				)}
 				<button
 					onClick={() => onContentFilterChange('properties')}
-					className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm transition-colors whitespace-nowrap ${
+					className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm transition-smooth whitespace-nowrap ${
 						contentFilter === 'properties'
-							? 'bg-brand text-white'
-							: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+							? 'bg-brand text-white shadow-md'
+							: 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'
 					}`}
 				>
 					Biens ({filteredPropertiesCount})
 				</button>
 				<button
 					onClick={() => onContentFilterChange('searchAds')}
-					className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm transition-colors whitespace-nowrap ${
+					className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm transition-smooth whitespace-nowrap ${
 						contentFilter === 'searchAds'
-							? 'bg-brand text-white'
-							: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+							? 'bg-brand text-white shadow-md'
+							: 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'
 					}`}
 				>
 					Recherches ({filteredSearchAdsCount})
@@ -139,10 +139,10 @@ const SearchFiltersPanelComponent = ({
 				{isAuthenticated && (
 					<button
 						onClick={() => onContentFilterChange('favorites')}
-						className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm transition-colors whitespace-nowrap ${
+						className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-sm transition-smooth whitespace-nowrap ${
 							contentFilter === 'favorites'
-								? 'bg-brand text-white'
-								: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+								? 'bg-brand text-white shadow-md'
+								: 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'
 						}`}
 					>
 						Favoris (
@@ -186,7 +186,7 @@ const SearchFiltersPanelComponent = ({
 							);
 							onPriceFilterChange(validated);
 						}}
-						className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+						className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand transition-smooth"
 					/>
 					<span className="text-gray-500 flex-shrink-0">-</span>
 					<input
@@ -205,7 +205,7 @@ const SearchFiltersPanelComponent = ({
 							);
 							onPriceFilterChange(validated);
 						}}
-						className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+						className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand transition-smooth"
 					/>
 				</div>
 				{/* Surface habitable */}
@@ -222,7 +222,7 @@ const SearchFiltersPanelComponent = ({
 							);
 							onSurfaceFilterChange(validated);
 						}}
-						className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+						className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand transition-smooth"
 					/>
 					<span className="text-gray-500 flex-shrink-0">-</span>
 					<input
@@ -241,7 +241,7 @@ const SearchFiltersPanelComponent = ({
 							);
 							onSurfaceFilterChange(validated);
 						}}
-						className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+						className="w-full px-2 sm:px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand transition-smooth"
 					/>
 				</div>
 			</div>
