@@ -35,7 +35,7 @@ export const getSecureCookieOptions = (maxAge: number): CookieOptions => {
 	return {
 		httpOnly: true, // Prevents XSS attacks by making cookie inaccessible to JavaScript
 		secure: isProduction, // Only send over HTTPS in production
-		sameSite: 'lax', // Allows cookies on same-site navigations (stricter than 'none', more forgiving than 'strict')
+		sameSite: isProduction ? 'none' : 'lax', // 'none' for cross-site in production, 'lax' for localhost
 		maxAge, // Cookie expiration in milliseconds
 		expires: new Date(Date.now() + maxAge), // Explicit expiration date for persistent cookies
 		path: '/', // Cookie available for entire domain
