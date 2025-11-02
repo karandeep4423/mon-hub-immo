@@ -21,27 +21,22 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 	const router = useRouter();
 	const { user, loading, shouldRedirect, isAuthenticated, refreshUser } =
 		useProtectedRoute();
-	const [isChecking, setIsChecking] = React.useState(true);
 
 	// Fetch user profile when component mounts (only for protected routes)
 	React.useEffect(() => {
-		const checkAuth = async () => {
-			if (!user && !loading) {
-				await refreshUser();
-			}
-			setIsChecking(false);
-		};
-		checkAuth();
+		if (!user && !loading) {
+			refreshUser();
+		}
 	}, []); // eslint-disable-line react-hooks/exhaustive-deps
 
 	React.useEffect(() => {
-		if (!isChecking && shouldRedirect) {
+		if (shouldRedirect) {
 			router.push(redirectTo);
 		}
-	}, [isChecking, shouldRedirect, router, redirectTo]);
+	}, [shouldRedirect, router, redirectTo]);
 
 	// Show loading while checking authentication
-	if (loading || isChecking) {
+	if (loading) {
 		return <PageLoader message="Checking authentication..." />;
 	}
 

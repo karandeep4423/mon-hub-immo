@@ -1,28 +1,25 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { shouldRedirectAuthenticated } from './lib/config/routes.config';
+import {
+	isProtectedRoute,
+	shouldRedirectAuthenticated,
+	REDIRECT_PATHS,
+} from './lib/config/routes.config';
 
 /**
  * Next.js Middleware for Route Protection
+ * Runs on the Edge before pages are rendered
+ * Provides server-side route protection for better performance and security
  *
- * NOTE: In production with cross-domain setup (frontend on monhubimmo.fr, backend on render.com),
- * the Edge middleware cannot read httpOnly cookies from the backend domain.
- * Therefore, we ONLY handle public route redirects here (e.g., redirect logged-in users from /login).
- *
- * Protected routes are handled by:
- * 1. Client-side <ProtectedRoute> component (immediate protection)
- * 2. Backend API authentication middleware (security layer)
- *
- * This approach works because:
- * - Client-side API calls include credentials (withCredentials: true)
- * - Cookies are sent with API requests, not with page navigation
- * - ProtectedRoute component checks auth before rendering content
+ * Benefits:
+ * - Prevents unauthorized access before component rendering
+ * - No flash of protected content
+ * - Better performance (Edge runtime)
+ * - SEO-friendly redirects
  */
 
 /**
  * Check if user has a valid access token cookie
- * NOTE: This only works in localhost. In production with cross-domain,
- * cookies from backend domain are not accessible here.
  */
 const hasAccessToken = (request: NextRequest): boolean => {
 	return !!request.cookies.get('accessToken')?.value;
@@ -48,16 +45,32 @@ export function middleware(request: NextRequest) {
 		return NextResponse.next();
 	}
 
-	// REMOVED: Protected route checks - handled by ProtectedRoute component
-	// Reason: Cross-domain cookies not accessible in Edge middleware
+	// Protected routes - require authentication
+	if (isProtectedRoute(pathname)) {
+		if (!isAuthenticated) {
+			// Redirect to login with return URL
+			const loginUrl = new URL(REDIRECT_PATHS.LOGIN, request.url);
+			loginUrl.searchParams.set('from', pathname);
 
-	// Auth routes - redirect if already authenticated (ONLY works on localhost)
-	// In production, this won't redirect but that's okay - login page will handle it
-	if (shouldRedirectAuthenticated(pathname) && isAuthenticated) {
-		return NextResponse.redirect(new URL('/dashboard', request.url));
+			return NextResponse.redirect(loginUrl);
+		}
 	}
 
-	// Allow all requests to proceed - protection happens at component level
+	// Auth routes - redirect if already authenticated
+	if (shouldRedirectAuthenticated(pathname)) {
+		if (isAuthenticated) {
+			return NextResponse.redirect(
+				new URL(REDIRECT_PATHS.DASHBOARD, request.url),
+			);
+		}
+	}
+
+	// Redirect authenticated users from landing page to home
+	if (pathname === '/' && isAuthenticated) {
+		return NextResponse.redirect(new URL(REDIRECT_PATHS.HOME, request.url));
+	}
+
+	// Allow request to proceed
 	return NextResponse.next();
 }
 
