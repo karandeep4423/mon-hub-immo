@@ -1,53 +1,51 @@
+import Link from 'next/link';
 import { LuHandshake, LuMessageCircle } from 'react-icons/lu';
-import { Features } from '@/lib/constants';
-// Migrated: Features.Landing.LANDING_UI_TEXT;
 
-interface HeroSectionProps {
-	onScrollToForm: () => void;
-}
-
-export const HeroSection = ({ onScrollToForm }: HeroSectionProps) => {
+export const HeroSection = () => {
 	return (
-		<section className="min-h-screen flex flex-col justify-center items-center text-center px-6 bg-brand text-white">
-			<p className="text-lg md:text-xl font-medium mb-2 max-w-2xl">
-				{Features.Landing.LANDING_UI_TEXT.heroIntro}
+		<section className="min-h-screen flex flex-col justify-center items-center text-center px-6 bg-[#00b4d8] text-white">
+			<p className="text-lg md:text-xl font-medium max-w-2xl">
+				Ici, peu importe votre réseau:
 				<br />
 				<span className="font-bold">
-					{Features.Landing.LANDING_UI_TEXT.heroIntroMain}
+					ce qui compte : c&apos;est de conclure
+					<br />
+					plus de ventes, ensemble.
 				</span>
 			</p>
 
-			<h1 className="text-3xl md:text-6xl font-bold mb-4">
-				{Features.Landing.LANDING_UI_TEXT.heroMainTitle}
+			<h1 className="text-3xl md:text-5xl py-12 font-bold">
+				Découvrez
 				<br />
-				<span className="text-white">
-					{Features.Landing.LANDING_UI_TEXT.heroBrandName}
-				</span>
+				<span className="text-white">monhubimmo</span>
 			</h1>
 
-			{/* Feature items with icons */}
-			<div className="sm:space-y-7  space-y-3 mb-3 sm:mb-7 max-w-2xl">
+			<div className="sm:space-y-4 space-y-3 sm:mb-7 max-w-2xl">
 				<div className="flex items-center justify-center gap-4">
-					<LuMessageCircle className="w-12 h-12 text-white " />
+					<LuMessageCircle className="w-12 h-12 text-white" />
 					<p className="text-lg md:text-xl font-medium text-left">
-						{Features.Landing.LANDING_UI_TEXT.networkTitle}
+						La 1ere plateforme collaborative pour
+						<br />
+						tous les professionnels de l&apos;immobilier.
 					</p>
 				</div>
 
-				<div className="flex mr-3 items-center justify-center gap-4">
+				<div className="flex mr-10.5 items-center justify-center gap-4">
 					<LuHandshake className="w-12 h-12 text-white" />
 					<p className="text-lg md:text-xl font-medium text-left">
-						{Features.Landing.LANDING_UI_TEXT.sharingTitle}
+						Partagez vos biens et vos clients,
+						<br />
+						sans barrière de réseau.
 					</p>
 				</div>
 			</div>
 
-			<button
-				onClick={onScrollToForm}
+			<Link
+				href="/auth/login"
 				className="bg-white text-gray-900 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors duration-200 shadow-lg"
 			>
-				{Features.Landing.LANDING_UI_TEXT.wantToBeInformed}
-			</button>
+				Tester gratuitement pendant 3 mois
+			</Link>
 		</section>
 	);
 };
