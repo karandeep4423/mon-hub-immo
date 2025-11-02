@@ -4,10 +4,11 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useChat } from '../../hooks/useChat';
 import { isValidMessageContent } from './utils/messageUtils';
 import { isEnterKeyPress } from './utils/keyboardUtils';
-import TypingIndicator from './TypingIndicator';
-import { ButtonSpinner } from './ui';
+import { Button } from '@/components/ui/Button';
 import { ChatApi } from '@/lib/api/chatApi';
-import { CHAT_TEXT } from '@/lib/constants/text';
+import { Features } from '@/lib/constants';
+
+import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -46,7 +47,9 @@ const getPlaceholderText = (
 	customPlaceholder?: string,
 ): string => {
 	if (customPlaceholder) return customPlaceholder;
-	return selectedUser ? CHAT_TEXT.typeMessage : CHAT_TEXT.selectUserToChat;
+	return selectedUser
+		? Features.Chat.CHAT_UI_TEXT.typeMessage
+		: Features.Chat.CHAT_UI_TEXT.selectUserToChat;
 };
 
 /**
@@ -68,17 +71,20 @@ const SendButton: React.FC<{
 	isSending: boolean;
 	onClick: () => void;
 }> = React.memo(({ isDisabled, isSending, onClick }) => (
-	<button
+	<Button
 		type="submit"
 		disabled={isDisabled}
 		onClick={onClick}
-		className="px-6 py-3 bg-[#00b4d8] text-white rounded-lg hover:bg-[#0094b3] disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[#00b4d8] focus:ring-offset-2"
+		loading={isSending}
+		className="px-6 py-3"
 		aria-label={
-			isSending ? CHAT_TEXT.sendingMessage : CHAT_TEXT.sendMessageButton
+			isSending
+				? Features.Chat.CHAT_UI_TEXT.sendingMessage
+				: Features.Chat.CHAT_UI_TEXT.sendMessageButton
 		}
 	>
-		{isSending ? <ButtonSpinner /> : CHAT_TEXT.send}
-	</button>
+		{Features.Chat.CHAT_UI_TEXT.send}
+	</Button>
 ));
 
 SendButton.displayName = 'SendButton';
@@ -106,7 +112,7 @@ const MessageInputField: React.FC<{
 				disabled={disabled}
 				maxLength={maxLength}
 				autoComplete="off"
-				aria-label={CHAT_TEXT.messageInput}
+				aria-label={Features.Chat.CHAT_UI_TEXT.messageInput}
 			/>
 			{maxLength && (
 				<div className="absolute -bottom-5 right-0 text-xs text-gray-400">
@@ -151,9 +157,7 @@ const MessageInput: React.FC<MessageInputProps> = React.memo(
 			isSendingMessage,
 			handleTyping,
 			stopTyping,
-			typingUsers,
 		} = useChat();
-
 		const [message, setMessage] = useState('');
 		const fileInputRef = useRef<HTMLInputElement | null>(null);
 		const [isUploading, setIsUploading] = useState(false);
@@ -177,7 +181,7 @@ const MessageInput: React.FC<MessageInputProps> = React.memo(
 					}));
 					await sendMessage({ attachments });
 				} catch (err) {
-					console.error('Failed to upload/send attachments', err);
+					logger.error('Failed to upload/send attachments', err);
 				} finally {
 					setIsUploading(false);
 					if (fileInputRef.current) fileInputRef.current.value = '';
@@ -215,7 +219,7 @@ const MessageInput: React.FC<MessageInputProps> = React.memo(
 		 * Log selected user changes for debugging
 		 */
 		useEffect(() => {
-			console.log(
+			logger.debug(
 				'💬 MessageInput: Selected user changed:',
 				selectedUser?.firstName ||
 					selectedUser?.name ||
@@ -236,14 +240,14 @@ const MessageInput: React.FC<MessageInputProps> = React.memo(
 				e.preventDefault();
 
 				if (!isValidMessage(message, selectedUser)) {
-					console.error(
+					logger.error(
 						'❌ Cannot submit - invalid message or no user selected',
 					);
 					return;
 				}
 
 				if (!selectedUser) {
-					console.error(
+					logger.error(
 						'❌ MessageInput: Cannot send message - no user selected',
 					);
 					return;
@@ -253,9 +257,9 @@ const MessageInput: React.FC<MessageInputProps> = React.memo(
 					await sendMessage({ text: message });
 					setMessage('');
 					stopTyping();
-					console.log('✅ MessageInput: Message sent successfully');
+					logger.debug('✅ MessageInput: Message sent successfully');
 				} catch (error) {
-					console.error(
+					logger.error(
 						'❌ MessageInput: Failed to send message:',
 						error,
 					);
@@ -322,12 +326,6 @@ const MessageInput: React.FC<MessageInputProps> = React.memo(
 				onDrop={onDrop}
 				onDragOver={onDragOver}
 			>
-				{/* Typing Indicator - Shows when other users are typing */}
-				<TypingIndicator
-					selectedUser={selectedUser}
-					typingUsers={typingUsers}
-				/>
-
 				{/* Message Form */}
 				<form onSubmit={handleSubmit} className="p-4">
 					<div className="flex items-end space-x-2">
@@ -341,31 +339,29 @@ const MessageInput: React.FC<MessageInputProps> = React.memo(
 							onChange={handleFileChange}
 							disabled={isDisabled}
 						/>
-						<button
+						<Button
 							type="button"
 							onClick={onPickFile}
 							disabled={isDisabled}
-							className="px-3 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 text-gray-600 hover:text-[#00b4d8]"
+							loading={isUploading}
+							variant="outline"
+							className="px-3 py-3"
 							aria-label="Add attachment"
 						>
-							{isUploading ? (
-								<ButtonSpinner />
-							) : (
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									strokeWidth="2"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									className="w-5 h-5"
-									aria-hidden
-								>
-									<path d="M21.44 11.05L12 20.5a6.5 6.5 0 01-9.19-9.19l9.43-9.43a4.5 4.5 0 116.36 6.36L9.41 17.32a2.5 2.5 0 11-3.54-3.54l7.78-7.78" />
-								</svg>
-							)}
-						</button>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								className="w-5 h-5"
+								aria-hidden
+							>
+								<path d="M21.44 11.05L12 20.5a6.5 6.5 0 01-9.19-9.19l9.43-9.43a4.5 4.5 0 116.36 6.36L9.41 17.32a2.5 2.5 0 11-3.54-3.54l7.78-7.78" />
+							</svg>
+						</Button>
 						<MessageInputField
 							value={message}
 							onChange={handleInputChange}

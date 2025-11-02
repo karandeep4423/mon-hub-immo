@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { SearchAdDetails } from '@/components/search-ads/SearchAdDetails';
 import { useAuth } from '@/hooks/useAuth';
-import searchAdApi from '@/lib/api/searchAdApi';
 import type { SearchAd } from '@/types/searchAd';
+import { useSearchAd } from '@/hooks/useSearchAds';
+import { PageLoader } from '@/components/ui/LoadingSpinner';
+import { Features } from '@/lib/constants';
 
 export default function SearchAdDetailsPage() {
 	const params = useParams();
@@ -13,38 +14,18 @@ export default function SearchAdDetailsPage() {
 	const { user } = useAuth();
 	const searchAdId = params?.id as string;
 
-	const [searchAd, setSearchAd] = useState<SearchAd | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-
-	useEffect(() => {
-		const fetchSearchAd = async () => {
-			try {
-				setLoading(true);
-				setError(null);
-				const ad = await searchAdApi.getSearchAdById(searchAdId);
-				setSearchAd(ad);
-			} catch (err) {
-				console.error('Error fetching search ad:', err);
-				setError('Impossible de charger les détails de la recherche.');
-			} finally {
-				setLoading(false);
-			}
-		};
-
-		if (searchAdId) {
-			fetchSearchAd();
-		}
-	}, [searchAdId]);
+	// Fetch search ad details using SWR
+	const {
+		data: searchAd,
+		isLoading: loading,
+		error,
+	} = useSearchAd(searchAdId);
 
 	if (loading) {
 		return (
-			<div className="min-h-screen bg-gray-50 flex items-center justify-center">
-				<div className="text-center">
-					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600 mx-auto mb-4"></div>
-					<p className="text-gray-600">Chargement des détails...</p>
-				</div>
-			</div>
+			<PageLoader
+				message={Features.SearchAds.SEARCH_AD_LOADING.DETAILS}
+			/>
 		);
 	}
 
@@ -54,11 +35,12 @@ export default function SearchAdDetailsPage() {
 				<div className="text-center">
 					<div className="text-red-500 text-xl mb-4">⚠️</div>
 					<h1 className="text-xl font-semibold text-gray-900 mb-2">
-						Recherche introuvable
+						{Features.SearchAds.SEARCH_AD_ERRORS.NOT_FOUND}
 					</h1>
 					<p className="text-gray-600 mb-4">
-						{error ||
-							'Cette recherche n&apos;existe pas ou a été supprimée.'}
+						{error
+							? error.message
+							: 'Cette recherche n&apos;existe pas ou a été supprimée.'}
 					</p>
 					<button
 						onClick={() => router.push('/home')}

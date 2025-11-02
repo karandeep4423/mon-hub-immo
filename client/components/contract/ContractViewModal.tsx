@@ -1,13 +1,14 @@
 import React, { useRef } from 'react';
-import { Modal } from '../ui/Modal';
-import { Button } from '../ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
+import { formatDateOptional } from '@/lib/utils/date';
 
 interface ContractViewModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	contractText: string;
 	collaboration: {
-		propertyOwnerId: {
+		postOwnerId: {
 			firstName: string;
 			lastName: string;
 		};
@@ -128,15 +129,6 @@ export const ContractViewModal: React.FC<ContractViewModalProps> = ({
 			printWindow.print();
 			printWindow.close();
 		}, 250);
-	};
-
-	const formatDate = (dateString?: string) => {
-		if (!dateString) return '-';
-		return new Date(dateString).toLocaleDateString('fr-FR', {
-			day: 'numeric',
-			month: 'long',
-			year: 'numeric',
-		});
 	};
 
 	// Parse and format contract text for better display
@@ -276,10 +268,10 @@ export const ContractViewModal: React.FC<ContractViewModalProps> = ({
 									Propriétaire
 								</p>
 								<p className="font-semibold text-gray-900">
-									{collaboration.propertyOwnerId.firstName}{' '}
-									{collaboration.propertyOwnerId.lastName}
+									{collaboration.postOwnerId.firstName}{' '}
+									{collaboration.postOwnerId.lastName}
 								</p>
-								<span className="inline-block mt-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+								<span className="inline-block mt-2 text-xs bg-info-light text-info px-2 py-1 rounded-full">
 									Agent Propriétaire
 								</span>
 							</div>
@@ -324,7 +316,7 @@ export const ContractViewModal: React.FC<ContractViewModalProps> = ({
 								<p className="text-sm text-gray-600 mb-1">
 									Agent propriétaire
 								</p>
-								<p className="text-3xl font-bold text-blue-600">
+								<p className="text-3xl font-bold text-brand">
 									{100 - collaboration.proposedCommission}%
 								</p>
 							</div>
@@ -350,8 +342,8 @@ export const ContractViewModal: React.FC<ContractViewModalProps> = ({
 									Propriétaire
 								</p>
 								<p className="font-semibold text-gray-900 mb-3">
-									{collaboration.propertyOwnerId.firstName}{' '}
-									{collaboration.propertyOwnerId.lastName}
+									{collaboration.postOwnerId.firstName}{' '}
+									{collaboration.postOwnerId.lastName}
 								</p>
 								<span
 									className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
@@ -368,7 +360,7 @@ export const ContractViewModal: React.FC<ContractViewModalProps> = ({
 									collaboration.ownerSignedAt && (
 										<p className="text-xs text-gray-500 mt-2">
 											Signé le:{' '}
-											{formatDate(
+											{formatDateOptional(
 												collaboration.ownerSignedAt,
 											)}
 										</p>
@@ -397,7 +389,7 @@ export const ContractViewModal: React.FC<ContractViewModalProps> = ({
 									collaboration.collaboratorSignedAt && (
 										<p className="text-xs text-gray-500 mt-2">
 											Signé le:{' '}
-											{formatDate(
+											{formatDateOptional(
 												collaboration.collaboratorSignedAt,
 											)}
 										</p>
@@ -409,7 +401,7 @@ export const ContractViewModal: React.FC<ContractViewModalProps> = ({
 					<div className="mt-8 pt-6 border-t border-gray-200 text-center">
 						<p className="text-xs text-gray-500">
 							Contrat généré le{' '}
-							{formatDate(collaboration.createdAt)} via la
+							{formatDateOptional(collaboration.createdAt)} via la
 							plateforme MonHubImmo
 						</p>
 					</div>

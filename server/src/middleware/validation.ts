@@ -98,8 +98,9 @@ const professionalInfoRules = {
 
 	network: body('professionalInfo.network')
 		.optional()
-		.isIn(['IAD', 'Century21', 'Orpi', 'Independant', 'Autre'])
-		.withMessage('Réseau invalide'),
+		.trim()
+		.isString()
+		.withMessage('Le réseau doit être une chaîne de caractères'),
 
 	siretNumber: body('professionalInfo.siretNumber')
 		.optional()
@@ -635,6 +636,11 @@ export const updateProgressStatusValidation = [
 			'visite_programmee',
 			'visite_realisee',
 			'retour_client',
+			'offre_en_cours',
+			'negociation_en_cours',
+			'compromis_signe',
+			'signature_notaire',
+			'affaire_conclue',
 		])
 		.withMessage('Étape de progression invalide'),
 	body('validatedBy')

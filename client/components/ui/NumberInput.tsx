@@ -10,6 +10,7 @@ interface NumberInputProps {
 	min?: number;
 	max?: number;
 	required?: boolean;
+	icon?: React.ReactNode;
 }
 
 export const NumberInput = ({
@@ -22,6 +23,7 @@ export const NumberInput = ({
 	min,
 	max,
 	required = false,
+	icon,
 }: NumberInputProps) => {
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const val = e.target.value;
@@ -39,8 +41,9 @@ export const NumberInput = ({
 		<div>
 			<label
 				htmlFor={name}
-				className="block text-sm font-medium text-gray-700 mb-1"
+				className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1"
 			>
+				{icon}
 				{label} {required && <span className="text-red-500">*</span>}
 			</label>
 			<div className="relative">

@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { Button } from '../../ui/Button';
-import { Card } from '../../ui/Card';
-import { ProfileAvatar } from '../../ui/ProfileAvatar';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
+import { logger } from '@/lib/utils/logger';
+import { formatDateTimeShort } from '@/lib/utils/date';
+import { Features, Components } from '@/lib/constants';
 
 export interface Activity {
 	id: string;
@@ -40,6 +43,36 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 	const [isAdding, setIsAdding] = useState(false);
 	const [showAddForm, setShowAddForm] = useState(false);
 
+	// Helper function to get gradient color for notes
+	const getNoteGradient = (userRole: string, noteIndex: number) => {
+		// Warm gradients for agent (owner)
+		const warmGradients = [
+			'bg-gradient-to-br from-orange-50 to-amber-50',
+			'bg-gradient-to-br from-red-50 to-pink-50',
+			'bg-gradient-to-br from-yellow-50 to-orange-50',
+			'bg-gradient-to-br from-pink-50 to-rose-50',
+			'bg-gradient-to-br from-amber-50 to-yellow-50',
+			'bg-gradient-to-br from-rose-50 to-orange-50',
+		];
+
+		// Cool gradients for apporteur (collaborator)
+		const coolGradients = [
+			'bg-gradient-to-br from-blue-50 to-cyan-50',
+			'bg-gradient-to-br from-indigo-50 to-blue-50',
+			'bg-gradient-to-br from-cyan-50 to-teal-50',
+			'bg-gradient-to-br from-purple-50 to-indigo-50',
+			'bg-gradient-to-br from-teal-50 to-emerald-50',
+			'bg-gradient-to-br from-sky-50 to-blue-50',
+		];
+
+		// Determine if user is agent or apporteur
+		const isAgentNote = userRole === 'agent';
+		const gradients = isAgentNote ? warmGradients : coolGradients;
+
+		// Use note index to select gradient (cycling through available gradients)
+		return gradients[noteIndex % gradients.length];
+	};
+
 	const handleAddNote = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!newNote.trim()) return;
@@ -51,21 +84,10 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 			setShowAddForm(false);
 			onRefresh?.();
 		} catch (error) {
-			console.error('Error adding note:', error);
+			logger.error('Error adding note:', error);
 		} finally {
 			setIsAdding(false);
 		}
-	};
-
-	const formatActivityTime = (dateString: string) => {
-		const date = new Date(dateString);
-		return date.toLocaleDateString('fr-FR', {
-			day: '2-digit',
-			month: '2-digit',
-			year: 'numeric',
-			hour: '2-digit',
-			minute: '2-digit',
-		});
 	};
 
 	const getActivityIcon = (type: Activity['type']) => {
@@ -105,7 +127,7 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 							className="flex items-center space-x-2"
 						>
 							<span>➕</span>
-							<span>Ajouter une activité</span>
+							<span>{Components.UI.BUTTON_TEXT.addActivity}</span>
 						</Button>
 					)}
 				</div>
@@ -113,9 +135,9 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 
 			{/* Add Activity Form */}
 			{showAddForm && canAddActivity && (
-				<Card className="mb-6 border border-cyan-200 bg-cyan-50">
-					<div className="p-4">
-						<form onSubmit={handleAddNote} className="space-y-4">
+				<Card className="mb-6 border border-brand-200 bg-brand-50">
+					<div className="p-1">
+						<form onSubmit={handleAddNote} className="space-y-2">
 							<div>
 								<label className="block text-sm font-medium text-gray-700 mb-2">
 									Nouvelle note
@@ -123,9 +145,13 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 								<textarea
 									value={newNote}
 									onChange={(e) => setNewNote(e.target.value)}
-									placeholder="Ajouter une note sur cette collaboration..."
+									placeholder={
+										Features.Collaboration
+											.COLLABORATION_FORM_PLACEHOLDERS
+											.ACTIVITY_NOTE
+									}
 									rows={3}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-none"
+									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand/20 focus:border-transparent "
 									required
 								/>
 							</div>
@@ -140,15 +166,16 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 									size="sm"
 									disabled={isAdding}
 								>
-									Annuler
+									{Components.UI.BUTTON_TEXT.cancel}
 								</Button>
 								<Button
 									type="submit"
 									variant="primary"
 									size="sm"
-									disabled={isAdding || !newNote.trim()}
+									loading={isAdding}
+									disabled={!newNote.trim()}
 								>
-									{isAdding ? 'Ajout...' : 'Ajouter'}
+									{Components.UI.BUTTON_TEXT.add}
 								</Button>
 							</div>
 						</form>
@@ -166,10 +193,10 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 						</p>
 					</div>
 				) : (
-					activities.map((activity) => (
+					activities.map((activity, activityIndex) => (
 						<div
 							key={activity.id}
-							className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg"
+							className={`flex items-start space-x-3 p-4 rounded-lg border border-transparent ${getNoteGradient(activity.author.role, activityIndex)}`}
 						>
 							<div className="flex-shrink-0">
 								<div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-sm">
@@ -182,12 +209,16 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 										{getActivityTitle(activity)}
 									</h4>
 									<time className="text-xs text-gray-500">
-										{formatActivityTime(activity.createdAt)}
+										{formatDateTimeShort(
+											activity.createdAt,
+										)}
 									</time>
 								</div>
-								<p className="text-sm text-gray-700 mb-3">
-									{activity.content}
-								</p>
+								{activity.content && (
+									<p className="text-sm text-gray-700 mb-3">
+										{activity.content}
+									</p>
+								)}
 								<div className="flex items-center space-x-2">
 									<ProfileAvatar
 										user={{

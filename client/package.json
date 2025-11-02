@@ -8,7 +8,16 @@
 		"start": "next start",
 		"lint": "next lint",
 		"test": "jest --config ./jest.config.mjs --runInBand",
-		"prepare": "husky"
+		"migrate:auth": "node scripts/migrate-auth-constants.js",
+		"validate:auth": "node scripts/validate-auth-migration.js",
+		"migrate:properties": "node scripts/migrate-properties-constants.js",
+		"validate:properties": "node scripts/validate-properties-migration.js",
+		"migrate:phase3": "node scripts/migrate-phase3.js",
+		"validate:phase3": "node scripts/validate-phase3.js",
+		"migrate:phase4": "node scripts/migrate-phase4.js",
+		"validate:phase4": "node scripts/validate-phase4.js",
+		"migrate:phase5": "node scripts/migrate-phase5.js",
+		"validate:phase5": "node scripts/validate-phase5.js"
 	},
 	"lint-staged": {
 		"**/*.{js,jsx,ts,tsx}": "eslint --fix",
@@ -26,10 +35,12 @@
 		"@typescript-eslint/eslint-plugin": "^8.37.0",
 		"@typescript-eslint/parser": "^8.37.0",
 		"axios": "^1.10.0",
+		"emoji-picker-react": "^4.15.0",
 		"eslint-config-prettier": "^10.1.5",
 		"eslint-plugin-prettier": "^5.5.1",
 		"husky": "^9.1.7",
 		"lint-staged": "^16.1.2",
+		"lucide-react": "^0.548.0",
 		"next": "15.4.1",
 		"next-auth": "^4.24.11",
 		"prettier": "^3.6.2",
@@ -41,6 +52,7 @@
 		"react-toastify": "^11.0.5",
 		"socket.io-client": "^4.8.1",
 		"stripe": "^19.1.0",
+		"swr": "^2.3.6",
 		"zod": "^4.0.5",
 		"zustand": "^5.0.8"
 	},

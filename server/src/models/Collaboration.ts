@@ -6,9 +6,10 @@ import mongoose, { Document, Schema, Types } from 'mongoose';
 
 export interface ICollaboration extends Document {
 	_id: Types.ObjectId;
-	propertyId: Types.ObjectId;
-	propertyOwnerId: Types.ObjectId; // Agent who owns the property
-	collaboratorId: Types.ObjectId; // Agent who wants to collaborate
+	postId: Types.ObjectId; // Generic post reference (property or searchAd)
+	postType: 'Property' | 'SearchAd'; // Type of post being collaborated on
+	postOwnerId: Types.ObjectId; // Owner of the post (property owner or search ad author)
+	collaboratorId: Types.ObjectId; // User who wants to collaborate
 
 	// Status tracking
 	status:
@@ -21,7 +22,11 @@ export interface ICollaboration extends Document {
 
 	// Proposal details
 	proposedCommission: number; // Percentage (e.g., 40 for 40%)
-	proposalMessage: string;
+	proposalMessage?: string;
+
+	// Compensation for apporteur d'affaire (when agent proposes on apporteur's post)
+	compensationType?: 'percentage' | 'fixed_amount' | 'gift_vouchers';
+	compensationAmount?: number; // Amount in euros or number of gift vouchers
 
 	// Contract signing
 	ownerSigned: boolean;
@@ -45,14 +50,24 @@ export interface ICollaboration extends Document {
 		| 'premier_contact'
 		| 'visite_programmee'
 		| 'visite_realisee'
-		| 'retour_client';
+		| 'retour_client'
+		| 'offre_en_cours'
+		| 'negociation_en_cours'
+		| 'compromis_signe'
+		| 'signature_notaire'
+		| 'affaire_conclue';
 	progressSteps: Array<{
 		id:
 			| 'accord_collaboration'
 			| 'premier_contact'
 			| 'visite_programmee'
 			| 'visite_realisee'
-			| 'retour_client';
+			| 'retour_client'
+			| 'offre_en_cours'
+			| 'negociation_en_cours'
+			| 'compromis_signe'
+			| 'signature_notaire'
+			| 'affaire_conclue';
 		completed: boolean;
 		validatedAt?: Date; // Date when first agent validated
 		ownerValidated: boolean;
@@ -84,6 +99,18 @@ export interface ICollaboration extends Document {
 	updatedAt: Date;
 	completedAt?: Date;
 
+	// Completion/Termination details
+	completionReason?:
+		| 'vente_conclue_collaboration'
+		| 'vente_conclue_seul'
+		| 'bien_retire'
+		| 'mandat_expire'
+		| 'client_desiste'
+		| 'vendu_tiers'
+		| 'sans_suite';
+	completedBy?: Types.ObjectId; // User who marked it as completed
+	completedByRole?: 'owner' | 'collaborator'; // Role of user who completed
+
 	// Methods
 	addActivity(
 		type: string,
@@ -97,7 +124,12 @@ export interface ICollaboration extends Document {
 			| 'premier_contact'
 			| 'visite_programmee'
 			| 'visite_realisee'
-			| 'retour_client',
+			| 'retour_client'
+			| 'offre_en_cours'
+			| 'negociation_en_cours'
+			| 'compromis_signe'
+			| 'signature_notaire'
+			| 'affaire_conclue',
 		notes: string | undefined,
 		userId: Types.ObjectId,
 		validatedBy: 'owner' | 'collaborator',
@@ -110,16 +142,25 @@ export interface ICollaboration extends Document {
 
 const collaborationSchema = new Schema<ICollaboration>(
 	{
-		propertyId: {
+		postId: {
 			type: Schema.Types.ObjectId,
-			ref: 'Property',
-			required: [true, 'Property ID is required'],
+			required: [true, 'Post ID is required'],
+			index: true,
+			refPath: 'postType',
+		},
+		postType: {
+			type: String,
+			enum: {
+				values: ['Property', 'SearchAd'],
+				message: 'Invalid post type',
+			},
+			required: [true, 'Post type is required'],
 			index: true,
 		},
-		propertyOwnerId: {
+		postOwnerId: {
 			type: Schema.Types.ObjectId,
 			ref: 'User',
-			required: [true, 'Property owner ID is required'],
+			required: [true, 'Post owner ID is required'],
 			index: true,
 		},
 		collaboratorId: {
@@ -146,14 +187,28 @@ const collaborationSchema = new Schema<ICollaboration>(
 		},
 		proposedCommission: {
 			type: Number,
-			required: [true, 'Proposed commission is required'],
-			min: [1, 'Commission must be at least 1%'],
+			required: false,
+			default: 0,
+			min: [0, 'Commission cannot be negative'],
 			max: [50, 'Commission cannot exceed 50%'],
 		},
 		proposalMessage: {
 			type: String,
-			required: [true, 'Proposal message is required'],
+			required: false,
 			maxlength: [500, 'Proposal message too long (max 500 characters)'],
+		},
+		compensationType: {
+			type: String,
+			enum: {
+				values: ['percentage', 'fixed_amount', 'gift_vouchers'],
+				message: 'Invalid compensation type',
+			},
+			required: false,
+		},
+		compensationAmount: {
+			type: Number,
+			required: false,
+			min: [0, 'Compensation amount must be positive'],
 		},
 		ownerSigned: {
 			type: Boolean,
@@ -203,6 +258,11 @@ const collaborationSchema = new Schema<ICollaboration>(
 					'visite_programmee',
 					'visite_realisee',
 					'retour_client',
+					'offre_en_cours',
+					'negociation_en_cours',
+					'compromis_signe',
+					'signature_notaire',
+					'affaire_conclue',
 				],
 				message: 'Invalid progress step',
 			},
@@ -218,6 +278,11 @@ const collaborationSchema = new Schema<ICollaboration>(
 						'visite_programmee',
 						'visite_realisee',
 						'retour_client',
+						'offre_en_cours',
+						'negociation_en_cours',
+						'compromis_signe',
+						'signature_notaire',
+						'affaire_conclue',
 					],
 					required: true,
 				},
@@ -289,6 +354,35 @@ const collaborationSchema = new Schema<ICollaboration>(
 		completedAt: {
 			type: Date,
 		},
+		completionReason: {
+			type: String,
+			enum: {
+				values: [
+					'vente_conclue_collaboration',
+					'vente_conclue_seul',
+					'bien_retire',
+					'mandat_expire',
+					'client_desiste',
+					'vendu_tiers',
+					'sans_suite',
+				],
+				message: 'Invalid completion reason',
+			},
+			required: false,
+		},
+		completedBy: {
+			type: Schema.Types.ObjectId,
+			ref: 'User',
+			required: false,
+		},
+		completedByRole: {
+			type: String,
+			enum: {
+				values: ['owner', 'collaborator'],
+				message: 'Invalid completed by role',
+			},
+			required: false,
+		},
 	},
 	{
 		timestamps: true,
@@ -301,11 +395,12 @@ const collaborationSchema = new Schema<ICollaboration>(
 // ============================================================================
 
 // Compound indexes for efficient queries
-collaborationSchema.index({ propertyId: 1, status: 1 });
-collaborationSchema.index({ propertyOwnerId: 1, status: 1 });
+collaborationSchema.index({ postId: 1, status: 1 });
+collaborationSchema.index({ postId: 1, postType: 1 });
+collaborationSchema.index({ postOwnerId: 1, status: 1 });
 collaborationSchema.index({ collaboratorId: 1, status: 1 });
 collaborationSchema.index(
-	{ propertyId: 1, propertyOwnerId: 1, collaboratorId: 1 },
+	{ postId: 1, postOwnerId: 1, collaboratorId: 1 },
 	{ unique: true },
 );
 
@@ -323,12 +418,22 @@ collaborationSchema.pre('save', function (next) {
 			| 'visite_programmee'
 			| 'visite_realisee'
 			| 'retour_client'
+			| 'offre_en_cours'
+			| 'negociation_en_cours'
+			| 'compromis_signe'
+			| 'signature_notaire'
+			| 'affaire_conclue'
 		> = [
 			'accord_collaboration',
 			'premier_contact',
 			'visite_programmee',
 			'visite_realisee',
 			'retour_client',
+			'offre_en_cours',
+			'negociation_en_cours',
+			'compromis_signe',
+			'signature_notaire',
+			'affaire_conclue',
 		];
 		this.progressSteps = steps.map((stepId) => ({
 			id: stepId,
@@ -384,7 +489,7 @@ collaborationSchema.methods.addActivity = function (
 };
 
 collaborationSchema.methods.signContract = function (userId: Types.ObjectId) {
-	const isOwner = this.propertyOwnerId.toString() === userId.toString();
+	const isOwner = this.postOwnerId.toString() === userId.toString();
 	const isCollaborator = this.collaboratorId.toString() === userId.toString();
 
 	if (!isOwner && !isCollaborator) {
@@ -433,7 +538,7 @@ collaborationSchema.methods.updateProgressStatus = function (
 	}
 
 	// Handle both populated and non-populated fields
-	const ownerId = this.propertyOwnerId._id || this.propertyOwnerId;
+	const ownerId = this.postOwnerId._id || this.postOwnerId;
 	const collaboratorId = this.collaboratorId._id || this.collaboratorId;
 
 	const isOwner = ownerId.toString() === userId.toString();
@@ -459,12 +564,22 @@ collaborationSchema.methods.updateProgressStatus = function (
 		| 'visite_programmee'
 		| 'visite_realisee'
 		| 'retour_client'
+		| 'offre_en_cours'
+		| 'negociation_en_cours'
+		| 'compromis_signe'
+		| 'signature_notaire'
+		| 'affaire_conclue'
 	> = [
 		'accord_collaboration',
 		'premier_contact',
 		'visite_programmee',
 		'visite_realisee',
 		'retour_client',
+		'offre_en_cours',
+		'negociation_en_cours',
+		'compromis_signe',
+		'signature_notaire',
+		'affaire_conclue',
 	];
 
 	const targetStepIndex = stepOrder.indexOf(targetStep);
@@ -538,6 +653,11 @@ collaborationSchema.methods.updateProgressStatus = function (
 		visite_programmee: 'Visite programmée',
 		visite_realisee: 'Visite réalisée',
 		retour_client: 'Retour client',
+		offre_en_cours: 'Offre en cours',
+		negociation_en_cours: 'Négociation en cours',
+		compromis_signe: 'Compromis signé',
+		signature_notaire: 'Signature notaire',
+		affaire_conclue: 'Affaire conclue',
 	};
 
 	const validatorLabel =
@@ -561,11 +681,11 @@ collaborationSchema.methods.updateProgressStatus = function (
 // STATIC METHODS
 // ============================================================================
 
-collaborationSchema.statics.findActiveForProperty = function (
-	propertyId: Types.ObjectId,
+collaborationSchema.statics.findActiveForPost = function (
+	postId: Types.ObjectId,
 ) {
 	return this.findOne({
-		propertyId,
+		postId,
 		status: { $in: ['pending', 'accepted', 'active'] },
 	});
 };
@@ -576,12 +696,12 @@ collaborationSchema.statics.getCollaborationsForUser = function (
 ) {
 	const query: {
 		$or: Array<{
-			propertyOwnerId?: Types.ObjectId;
+			postOwnerId?: Types.ObjectId;
 			collaboratorId?: Types.ObjectId;
 		}>;
 		status?: string;
 	} = {
-		$or: [{ propertyOwnerId: userId }, { collaboratorId: userId }],
+		$or: [{ postOwnerId: userId }, { collaboratorId: userId }],
 	};
 
 	if (status) {
@@ -589,8 +709,8 @@ collaborationSchema.statics.getCollaborationsForUser = function (
 	}
 
 	return this.find(query)
-		.populate('propertyId', 'title location price images')
-		.populate('propertyOwnerId', 'firstName lastName email profileImage')
+		.populate('postId')
+		.populate('postOwnerId', 'firstName lastName email profileImage')
 		.populate('collaboratorId', 'firstName lastName email profileImage')
 		.sort({ updatedAt: -1 });
 };

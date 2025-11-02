@@ -4,7 +4,7 @@ export { FileUpload } from './FileUpload';
 export { ImageLightbox } from './ImageLightbox';
 export { ProfileImageUploader } from './ProfileImageUploader';
 export { ProfileAvatar } from './ProfileAvatar';
-export { LoadingSpinner, ButtonLoader } from './LoadingSpinner';
+export { LoadingSpinner, PageLoader, ButtonLoader } from './LoadingSpinner';
 export {
 	LoadingOverlay,
 	LoadingState,
@@ -12,21 +12,38 @@ export {
 	CardSkeleton,
 	TableSkeleton,
 } from './Loading';
+export {
+	SkeletonLoader,
+	SkeletonText,
+	SkeletonCard,
+	SkeletonAvatar,
+	SkeletonTable,
+} from './SkeletonLoader';
 export { Card } from './Card';
 export { Modal } from './Modal';
 export { ConfirmDialog } from './ConfirmDialog';
 export { FormSection, FormField } from './Form';
 export { Alert } from './Alert';
-export { ErrorBoundary } from './ErrorBoundary';
+export { ErrorBoundary, FilterErrorFallback } from './ErrorBoundary';
+export { GeolocationPrompt } from './GeolocationPrompt';
 export { CheckmarkIcon } from './CheckmarkIcon';
-export { StepIndicator } from './StepIndicator';
+export { StepStatusIndicator } from './StepStatusIndicator';
 export { FavoriteButton } from './FavoriteButton';
-export { StatusBadge } from './StatusBadge';
+export { StatusBadge, Badge } from './StatusBadge';
+export { Badge as NewBadge } from './Badge';
 export { EnergyRatingSelector } from './EnergyRatingSelector';
 export { PropertyTypeSelector } from './PropertyTypeSelector';
 export { NumberInput } from './NumberInput';
-export { Select } from './Select';
-export { LocationSearchInput } from './LocationSearchInput';
-export type { LocationItem } from './LocationSearchInput';
-export { UnifiedSearchBar } from './UnifiedSearchBar';
-export { SingleUnifiedSearch } from './SingleUnifiedSearch';
+export { Pagination } from './Pagination';
+// Location search components
+export {
+	BaseLocationAutocomplete,
+	type LocationItem,
+} from './BaseLocationAutocomplete';
+export type { LocationItem as LocationItemType } from '@/types/location';
+export { CityAutocomplete } from './CityAutocomplete';
+export { AddressAutocomplete } from './AddressAutocomplete';
+export { LocationSearchWithRadius } from './LocationSearchWithRadius';
+export { PriceBreakdown } from './PriceBreakdown';
+export { RichTextEditor } from './RichTextEditor';
+export { RichTextDisplay } from './RichTextDisplay';

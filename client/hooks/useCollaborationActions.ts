@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 import { collaborationApi } from '@/lib/api/collaborationApi';
 import { Collaboration } from '@/types/collaboration';
 import { OverallCollaborationStatus } from '@/components/collaboration/overall-status/types';
+import { logger } from '@/lib/utils/logger';
 
 export const useCollaborationActions = (
 	collaboration: Collaboration | null,
@@ -38,7 +39,10 @@ export const useCollaborationActions = (
 				await refetchCollaboration();
 				return true;
 			} catch (error) {
-				console.error('Error updating status:', error);
+				logger.error(
+					'[CollaborationActions] Status update failed:',
+					error,
+				);
 				setError('Erreur lors de la mise à jour du statut');
 				return false;
 			} finally {
@@ -60,7 +64,7 @@ export const useCollaborationActions = (
 				await refetchCollaboration();
 				return true;
 			} catch (error) {
-				console.error('Error adding note:', error);
+				logger.error('[CollaborationActions] Add note failed:', error);
 				setError("Erreur lors de l'ajout de la note");
 				return false;
 			} finally {
@@ -81,7 +85,10 @@ export const useCollaborationActions = (
 			await refetchCollaboration();
 			return true;
 		} catch (error) {
-			console.error('Error signing contract:', error);
+			logger.error(
+				'[CollaborationActions] Contract signing failed:',
+				error,
+			);
 			setError('Erreur lors de la signature du contrat');
 			return false;
 		} finally {

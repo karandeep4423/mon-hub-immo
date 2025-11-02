@@ -1,6 +1,7 @@
 import { Server } from 'socket.io';
 import { SocketManagerAPI } from './socketManager';
 import { SOCKET_EVENTS } from './socketConfig';
+import { logger } from '../utils/logger';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -33,15 +34,36 @@ const emitNewMessage = (
 ): void => {
 	const { receiverId, senderId } = message;
 
+	logger.debug(
+		`[MessageHandler] Emitting newMessage from ${senderId} to ${receiverId}`,
+		{ messageId: message._id },
+	);
+
 	// Emit to receiver for real-time notification
-	socketManager.emitToUser(receiverId, SOCKET_EVENTS.NEW_MESSAGE, message);
+	const receiverSocketId = socketManager.getReceiverSocketId(receiverId);
+	if (receiverSocketId) {
+		socketManager.emitToUser(
+			receiverId,
+			SOCKET_EVENTS.NEW_MESSAGE,
+			message,
+		);
+		logger.debug(
+			`[MessageHandler] ✅ Emitted to receiver ${receiverId} (socket: ${receiverSocketId})`,
+		);
+	} else {
+		logger.warn(`[MessageHandler] ⚠️ Receiver ${receiverId} not connected`);
+	}
 
 	// Emit to sender for confirmation and real-time sync
-	socketManager.emitToUser(senderId, SOCKET_EVENTS.NEW_MESSAGE, message);
-
-	console.log(
-		`📤 Emitted newMessage to receiver ${receiverId} and sender ${senderId}`,
-	);
+	const senderSocketId = socketManager.getReceiverSocketId(senderId);
+	if (senderSocketId) {
+		socketManager.emitToUser(senderId, SOCKET_EVENTS.NEW_MESSAGE, message);
+		logger.debug(
+			`[MessageHandler] ✅ Emitted to sender ${senderId} (socket: ${senderSocketId})`,
+		);
+	} else {
+		logger.warn(`[MessageHandler] ⚠️ Sender ${senderId} not connected`);
+	}
 };
 
 /**
@@ -57,14 +79,25 @@ const emitReadReceipt = (
 		senderId,
 	};
 
-	socketManager.emitToUser(
-		senderId,
-		SOCKET_EVENTS.MESSAGES_READ,
-		readReceipt,
+	logger.debug(
+		`[MessageHandler] Emitting read receipt to sender ${senderId} from reader ${readBy}`,
 	);
-	console.log(
-		`📤 Emitted read receipt to sender ${senderId} from reader ${readBy}`,
-	);
+
+	const senderSocketId = socketManager.getReceiverSocketId(senderId);
+	if (senderSocketId) {
+		socketManager.emitToUser(
+			senderId,
+			SOCKET_EVENTS.MESSAGES_READ,
+			readReceipt,
+		);
+		logger.debug(
+			`[MessageHandler] ✅ Emitted read receipt to ${senderId} (socket: ${senderSocketId})`,
+		);
+	} else {
+		logger.warn(
+			`[MessageHandler] ⚠️ Sender ${senderId} not connected for read receipt`,
+		);
+	}
 };
 
 /**
@@ -84,7 +117,9 @@ const emitMessageDeleted = (
 		SOCKET_EVENTS.MESSAGE_DELETED,
 		payload,
 	);
-	console.log(`🗑️ Emitted messageDeleted for ${payload.messageId}`);
+	logger.debug(
+		`🗑️[MessageHandler] Emitted messageDeleted for ${payload.messageId}`,
+	);
 };
 
 // ============================================================================
@@ -102,7 +137,7 @@ export const createMessageHandler = (
 	socketManager: SocketManagerAPI,
 ): MessageHandlerAPI => {
 	// Log initialization
-	console.log('📨 Message handler initialized');
+	logger.debug('📨[MessageHandler] Message handler initialized');
 
 	// Return public API using partial application
 	return {

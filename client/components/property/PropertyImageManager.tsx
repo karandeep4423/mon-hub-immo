@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ImageUploader } from '../ui/ImageUploader';
 import Image from 'next/image';
+import { Components } from '@/lib/constants';
 
 interface ImageFile {
 	file: File;
@@ -59,7 +60,10 @@ export const PropertyImageManager: React.FC<PropertyImageManagerProps> = ({
 						<div className="relative inline-block w-32 h-32">
 							<Image
 								src={existingMainImage.url}
-								alt="Image principale actuelle"
+								alt={
+									Components.UI.IMAGE_ALT_TEXT
+										.mainPropertyImage
+								}
 								width={128}
 								height={128}
 								className="w-full h-full object-cover rounded-lg border-2 border-gray-200"

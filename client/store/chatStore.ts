@@ -1,6 +1,8 @@
 import { ChatApi } from '@/lib/api/chatApi';
 import { toast } from 'react-toastify';
 import { chatLogger } from '@/lib/utils/logger';
+import { logger } from '@/lib/utils/logger';
+import { Features } from '@/lib/constants';
 import type {
 	ChatUser as User,
 	ChatMessage as Message,
@@ -260,11 +262,23 @@ export const createChatStore = (): ChatStore => {
 	const getState = (): ChatState => state;
 
 	const setState = (newState: Partial<ChatState>): void => {
+		const prevState = { ...state };
 		state = { ...state, ...newState };
+
+		// Debug log state changes
+		if (newState.messages) {
+			logger.debug('[ChatStore] Messages state updated', {
+				previousCount: prevState.messages.length,
+				newCount: state.messages.length,
+				listenerCount: listeners.size,
+			});
+		}
+
 		notify();
 	};
 
 	const notify = (): void => {
+		logger.debug(`[ChatStore] Notifying ${listeners.size} listeners`);
 		listeners.forEach((listener) => listener());
 	};
 
@@ -382,8 +396,9 @@ export const createChatStore = (): ChatStore => {
 
 		setState({ users: reorderedUsers });
 
-		console.log(
-			`📝 Updated last message for user ${message.senderId}: "${message.text}" at ${message.createdAt}`,
+		logger.debug(
+			`[ChatStore] Updated last message for user ${message.senderId}`,
+			{ text: message.text, createdAt: message.createdAt },
 		);
 	};
 
@@ -435,12 +450,13 @@ export const createChatStore = (): ChatStore => {
 				sortUsersByRecentActivity(usersWithLastMessage);
 			setState({ users: reorderedUsers });
 
-			console.log(
-				`📝 Updated last message for user ${peerUserId}: "${message.text}" at ${message.createdAt}`,
+			logger.debug(
+				`[ChatStore] Updated last message for user ${peerUserId}`,
+				{ text: message.text, createdAt: message.createdAt },
 			);
 		} else {
-			console.log(
-				'⚠️ ChatStore: Received message from user not in sidebar:',
+			logger.debug(
+				'[ChatStore] Received message from user not in sidebar',
 				peerUserId,
 			);
 			// Could fetch user details here if needed, but this should be rare
@@ -524,14 +540,15 @@ export const createChatStore = (): ChatStore => {
 			setUsers(users);
 		} catch (error: unknown) {
 			const errorMessage =
-				error instanceof Error ? error.message : 'Error fetching users';
+				error instanceof Error
+					? error.message
+					: Features.Chat.CHAT_TOAST_MESSAGES.FETCH_ERROR;
 			chatLogger.error('Error fetching users:', error);
 			toast.error(errorMessage);
 		} finally {
 			setUsersLoading(false);
 		}
 	};
-
 	const getUserById = async (userId: string): Promise<User | null> => {
 		chatLogger.debug('Fetching user by ID:', userId);
 
@@ -552,19 +569,20 @@ export const createChatStore = (): ChatStore => {
 		} catch (error: unknown) {
 			chatLogger.error('Error fetching user by ID:', error);
 			const errorMessage =
-				error instanceof Error ? error.message : 'Error fetching user';
+				error instanceof Error
+					? error.message
+					: Features.Chat.CHAT_TOAST_MESSAGES.FETCH_ERROR;
 			toast.error(errorMessage);
 			return null;
 		}
 	};
-
 	const getMessages = async (userId: string): Promise<void> => {
 		chatLogger.debug('Fetching messages for user:', userId);
 
 		// Ensure we're only loading messages for the currently selected user
 		if (state.selectedUser?._id !== userId) {
-			console.log(
-				'🚫 ChatStore: Ignoring messages fetch for non-selected user:',
+			logger.debug(
+				'[ChatStore] Ignoring messages fetch for non-selected user',
 				userId,
 			);
 			return;
@@ -574,19 +592,17 @@ export const createChatStore = (): ChatStore => {
 
 		try {
 			const messages = await ChatApi.getMessages(userId, { limit: 30 });
-			console.log(
-				'✅ ChatStore: Messages fetched for user:',
+			logger.debug('[ChatStore] Messages fetched for user', {
 				userId,
-				'- Count:',
-				messages.length,
-			);
+				count: messages.length,
+			});
 
 			// Double-check the user is still selected before setting messages
 			if (state.selectedUser?._id === userId) {
 				setMessages(messages);
 			} else {
-				console.log(
-					'🚫 ChatStore: User changed during fetch, ignoring messages for:',
+				logger.debug(
+					'[ChatStore] User changed during fetch, ignoring messages for',
 					userId,
 				);
 			}
@@ -595,13 +611,12 @@ export const createChatStore = (): ChatStore => {
 			const errorMessage =
 				error instanceof Error
 					? error.message
-					: 'Error fetching messages';
+					: Features.Chat.CHAT_TOAST_MESSAGES.FETCH_ERROR;
 			toast.error(errorMessage);
 		} finally {
 			setMessagesLoading(false);
 		}
 	};
-
 	const loadOlderMessages = async (): Promise<Message[]> => {
 		const peerId = state.selectedUser?._id;
 		if (!peerId) return [] as Message[];
@@ -657,12 +672,10 @@ export const createChatStore = (): ChatStore => {
 			return;
 		}
 
-		console.log(
-			'📤 ChatStore: Sending message:',
+		logger.debug('[ChatStore] Sending message to', {
+			userId: state.selectedUser._id,
 			messageData,
-			'to:',
-			state.selectedUser._id,
-		);
+		});
 
 		setSendingMessage(true);
 
@@ -672,15 +685,15 @@ export const createChatStore = (): ChatStore => {
 				messageData,
 			);
 			chatLogger.success('Message sent:', newMessage);
-			console.log(
-				'📋 ChatStore: Current processed IDs before add:',
+			logger.debug(
+				'[ChatStore] Current processed IDs before add',
 				Array.from(processedMessageIds),
 			);
 
 			// Store sent message ID to prevent duplicate when socket echoes it back
 			processedMessageIds.add(String(newMessage._id));
-			console.log(
-				'📋 ChatStore: Added message ID to processed:',
+			logger.debug(
+				'[ChatStore] Added message ID to processed',
 				String(newMessage._id),
 			);
 
@@ -690,18 +703,17 @@ export const createChatStore = (): ChatStore => {
 				newMessage,
 			]);
 			setState({ messages: updatedMessages });
-			console.log(
-				'📋 ChatStore: Messages after send:',
-				updatedMessages.length,
-			);
+			logger.debug('[ChatStore] Messages after send', {
+				count: updatedMessages.length,
+			});
 
 			// Ensure the selected user is in the users list (for new conversations)
 			const existingUser = state.users.find(
 				(u) => u._id === state.selectedUser!._id,
 			);
 			if (!existingUser) {
-				console.log(
-					'📝 ChatStore: Adding new user to sidebar:',
+				logger.debug(
+					'[ChatStore] Adding new user to sidebar',
 					state.selectedUser!._id,
 				);
 				const updatedUsers = [
@@ -732,7 +744,7 @@ export const createChatStore = (): ChatStore => {
 			const errorMessage =
 				error instanceof Error
 					? error.message
-					: 'Error sending message';
+					: Features.Chat.CHAT_TOAST_MESSAGES.SEND_ERROR;
 			toast.error(errorMessage);
 		} finally {
 			setSendingMessage(false);
@@ -744,12 +756,10 @@ export const createChatStore = (): ChatStore => {
 			await ChatApi.deleteMessage(messageId);
 			removeMessageById(messageId);
 		} catch (error) {
-			toast.error('Failed to delete message');
+			toast.error(Features.Chat.CHAT_TOAST_MESSAGES.DELETE_ERROR);
 			throw error as Error;
 		}
-	};
-
-	// ============================================================================
+	}; // ============================================================================
 	// RETURN STORE API
 	// ============================================================================
 

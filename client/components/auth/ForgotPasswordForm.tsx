@@ -2,52 +2,43 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { authService } from '@/lib/api/authApi';
 import { forgotPasswordSchema } from '@/lib/validation';
+import { useForm } from '@/hooks/useForm';
+import { Features } from '@/lib/constants';
+import { handleAuthError, authToastSuccess } from '@/lib/utils/authToast';
+
+interface ForgotPasswordFormData extends Record<string, unknown> {
+	email: string;
+}
 
 export const ForgotPasswordForm: React.FC = () => {
 	const router = useRouter();
-	const [loading, setLoading] = useState(false);
-	const [email, setEmail] = useState('');
-	const [error, setError] = useState('');
 	const [success, setSuccess] = useState(false);
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setError('');
-
-		try {
-			forgotPasswordSchema.parse({ email });
-			setLoading(true);
-
-			const response = await authService.forgotPassword({ email });
-
-			if (response.success) {
-				setSuccess(true);
-				toast.success(response.message);
-			} else {
-				setError(response.message);
-			}
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		} catch (validationError: any) {
-			if (validationError.errors) {
-				setError(
-					validationError.errors[0]?.message ||
-						'Adresse email invalide',
-				);
-			} else {
-				setError(
-					validationError.response?.data?.message ||
-						"Une erreur s'est produite",
-				);
-			}
-		} finally {
-			setLoading(false);
-		}
-	};
+	const { values, errors, isSubmitting, handleInputChange, handleSubmit } =
+		useForm<ForgotPasswordFormData>({
+			initialValues: { email: '' },
+			onSubmit: async (data) => {
+				try {
+					forgotPasswordSchema.parse(data);
+					const response = await authService.forgotPassword(data);
+					if (response.success) {
+						setSuccess(true);
+						authToastSuccess(
+							Features.Auth.AUTH_TOAST_MESSAGES
+								.FORGOT_PASSWORD_SUCCESS,
+						);
+					} else {
+						handleAuthError(new Error(response.message));
+					}
+				} catch (error) {
+					handleAuthError(error);
+				}
+			},
+		});
 
 	if (success) {
 		return (
@@ -55,7 +46,7 @@ export const ForgotPasswordForm: React.FC = () => {
 				{/* Header */}
 				<div className="text-center pt-8 sm:pt-12 pb-6 sm:pb-8 px-4 sm:px-6">
 					<h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">
-						mon<span className="text-cyan-500">hubimmo</span>
+						mon<span className="text-brand">hubimmo</span>
 					</h1>
 				</div>
 
@@ -88,7 +79,7 @@ export const ForgotPasswordForm: React.FC = () => {
 								réinitialisation à
 							</p>
 							<p className="font-semibold text-gray-900 text-sm">
-								{email}
+								{values.email}
 							</p>
 						</div>
 
@@ -96,10 +87,10 @@ export const ForgotPasswordForm: React.FC = () => {
 							<Button
 								onClick={() =>
 									router.push(
-										`/auth/reset-password?email=${encodeURIComponent(email)}`,
+										`/auth/reset-password?email=${encodeURIComponent(values.email)}`,
 									)
 								}
-								className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
+								className="w-full bg-brand hover:bg-brand-600 text-white"
 								size="lg"
 							>
 								Continuer la réinitialisation
@@ -107,8 +98,10 @@ export const ForgotPasswordForm: React.FC = () => {
 
 							<button
 								type="button"
-								onClick={() => router.push('/auth/login')}
-								className="text-cyan-600 hover:text-cyan-500 text-sm font-medium"
+								onClick={() =>
+									router.push(Features.Auth.AUTH_ROUTES.LOGIN)
+								}
+								className="text-brand hover:text-brand text-sm font-medium"
 							>
 								Retour à la connexion
 							</button>
@@ -124,7 +117,7 @@ export const ForgotPasswordForm: React.FC = () => {
 			{/* Header */}
 			<div className="text-center pt-8 sm:pt-12 pb-6 sm:pb-8 px-4 sm:px-6">
 				<h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">
-					mon<span className="text-cyan-500">hubimmo</span>
+					mon<span className="text-brand">hubimmo</span>
 				</h1>
 
 				<div className="space-y-3 sm:space-y-4">
@@ -150,17 +143,17 @@ export const ForgotPasswordForm: React.FC = () => {
 							<Input
 								label=""
 								type="email"
-								value={email}
-								onChange={(e) => {
-									setEmail(e.target.value);
-									setError('');
-								}}
-								error={error}
-								placeholder="Votre adresse email"
+								name="email"
+								value={values.email}
+								onChange={handleInputChange}
+								error={errors.email}
+								placeholder={
+									Features.Auth.AUTH_PLACEHOLDERS.YOUR_EMAIL
+								}
 								required
 								className="text-center"
 							/>
-							{error && (
+							{errors.email && (
 								<div className="flex items-center justify-center text-red-600 text-sm mt-2">
 									<svg
 										className="w-4 h-4 mr-1"
@@ -173,7 +166,7 @@ export const ForgotPasswordForm: React.FC = () => {
 											clipRule="evenodd"
 										/>
 									</svg>
-									{error}
+									{errors.email}
 								</div>
 							)}
 						</div>
@@ -181,11 +174,11 @@ export const ForgotPasswordForm: React.FC = () => {
 						{/* Submit Button */}
 						<Button
 							type="submit"
-							loading={loading}
-							className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
+							loading={isSubmitting}
+							className="w-full bg-brand hover:bg-brand-600 text-white"
 							size="lg"
 						>
-							{loading
+							{isSubmitting
 								? 'Envoi en cours...'
 								: 'Envoyer les instructions'}
 						</Button>
@@ -195,8 +188,10 @@ export const ForgotPasswordForm: React.FC = () => {
 					<div className="text-center mt-8 sm:mt-10 pb-8">
 						<button
 							type="button"
-							onClick={() => router.push('/auth/login')}
-							className="text-cyan-600 hover:text-cyan-500 text-sm font-medium transition-colors"
+							onClick={() =>
+								router.push(Features.Auth.AUTH_ROUTES.LOGIN)
+							}
+							className="text-brand hover:text-brand text-sm font-medium transition-colors"
 						>
 							Retour à la connexion
 						</button>

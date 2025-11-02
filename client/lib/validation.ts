@@ -124,7 +124,11 @@ export const verifyEmailSchema = z.object({
 		.email('Veuillez entrer une adresse email valide'),
 	code: z
 		.string()
-		.length(6, 'Le code de vérification doit contenir 6 chiffres'),
+		.length(6, 'Le code de vérification doit contenir 6 caractères')
+		.regex(
+			/^[0-9A-Z]+$/,
+			'Le code doit contenir uniquement des chiffres et lettres majuscules',
+		),
 });
 
 export const forgotPasswordSchema = z.object({
@@ -141,7 +145,11 @@ export const resetPasswordSchema = z.object({
 		.email('Veuillez entrer une adresse email valide'),
 	code: z
 		.string()
-		.length(6, 'Le code de réinitialisation doit contenir 6 chiffres'),
+		.length(6, 'Le code de réinitialisation doit contenir 6 caractères')
+		.regex(
+			/^[0-9A-Z]+$/,
+			'Le code doit contenir uniquement des chiffres et lettres majuscules',
+		),
 	newPassword: z
 		.string()
 		.min(8, 'Le mot de passe doit contenir au moins 8 caractères')

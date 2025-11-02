@@ -11,19 +11,14 @@
 // LOADING COMPONENTS
 // ============================================================================
 
-export {
-	LoadingSpinner,
-	CenteredLoading,
-	ButtonSpinner,
-} from './LoadingSpinner';
-
+// Use LoadingSpinner from @/components/ui/LoadingSpinner instead
 export { default as LoadingOlderMessages } from './LoadingOlderMessages';
 
 // ============================================================================
-// USER COMPONENTS
+// USER COMPONENTS (USE ProfileAvatar from @/components/ui instead)
 // ============================================================================
 
-export { UserAvatar, OnlineIndicator } from './UserAvatar';
+// UserAvatar removed - use ProfileAvatar from @/components/ui/ProfileAvatar
 
 // ============================================================================
 // EMPTY STATE COMPONENTS

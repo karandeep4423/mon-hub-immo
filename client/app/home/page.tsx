@@ -1,164 +1,208 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import {
-	PropertyService,
-	Property,
-	PropertyFilters,
-} from '@/lib/api/propertyApi';
-import searchAdApi from '@/lib/api/searchAdApi';
-import { SearchAd } from '@/types/searchAd';
-import { HomeSearchAdCard } from '@/components/search-ads/HomeSearchAdCard';
-import { PropertyCard } from '@/components/property';
+import { useState, useEffect, useMemo, useRef, Suspense } from 'react';
+import { Property, PropertyFilters } from '@/lib/api/propertyApi';
+import { SearchAdFilters } from '@/lib/api/searchAdApi';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { useAuth } from '@/hooks/useAuth';
-import { Pagination } from '@/components/ui/Pagination';
+import { useProperties } from '@/hooks/useProperties';
+import { useSearchAds } from '@/hooks/useSearchAds';
 import {
-	SingleUnifiedSearch,
-	LocationItem,
-} from '@/components/ui/SingleUnifiedSearch';
+	GeolocationPrompt,
+	ErrorBoundary,
+	FilterErrorFallback,
+} from '@/components/ui';
+import type { LocationItem } from '@/components/ui/LocationSearchWithRadius';
+import { authService } from '@/lib/api/authApi';
+import { PageLoader } from '@/components/ui/LoadingSpinner';
+import {
+	HomeHeader,
+	SearchFiltersPanel,
+	PropertiesSection,
+	SearchAdsSection,
+} from '@/components/home';
+import {
+	getMunicipalitiesNearby,
+	searchMunicipalities,
+} from '@/lib/services/frenchAddressApi';
+import {
+	requestGeolocation,
+	checkGeolocationPermission,
+	setGeolocationPreference,
+	getGeolocationPreference,
+} from '@/lib/services/geolocationService';
+import { logger } from '@/lib/utils/logger';
+import { useDebounce } from '@/hooks/useDebounce';
+import { Features } from '@/lib/constants';
+import { usePageState } from '@/hooks/usePageState';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
+import { FILTER_DEFAULTS } from '@/lib/constants/filters';
+import type {
+	ContentFilter,
+	PriceRange,
+	SurfaceRange,
+	RestorationState,
+} from '@/types/filters';
 
-type ContentFilter = 'all' | 'properties' | 'searchAds' | 'favorites';
-
-export default function Home() {
-	const { user } = useAuth();
+function HomeContent() {
+	const { user, refreshUser } = useAuth();
 	const { favoritePropertyIds, favoriteSearchAdIds, initializeFavorites } =
 		useFavoritesStore();
-	const [properties, setProperties] = useState<Property[]>([]);
-	const [searchAds, setSearchAds] = useState<SearchAd[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
 	const [searchTerm, setSearchTerm] = useState('');
 	const [typeFilter, setTypeFilter] = useState('');
 	const [selectedLocations, setSelectedLocations] = useState<LocationItem[]>(
 		[],
 	);
+	const [radiusKm, setRadiusKm] = useState<number>(FILTER_DEFAULTS.RADIUS_KM);
 	const [profileFilter, setProfileFilter] = useState('');
-	const [priceFilter, setPriceFilter] = useState({ min: 0, max: 10000000 });
-	const [surfaceFilter, setSurfaceFilter] = useState({ min: 0, max: 100000 });
+	const [priceFilter, setPriceFilter] = useState<PriceRange>({
+		min: FILTER_DEFAULTS.PRICE_MIN,
+		max: FILTER_DEFAULTS.PRICE_MAX,
+	});
+	const [surfaceFilter, setSurfaceFilter] = useState<SurfaceRange>({
+		min: FILTER_DEFAULTS.SURFACE_MIN,
+		max: FILTER_DEFAULTS.SURFACE_MAX,
+	});
 	const [contentFilter, setContentFilter] = useState<ContentFilter>('all');
 	const [propPage, setPropPage] = useState(1);
 	const [adPage, setAdPage] = useState(1);
-	const PAGE_SIZE = 6;
+	const [showGeolocationPrompt, setShowGeolocationPrompt] = useState(false);
+	const [geolocationError, setGeolocationError] = useState<string | null>(
+		null,
+	);
+	const [myAreaLocations, setMyAreaLocations] = useState<LocationItem[]>([]);
+	const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+	// Simplified restoration state management
+	const restorationStateRef = useRef<RestorationState>({
+		status: 'pending',
+		completedAt: null,
+		skipNextReset: true,
+		lastFiltersSignature: null,
+	});
+
+	// Persist filters and dual pagination for Home; restore window scroll
+	const {
+		key: pageKey,
+		savedState,
+		save,
+	} = usePageState({
+		key: 'home',
+		getCurrentState: () => ({
+			filters: {
+				searchTerm,
+				typeFilter,
+				selectedLocations,
+				radiusKm,
+				profileFilter,
+				priceFilter,
+				surfaceFilter,
+				contentFilter,
+				propPage,
+				adPage,
+			},
+		}),
+	});
+
+	// Debounce search term with standard delay
+	const debouncedSearchTerm = useDebounce(
+		searchTerm,
+		Features.Common.DEBOUNCE.SEARCH,
+	);
 
 	const isAuthenticated = !!user;
 
-	// Mapping function for property types between properties and search ads
-	const mapPropertyType = (propertyType: string): string[] => {
-		const typeMapping: Record<string, string[]> = {
-			Appartement: ['apartment'],
-			Maison: ['house'],
-			Terrain: ['land'],
-			'Local commercial': ['commercial'],
-			Bureaux: ['building', 'commercial'],
-			Parking: ['parking', 'garage'],
-			Autre: ['other'],
-		};
-		return typeMapping[propertyType] || [];
-	};
+	// Fetch user profile when home page loads (if cookie exists)
+	useEffect(() => {
+		if (!user) {
+			refreshUser();
+		}
+	}, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-	// Helper function to filter search ads based on current filters
-	const filterSearchAds = (searchAds: SearchAd[]): SearchAd[] => {
-		return searchAds.filter((searchAd) => {
-			// Filter by status (only active)
-			if (searchAd.status !== 'active') return false;
-
-			// Filter by profile (user type)
-			if (profileFilter && searchAd.authorType !== profileFilter) {
-				return false;
-			}
-
-			// Filter by property type
-			if (typeFilter) {
-				const mappedTypes = mapPropertyType(typeFilter);
-				const hasMatchingType = searchAd.propertyTypes.some((type) =>
-					mappedTypes.includes(type),
-				);
-				if (!hasMatchingType) return false;
-			}
-
-			// Filter by search term (search in title, description, and cities)
-			if (searchTerm) {
-				const searchLower = searchTerm.toLowerCase();
-				const matchesTitle = searchAd.title
-					.toLowerCase()
-					.includes(searchLower);
-				const matchesDescription =
-					searchAd.description?.toLowerCase().includes(searchLower) ||
-					false;
-				const matchesCities = searchAd.location.cities.some((city) =>
-					city.toLowerCase().includes(searchLower),
-				);
-				if (!matchesTitle && !matchesDescription && !matchesCities)
-					return false;
-			}
-
-			// Filter by selected locations (cities or postal codes)
-			if (selectedLocations.length > 0) {
-				const hasSpecialFilter = selectedLocations.some(
-					(loc) => loc.type === 'special',
-				);
-
-				// If "Toute la France" is selected, skip location filtering
-				if (
-					hasSpecialFilter &&
-					selectedLocations.some((loc) => loc.value === 'all_france')
-				) {
-					// Don't filter by location
-				} else if (hasSpecialFilter) {
-					// Handle "Autour de moi" - for now, skip (requires geolocation)
-					// You can implement geolocation logic here
-				} else {
-					// Filter by cities and postal codes
-					const cities = selectedLocations
-						.filter((loc) => loc.city)
-						.map((loc) => loc.city!.toLowerCase());
-					const postalCodes = selectedLocations
-						.filter((loc) => loc.postalCode)
-						.map((loc) => loc.postalCode!);
-
-					const matchesCity =
-						cities.length === 0 ||
-						searchAd.location.cities.some((city) =>
-							cities.some((filterCity) =>
-								city.toLowerCase().includes(filterCity),
-							),
-						);
-
-					const matchesPostalCode =
-						postalCodes.length === 0 ||
-						(searchAd.location.postalCodes &&
-							searchAd.location.postalCodes.some((pc) =>
-								postalCodes.includes(pc),
-							));
-
-					if (!matchesCity && !matchesPostalCode) return false;
-				}
-			}
-
-			// Filter by price range (budget max should be within range)
-			if (priceFilter.min > 0 && searchAd.budget.max < priceFilter.min)
-				return false;
-			if (
-				priceFilter.max < 10000000 &&
-				searchAd.budget.max > priceFilter.max
-			)
-				return false;
-
-			return true;
+	// Restore saved filters/pages once on mount
+	useEffect(() => {
+		// Check what's in session storage directly
+		const rawSessionData = sessionStorage.getItem(`pageState:${pageKey}`);
+		logger.debug('[Home] Raw session storage:', {
+			key: pageKey,
+			rawData: rawSessionData,
+			parsed: rawSessionData ? JSON.parse(rawSessionData) : null,
 		});
-	};
 
-	// Helper function to filter properties based on current filters
-	const filterProperties = (properties: Property[]): Property[] => {
-		return properties.filter((property) => {
-			// Filter by profile (user type)
-			if (profileFilter && property.owner.userType !== profileFilter) {
-				return false;
-			}
+		const filters =
+			(savedState?.filters as Record<string, unknown>) || undefined;
 
-			return true;
+		logger.debug('[Home] Restoration attempt:', {
+			hasSavedState: !!savedState,
+			filters,
+			scrollY: savedState?.scrollY,
+			scrollX: savedState?.scrollX,
+			fullState: savedState,
 		});
+
+		if (!filters) {
+			// No saved state, mark restoration as complete to allow normal operation
+			restorationStateRef.current.status = 'complete';
+			return;
+		}
+
+		// Mark that restoration is in progress to block reset effects
+		restorationStateRef.current.status = 'in-progress';
+
+		if (typeof filters.searchTerm === 'string')
+			setSearchTerm(filters.searchTerm);
+		if (typeof filters.typeFilter === 'string')
+			setTypeFilter(filters.typeFilter);
+		if (typeof filters.radiusKm === 'number') setRadiusKm(filters.radiusKm);
+		if (typeof filters.profileFilter === 'string')
+			setProfileFilter(filters.profileFilter);
+		if (typeof filters.priceFilter === 'object' && filters.priceFilter)
+			setPriceFilter(filters.priceFilter as { min: number; max: number });
+		if (typeof filters.surfaceFilter === 'object' && filters.surfaceFilter)
+			setSurfaceFilter(
+				filters.surfaceFilter as { min: number; max: number },
+			);
+		if (typeof filters.contentFilter === 'string')
+			setContentFilter(filters.contentFilter as ContentFilter);
+		if (typeof filters.propPage === 'number') {
+			logger.debug('[Home] Restoring propPage:', filters.propPage);
+			setPropPage(filters.propPage);
+		}
+		if (typeof filters.adPage === 'number') {
+			logger.debug('[Home] Restoring adPage:', filters.adPage);
+			setAdPage(filters.adPage);
+		}
+		if (Array.isArray(filters.selectedLocations))
+			setSelectedLocations(filters.selectedLocations as LocationItem[]);
+
+		// prevent auto-activation overriding restored state
+		setIsInitialLoad(false);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	// Mark restoration complete AFTER all state updates have been processed
+	useEffect(() => {
+		if (restorationStateRef.current.status === 'in-progress') {
+			logger.debug(
+				'[Home] Restoration complete - enabling normal operations',
+			);
+			restorationStateRef.current.status = 'complete';
+			restorationStateRef.current.completedAt = Date.now();
+		}
+	}, [propPage, adPage, contentFilter]);
+
+	// Save radius preference when it changes
+	const handleRadiusChange = async (newRadius: number) => {
+		setRadiusKm(newRadius);
+		if (user) {
+			try {
+				await authService.updateSearchPreferences({
+					preferredRadius: newRadius,
+				});
+			} catch (error) {
+				logger.error('Error saving radius preference:', error);
+			}
+		}
 	};
 
 	// Reset to 'all' if favorites is selected but user is not authenticated
@@ -175,273 +219,438 @@ export default function Home() {
 		}
 	}, [isAuthenticated, initializeFavorites]);
 
-	// Debounce effect for search term
+	// Auto-activate "Mon secteur" filter for agents on initial load (skip if restored state exists)
 	useEffect(() => {
-		const fetchData = async () => {
+		if (!user || !isInitialLoad) return;
+		if (savedState?.filters) return;
+		if (user.userType !== 'agent') return;
+
+		const city = user.professionalInfo?.city;
+		const postalCode = user.professionalInfo?.postalCode;
+
+		if (!city || !postalCode) return;
+
+		// Auto-select "Mon secteur" filter to show agent's registered city area
+		setContentFilter('myArea');
+		setIsInitialLoad(false);
+
+		logger.debug(
+			'[Home] Auto-activated "Mon secteur" for agent:',
+			city,
+			postalCode,
+		);
+	}, [user, isInitialLoad, savedState?.filters]);
+
+	// Load "Mon secteur" locations from user's registered city
+	useEffect(() => {
+		const loadMyAreaLocations = async () => {
+			if (!user) return;
+
+			const city = user.professionalInfo?.city;
+			const postalCode = user.professionalInfo?.postalCode;
+
+			if (!city || !postalCode) return;
+
 			try {
-				setLoading(true);
-				setError(null);
+				logger.debug(
+					'[Home] Loading "Mon secteur" locations:',
+					city,
+					postalCode,
+				);
 
-				const filters: PropertyFilters = {};
-				if (searchTerm) filters.search = searchTerm;
-				if (typeFilter) filters.propertyType = typeFilter;
+				// First, get the exact coordinates of the agent's city
+				const citySearchResults = await searchMunicipalities(
+					`${city} ${postalCode}`,
+					5,
+				);
 
-				// Add location filters (postal codes)
-				if (selectedLocations.length > 0) {
-					const postalCodes = selectedLocations
-						.filter(
-							(loc) => loc.postalCode && loc.type !== 'special',
-						)
-						.map((loc) => loc.postalCode!);
+				const agentCity = citySearchResults.find(
+					(m) =>
+						m.name.toLowerCase() === city.toLowerCase() &&
+						m.postcode === postalCode,
+				);
 
-					if (postalCodes.length > 0) {
-						filters.postalCode = postalCodes.join(',');
-					}
+				if (!agentCity) {
+					logger.error(
+						'[Home] Could not find coordinates for agent city:',
+						city,
+						postalCode,
+					);
+					return;
 				}
 
-				if (priceFilter.min > 0) filters.minPrice = priceFilter.min;
-				if (priceFilter.max < 10000000)
-					filters.maxPrice = priceFilter.max;
-				if (surfaceFilter.min > 0)
-					filters.minSurface = surfaceFilter.min;
-				if (surfaceFilter.max < 100000)
-					filters.maxSurface = surfaceFilter.max;
+				logger.debug('[Home] Agent city coordinates:', agentCity);
 
-				const [propertiesData, searchAdsData] = await Promise.all([
-					PropertyService.getAllProperties(filters),
-					searchAdApi.getAllSearchAds(),
-				]);
-
-				setProperties(propertiesData || []);
-				setSearchAds(searchAdsData || []);
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			} catch (error: any) {
-				console.error('Error fetching data:', error);
-				setError(
-					error.message || 'Erreur lors du chargement des données',
+				// Get all cities within 50km radius using coordinates
+				const nearbyCities = await getMunicipalitiesNearby(
+					agentCity.coordinates.lat,
+					agentCity.coordinates.lon,
+					50, // 50km radius
 				);
-			} finally {
-				setLoading(false);
+
+				// Convert to LocationItem format
+				const locationItems: LocationItem[] = nearbyCities.map(
+					(municipality) => ({
+						name: municipality.name,
+						postcode: municipality.postcode,
+						citycode: municipality.citycode,
+						coordinates: municipality.coordinates,
+						context: municipality.context,
+						display: `${municipality.name} (${municipality.postcode})`,
+						value: `${municipality.name}-${municipality.postcode}`,
+					}),
+				);
+
+				setMyAreaLocations(locationItems);
+				logger.debug(
+					'[Home] "Mon secteur" locations loaded:',
+					locationItems.length,
+					'cities within 50km',
+				);
+				logger.debug(
+					'[Home] Postal codes:',
+					locationItems.map((l) => l.postcode),
+				);
+			} catch (error) {
+				logger.error(
+					'[Home] Error loading "Mon secteur" locations:',
+					error,
+				);
 			}
 		};
 
-		const debounceTimer = setTimeout(
-			() => {
-				fetchData();
-			},
-			searchTerm ? 500 : 0,
-		); // 500ms delay for search, immediate for others
+		loadMyAreaLocations();
+	}, [user]);
 
-		return () => clearTimeout(debounceTimer);
-	}, [
-		searchTerm,
-		typeFilter,
-		selectedLocations,
-		priceFilter,
-		surfaceFilter,
-		profileFilter,
-	]);
-
-	// Reset pagination when filters/content change
+	// Check geolocation permission and show prompt on first visit
 	useEffect(() => {
-		setPropPage(1);
-		setAdPage(1);
+		const checkAndPromptGeolocation = async () => {
+			if (!user) return;
+
+			const storedPref = getGeolocationPreference();
+			if (storedPref) {
+				// User already made a choice
+				logger.debug(
+					'[Home] Geolocation preference already set:',
+					storedPref,
+				);
+				return;
+			}
+
+			// Check browser permission
+			const permission = await checkGeolocationPermission();
+			logger.debug('[Home] Geolocation permission status:', permission);
+
+			if (permission === 'prompt') {
+				// Show custom prompt
+				setShowGeolocationPrompt(true);
+			} else if (permission === 'granted') {
+				// Auto-request location
+				handleRequestGeolocation();
+			}
+		};
+
+		checkAndPromptGeolocation();
+	}, [user]);
+
+	// Handle geolocation request
+	const handleRequestGeolocation = async () => {
+		try {
+			const location = await requestGeolocation();
+			setGeolocationPreference(true);
+			setShowGeolocationPrompt(false);
+			setGeolocationError(null);
+			logger.debug('[Home] Geolocation granted:', location);
+		} catch (error: unknown) {
+			const err = error as { message: string };
+			setGeolocationError(err.message);
+			setGeolocationPreference(false);
+			logger.error('[Home] Geolocation error:', err.message);
+		}
+	};
+
+	// Handle geolocation denial
+	const handleDenyGeolocation = () => {
+		setGeolocationPreference(false);
+		setShowGeolocationPrompt(false);
+		logger.debug('[Home] Geolocation denied by user');
+	};
+
+	// Build property filters based on current state
+	const propertyFilters = useMemo((): PropertyFilters => {
+		const filters: PropertyFilters = {};
+		if (debouncedSearchTerm) filters.search = debouncedSearchTerm;
+		if (typeFilter) filters.propertyType = typeFilter;
+
+		// Add location filters - use myArea locations when in "Mon secteur" mode
+		const locationsToFilter =
+			contentFilter === 'myArea' && myAreaLocations.length > 0
+				? myAreaLocations
+				: selectedLocations;
+
+		if (locationsToFilter.length > 0) {
+			const postalCodes = locationsToFilter.map((loc) => loc.postcode);
+			if (postalCodes.length > 0) {
+				filters.postalCode = postalCodes.join(',');
+			}
+		}
+
+		if (priceFilter.min > 0) filters.minPrice = priceFilter.min;
+		if (priceFilter.max < FILTER_DEFAULTS.PRICE_MAX)
+			filters.maxPrice = priceFilter.max;
+		if (surfaceFilter.min > 0) filters.minSurface = surfaceFilter.min;
+		if (surfaceFilter.max < FILTER_DEFAULTS.SURFACE_MAX)
+			filters.maxSurface = surfaceFilter.max;
+
+		return filters;
 	}, [
-		searchTerm,
+		debouncedSearchTerm,
 		typeFilter,
 		selectedLocations,
+		myAreaLocations,
+		contentFilter,
 		priceFilter,
 		surfaceFilter,
-		profileFilter,
-		contentFilter,
 	]);
 
-	// Count filtered search ads for display
-	const filteredSearchAdsCount = filterSearchAds(searchAds).length;
+	// Build search ad filters based on current state
+	const searchAdFilters = useMemo((): SearchAdFilters => {
+		const filters: SearchAdFilters = {};
+		if (debouncedSearchTerm) filters.search = debouncedSearchTerm;
+		if (typeFilter) filters.propertyType = typeFilter;
+		if (profileFilter) filters.authorType = profileFilter;
+
+		// Add location filters - use myArea locations when in "Mon secteur" mode
+		const locationsToFilter =
+			contentFilter === 'myArea' && myAreaLocations.length > 0
+				? myAreaLocations
+				: selectedLocations;
+
+		if (locationsToFilter.length > 0) {
+			const postalCodes = locationsToFilter.map((loc) => loc.postcode);
+			if (postalCodes.length > 0) {
+				filters.postalCode = postalCodes.join(',');
+			}
+		}
+
+		if (priceFilter.min > 0) filters.minBudget = priceFilter.min;
+		if (priceFilter.max < FILTER_DEFAULTS.PRICE_MAX)
+			filters.maxBudget = priceFilter.max;
+
+		return filters;
+	}, [
+		debouncedSearchTerm,
+		typeFilter,
+		profileFilter,
+		selectedLocations,
+		myAreaLocations,
+		contentFilter,
+		priceFilter,
+	]);
+
+	// Fetch properties using SWR
+	const {
+		data: swrProperties,
+		isLoading: loadingProperties,
+		error: propertiesError,
+	} = useProperties(propertyFilters);
+	const properties: Property[] = swrProperties || [];
+
+	// Fetch search ads using SWR with server-side filtering
+	const {
+		data: swrSearchAds = [],
+		isLoading: loadingSearchAds,
+		error: searchAdsError,
+	} = useSearchAds(searchAdFilters);
+	const searchAds = swrSearchAds || [];
+
+	// Combined loading and error states
+	const loading = loadingProperties || loadingSearchAds;
+	const error = propertiesError || searchAdsError;
+
+	// Restore scroll only after data and restored state are settled
+	useScrollRestoration({
+		key: pageKey,
+		ready: () =>
+			restorationStateRef.current.status === 'complete' && !loading,
+		debug: true,
+	});
+
+	const filtersForSave = useMemo(
+		() => ({
+			searchTerm,
+			typeFilter,
+			selectedLocations,
+			radiusKm,
+			profileFilter,
+			priceFilter,
+			surfaceFilter,
+			contentFilter,
+		}),
+		[
+			searchTerm,
+			typeFilter,
+			selectedLocations,
+			radiusKm,
+			priceFilter,
+			surfaceFilter,
+			profileFilter,
+			contentFilter,
+		],
+	);
+
+	const filtersSignature = useMemo(
+		() => JSON.stringify(filtersForSave),
+		[filtersForSave],
+	);
+
+	// Reset pagination when filters/content change, but skip restoration-driven updates
+	useEffect(() => {
+		if (restorationStateRef.current.status !== 'complete') {
+			logger.debug(
+				'[Home] Skipping pagination reset - restoration not complete',
+			);
+			return;
+		}
+
+		if (restorationStateRef.current.skipNextReset) {
+			restorationStateRef.current.skipNextReset = false;
+			restorationStateRef.current.lastFiltersSignature = filtersSignature;
+			logger.debug(
+				'[Home] Skipping pagination reset - flagged to skip once',
+				{ filtersSignature },
+			);
+			return;
+		}
+
+		// Short cooldown after restoration to allow dependent effects to settle
+		if (
+			restorationStateRef.current.completedAt &&
+			Date.now() - restorationStateRef.current.completedAt <
+				FILTER_DEFAULTS.RESTORATION_COOLDOWN_MS
+		) {
+			if (
+				restorationStateRef.current.lastFiltersSignature !==
+				filtersSignature
+			) {
+				restorationStateRef.current.lastFiltersSignature =
+					filtersSignature;
+			}
+			logger.debug('[Home] Skipping pagination reset during cooldown');
+			return;
+		}
+
+		if (
+			restorationStateRef.current.lastFiltersSignature ===
+			filtersSignature
+		) {
+			logger.debug('[Home] Filters unchanged; no pagination reset');
+			return;
+		}
+
+		restorationStateRef.current.lastFiltersSignature = filtersSignature;
+		logger.debug('[Home] Resetting pagination due to filter change');
+		// Reset only the relevant pagination for current contentFilter
+		if (contentFilter === 'properties') {
+			setPropPage(1);
+		} else if (contentFilter === 'searchAds') {
+			setAdPage(1);
+		} else {
+			setPropPage(1);
+			setAdPage(1);
+		}
+		save({ filters: filtersForSave });
+	}, [filtersForSave, filtersSignature, save, contentFilter]);
+
+	// Persist page changes
+	useEffect(() => {
+		if (restorationStateRef.current.status !== 'complete') {
+			logger.debug(
+				'[Home] Skipping pagination save - restoration not complete',
+			);
+			return;
+		}
+		logger.debug('[Home] Saving pagination:', { propPage, adPage });
+		save({
+			filters: { propPage, adPage },
+		});
+	}, [propPage, adPage, save]);
+
+	// Server-side filtering now handles all cases including "Mon secteur"
+	// Filter favorites client-side only
+	const filteredProperties =
+		contentFilter === 'favorites'
+			? properties.filter((prop) => favoritePropertyIds.has(prop._id))
+			: properties;
+
+	const filteredSearchAds =
+		contentFilter === 'favorites'
+			? searchAds.filter((ad) => favoriteSearchAdIds.has(ad._id))
+			: searchAds;
+
+	const filteredPropertiesCount = filteredProperties.length;
+	const filteredSearchAdsCount = filteredSearchAds.length;
 
 	return (
 		<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+			{/* Geolocation Permission Prompt */}
+			{showGeolocationPrompt && (
+				<GeolocationPrompt
+					onAllow={handleRequestGeolocation}
+					onDeny={handleDenyGeolocation}
+					error={geolocationError}
+				/>
+			)}
+
 			{/* Header with unified title and stats */}
-			<div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-				<div className="text-sm text-gray-600">
-					{properties.length} bien{properties.length > 1 ? 's' : ''} •{' '}
-					{filteredSearchAdsCount} recherche
-					{filteredSearchAdsCount > 1 ? 's' : ''}
-				</div>
-			</div>
+			<HomeHeader
+				filteredPropertiesCount={filteredPropertiesCount}
+				filteredSearchAdsCount={filteredSearchAdsCount}
+			/>
 
-			{/* Unified Search and Filters */}
-			<div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-				{/* Single Unified Search - handles both text and location */}
-				<div className="mb-4">
-					<SingleUnifiedSearch
-						searchTerm={searchTerm}
-						onSearchChange={setSearchTerm}
-						selectedLocations={selectedLocations}
-						onLocationsChange={setSelectedLocations}
-					/>
-				</div>
-
-				{/* Content Type Filter */}
-				<div className="flex flex-wrap gap-2 mb-4">
-					<button
-						onClick={() => setContentFilter('all')}
-						className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-							contentFilter === 'all'
-								? 'bg-brand text-white'
-								: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-						}`}
-					>
-						Tout ({properties.length + filteredSearchAdsCount})
-					</button>
-					<button
-						onClick={() => setContentFilter('properties')}
-						className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-							contentFilter === 'properties'
-								? 'bg-brand text-white'
-								: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-						}`}
-					>
-						Biens à vendre ({properties.length})
-					</button>
-					<button
-						onClick={() => setContentFilter('searchAds')}
-						className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-							contentFilter === 'searchAds'
-								? 'bg-brand text-white'
-								: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-						}`}
-					>
-						Recherche de biens ({filteredSearchAdsCount})
-					</button>
-					{isAuthenticated && (
-						<button
-							onClick={() => setContentFilter('favorites')}
-							className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-								contentFilter === 'favorites'
-									? 'bg-brand text-white'
-									: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-							}`}
-						>
-							Favoris (
-							{favoritePropertyIds.size +
-								favoriteSearchAdIds.size}
-							)
-						</button>
-					)}
-				</div>
-
-				{/* Property-specific Filters */}
-				{(contentFilter === 'all' ||
-					contentFilter === 'properties' ||
-					contentFilter === 'favorites') && (
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-						<select
-							value={typeFilter}
-							onChange={(e) => setTypeFilter(e.target.value)}
-							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-						>
-							<option value="">Type de bien</option>
-							<option value="Appartement">Appartement</option>
-							<option value="Maison">Maison</option>
-							<option value="Terrain">Terrain</option>
-							<option value="Local commercial">
-								Local commercial
-							</option>
-							<option value="Bureaux">Bureaux</option>
-							<option value="Parking">Parking</option>
-							<option value="Autre">Autre</option>
-						</select>
-
-						<select
-							value={profileFilter}
-							onChange={(e) => setProfileFilter(e.target.value)}
-							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-						>
-							<option value="">Tous les profils</option>
-							<option value="agent">Agent</option>
-							<option value="apporteur">Apporteur</option>
-						</select>
-
-						<div className="flex items-center gap-2">
-							<input
-								type="number"
-								placeholder="Prix min"
-								value={priceFilter.min || ''}
-								onChange={(e) =>
-									setPriceFilter((prev) => ({
-										...prev,
-										min: parseInt(e.target.value) || 0,
-									}))
-								}
-								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-							/>
-							<span className="text-gray-500">-</span>
-							<input
-								type="number"
-								placeholder="Prix max"
-								value={
-									priceFilter.max === 10000000
-										? ''
-										: priceFilter.max
-								}
-								onChange={(e) =>
-									setPriceFilter((prev) => ({
-										...prev,
-										max:
-											parseInt(e.target.value) ||
-											10000000,
-									}))
-								}
-								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-							/>
-						</div>
-
-						{/* Surface habitable */}
-						<div className="flex items-center gap-2">
-							<input
-								type="number"
-								placeholder="Surface min (m²)"
-								value={surfaceFilter.min || ''}
-								onChange={(e) =>
-									setSurfaceFilter((prev) => ({
-										...prev,
-										min: parseInt(e.target.value) || 0,
-									}))
-								}
-								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-							/>
-							<span className="text-gray-500">-</span>
-							<input
-								type="number"
-								placeholder="Surface max (m²)"
-								value={
-									surfaceFilter.max === 100000
-										? ''
-										: surfaceFilter.max
-								}
-								onChange={(e) =>
-									setSurfaceFilter((prev) => ({
-										...prev,
-										max: parseInt(e.target.value) || 100000,
-									}))
-								}
-								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
-							/>
-						</div>
-					</div>
-				)}
-			</div>
+			{/* Unified Search and Filters - Wrapped with ErrorBoundary */}
+			<ErrorBoundary fallback={<FilterErrorFallback />}>
+				<SearchFiltersPanel
+					searchTerm={searchTerm}
+					onSearchTermChange={setSearchTerm}
+					selectedLocations={selectedLocations}
+					onLocationsChange={setSelectedLocations}
+					radiusKm={radiusKm}
+					onRadiusChange={handleRadiusChange}
+					contentFilter={contentFilter}
+					onContentFilterChange={setContentFilter}
+					typeFilter={typeFilter}
+					onTypeFilterChange={setTypeFilter}
+					profileFilter={profileFilter}
+					onProfileFilterChange={setProfileFilter}
+					priceFilter={priceFilter}
+					onPriceFilterChange={setPriceFilter}
+					surfaceFilter={surfaceFilter}
+					onSurfaceFilterChange={setSurfaceFilter}
+					filteredPropertiesCount={filteredPropertiesCount}
+					filteredSearchAdsCount={filteredSearchAdsCount}
+					isAuthenticated={isAuthenticated}
+					hasMyArea={
+						!!user?.professionalInfo?.city &&
+						myAreaLocations.length > 0
+					}
+					myAreaLocationsCount={myAreaLocations.length}
+					favoritePropertyIds={favoritePropertyIds}
+					favoriteSearchAdIds={favoriteSearchAdIds}
+				/>
+			</ErrorBoundary>
 
 			{/* Unified Feed */}
 			{loading ? (
 				<div className="text-center py-12">
-					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto mb-4"></div>
-					<p className="text-gray-600">Chargement des annonces...</p>
+					<PageLoader message="Chargement des annonces..." />
 				</div>
 			) : error ? (
 				<div className="text-center py-12 bg-red-50 rounded-lg">
-					<p className="text-red-600">{error}</p>
+					<p className="text-red-600">
+						{error.message ||
+							'Erreur lors du chargement des données'}
+					</p>
 					<button
 						onClick={() => window.location.reload()}
 						className="mt-4 px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-dark"
@@ -454,159 +663,46 @@ export default function Home() {
 					{/* Properties Section */}
 					{(contentFilter === 'all' ||
 						contentFilter === 'properties' ||
-						contentFilter === 'favorites') && (
-						<div id="properties-section">
-							<h2 className="text-2xl font-bold text-gray-900 mb-6">
-								Les biens à vendre
-							</h2>
-							{(() => {
-								const propertiesToShow =
-									contentFilter === 'favorites'
-										? filterProperties(properties).filter(
-												(property) =>
-													favoritePropertyIds.has(
-														property._id,
-													),
-											)
-										: filterProperties(properties);
-
-								return propertiesToShow.length === 0 ? (
-									<div className="text-center py-12 bg-gray-50 rounded-lg">
-										<div className="mx-auto w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
-											<svg
-												className="w-8 h-8 text-gray-400"
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24"
-											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth="2"
-													d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
-												/>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth="2"
-													d="M8 5a2 2 0 012-2h4a2 2 0 012 2v3H8V5z"
-												/>
-											</svg>
-										</div>
-										<h3 className="text-lg font-semibold text-gray-900 mb-2">
-											Aucun bien trouvé
-										</h3>
-										<p className="text-gray-600">
-											{contentFilter === 'favorites'
-												? "Vous n'avez pas encore de biens en favoris."
-												: "Essayez d'ajuster vos filtres pour voir des biens à vendre."}
-										</p>
-									</div>
-								) : (
-									<>
-										<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-											{propertiesToShow
-												.slice(
-													(propPage - 1) * PAGE_SIZE,
-													propPage * PAGE_SIZE,
-												)
-												.map((property) => (
-													<PropertyCard
-														key={property._id}
-														property={property}
-													/>
-												))}
-										</div>
-										<Pagination
-											currentPage={propPage}
-											totalItems={propertiesToShow.length}
-											pageSize={PAGE_SIZE}
-											onPageChange={setPropPage}
-											scrollTargetId="properties-section"
-											className="mt-4"
-										/>
-									</>
-								);
-							})()}
-						</div>
+						contentFilter === 'favorites' ||
+						contentFilter === 'myArea') && (
+						<PropertiesSection
+							properties={filteredProperties}
+							contentFilter={contentFilter}
+							favoritePropertyIds={favoritePropertyIds}
+							currentPage={propPage}
+							pageSize={FILTER_DEFAULTS.PAGE_SIZE}
+							onPageChange={setPropPage}
+						/>
 					)}
 
 					{/* Search Ads Section */}
 					{(contentFilter === 'all' ||
 						contentFilter === 'searchAds' ||
-						contentFilter === 'favorites') && (
-						<div id="search-ads-section">
-							<h2 className="text-2xl font-bold text-gray-900 mb-6">
-								Recherches clients
-							</h2>
-							{(() => {
-								const filteredSearchAdsToShow =
-									contentFilter === 'favorites'
-										? filterSearchAds(searchAds).filter(
-												(ad) =>
-													favoriteSearchAdIds.has(
-														ad._id,
-													),
-											)
-										: filterSearchAds(searchAds);
-
-								return filteredSearchAdsToShow.length === 0 ? (
-									<div className="text-center py-12 bg-gray-50 rounded-lg">
-										<div className="mx-auto w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
-											<svg
-												className="w-8 h-8 text-gray-400"
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24"
-											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth="2"
-													d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-												/>
-											</svg>
-										</div>
-										<h3 className="text-lg font-semibold text-gray-900 mb-2">
-											Aucune recherche trouvée
-										</h3>
-										<p className="text-gray-600">
-											Essayez d&apos;ajuster vos filtres
-											pour voir des recherches clients.
-										</p>
-									</div>
-								) : (
-									<>
-										<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-											{filteredSearchAdsToShow
-												.slice(
-													(adPage - 1) * PAGE_SIZE,
-													adPage * PAGE_SIZE,
-												)
-												.map((searchAd) => (
-													<HomeSearchAdCard
-														key={searchAd._id}
-														searchAd={searchAd}
-													/>
-												))}
-										</div>
-										<Pagination
-											currentPage={adPage}
-											totalItems={
-												filteredSearchAdsToShow.length
-											}
-											pageSize={PAGE_SIZE}
-											onPageChange={setAdPage}
-											scrollTargetId="search-ads-section"
-											className="mt-4"
-										/>
-									</>
-								);
-							})()}
-						</div>
+						contentFilter === 'favorites' ||
+						contentFilter === 'myArea') && (
+						<SearchAdsSection
+							searchAds={
+								contentFilter === 'favorites'
+									? filteredSearchAds.filter((ad) =>
+											favoriteSearchAdIds.has(ad._id),
+										)
+									: filteredSearchAds
+							}
+							currentPage={adPage}
+							pageSize={FILTER_DEFAULTS.PAGE_SIZE}
+							onPageChange={setAdPage}
+						/>
 					)}
 				</div>
 			)}
 		</div>
+	);
+}
+
+export default function Home() {
+	return (
+		<Suspense fallback={<PageLoader />}>
+			<HomeContent />
+		</Suspense>
 	);
 }

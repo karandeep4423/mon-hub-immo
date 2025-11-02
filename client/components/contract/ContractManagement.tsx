@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '../ui/Button';
-import { Card } from '../ui/Card';
-import { ProfileAvatar } from '../ui/ProfileAvatar';
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { contractApi, ContractData } from '@/lib/api/contractApi';
 import { useAuth } from '@/hooks/useAuth';
-import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { toast } from 'react-toastify';
+import { useFetch, useMutation } from '@/hooks';
+import { Features } from '@/lib/constants';
 
 interface ContractManagementProps {
 	collaborationId: string;
@@ -19,51 +22,39 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 	onClose,
 }) => {
 	const { user } = useAuth();
-	const [contract, setContract] = useState<ContractData | null>(null);
-	const [isLoading, setIsLoading] = useState(true);
-	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [error, setError] = useState<string | null>(null);
 	const [isEditing, setIsEditing] = useState(false);
 	const [formData, setFormData] = useState({
 		contractText: '',
 		additionalTerms: '',
 	});
 	const [confirmOpen, setConfirmOpen] = useState(false);
+	const [checkboxes, setCheckboxes] = useState({
+		readContract: false,
+		acceptTerms: false,
+		respectObligations: false,
+		legallyBinding: false,
+	});
 
-	useEffect(() => {
-		const loadContract = async () => {
-			try {
-				setIsLoading(true);
-				setError(null);
-				console.log(
-					'Loading contract for collaboration:',
-					collaborationId,
-				);
-				const response = await contractApi.getContract(collaborationId);
-				console.log('Contract API response:', response);
-
-				if (response && response.contract) {
-					setContract(response.contract);
-					setFormData({
-						contractText: response.contract.contractText || '',
-						additionalTerms:
-							response.contract.additionalTerms || '',
-					});
-				} else {
-					throw new Error('Invalid contract response structure');
-				}
-			} catch (err) {
-				console.error('Error fetching contract:', err);
-				setError('Erreur lors du chargement du contrat');
-			} finally {
-				setIsLoading(false);
+	// Fetch contract using useFetch hook
+	const {
+		data: contractResponse,
+		loading: isLoading,
+		error,
+		refetch: reloadContract,
+	} = useFetch(() => contractApi.getContract(collaborationId), {
+		skip: !collaborationId,
+		showErrorToast: false,
+		onSuccess: (response) => {
+			if (response && response.contract) {
+				setFormData({
+					contractText: response.contract.contractText || '',
+					additionalTerms: response.contract.additionalTerms || '',
+				});
 			}
-		};
+		},
+	});
 
-		if (collaborationId) {
-			loadContract();
-		}
-	}, [collaborationId]);
+	const contract = contractResponse?.contract || null;
 
 	const handleEdit = () => {
 		setIsEditing(true);
@@ -81,84 +72,83 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 		});
 	};
 
-	const handleUpdateContract = async () => {
+	// Use useMutation for update contract
+	const { mutate: updateContract, loading: isUpdating } = useMutation(
+		() => contractApi.updateContract(collaborationId, formData),
+		{
+			onSuccess: (response) => {
+				setIsEditing(false);
+				if (response.requiresResigning) {
+					toast.info(
+						Features.Collaboration.CONTRACT_TOAST_MESSAGES
+							.UPDATE_REQUIRES_RESIGN,
+					);
+				}
+				onContractUpdate?.(response.contract);
+				reloadContract();
+			},
+			showErrorToast: true,
+			errorMessage:
+				Features.Collaboration.CONTRACT_TOAST_MESSAGES.UPDATE_ERROR,
+		},
+	);
+
+	// Use useMutation for sign contract
+	const { mutate: signContract, loading: isSigning } = useMutation(
+		() => contractApi.signContract(collaborationId),
+		{
+			onSuccess: (response) => {
+				onContractUpdate?.(response.contract);
+				if (
+					response.contract.ownerSigned &&
+					response.contract.collaboratorSigned
+				) {
+					toast.success(
+						Features.Collaboration.CONTRACT_TOAST_MESSAGES
+							.SIGN_SUCCESS_BOTH,
+					);
+				} else {
+					toast.success(
+						Features.Collaboration.CONTRACT_TOAST_MESSAGES
+							.SIGN_SUCCESS_WAITING,
+					);
+				}
+				setConfirmOpen(false);
+				reloadContract();
+			},
+			showErrorToast: true,
+			errorMessage:
+				Features.Collaboration.CONTRACT_TOAST_MESSAGES.SIGN_ERROR,
+		},
+	);
+	const isSubmitting = isUpdating || isSigning;
+
+	const handleUpdateContract = () => {
 		if (!contract) return;
-
-		setIsSubmitting(true);
-		setError(null);
-
-		try {
-			const response = await contractApi.updateContract(
-				collaborationId,
-				formData,
-			);
-			setContract(response.contract);
-			setIsEditing(false);
-
-			if (response.requiresResigning) {
-				toast.info(
-					'Le contrat a été modifié. Les deux parties doivent signer à nouveau.',
-				);
-			}
-
-			onContractUpdate?.(response.contract);
-		} catch (err) {
-			console.error('Error updating contract:', err);
-			const errorMessage =
-				err instanceof Error
-					? err.message
-					: 'Erreur lors de la mise à jour du contrat';
-			setError(errorMessage);
-		} finally {
-			setIsSubmitting(false);
-		}
+		updateContract({});
 	};
 
-	const doSignContract = async () => {
+	const doSignContract = () => {
 		if (!contract) return;
-
-		setIsSubmitting(true);
-		setError(null);
-
-		try {
-			const response = await contractApi.signContract(collaborationId);
-			setContract(response.contract);
-			onContractUpdate?.(response.contract);
-
-			if (
-				response.contract.ownerSigned &&
-				response.contract.collaboratorSigned
-			) {
-				toast.success(
-					'Félicitations ! Le contrat a été signé par les deux parties. La collaboration est maintenant active.',
-				);
-			} else {
-				toast.success(
-					"Contrat signé avec succès. En attente de la signature de l'autre partie.",
-				);
-			}
-		} catch (err) {
-			console.error('Error signing contract:', err);
-			const errorMessage =
-				err instanceof Error
-					? err.message
-					: 'Erreur lors de la signature du contrat';
-			setError(errorMessage);
-			toast.error(errorMessage);
-		} finally {
-			setIsSubmitting(false);
-			setConfirmOpen(false);
-		}
+		signContract({});
 	};
 
 	const handleSignContract = () => {
+		// Validate all checkboxes are checked
+		const allChecked = Object.values(checkboxes).every((value) => value);
+		if (!allChecked) {
+			toast.error(
+				"Veuillez cocher toutes les conditions d'acceptation avant de signer",
+			);
+			return;
+		}
 		setConfirmOpen(true);
 	};
 
 	if (isLoading) {
 		return (
 			<div className="flex items-center justify-center p-8">
-				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+				<LoadingSpinner size="lg" />
 			</div>
 		);
 	}
@@ -167,17 +157,19 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 		return (
 			<div className="text-center p-8">
 				<p className="text-red-600">
-					{error || 'Contrat non trouvé ou données incomplètes'}
+					{error
+						? String(error)
+						: Features.Collaboration.CONTRACT_TOAST_MESSAGES
+								.NOT_FOUND}
 				</p>
 				{onClose && (
 					<Button onClick={onClose} className="mt-4">
-						Fermer
+						{Features.Collaboration.CONTRACT_UI_TEXT.CLOSE_BUTTON}
 					</Button>
 				)}
 			</div>
 		);
 	}
-
 	const isOwner =
 		contract.propertyOwner.id === user?._id ||
 		contract.propertyOwner.id === user?.id;
@@ -188,34 +180,35 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 		? contract.collaboratorSigned
 		: contract.ownerSigned;
 
-	// Debug logging
-	console.log('Contract Management Debug:', {
-		contract,
-		user,
-		propertyOwnerId: contract.propertyOwner.id,
-		userId: user?._id,
-		userIdAlt: user?.id,
-		isOwner,
-		ownerSigned: contract.ownerSigned,
-		collaboratorSigned: contract.collaboratorSigned,
-	});
-
 	return (
 		<div className="space-y-6">
 			<ConfirmDialog
 				isOpen={confirmOpen}
-				title="Signer le contrat ?"
-				description="Êtes-vous sûr de vouloir signer ce contrat ? Cette action sera enregistrée."
+				title={
+					Features.Collaboration.CONTRACT_UI_TEXT.SIGN_DIALOG_TITLE
+				}
+				description={
+					Features.Collaboration.CONTRACT_UI_TEXT
+						.SIGN_DIALOG_DESCRIPTION
+				}
 				onCancel={() => setConfirmOpen(false)}
 				onConfirm={doSignContract}
-				confirmText="Oui, signer"
-				cancelText="Non, revenir"
+				confirmText={
+					Features.Collaboration.CONTRACT_UI_TEXT.SIGN_CONFIRM_TEXT
+				}
+				cancelText={
+					Features.Collaboration.CONTRACT_UI_TEXT.SIGN_CANCEL_TEXT
+				}
 				variant="primary"
 				loading={isSubmitting}
 			/>
 			{error && (
 				<div className="bg-red-50 border border-red-200 rounded-lg p-4">
-					<p className="text-red-600">{error}</p>
+					<p className="text-red-600">
+						{error.message ||
+							Features.Collaboration.CONTRACT_UI_TEXT
+								.DEFAULT_ERROR}
+					</p>
 				</div>
 			)}
 
@@ -223,17 +216,23 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 			<Card className="p-6">
 				<div className="flex items-center justify-between mb-4">
 					<h2 className="text-2xl font-bold text-gray-900">
-						Contrat de Collaboration
+						{Features.Collaboration.CONTRACT_UI_TEXT.TITLE}
 					</h2>
 					<div className="flex items-center space-x-2">
 						{currentUserSigned && (
 							<span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-								✓ Vous avez signé
+								{
+									Features.Collaboration.CONTRACT_UI_TEXT
+										.YOU_SIGNED
+								}
 							</span>
 						)}
 						{otherPartySigned && (
 							<span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-								✓ Partenaire a signé
+								{
+									Features.Collaboration.CONTRACT_UI_TEXT
+										.PARTNER_SIGNED
+								}
 							</span>
 						)}
 					</div>
@@ -259,11 +258,17 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 								</div>
 								<div className="ml-3">
 									<h3 className="text-sm font-medium text-orange-800">
-										Le contrat a été modifié
+										{
+											Features.Collaboration
+												.CONTRACT_UI_TEXT.MODIFIED_TITLE
+										}
 									</h3>
 									<p className="text-sm text-orange-700 mt-1">
-										Les deux parties doivent signer à
-										nouveau.
+										{
+											Features.Collaboration
+												.CONTRACT_UI_TEXT
+												.MODIFIED_DESCRIPTION
+										}
 									</p>
 								</div>
 							</div>
@@ -274,7 +279,10 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
 					<div>
 						<h3 className="font-semibold text-gray-900 mb-3">
-							Propriétaire
+							{
+								Features.Collaboration.CONTRACT_UI_TEXT
+									.OWNER_SECTION
+							}
 						</h3>
 						<div className="flex items-center space-x-3 mb-2">
 							<ProfileAvatar
@@ -319,7 +327,10 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 					</div>
 					<div>
 						<h3 className="font-semibold text-gray-900 mb-3">
-							Collaborateur
+							{
+								Features.Collaboration.CONTRACT_UI_TEXT
+									.COLLABORATOR_SECTION
+							}
 						</h3>
 						<div className="flex items-center space-x-3 mb-2">
 							<ProfileAvatar
@@ -367,17 +378,23 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 
 			{/* Contract Content */}
 			<Card className="p-6">
-				<div className="flex items-center justify-between mb-4">
-					<h3 className="text-lg font-semibold text-gray-900">
-						Termes du contrat
+				<div className="flex justify-between items-center mb-4">
+					<h3 className="text-xl font-semibold text-gray-900">
+						{
+							Features.Collaboration.CONTRACT_UI_TEXT
+								.CONTRACT_CONTENT_SECTION
+						}
 					</h3>
 					{!isEditing && contract.canEdit && (
 						<Button
 							onClick={handleEdit}
 							variant="outline"
-							disabled={isSubmitting}
+							loading={isSubmitting}
 						>
-							Modifier le contrat
+							{
+								Features.Collaboration.CONTRACT_UI_TEXT
+									.EDIT_BUTTON
+							}
 						</Button>
 					)}
 				</div>
@@ -397,8 +414,12 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 									})
 								}
 								rows={12}
-								className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-								placeholder="Saisissez le contenu du contrat..."
+								className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand/20"
+								placeholder={
+									Features.Collaboration
+										.COLLABORATION_FORM_PLACEHOLDERS
+										.CONTRACT_CONTENT
+								}
 							/>
 						</div>
 						<div>
@@ -414,24 +435,34 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 									})
 								}
 								rows={4}
-								className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-								placeholder="Conditions supplémentaires..."
+								className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand/20"
+								placeholder={
+									Features.Collaboration
+										.COLLABORATION_FORM_PLACEHOLDERS
+										.CONTRACT_TERMS
+								}
 							/>
 						</div>
 						<div className="flex space-x-3">
 							<Button
 								onClick={handleUpdateContract}
-								disabled={isSubmitting}
-								className="bg-blue-600 hover:bg-blue-700"
+								loading={isSubmitting}
+								className="bg-brand hover:bg-brand-600"
 							>
-								{isSubmitting ? 'Sauvegarde...' : 'Sauvegarder'}
+								{
+									Features.Collaboration.CONTRACT_UI_TEXT
+										.SAVE_BUTTON
+								}
 							</Button>
 							<Button
 								onClick={handleCancelEdit}
 								variant="outline"
 								disabled={isSubmitting}
 							>
-								Annuler
+								{
+									Features.Collaboration.CONTRACT_UI_TEXT
+										.CANCEL_EDIT_BUTTON
+								}
 							</Button>
 						</div>
 					</div>
@@ -439,7 +470,10 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 					<div className="space-y-4">
 						<div>
 							<h4 className="font-medium text-gray-900 mb-2">
-								Contenu du contrat
+								{
+									Features.Collaboration.CONTRACT_UI_TEXT
+										.CONTRACT_CONTENT_SECTION
+								}
 							</h4>
 							<div className="bg-gray-50 rounded-lg p-4 whitespace-pre-wrap">
 								{contract.contractText ||
@@ -449,7 +483,10 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 						{contract.additionalTerms && (
 							<div>
 								<h4 className="font-medium text-gray-900 mb-2">
-									Conditions supplémentaires
+									{
+										Features.Collaboration.CONTRACT_UI_TEXT
+											.TERMS_SECTION
+									}
 								</h4>
 								<div className="bg-gray-50 rounded-lg p-4 whitespace-pre-wrap">
 									{contract.additionalTerms}
@@ -467,58 +504,95 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 						Signature
 					</h3>
 					<div className="space-y-4">
-						<div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-							<h4 className="font-medium text-blue-900 mb-2">
+						<div className="bg-info-light border border-info rounded-lg p-4">
+							<h4 className="font-medium text-gray-900 mb-2">
 								Conditions d&apos;acceptation
+								<span className="text-red-500 ml-1">*</span>
 							</h4>
-							<div className="space-y-2 text-sm text-blue-800">
-								<label className="flex items-center">
+							<div className="space-y-2 text-sm text-gray-800">
+								<label className="flex items-center cursor-pointer">
 									<input
 										type="checkbox"
-										required
-										className="mr-2"
+										checked={checkboxes.readContract}
+										onChange={(e) =>
+											setCheckboxes({
+												...checkboxes,
+												readContract: e.target.checked,
+											})
+										}
+										className="mr-2 w-4 h-4 cursor-pointer"
 									/>
-									Je confirme avoir lu et compris
-									l&apos;intégralité du contrat de
-									collaboration
+									<span>
+										Je confirme avoir lu et compris
+										l&apos;intégralité du contrat de
+										collaboration
+									</span>
 								</label>
-								<label className="flex items-center">
+								<label className="flex items-center cursor-pointer">
 									<input
 										type="checkbox"
-										required
-										className="mr-2"
+										checked={checkboxes.acceptTerms}
+										onChange={(e) =>
+											setCheckboxes({
+												...checkboxes,
+												acceptTerms: e.target.checked,
+											})
+										}
+										className="mr-2 w-4 h-4 cursor-pointer"
 									/>
-									J&apos;accepte les termes et conditions
-									énoncés dans ce contrat
+									<span>
+										J&apos;accepte les termes et conditions
+										énoncés dans ce contrat
+									</span>
 								</label>
-								<label className="flex items-center">
+								<label className="flex items-center cursor-pointer">
 									<input
 										type="checkbox"
-										required
-										className="mr-2"
+										checked={checkboxes.respectObligations}
+										onChange={(e) =>
+											setCheckboxes({
+												...checkboxes,
+												respectObligations:
+													e.target.checked,
+											})
+										}
+										className="mr-2 w-4 h-4 cursor-pointer"
 									/>
-									Je m&apos;engage à respecter mes obligations
-									telles que définies dans le contrat
+									<span>
+										Je m&apos;engage à respecter mes
+										obligations telles que définies dans le
+										contrat
+									</span>
 								</label>
-								<label className="flex items-center">
+								<label className="flex items-center cursor-pointer">
 									<input
 										type="checkbox"
-										required
-										className="mr-2"
+										checked={checkboxes.legallyBinding}
+										onChange={(e) =>
+											setCheckboxes({
+												...checkboxes,
+												legallyBinding:
+													e.target.checked,
+											})
+										}
+										className="mr-2 w-4 h-4 cursor-pointer"
 									/>
-									Je comprends que ce contrat est
-									juridiquement contraignant
+									<span>
+										Je comprends que ce contrat est
+										juridiquement contraignant
+									</span>
 								</label>
 							</div>
 						</div>
 						<Button
 							onClick={handleSignContract}
-							disabled={isSubmitting}
+							loading={isSubmitting}
 							className="bg-green-600 hover:bg-green-700 w-full"
 						>
-							{isSubmitting
-								? 'Signature...'
-								: '✍️ Signer le contrat'}
+							{
+								Features.Collaboration.CONTRACT_UI_TEXT
+									.SIGN_BUTTON
+							}
 						</Button>
 					</div>
 				</Card>
@@ -528,7 +602,7 @@ export const ContractManagement: React.FC<ContractManagementProps> = ({
 			{onClose && (
 				<div className="flex justify-end">
 					<Button onClick={onClose} variant="outline">
-						Fermer
+						{Features.Collaboration.CONTRACT_UI_TEXT.CLOSE_BUTTON}
 					</Button>
 				</div>
 			)}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal } from './Modal';
 import { Button } from './Button';
+import { UI } from '@/lib/constants/components';
 
 type Variant = 'danger' | 'primary' | 'warning';
 
@@ -14,6 +15,7 @@ interface ConfirmDialogProps {
 	cancelText?: string;
 	variant?: Variant;
 	loading?: boolean;
+	zIndex?: number;
 }
 
 export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
@@ -22,19 +24,20 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 	description,
 	onConfirm,
 	onCancel,
-	confirmText = 'Confirmer',
-	cancelText = 'Annuler',
+	confirmText = UI.DIALOG_TEXT.confirm,
+	cancelText = UI.DIALOG_TEXT.cancel,
 	variant = 'primary',
 	loading = false,
+	zIndex = 60,
 }) => {
-	const variantClasses: Record<Variant, string> = {
-		danger: 'bg-red-600 hover:bg-red-700 text-white',
-		primary: 'bg-brand-600 hover:bg-brand-700 text-white',
-		warning: 'bg-yellow-600 hover:bg-yellow-700 text-white',
-	};
-
 	return (
-		<Modal isOpen={isOpen} onClose={onCancel} title={title} size="sm">
+		<Modal
+			isOpen={isOpen}
+			onClose={onCancel}
+			title={title}
+			size="sm"
+			zIndex={zIndex}
+		>
 			<div className="space-y-4">
 				{description && (
 					<p className="text-sm text-gray-600">{description}</p>
@@ -49,10 +52,10 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 					</Button>
 					<Button
 						onClick={onConfirm}
-						disabled={loading}
-						className={variantClasses[variant]}
+						loading={loading}
+						className={UI.DIALOG_VARIANT_CLASSES[variant]}
 					>
-						{loading ? 'Veuillez patienter...' : confirmText}
+						{confirmText}
 					</Button>
 				</div>
 			</div>

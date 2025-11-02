@@ -21,12 +21,12 @@ export const useCollaborationPermissions = (
 		const userId = user.id || user._id;
 		const isOwner =
 			userId &&
-			(userId === collaboration.propertyOwnerId?._id ||
-				userId === collaboration.propertyOwnerId);
+			(userId === collaboration.postOwnerId?._id ||
+				userId === (collaboration.postOwnerId as unknown as string));
 		const isCollaborator =
 			userId &&
 			(userId === collaboration.collaboratorId?._id ||
-				userId === collaboration.collaboratorId);
+				userId === (collaboration.collaboratorId as unknown as string));
 		const canUpdate = Boolean(isOwner || isCollaborator);
 		const isActive = collaboration.status === 'active';
 

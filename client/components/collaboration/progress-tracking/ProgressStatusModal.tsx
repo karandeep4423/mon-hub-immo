@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { Button } from '../../ui/Button';
 import { Modal } from '../../ui/Modal';
-import { StepIndicator } from '../../ui/StepIndicator';
+import { StepStatusIndicator } from '../../ui/StepStatusIndicator';
 import {
 	PROGRESS_STEPS_CONFIG,
 	ProgressStep,
 	ProgressStatusUpdate,
 	ProgressStepData,
 } from './types';
-import { STEP_ORDER } from '../../../lib/constants/stepOrder';
+import { Features, Components } from '@/lib/constants';
+import { logger } from '@/lib/utils/logger';
 
 interface ProgressStatusModalProps {
 	isOpen: boolean;
@@ -31,7 +32,7 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 }) => {
 	// Find the next uncompleted step as default selection
 	const nextUncompletedStep =
-		STEP_ORDER.find((stepId) => {
+		Features.Collaboration.STEP_ORDER.find((stepId) => {
 			const stepData = steps?.find((s) => s.id === stepId);
 			return !stepData?.completed;
 		}) || currentStep;
@@ -62,14 +63,18 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 			onClose();
 			setNotes('');
 		} catch (error) {
-			console.error('Error updating status:', error);
+			logger.error('Error updating status:', error);
 		} finally {
 			setIsUpdating(false);
 		}
 	};
 
 	return (
-		<Modal isOpen={isOpen} onClose={onClose} title="Modifier le statut">
+		<Modal
+			isOpen={isOpen}
+			onClose={onClose}
+			title={Components.UI.BUTTON_TEXT.editStatus}
+		>
 			<div className="space-y-6">
 				{/* Step Selection */}
 				<div>
@@ -77,7 +82,7 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 						Sélectionner l&apos;étape
 					</label>
 					<div className="space-y-2">
-						{STEP_ORDER.map((step) => {
+						{Features.Collaboration.STEP_ORDER.map((step) => {
 							const config = PROGRESS_STEPS_CONFIG[step];
 							const stepData = steps?.find((s) => s.id === step);
 							const isCompleted = stepData?.completed || false;
@@ -86,15 +91,15 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 							const stepState = isCompleted
 								? 'completed'
 								: selectedStep === step
-									? 'current'
-									: 'upcoming';
+									? 'active'
+									: 'pending';
 
 							return (
 								<div
 									key={step}
 									className={`flex items-center p-3 border rounded-lg transition-colors ${
 										selectedStep === step
-											? 'border-blue-500 bg-blue-50'
+											? 'border-brand bg-brand-50'
 											: isDisabled
 												? 'border-gray-200 bg-gray-50 cursor-not-allowed'
 												: 'border-gray-300 hover:border-gray-400 cursor-pointer'
@@ -103,7 +108,7 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 										!isDisabled && setSelectedStep(step)
 									}
 								>
-									<StepIndicator
+									<StepStatusIndicator
 										state={stepState}
 										icon={config.icon}
 										size="sm"
@@ -129,7 +134,7 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 										</p>
 									</div>
 									{selectedStep === step && !isDisabled && (
-										<div className="w-4 h-4 border-2 border-blue-500 rounded-full bg-blue-500 flex items-center justify-center">
+										<div className="w-4 h-4 border-2 border-brand rounded-full bg-brand-500 flex items-center justify-center">
 											<div className="w-2 h-2 bg-white rounded-full" />
 										</div>
 									)}
@@ -146,11 +151,11 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 							<label className="block text-sm font-medium text-gray-700 mb-2">
 								Aperçu de la progression
 							</label>
-							<div className="p-3 bg-blue-50 rounded-lg">
-								<p className="text-sm text-blue-800">
+							<div className="p-3 bg-brand-50 rounded-lg">
+								<p className="text-sm text-brand-800">
 									L&apos;étape &quot;
 									{PROGRESS_STEPS_CONFIG[selectedStep].title}
-									&quot; sera marquée comme terminée
+									&quot; sera marquée comme complétée
 								</p>
 							</div>
 						</div>
@@ -164,10 +169,14 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 					<textarea
 						value={notes}
 						onChange={(e) => setNotes(e.target.value)}
-						placeholder="Ajouter une note sur cette mise à jour..."
+						placeholder={
+							Features.Collaboration
+								.COLLABORATION_FORM_PLACEHOLDERS
+								.STATUS_UPDATE_NOTE
+						}
 						rows={3}
 						maxLength={500}
-						className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-transparent"
 					/>
 					<p className="text-xs text-gray-500 mt-1">
 						{notes.length}/500 caractères
@@ -185,14 +194,14 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 					</Button>
 					<Button
 						onClick={handleSubmit}
+						loading={isUpdating}
 						disabled={
-							isUpdating ||
 							!selectedStep ||
 							steps?.find((s) => s.id === selectedStep)?.completed
 						}
 						className="min-w-24"
 					>
-						{isUpdating ? 'Mise à jour...' : 'Mettre à jour'}
+						Mettre à jour
 					</Button>
 				</div>
 			</div>

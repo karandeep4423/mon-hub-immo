@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { FavoritesService } from '@/lib/api/favoritesApi';
+import { logger } from '@/lib/utils/logger';
 
 interface FavoritesState {
 	// Backward-compatible property favorites set
@@ -56,7 +57,7 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
 				isLoading: false,
 			});
 		} catch (error) {
-			console.error('Error initializing favorites:', error);
+			logger.error('Error initializing favorites', error);
 			set({
 				favoriteIds: new Set(),
 				favoritePropertyIds: new Set(),
@@ -88,7 +89,7 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
 			});
 			return response.isFavorite;
 		} catch (error) {
-			console.error('Error toggling favorite:', error);
+			logger.error('Error toggling favorite', error);
 			throw error;
 		}
 	},
@@ -105,7 +106,7 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
 			set({ favoriteSearchAdIds: newSet });
 			return response.isFavorite;
 		} catch (error) {
-			console.error('Error toggling search ad favorite:', error);
+			logger.error('Error toggling search ad favorite', error);
 			throw error;
 		}
 	},

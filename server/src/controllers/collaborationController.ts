@@ -1,11 +1,13 @@
 import { Request, Response } from 'express';
 import { Collaboration } from '../models/Collaboration';
 import { Property } from '../models/Property';
+import { SearchAd } from '../models/SearchAd';
 import { Types } from 'mongoose';
-import type { IUser } from '../models/User';
+import mongoose from 'mongoose';
 import { User } from '../models/User';
 import { notificationService } from '../services/notificationService';
 import { collabTexts } from '../utils/notificationTexts';
+import { logger } from '../utils/logger';
 
 interface AuthenticatedRequest extends Request {
 	user?: {
@@ -19,36 +21,93 @@ export const proposeCollaboration = async (
 	res: Response,
 ): Promise<void> => {
 	try {
-		const { propertyId, commissionPercentage, message } = req.body;
+		const {
+			propertyId,
+			searchAdId,
+			commissionPercentage,
+			message,
+			compensationType,
+			compensationAmount,
+		} = req.body;
 		const userId = req.user?.id;
+		const userType = req.user?.userType;
 
 		if (!userId) {
 			res.status(401).json({ success: false, message: 'Unauthorized' });
 			return;
 		}
 
-		// Check if property exists
-		const property = await Property.findById(propertyId);
-		if (!property) {
-			res.status(404).json({
+		// Only agents can propose collaborations
+		if (userType === 'apporteur') {
+			res.status(403).json({
 				success: false,
-				message: 'Property not found',
+				message:
+					'Apporteurs cannot propose collaborations. Only agents can propose collaborations.',
 			});
 			return;
 		}
 
-		// Check that the user is not proposing collaboration on their own property
-		if (property.owner.toString() === userId) {
+		// Determine post type and ID
+		const postType = propertyId ? 'Property' : 'SearchAd';
+		const postId = propertyId || searchAdId;
+
+		if (!postId) {
 			res.status(400).json({
 				success: false,
-				message: 'Cannot collaborate on your own property',
+				message: 'Either propertyId or searchAdId must be provided',
 			});
 			return;
+		}
+
+		let postOwnerId: Types.ObjectId;
+
+		// Fetch the post (property or searchAd)
+		if (postType === 'Property') {
+			const property = await Property.findById(postId);
+			if (!property) {
+				res.status(404).json({
+					success: false,
+					message: 'Property not found',
+				});
+				return;
+			}
+
+			// Check that the user is not proposing collaboration on their own property
+			if (property.owner.toString() === userId) {
+				res.status(400).json({
+					success: false,
+					message: 'Cannot collaborate on your own property',
+				});
+				return;
+			}
+
+			postOwnerId = property.owner as Types.ObjectId;
+		} else {
+			// searchAd
+			const searchAd = await SearchAd.findById(postId);
+			if (!searchAd) {
+				res.status(404).json({
+					success: false,
+					message: 'Search ad not found',
+				});
+				return;
+			}
+
+			// Check that the user is not proposing collaboration on their own search ad
+			if (searchAd.authorId.toString() === userId) {
+				res.status(400).json({
+					success: false,
+					message: 'Cannot collaborate on your own search ad',
+				});
+				return;
+			}
+
+			postOwnerId = searchAd.authorId as Types.ObjectId;
 		}
 
 		// Check for existing collaboration
 		const existingCollaboration = await Collaboration.findOne({
-			propertyId,
+			postId,
 			collaboratorId: userId, // Current user is the collaborator
 			status: { $in: ['pending', 'accepted', 'active'] },
 		});
@@ -61,9 +120,9 @@ export const proposeCollaboration = async (
 			return;
 		}
 
-		// Block if the property already has an active/pending/accepted collaboration with someone else
+		// Block if the post already has an active/pending/accepted collaboration with someone else
 		const collabWithAnother = await Collaboration.findOne({
-			propertyId,
+			postId,
 			collaboratorId: { $ne: userId },
 			status: { $in: ['pending', 'accepted', 'active'] },
 		});
@@ -71,82 +130,139 @@ export const proposeCollaboration = async (
 		if (collabWithAnother) {
 			res.status(409).json({
 				success: false,
-				message: 'Property already under collaboration',
+				message: `${postType === 'Property' ? 'Property' : 'Search ad'} already under collaboration`,
 			});
 			return;
 		}
 
-		const collaboration = new Collaboration({
-			propertyId,
-			propertyOwnerId: property.owner, // Property owner receives the collaboration request
-			collaboratorId: userId, // Current authenticated user becomes the collaborator
-			proposedCommission: commissionPercentage,
-			proposalMessage: message,
-			status: 'pending',
-			currentStep: 'proposal',
-			activities: [
-				{
-					type: 'proposal',
-					message: `Collaboration proposée avec ${commissionPercentage}% de commission`,
-					createdBy: new Types.ObjectId(userId),
-					createdAt: new Date(),
-				},
-			],
-			ownerSigned: false,
-			collaboratorSigned: false,
-		});
+		// Check if post owner is apporteur and apply special validation
+		const postOwner = await User.findById(postOwnerId).select('userType');
+		const isApporteurPost = postOwner?.userType === 'apporteur';
 
-		await collaboration.save();
-
-		// Notify property owner about new proposal
-		const owner = property.owner as Types.ObjectId | IUser;
-		let ownerId: Types.ObjectId;
-		if (owner instanceof Types.ObjectId) {
-			ownerId = owner;
-		} else {
-			ownerId = owner._id as unknown as Types.ObjectId;
+		// Validate compensation for apporteur posts
+		if (isApporteurPost) {
+			if (compensationType === 'percentage' || !compensationType) {
+				if (commissionPercentage && commissionPercentage >= 50) {
+					res.status(400).json({
+						success: false,
+						message:
+							'Commission percentage must be less than 50% for apporteur posts',
+					});
+					return;
+				}
+			} else if (
+				compensationType === 'fixed_amount' ||
+				compensationType === 'gift_vouchers'
+			) {
+				if (!compensationAmount || compensationAmount <= 0) {
+					res.status(400).json({
+						success: false,
+						message: 'Compensation amount must be greater than 0',
+					});
+					return;
+				}
+			}
 		}
-		// fetch actor for a better message
-		const actor = await User.findById(userId).select(
-			'firstName lastName email profileImage',
-		);
-		const actorName = actor
-			? actor.firstName
-				? `${actor.firstName} ${actor.lastName}`
-				: actor.firstName || actor.email
-			: 'Someone';
-		await notificationService.create({
-			recipientId: ownerId,
-			actorId: userId,
-			type: 'collab:proposal_received',
-			entity: { type: 'collaboration', id: collaboration._id },
-			title: collabTexts.proposalReceivedTitle,
-			message: collabTexts.proposalReceivedBody({
-				actorName,
-				commission: commissionPercentage,
-			}),
-			data: {
-				propertyId,
-				commissionPercentage,
-				actorName,
-				actorAvatar: actor?.profileImage || undefined,
-			},
-		});
 
-		res.status(201).json({
-			success: true,
-			message: 'Collaboration proposed successfully',
-			collaboration,
-		});
+		// Determine activity message based on compensation type
+		let activityMessage = '';
+		if (isApporteurPost && compensationType !== 'percentage') {
+			if (compensationType === 'fixed_amount') {
+				activityMessage = `Collaboration proposée avec ${compensationAmount}€ de compensation`;
+			} else if (compensationType === 'gift_vouchers') {
+				activityMessage = `Collaboration proposée avec ${compensationAmount} chèques cadeaux`;
+			}
+		} else {
+			activityMessage = `Collaboration proposée avec ${commissionPercentage || 0}% de commission`;
+		}
+
+		// Use MongoDB transaction for atomic collaboration creation
+		const session = await mongoose.startSession();
+		session.startTransaction();
+
+		try {
+			const collaboration = new Collaboration({
+				postId,
+				postType,
+				postOwnerId, // Post owner receives the collaboration request
+				collaboratorId: userId, // Current authenticated user becomes the collaborator
+				proposedCommission: commissionPercentage || 0,
+				proposalMessage: message,
+				...(isApporteurPost && {
+					compensationType,
+					compensationAmount,
+				}),
+				status: 'pending',
+				currentStep: 'proposal',
+				activities: [
+					{
+						type: 'proposal',
+						message: activityMessage,
+						createdBy: new Types.ObjectId(userId),
+						createdAt: new Date(),
+					},
+				],
+				ownerSigned: false,
+				collaboratorSigned: false,
+			});
+
+			await collaboration.save({ session });
+
+			// Notify post owner about new proposal
+			const actor = await User.findById(userId)
+				.select('firstName lastName email profileImage')
+				.session(session);
+			const actorName = actor
+				? actor.firstName
+					? `${actor.firstName} ${actor.lastName}`
+					: actor.firstName || actor.email
+				: 'Someone';
+
+			await notificationService.create({
+				recipientId: postOwnerId,
+				actorId: userId,
+				type: 'collab:proposal_received',
+				entity: { type: 'collaboration', id: collaboration._id },
+				title: collabTexts.proposalReceivedTitle,
+				message: collabTexts.proposalReceivedBody({
+					actorName,
+					commission: commissionPercentage,
+				}),
+				data: {
+					postId: postId.toString(),
+					postType,
+					commissionPercentage,
+					actorName,
+					actorAvatar: actor?.profileImage || undefined,
+				},
+			});
+
+			// Commit the transaction
+			await session.commitTransaction();
+
+			res.status(201).json({
+				success: true,
+				message: 'Collaboration proposed successfully',
+				collaboration,
+			});
+		} catch (txError) {
+			// Rollback on error
+			await session.abortTransaction();
+			throw txError;
+		} finally {
+			session.endSession();
+		}
 	} catch (error) {
-		console.error('Error proposing collaboration:', error);
+		logger.error(
+			'[CollaborationController] Error proposing collaboration',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',
 		});
 	}
 };
-
 export const getUserCollaborations = async (
 	req: AuthenticatedRequest,
 	res: Response,
@@ -160,10 +276,10 @@ export const getUserCollaborations = async (
 		}
 
 		const collaborations = await Collaboration.find({
-			$or: [{ propertyOwnerId: userId }, { collaboratorId: userId }],
+			$or: [{ postOwnerId: userId }, { collaboratorId: userId }],
 		})
-			.populate('propertyId', 'title address price mainImage clientInfo')
-			.populate('propertyOwnerId', 'firstName lastName profileImage')
+			.populate('postId')
+			.populate('postOwnerId', 'firstName lastName profileImage')
 			.populate('collaboratorId', 'firstName lastName profileImage')
 			.populate(
 				'progressSteps.notes.createdBy',
@@ -176,14 +292,16 @@ export const getUserCollaborations = async (
 			collaborations,
 		});
 	} catch (error) {
-		console.error('Error getting collaborations:', error);
+		logger.error(
+			'[CollaborationController] Error getting collaborations',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',
 		});
 	}
 };
-
 export const respondToCollaboration = async (
 	req: AuthenticatedRequest,
 	res: Response,
@@ -207,10 +325,10 @@ export const respondToCollaboration = async (
 			return;
 		}
 
-		if (collaboration.propertyOwnerId.toString() !== userId) {
+		if (collaboration.postOwnerId.toString() !== userId) {
 			res.status(403).json({
 				success: false,
-				message: 'Only property owner can respond',
+				message: 'Only post owner can respond',
 			});
 			return;
 		}
@@ -223,55 +341,73 @@ export const respondToCollaboration = async (
 			return;
 		}
 
-		collaboration.status =
-			response === 'accepted' ? 'accepted' : 'rejected';
-		await collaboration.save();
+		// Use MongoDB transaction for atomic collaboration response
+		const session = await mongoose.startSession();
+		session.startTransaction();
 
-		// Notify collaborator about decision
-		const actor = await User.findById(userId).select(
-			'firstName lastName email profileImage',
-		);
-		const actorName = actor
-			? actor.firstName
-				? `${actor.firstName} ${actor.lastName}`
-				: actor.firstName || actor.email
-			: 'Someone';
-		await notificationService.create({
-			recipientId: collaboration.collaboratorId,
-			actorId: userId,
-			type:
-				response === 'accepted'
-					? 'collab:proposal_accepted'
-					: 'collab:proposal_rejected',
-			entity: { type: 'collaboration', id: collaboration._id },
-			title:
-				response === 'accepted'
-					? collabTexts.proposalAcceptedTitle({ actorName })
-					: collabTexts.proposalRejectedTitle({ actorName }),
-			message:
-				response === 'accepted'
-					? collabTexts.proposalAcceptedBody({ actorName })
-					: collabTexts.proposalRejectedBody({ actorName }),
-			data: {
-				actorName,
-				actorAvatar: actor?.profileImage || undefined,
-			},
-		});
+		try {
+			collaboration.status =
+				response === 'accepted' ? 'accepted' : 'rejected';
+			await collaboration.save({ session });
 
-		res.status(200).json({
-			success: true,
-			message: `Collaboration ${response}`,
-			collaboration,
-		});
+			// Notify collaborator about decision
+			const actor = await User.findById(userId)
+				.select('firstName lastName email profileImage')
+				.session(session);
+			const actorName = actor
+				? actor.firstName
+					? `${actor.firstName} ${actor.lastName}`
+					: actor.firstName || actor.email
+				: 'Someone';
+
+			await notificationService.create({
+				recipientId: collaboration.collaboratorId,
+				actorId: userId,
+				type:
+					response === 'accepted'
+						? 'collab:proposal_accepted'
+						: 'collab:proposal_rejected',
+				entity: { type: 'collaboration', id: collaboration._id },
+				title:
+					response === 'accepted'
+						? collabTexts.proposalAcceptedTitle({ actorName })
+						: collabTexts.proposalRejectedTitle({ actorName }),
+				message:
+					response === 'accepted'
+						? collabTexts.proposalAcceptedBody({ actorName })
+						: collabTexts.proposalRejectedBody({ actorName }),
+				data: {
+					actorName,
+					actorAvatar: actor?.profileImage || undefined,
+				},
+			});
+
+			// Commit the transaction
+			await session.commitTransaction();
+
+			res.status(200).json({
+				success: true,
+				message: `Collaboration ${response}`,
+				collaboration,
+			});
+		} catch (txError) {
+			// Rollback on error
+			await session.abortTransaction();
+			throw txError;
+		} finally {
+			session.endSession();
+		}
 	} catch (error) {
-		console.error('Error responding to collaboration:', error);
+		logger.error(
+			'[CollaborationController] Error responding to collaboration',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',
 		});
 	}
 };
-
 export const addCollaborationNote = async (
 	req: AuthenticatedRequest,
 	res: Response,
@@ -295,7 +431,7 @@ export const addCollaborationNote = async (
 			return;
 		}
 
-		const isOwner = collaboration.propertyOwnerId.toString() === userId;
+		const isOwner = collaboration.postOwnerId.toString() === userId;
 		const isCollaborator =
 			collaboration.collaboratorId.toString() === userId;
 
@@ -331,7 +467,7 @@ export const addCollaborationNote = async (
 		// Notify the other party about the note
 		const noteRecipientId = isOwner
 			? collaboration.collaboratorId
-			: collaboration.propertyOwnerId;
+			: collaboration.postOwnerId;
 		// Enrich with actor details for better UX in notifications
 		const actor = await User.findById(userId).select(
 			'firstName lastName email profileImage',
@@ -357,14 +493,13 @@ export const addCollaborationNote = async (
 			});
 		}
 	} catch (error) {
-		console.error('Error adding note:', error);
+		logger.error('[CollaborationController] Error adding note', error);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',
 		});
 	}
 };
-
 export const getCollaborationsByProperty = async (
 	req: AuthenticatedRequest,
 	res: Response,
@@ -378,8 +513,11 @@ export const getCollaborationsByProperty = async (
 			return;
 		}
 
-		const collaborations = await Collaboration.find({ propertyId })
-			.populate('propertyOwnerId', 'firstName lastName profileImage')
+		const collaborations = await Collaboration.find({
+			postId: propertyId,
+			postType: 'Property',
+		})
+			.populate('postOwnerId', 'firstName lastName profileImage')
 			.populate('collaboratorId', 'firstName lastName profileImage')
 			.sort({ createdAt: -1 });
 
@@ -388,14 +526,16 @@ export const getCollaborationsByProperty = async (
 			collaborations,
 		});
 	} catch (error) {
-		console.error('Error getting property collaborations:', error);
+		logger.error(
+			'[CollaborationController] Error getting property collaborations',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',
 		});
 	}
 };
-
 export const cancelCollaboration = async (
 	req: AuthenticatedRequest,
 	res: Response,
@@ -411,10 +551,7 @@ export const cancelCollaboration = async (
 
 		// Find the collaboration
 		const collaboration = await Collaboration.findById(id)
-			.populate(
-				'propertyOwnerId',
-				'firstName lastName email profileImage',
-			)
+			.populate('postOwnerId', 'firstName lastName email profileImage')
 			.populate(
 				'collaboratorId',
 				'firstName lastName email profileImage',
@@ -429,7 +566,7 @@ export const cancelCollaboration = async (
 		}
 
 		// Check if user is involved in this collaboration
-		const isOwner = collaboration.propertyOwnerId._id.toString() === userId;
+		const isOwner = collaboration.postOwnerId._id.toString() === userId;
 		const isCollaborator =
 			collaboration.collaboratorId._id.toString() === userId;
 
@@ -465,7 +602,7 @@ export const cancelCollaboration = async (
 		// Notify the other party about cancellation
 		const cancelRecipientId = isOwner
 			? collaboration.collaboratorId
-			: collaboration.propertyOwnerId;
+			: collaboration.postOwnerId;
 		const actor = await User.findById(userId).select(
 			'firstName lastName email profileImage',
 		);
@@ -487,14 +624,16 @@ export const cancelCollaboration = async (
 			},
 		});
 	} catch (error) {
-		console.error('Error cancelling collaboration:', error);
+		logger.error(
+			'[CollaborationController] Error cancelling collaboration',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',
 		});
 	}
 };
-
 export const updateProgressStatus = async (
 	req: AuthenticatedRequest,
 	res: Response,
@@ -516,6 +655,11 @@ export const updateProgressStatus = async (
 			'visite_programmee',
 			'visite_realisee',
 			'retour_client',
+			'offre_en_cours',
+			'negociation_en_cours',
+			'compromis_signe',
+			'signature_notaire',
+			'affaire_conclue',
 		];
 		if (!validSteps.includes(targetStep)) {
 			res.status(400).json({
@@ -539,10 +683,7 @@ export const updateProgressStatus = async (
 
 		// Find the collaboration
 		const collaboration = await Collaboration.findById(id)
-			.populate(
-				'propertyOwnerId',
-				'firstName lastName email profileImage',
-			)
+			.populate('postOwnerId', 'firstName lastName email profileImage')
 			.populate('collaboratorId', 'firstName lastName email profileImage')
 			.populate({
 				path: 'progressSteps.notes.createdBy',
@@ -558,7 +699,7 @@ export const updateProgressStatus = async (
 		}
 
 		// Check authorization
-		const isOwner = collaboration.propertyOwnerId._id.toString() === userId;
+		const isOwner = collaboration.postOwnerId._id.toString() === userId;
 		const isCollaborator =
 			collaboration.collaboratorId._id.toString() === userId;
 
@@ -600,7 +741,7 @@ export const updateProgressStatus = async (
 		// Notify the other party about progress update
 		const progressRecipientId = isOwner
 			? collaboration.collaboratorId
-			: collaboration.propertyOwnerId;
+			: collaboration.postOwnerId;
 		const actor = await User.findById(userId).select(
 			'firstName lastName email profileImage',
 		);
@@ -616,6 +757,11 @@ export const updateProgressStatus = async (
 			visite_programmee: 'Visite programmée',
 			visite_realisee: 'Visite réalisée',
 			retour_client: 'Retour client',
+			offre_en_cours: 'Offre en cours',
+			negociation_en_cours: 'Négociation en cours',
+			compromis_signe: 'Compromis signé',
+			signature_notaire: 'Signature notaire',
+			affaire_conclue: 'Affaire conclue',
 		};
 
 		await notificationService.create({
@@ -636,14 +782,16 @@ export const updateProgressStatus = async (
 			},
 		});
 	} catch (error) {
-		console.error('Error updating progress status:', error);
+		logger.error(
+			'[CollaborationController] Error updating progress status',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',
 		});
 	}
 };
-
 export const signCollaboration = async (
 	req: AuthenticatedRequest,
 	res: Response,
@@ -659,10 +807,7 @@ export const signCollaboration = async (
 
 		// Find the collaboration
 		const collaboration = await Collaboration.findById(id)
-			.populate(
-				'propertyOwnerId',
-				'firstName lastName email profileImage',
-			)
+			.populate('postOwnerId', 'firstName lastName email profileImage')
 			.populate(
 				'collaboratorId',
 				'firstName lastName email profileImage',
@@ -686,12 +831,12 @@ export const signCollaboration = async (
 		});
 
 		// Notify the other party about signing
-		const isOwner = collaboration.propertyOwnerId._id
-			? collaboration.propertyOwnerId._id.toString() === userId
-			: collaboration.propertyOwnerId.toString() === userId;
+		const isOwner = collaboration.postOwnerId._id
+			? collaboration.postOwnerId._id.toString() === userId
+			: collaboration.postOwnerId.toString() === userId;
 		const signRecipientId = isOwner
 			? collaboration.collaboratorId
-			: collaboration.propertyOwnerId;
+			: collaboration.postOwnerId;
 		const actor = await User.findById(userId).select(
 			'firstName lastName email profileImage',
 		);
@@ -729,20 +874,23 @@ export const signCollaboration = async (
 			});
 		}
 	} catch (error) {
-		console.error('Error signing collaboration:', error);
+		logger.error(
+			'[CollaborationController] Error signing collaboration',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',
 		});
 	}
 };
-
 export const completeCollaboration = async (
 	req: AuthenticatedRequest,
 	res: Response,
 ): Promise<void> => {
 	try {
 		const { id } = req.params;
+		const { completionReason } = req.body;
 		const userId = req.user?.id;
 
 		if (!userId) {
@@ -750,11 +898,27 @@ export const completeCollaboration = async (
 			return;
 		}
 
+		// Validate completion reason
+		const validReasons = [
+			'vente_conclue_collaboration',
+			'vente_conclue_seul',
+			'bien_retire',
+			'mandat_expire',
+			'client_desiste',
+			'vendu_tiers',
+			'sans_suite',
+		];
+
+		if (!completionReason || !validReasons.includes(completionReason)) {
+			res.status(400).json({
+				success: false,
+				message: 'Invalid or missing completion reason',
+			});
+			return;
+		}
+
 		const collaboration = await Collaboration.findById(id)
-			.populate(
-				'propertyOwnerId',
-				'firstName lastName email profileImage',
-			)
+			.populate('postOwnerId', 'firstName lastName email profileImage')
 			.populate(
 				'collaboratorId',
 				'firstName lastName email profileImage',
@@ -769,7 +933,7 @@ export const completeCollaboration = async (
 		}
 
 		// Check authorization
-		const isOwner = collaboration.propertyOwnerId._id.toString() === userId;
+		const isOwner = collaboration.postOwnerId._id.toString() === userId;
 		const isCollaborator =
 			collaboration.collaboratorId._id.toString() === userId;
 
@@ -790,10 +954,31 @@ export const completeCollaboration = async (
 			return;
 		}
 
+		// Check if "Affaire conclue" is validated by BOTH users
+		const affaireConclueStep = collaboration.progressSteps.find(
+			(step) => step.id === 'affaire_conclue',
+		);
+
+		if (
+			!affaireConclueStep ||
+			!affaireConclueStep.ownerValidated ||
+			!affaireConclueStep.collaboratorValidated
+		) {
+			res.status(400).json({
+				success: false,
+				message:
+					'Cannot complete: "Affaire conclue" must be validated by both users',
+			});
+			return;
+		}
+
 		// Update status to completed
 		collaboration.status = 'completed';
 		collaboration.currentStep = 'completed';
 		collaboration.completedAt = new Date();
+		collaboration.completionReason = completionReason;
+		collaboration.completedBy = new Types.ObjectId(userId);
+		collaboration.completedByRole = isOwner ? 'owner' : 'collaborator';
 
 		// Mark all progress steps as completed
 		collaboration.progressSteps.forEach((step) => {
@@ -812,16 +997,17 @@ export const completeCollaboration = async (
 			createdAt: new Date(),
 		});
 
+		// Save the collaboration to persist changes
+		await collaboration.save();
+
 		res.status(200).json({
 			success: true,
 			message: 'Collaboration completed successfully',
 			collaboration,
-		});
-
-		// Notify the other party about completion
+		}); // Notify the other party about completion
 		const completeRecipientId = isOwner
 			? collaboration.collaboratorId
-			: collaboration.propertyOwnerId;
+			: collaboration.postOwnerId;
 		const actor = await User.findById(userId).select(
 			'firstName lastName email profileImage',
 		);
@@ -843,7 +1029,46 @@ export const completeCollaboration = async (
 			},
 		});
 	} catch (error) {
-		console.error('Error completing collaboration:', error);
+		logger.error(
+			'[CollaborationController] Error completing collaboration',
+			error,
+		);
+		res.status(500).json({
+			success: false,
+			message: 'Internal server error',
+		});
+	}
+};
+export const getCollaborationsBySearchAd = async (
+	req: AuthenticatedRequest,
+	res: Response,
+): Promise<void> => {
+	try {
+		const { searchAdId } = req.params;
+		const userId = req.user?.id;
+
+		if (!userId) {
+			res.status(401).json({ success: false, message: 'Unauthorized' });
+			return;
+		}
+
+		const collaborations = await Collaboration.find({
+			postId: searchAdId,
+			postType: 'SearchAd',
+		})
+			.populate('postOwnerId', 'firstName lastName profileImage')
+			.populate('collaboratorId', 'firstName lastName profileImage')
+			.sort({ createdAt: -1 });
+
+		res.status(200).json({
+			success: true,
+			collaborations,
+		});
+	} catch (error) {
+		logger.error(
+			'[CollaborationController] Error getting search ad collaborations',
+			error,
+		);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',

@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Property } from '@/lib/api/propertyApi';
 import { getImageUrl } from '@/lib/utils/imageUtils';
-import { ProfileAvatar, FavoriteButton } from '../ui';
-import { getBadgeConfig } from '@/lib/constants/badges';
+import { ProfileAvatar, FavoriteButton, RichTextDisplay } from '../ui';
+import { Features } from '@/lib/constants';
+import { collaborationApi } from '@/lib/api/collaborationApi';
+import { useAuth } from '@/hooks/useAuth';
+import { formatDateShort } from '@/lib/utils/date';
 
 interface PropertyCardProps {
 	property: Property;
@@ -14,11 +17,44 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 	property,
 	onFavoriteToggle,
 }) => {
+	const { user } = useAuth();
+	const [collaborationStatus, setCollaborationStatus] = useState<
+		'pending' | 'accepted' | 'active' | null
+	>(null);
+
+	useEffect(() => {
+		// Only check collaboration status if user is authenticated
+		if (!user) return;
+
+		const checkCollaboration = async () => {
+			try {
+				const { collaborations } =
+					await collaborationApi.getPropertyCollaborations(
+						property._id,
+					);
+				const blocking = collaborations.find((c) =>
+					['pending', 'accepted', 'active'].includes(
+						c.status as string,
+					),
+				);
+				if (blocking) {
+					setCollaborationStatus(
+						blocking.status as 'pending' | 'accepted' | 'active',
+					);
+				}
+			} catch {
+				// Silently fail - collaboration status is optional
+			}
+		};
+
+		checkCollaboration();
+	}, [property._id, user]);
+
 	return (
-		<Link href={`/property/${property._id}`} className="block">
-			<div className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+		<Link href={`/property/${property._id}`} className="block h-full">
+			<div className="bg-white shadow-card rounded-2xl overflow-hidden hover:shadow-card-hover transition-all duration-300 hover:scale-102 border border-gray-200 h-full flex flex-col relative">
 				{/* Image with badges */}
-				<div className="relative">
+				<div className="relative flex-shrink-0 rounded-t-2xl overflow-hidden">
 					<img
 						src={getImageUrl(property.mainImage, 'medium')}
 						alt={property.title}
@@ -30,17 +66,34 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 							);
 						}}
 					/>
-					<div className="absolute top-2 left-2 flex flex-wrap gap-1 max-w-[70%]">
+					<div className="absolute top-2 left-2 flex flex-wrap gap-1 max-w-[calc(100%-5rem)] sm:max-w-[70%] z-10">
+						{collaborationStatus && (
+							<span className="bg-brand text-white text-xs px-2 py-1 rounded-full font-semibold shadow-md whitespace-nowrap">
+								ℹ️{' '}
+								<span className="hidden sm:inline">
+									En collaboration (
+									{Features.Collaboration
+										.COLLABORATION_STATUS_CONFIG[
+										collaborationStatus
+									]?.label || collaborationStatus}
+									)
+								</span>
+								<span className="sm:hidden">Collab</span>
+							</span>
+						)}
 						{property.badges &&
 							property.badges.length > 0 &&
 							property.badges.map((badgeValue) => {
-								const config = getBadgeConfig(badgeValue);
+								const config =
+									Features.Properties.getBadgeConfig(
+										badgeValue,
+									);
 								if (!config) return null;
 
 								return (
 									<span
 										key={badgeValue}
-										className={`${config.bgColor} ${config.color} text-xs px-2 py-1 rounded-full`}
+										className={`${config.bgColor} ${config.color} text-xs px-2 py-1 rounded-full whitespace-nowrap`}
 									>
 										{config.label}
 									</span>
@@ -48,7 +101,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 							})}
 					</div>
 					{/* Favorite Button */}
-					<div className="absolute top-2 right-2">
+					<div className="absolute top-2 right-2 z-10">
 						<FavoriteButton
 							itemId={property._id}
 							itemType="property"
@@ -67,7 +120,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 				</div>
 
 				{/* Content */}
-				<div className="p-4">
+				<div className="p-4 flex flex-col flex-grow">
 					<div className="flex items-center justify-between mb-2">
 						<div className="flex items-baseline space-x-2">
 							<p className="text-2xl font-bold text-black">
@@ -83,25 +136,25 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 						{property.title}
 					</h3>
 
-					<p className="text-gray-600 text-sm mb-3 line-clamp-2">
-						{property.description}
-					</p>
+					<div className="text-gray-600 text-sm mb-3 line-clamp-2">
+						<RichTextDisplay content={property.description} />
+					</div>
 
-					<div className="flex flex-wrap gap-2 mb-3">
-						<span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded">
+					<div className="flex flex-wrap gap-2 mb-3 ">
+						<span className="bg-brand-100  text-brand-800 text-xs font-semibold px-2.5 py-1 rounded-lg">
 							{property.propertyType}
 						</span>
-						<span className="bg-gray-100 text-gray-800 text-xs font-semibold px-2 py-1 rounded">
+						<span className="bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-1 rounded-lg">
 							{property.city}
 						</span>
 						{property.rooms && (
-							<span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">
+							<span className="bg-success-light text-success text-xs font-semibold px-2.5 py-1 rounded-lg">
 								{property.rooms} pièce
 								{property.rooms > 1 ? 's' : ''}
 							</span>
 						)}
 						{property.bedrooms && (
-							<span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-1 rounded">
+							<span className="bg-secondary-100 text-secondary-700 text-xs font-semibold px-2.5 py-1 rounded-lg">
 								{property.bedrooms} ch.
 							</span>
 						)}
@@ -123,7 +176,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 							)}
 						{property.parkingSpaces &&
 							property.parkingSpaces > 0 && (
-								<span className="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2 py-1 rounded">
+								<span className="bg-info-light text-info text-xs font-semibold px-2.5 py-1 rounded-lg">
 									{property.parkingSpaces} parking
 									{property.parkingSpaces > 1 ? 's' : ''}
 								</span>
@@ -146,9 +199,9 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 						</div>
 						<div className="text-right">
 							<p className="text-gray-500 text-xs">
-								{new Date(
+								{formatDateShort(
 									property.publishedAt || property.createdAt,
-								).toLocaleDateString('fr-FR')}
+								)}
 							</p>
 						</div>
 					</div>

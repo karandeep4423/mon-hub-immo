@@ -1,9 +1,11 @@
 import type { Property } from '@/lib/api/propertyApi';
+import type { SearchAd } from './searchAd';
 
 export interface Collaboration {
 	_id: string;
-	propertyId: string | Partial<Property>;
-	propertyOwnerId: {
+	postId: string | Partial<Property> | Partial<SearchAd>;
+	postType: 'Property' | 'SearchAd';
+	postOwnerId: {
 		_id: string;
 		firstName: string;
 		lastName: string;
@@ -24,6 +26,8 @@ export interface Collaboration {
 		| 'rejected';
 	proposedCommission: number;
 	proposalMessage: string;
+	compensationType?: 'percentage' | 'fixed_amount' | 'gift_vouchers';
+	compensationAmount?: number;
 	ownerSigned: boolean;
 	ownerSignedAt?: string;
 	collaboratorSigned: boolean;
@@ -39,12 +43,30 @@ export interface Collaboration {
 		| 'premier_contact'
 		| 'visite_programmee'
 		| 'visite_realisee'
-		| 'retour_client';
+		| 'retour_client'
+		| 'offre_en_cours'
+		| 'negociation_en_cours'
+		| 'compromis_signe'
+		| 'signature_notaire'
+		| 'affaire_conclue';
 	progressSteps: ProgressStepData[];
 
 	activities: CollaborationActivity[];
 	createdAt: string;
 	updatedAt: string;
+	completedAt?: string;
+
+	// Completion/Termination details
+	completionReason?:
+		| 'vente_conclue_collaboration'
+		| 'vente_conclue_seul'
+		| 'bien_retire'
+		| 'mandat_expire'
+		| 'client_desiste'
+		| 'vendu_tiers'
+		| 'sans_suite';
+	completedBy?: string; // User ID who marked it as completed
+	completedByRole?: 'owner' | 'collaborator'; // Role of user who completed
 }
 
 export interface StepNote {
@@ -64,7 +86,12 @@ export interface ProgressStepData {
 		| 'premier_contact'
 		| 'visite_programmee'
 		| 'visite_realisee'
-		| 'retour_client';
+		| 'retour_client'
+		| 'offre_en_cours'
+		| 'negociation_en_cours'
+		| 'compromis_signe'
+		| 'signature_notaire'
+		| 'affaire_conclue';
 	completed: boolean;
 	validatedAt?: string;
 	ownerValidated: boolean;
@@ -87,10 +114,13 @@ export interface CollaborationActivity {
 }
 
 export interface ProposeCollaborationRequest {
-	propertyId: string;
+	propertyId?: string;
+	searchAdId?: string;
 	collaboratorId?: string; // Optional - backend will use authenticated user if not provided
-	commissionPercentage: number;
-	message: string;
+	commissionPercentage?: number;
+	message?: string;
+	compensationType?: 'percentage' | 'fixed_amount' | 'gift_vouchers';
+	compensationAmount?: number;
 }
 
 export interface RespondToCollaborationRequest {

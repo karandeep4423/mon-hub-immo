@@ -58,13 +58,14 @@ export interface IProperty extends Document {
 	// Property condition and characteristics
 	condition?: 'new' | 'good' | 'refresh' | 'renovate';
 	propertyNature?: string;
-	characteristics?: string;
-	saleType?: 'ancien' | 'viager';
+	saleType?: string; // Dynamic based on property type
 
 	// Financial info
-	feesResponsibility?: 'buyer' | 'seller';
 	annualCondoFees?: number;
 	tariffLink?: string;
+	agencyFeesPercentage?: number; // % frais d'agence
+	agencyFeesAmount?: number; // Montant des frais d'agence calculé
+	priceIncludingFees?: number; // Prix FAI (Frais d'Acquéreur Inclus)
 
 	// Additional property details
 	landArea?: number; // Surface totale du terrain in m²
@@ -325,27 +326,13 @@ const propertySchema = new Schema<IProperty>(
 			trim: true,
 			maxlength: [100, 'Nature du bien trop longue'],
 		},
-		characteristics: {
-			type: String,
-			trim: true,
-			maxlength: [200, 'Caractéristiques trop longues'],
-		},
 		saleType: {
 			type: String,
-			enum: {
-				values: ['ancien', 'viager'],
-				message: 'Type de vente invalide',
-			},
+			trim: true,
+			maxlength: [100, 'Type de vente trop long'],
 		},
 
 		// Financial info
-		feesResponsibility: {
-			type: String,
-			enum: {
-				values: ['buyer', 'seller'],
-				message: 'Responsabilité des honoraires invalide',
-			},
-		},
 		annualCondoFees: {
 			type: Number,
 			min: [0, 'Les charges ne peuvent pas être négatives'],
@@ -355,6 +342,19 @@ const propertySchema = new Schema<IProperty>(
 			type: String,
 			trim: true,
 			maxlength: [500, 'Lien des tarifs trop long'],
+		},
+		agencyFeesPercentage: {
+			type: Number,
+			min: [0, 'Le pourcentage ne peut pas être négatif'],
+			max: [100, 'Le pourcentage ne peut pas dépasser 100%'],
+		},
+		agencyFeesAmount: {
+			type: Number,
+			min: [0, 'Le montant ne peut pas être négatif'],
+		},
+		priceIncludingFees: {
+			type: Number,
+			min: [0, 'Le prix FAI ne peut pas être négatif'],
 		},
 
 		// Additional property details

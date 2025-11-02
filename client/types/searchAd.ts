@@ -59,6 +59,7 @@ export interface SearchAd {
 	// --- Admin & Display ---
 	title: string;
 	description?: string;
+	badges?: string[]; // Badges pour l'annonce
 
 	// Client Information
 	clientInfo?: {

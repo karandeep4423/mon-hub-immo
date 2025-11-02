@@ -52,6 +52,7 @@ export interface ISearchAd extends Document {
 	// --- Admin & Display ---
 	title: string;
 	description: string;
+	badges?: string[]; // Badges pour l'annonce
 
 	// Client Information
 	clientInfo?: {
@@ -132,6 +133,7 @@ const SearchAdSchema = new Schema<ISearchAd>(
 
 		title: { type: String, required: true, trim: true },
 		description: { type: String, trim: true },
+		badges: [{ type: String }],
 
 		clientInfo: {
 			type: {

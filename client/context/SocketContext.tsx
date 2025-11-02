@@ -10,6 +10,8 @@ import React, {
 } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from '../hooks/useAuth';
+import { logger } from '@/lib/utils/logger';
+import { Features } from '@/lib/constants';
 
 interface SocketContextType {
 	socket: Socket | null;
@@ -41,7 +43,7 @@ const BASE_URL: string =
 
 // Debug logging for development
 if (typeof window !== 'undefined') {
-	console.log('🔗 Socket URL Configuration:', {
+	logger.debug('[Socket] URL Configuration', {
 		NEXT_PUBLIC_SOCKET_URL: process.env.NEXT_PUBLIC_SOCKET_URL,
 		NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
 		resolved_BASE_URL: BASE_URL,
@@ -57,15 +59,15 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 	const socketRef = useRef<Socket | null>(null);
 
 	useEffect(() => {
-		console.log('SocketProvider: Auth state changed', {
-			user: !!user,
+		logger.debug('[SocketProvider] Auth state changed', {
+			hasUser: !!user,
 			loading,
 		});
 
 		// Don't connect if still loading or no user
 		if (loading || !user) {
 			if (socketRef.current) {
-				console.log('🛑 Disconnecting socket - no user or loading');
+				logger.debug('[Socket] Disconnecting - no user or loading');
 				socketRef.current.disconnect();
 				socketRef.current = null;
 				setIsConnected(false);
@@ -76,14 +78,13 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 
 		// Only create socket if it doesn't exist
 		if (!socketRef.current) {
-			console.log(
-				'🟢 Creating new socket connection for user:',
-				user._id || user.id,
-			);
+			logger.debug('[Socket] Creating new connection', {
+				userId: user._id || user.id,
+			});
 
-			const userId = user._id || user.id;
+			// Auth token is automatically sent via httpOnly cookies
 			const newSocket = io(BASE_URL, {
-				query: { userId },
+				withCredentials: true, // Enable cookies to be sent
 				transports: ['polling', 'websocket'], // Try polling first, then websocket
 				reconnectionAttempts: 5,
 				reconnectionDelay: 1000,
@@ -94,43 +95,58 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 			});
 
 			newSocket.on('connect', () => {
-				console.log('🚀 Socket connected successfully:', newSocket.id);
-				console.log('🌐 Connected to:', BASE_URL);
+				logger.debug('🚀 Socket connected successfully', {
+					socketId: newSocket.id,
+					baseUrl: BASE_URL,
+				});
 				setIsConnected(true);
 			});
 
 			newSocket.on('disconnect', (reason) => {
-				console.warn('⚠️ Socket disconnected:', reason);
+				logger.warn('⚠️ Socket disconnected', { reason });
 				setIsConnected(false);
 			});
 
 			newSocket.on('connect_error', (err) => {
-				console.error('❌ Socket connection error:', err);
-				console.error('🔗 Attempted connection to:', BASE_URL);
-				console.error('👤 User ID:', userId);
+				logger.error('❌ Socket connection error', {
+					error: err.message,
+					baseUrl: BASE_URL,
+				});
 				setIsConnected(false);
 			});
 
 			newSocket.on('reconnect', (attemptNumber) => {
-				console.log('🔄 Socket reconnected on attempt:', attemptNumber);
+				logger.debug('🔄 Socket reconnected', { attemptNumber });
 				setIsConnected(true);
 			});
 
 			newSocket.on('reconnect_error', (err) => {
-				console.error('❌ Socket reconnection failed:', err);
+				logger.error('❌ Socket reconnection failed', {
+					error: err.message,
+				});
 				setIsConnected(false);
 			});
 
 			newSocket.on('reconnect_failed', () => {
-				console.error(
+				logger.error(
 					'❌ Socket reconnection failed after all attempts',
 				);
 				setIsConnected(false);
 			});
 
-			newSocket.on('getOnlineUsers', (users) => {
-				console.log('🟢 Online users updated:', users);
-				setOnlineUsers(users);
+			newSocket.on(
+				Features.Chat.SOCKET_EVENTS.GET_ONLINE_USERS,
+				(users) => {
+					logger.debug('🟢 Online users updated', {
+						count: users.length,
+					});
+					setOnlineUsers(users);
+				},
+			);
+
+			// Add test listener to verify socket is receiving events
+			newSocket.onAny((eventName, ...args) => {
+				logger.debug('🎯 Socket received event:', eventName, args);
 			});
 
 			socketRef.current = newSocket;
@@ -140,7 +156,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 		return () => {
 			// Only disconnect if user is logging out, not on every effect run
 			if (!user && socketRef.current) {
-				console.log('🛑 User logged out, disconnecting socket');
+				logger.debug('🛑 User logged out, disconnecting socket');
 				socketRef.current.disconnect();
 				socketRef.current = null;
 				setIsConnected(false);

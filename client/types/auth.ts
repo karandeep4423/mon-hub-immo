@@ -3,6 +3,7 @@ export interface AuthResponse {
 	message: string;
 	user?: User;
 	token?: string;
+	refreshToken?: string; // JWT refresh token for token renewal
 	requiresVerification?: boolean;
 	codeSent?: boolean;
 	requiresProfileCompletion?: boolean; // Add this
@@ -11,8 +12,7 @@ export interface AuthResponse {
 
 // Update User interface
 export interface User {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    id: any;
+	id: string;
 	_id: string;
 	firstName: string;
 	lastName: string;
@@ -38,19 +38,27 @@ export interface User {
 		independentAgent?: boolean;
 		alertsEnabled?: boolean;
 		alertFrequency?: 'quotidien' | 'hebdomadaire';
+		identityCard?: {
+			url: string;
+			key: string;
+			uploadedAt: string;
+		};
+	};
+
+	searchPreferences?: {
+		preferredRadius?: number;
+		lastSearchLocations?: Array<{
+			city: string;
+			postcode: string;
+			coordinates?: {
+				lat: number;
+				lon: number;
+			};
+		}>;
 	};
 
 	createdAt?: string;
 	updatedAt?: string;
-}
-
-export interface AuthResponse {
-	success: boolean;
-	message: string;
-	user?: User;
-	token?: string;
-	requiresVerification?: boolean;
-	codeSent?: boolean;
 }
 
 export interface ValidationError {
@@ -58,22 +66,21 @@ export interface ValidationError {
 	message: string;
 }
 
-export type SignUpData = {
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string;
-    userType: '' | 'agent' | 'apporteur';
-    password: string;
-    confirmPassword: string;
-    // Agent-specific fields
-    agentType?: string;
-    tCard?: string;
-    sirenNumber?: string;
-    rsacNumber?: string;
-    collaboratorCertificate?: string;
-};
-
+export interface SignUpData {
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone: string;
+	userType: '' | 'agent' | 'apporteur';
+	password: string;
+	confirmPassword: string;
+	// Agent-specific fields
+	agentType?: string;
+	tCard?: string;
+	sirenNumber?: string;
+	rsacNumber?: string;
+	collaboratorCertificate?: string;
+}
 
 export interface LoginData {
 	email: string;

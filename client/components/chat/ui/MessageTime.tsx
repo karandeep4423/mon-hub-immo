@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { formatMessageTime } from '../utils/messageUtils';
+import { logger } from '@/lib/utils/logger';
 
 // ============================================================================
 // MESSAGE TIME COMPONENT
@@ -59,7 +60,7 @@ const formatWithDate = (timestamp: string): string => {
 		// Different year - show full date and time
 		return `${date.toLocaleDateString()} ${formatMessageTime(timestamp)}`;
 	} catch (error) {
-		console.error('Error formatting date with time:', error);
+		logger.error('Error formatting date with time:', error);
 		return formatMessageTime(timestamp);
 	}
 };

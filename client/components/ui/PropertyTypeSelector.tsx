@@ -36,7 +36,7 @@ export const PropertyTypeSelector = ({
 						key={type.value}
 						type="button"
 						onClick={() => onChange(type.value)}
-						className={`p-4 border-2 rounded-lg text-center transition-all duration-200 hover:shadow-md ${
+						className={`p-4 border-2 rounded-lg text-center transition-smooth hover:shadow-md ${
 							value === type.value
 								? 'border-brand-600 bg-brand-50 ring-2 ring-brand-200'
 								: 'border-gray-200 hover:border-gray-300'

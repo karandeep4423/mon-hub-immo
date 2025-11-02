@@ -4,8 +4,9 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '../ui/Button';
 import { ProfileUpdateModal } from './ProfileUpdateModal';
-import { ProfileAvatar } from '../ui';
+import { ProfileAvatar, RichTextDisplay } from '../ui';
 import { User } from '@/types/auth';
+import { storage, STORAGE_KEYS } from '@/lib/utils/storageManager';
 
 interface AgentProfileCardProps {
 	user: User;
@@ -18,21 +19,19 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 
 	// Restore persisted collapse state
 	useEffect(() => {
-		try {
-			const v = localStorage.getItem('dashboard.profInfo.open');
-			if (v !== null) setIsInfoOpen(v === '1');
-		} catch {}
+		const value = storage.get<string>(
+			STORAGE_KEYS.DASHBOARD_PROF_INFO_OPEN,
+		);
+		if (value !== null) setIsInfoOpen(value === '1');
 	}, []);
 
 	const toggleInfo = () => {
 		setIsInfoOpen((prev) => {
 			const next = !prev;
-			try {
-				localStorage.setItem(
-					'dashboard.profInfo.open',
-					next ? '1' : '0',
-				);
-			} catch {}
+			storage.set(
+				STORAGE_KEYS.DASHBOARD_PROF_INFO_OPEN,
+				next ? '1' : '0',
+			);
 			return next;
 		});
 	};
@@ -50,7 +49,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 								onClick={() =>
 									router.push('/auth/complete-profile')
 								}
-								className="bg-cyan-600 hover:bg-cyan-700 text-white"
+								className="bg-brand hover:bg-brand-600 text-white"
 								size="sm"
 							>
 								<svg
@@ -171,7 +170,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 						>
 							<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
 								<div className="text-center p-4 bg-gray-50 rounded-lg">
-									<p className="text-2xl font-bold text-cyan-600">
+									<p className="text-2xl font-bold text-brand">
 										{user.professionalInfo
 											?.interventionRadius || 20}
 										km
@@ -181,7 +180,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 									</p>
 								</div>
 								<div className="text-center p-4 bg-gray-50 rounded-lg">
-									<p className="text-2xl font-bold text-cyan-600">
+									<p className="text-2xl font-bold text-brand">
 										{user.professionalInfo
 											?.yearsExperience || 0}
 									</p>
@@ -190,7 +189,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 									</p>
 								</div>
 								<div className="text-center p-4 bg-gray-50 rounded-lg">
-									<p className="text-2xl font-bold text-cyan-600">
+									<p className="text-2xl font-bold text-brand">
 										{user.professionalInfo?.network ||
 											'N/A'}
 									</p>
@@ -219,17 +218,39 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 											'Non renseigné'}
 									</p>
 								</div>
+								{user.professionalInfo?.coveredCities &&
+									user.professionalInfo.coveredCities.length >
+										0 && (
+										<div className="md:col-span-2">
+											<p className="text-sm font-medium text-gray-600">
+												Communes couvertes
+											</p>
+											<div className="flex flex-wrap gap-2 mt-2">
+												{user.professionalInfo.coveredCities.map(
+													(city, index) => (
+														<span
+															key={index}
+															className="inline-flex px-3 py-1 text-sm bg-brand-50 text-brand-700 rounded-full"
+														>
+															{city}
+														</span>
+													),
+												)}
+											</div>
+										</div>
+									)}
 								{user.professionalInfo?.personalPitch && (
 									<div className="md:col-span-2">
-										<p className="text-sm font-medium text-gray-600">
+										<p className="text-sm font-medium text-gray-600 mb-2">
 											Bio personnelle
 										</p>
-										<p className="text-base text-gray-900 mt-1">
-											{
+										<RichTextDisplay
+											content={
 												user.professionalInfo
 													.personalPitch
 											}
-										</p>
+											className="text-base text-gray-900"
+										/>
 									</div>
 								)}
 							</div>

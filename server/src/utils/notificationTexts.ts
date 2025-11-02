@@ -49,3 +49,30 @@ export const contractTexts = {
 	signedTitle: 'Contrat signé',
 	signedBody: 'Le contrat a été signé.',
 };
+
+export const appointmentTexts = {
+	newTitle: 'Nouvelle demande de rendez-vous',
+	newBody: (p: {
+		clientName: string;
+		appointmentType: string;
+		scheduledDate: string;
+		scheduledTime: string;
+	}) =>
+		`${p.clientName} souhaite un rendez-vous "${p.appointmentType}" le ${p.scheduledDate} à ${p.scheduledTime}`,
+	confirmedTitle: 'Rendez-vous confirmé',
+	confirmedBody: (p: { agentName: string }) =>
+		`${p.agentName} a confirmé votre rendez-vous`,
+	rejectedTitle: 'Rendez-vous refusé',
+	rejectedBody: (p: { agentName: string }) =>
+		`${p.agentName} a refusé votre demande de rendez-vous`,
+	cancelledTitle: 'Rendez-vous annulé',
+	cancelledBody: (p: { agentName: string }) =>
+		`${p.agentName} a annulé votre rendez-vous`,
+	rescheduledTitle: 'Rendez-vous reporté',
+	rescheduledBody: (p: {
+		agentName: string;
+		scheduledDate: string;
+		scheduledTime: string;
+	}) =>
+		`${p.agentName} a reporté votre rendez-vous au ${p.scheduledDate} à ${p.scheduledTime}`,
+};

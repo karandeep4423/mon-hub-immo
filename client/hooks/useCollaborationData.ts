@@ -1,6 +1,9 @@
 // hooks/useCollaborationData.ts
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import useSWR from 'swr';
 import { collaborationApi } from '@/lib/api/collaborationApi';
+import { swrKeys } from '@/lib/swrKeys';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Collaboration } from '@/types/collaboration';
 import {
 	ProgressStepData,
@@ -13,99 +16,97 @@ export const useCollaborationData = (
 	collaborationId: string,
 	user: User | null,
 ) => {
-	const [collaboration, setCollaboration] = useState<Collaboration | null>(
-		null,
-	);
 	const [progressSteps, setProgressSteps] = useState<ProgressStepData[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
 
-	const fetchCollaboration = useCallback(async () => {
-		if (!collaborationId || !user) return;
+	// Fetch collaborations using SWR
+	const {
+		data: collaborationsData,
+		isLoading,
+		error: fetchError,
+		mutate: refetch,
+	} = useSWR(
+		collaborationId && user ? swrKeys.collaborations.list(user._id) : null,
+		() => collaborationApi.getUserCollaborations(),
+		{
+			revalidateOnFocus: false,
+			onError: () => {
+				// Error handled by global SWR config
+			},
+		},
+	);
 
-		try {
-			setIsLoading(true);
-			setError(null);
-
-			// Get basic collaboration data via getUserCollaborations
-			const response = await collaborationApi.getUserCollaborations();
-			const foundCollaboration = response.collaborations.find(
+	// Find the specific collaboration
+	const collaboration = useMemo(() => {
+		if (!collaborationsData?.collaborations) return null;
+		return (
+			collaborationsData.collaborations.find(
 				(c) => c._id === collaborationId,
-			);
+			) || null
+		);
+	}, [collaborationsData, collaborationId]);
 
-			if (!foundCollaboration) {
-				setError('Collaboration non trouvée');
-				return;
-			}
-
-			setCollaboration(foundCollaboration);
-
-			// Transform progress steps
-			if (
-				foundCollaboration.progressSteps &&
-				foundCollaboration.progressSteps.length > 0
-			) {
-				const transformedSteps = foundCollaboration.progressSteps.map(
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					(step: any) => {
-						const config =
-							PROGRESS_STEPS_CONFIG[step.id as ProgressStep];
-						return {
-							id: step.id,
-							title: config?.title || step.id,
-							description: config?.description || '',
-							completed: step.completed,
-							current:
-								foundCollaboration.currentProgressStep ===
-								step.id,
-							validatedAt: step.validatedAt,
-							ownerValidated: step.ownerValidated || false,
-							collaboratorValidated:
-								step.collaboratorValidated || false,
-							notes: step.notes || [],
-						};
-					},
-				);
-				setProgressSteps(transformedSteps);
-			} else {
-				// Create default progress steps
-				const defaultSteps = Object.entries(PROGRESS_STEPS_CONFIG).map(
-					([stepId, config], index) => ({
-						id: stepId as ProgressStep,
-						title: config.title,
-						description: config.description,
-						completed:
-							foundCollaboration.currentStep === stepId ||
-							(foundCollaboration.currentStep === 'completed' &&
-								index <
-									Object.keys(PROGRESS_STEPS_CONFIG).length -
-										1),
-						current: foundCollaboration.currentStep === stepId,
-						ownerValidated: false,
-						collaboratorValidated: false,
-						notes: [],
-					}),
-				);
-				setProgressSteps(defaultSteps);
-			}
-		} catch (err) {
-			console.error('Error fetching collaboration:', err);
-			setError('Erreur lors du chargement de la collaboration');
-		} finally {
-			setIsLoading(false);
+	// Transform progress steps when collaboration changes
+	useMemo(() => {
+		if (!collaboration) {
+			setProgressSteps([]);
+			return;
 		}
-	}, [collaborationId, user]);
 
-	useEffect(() => {
-		fetchCollaboration();
-	}, [fetchCollaboration]);
+		// Transform progress steps
+		if (
+			collaboration.progressSteps &&
+			collaboration.progressSteps.length > 0
+		) {
+			const transformedSteps = collaboration.progressSteps.map((step) => {
+				const config = PROGRESS_STEPS_CONFIG[step.id as ProgressStep];
+				return {
+					id: step.id,
+					title: config?.title || step.id,
+					description: config?.description || '',
+					completed: step.completed,
+					current: collaboration.currentProgressStep === step.id,
+					validatedAt: step.validatedAt,
+					ownerValidated: step.ownerValidated || false,
+					collaboratorValidated: step.collaboratorValidated || false,
+					notes: step.notes || [],
+				} as ProgressStepData;
+			});
+			setProgressSteps(transformedSteps);
+		} else {
+			// Create default progress steps
+			const defaultSteps = Object.entries(PROGRESS_STEPS_CONFIG).map(
+				([stepId, config], index) => ({
+					id: stepId as ProgressStep,
+					title: config.title,
+					description: config.description,
+					completed:
+						collaboration.currentStep === stepId ||
+						(collaboration.currentStep === 'completed' &&
+							index <
+								Object.keys(PROGRESS_STEPS_CONFIG).length - 1),
+					current: collaboration.currentStep === stepId,
+					ownerValidated: false,
+					collaboratorValidated: false,
+					notes: [],
+				}),
+			);
+			setProgressSteps(defaultSteps);
+		}
+	}, [collaboration]);
+
+	// Manual setter for collaboration (for optimistic updates)
+	const setCollaboration = useCallback(() => {
+		// This is handled by the collaboration state now via useFetch
+		// If needed for optimistic updates, trigger a refetch
+		refetch();
+	}, [refetch]);
 
 	return {
 		collaboration,
 		progressSteps,
 		isLoading,
-		error,
-		refetchCollaboration: fetchCollaboration,
+		error: fetchError?.message || null,
+		refetchCollaboration: refetch,
 		setCollaboration,
 		setProgressSteps,
 	};
