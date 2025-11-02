@@ -51,6 +51,10 @@ const FRONTEND_ORIGINS = parseEnvOrigins(process.env.FRONTEND_URL);
 // MIDDLEWARE
 // ============================================================================
 
+// Trust proxy - required for apps behind reverse proxies (Render, Heroku, etc.)
+// This allows Express to correctly read X-Forwarded-* headers for rate limiting and IP detection
+app.set('trust proxy', 1);
+
 app.use(
 	helmet({
 		contentSecurityPolicy: {
