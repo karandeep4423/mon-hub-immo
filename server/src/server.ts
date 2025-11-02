@@ -37,6 +37,16 @@ const io = createSocketServer(server);
 // Initialize socket service using functional factory
 const socketService = createSocketService(io);
 
+// Helper to parse comma-separated FRONTEND_URL env into a clean string[]
+const parseEnvOrigins = (csv?: string): string[] =>
+	(csv || '')
+		.split(',')
+		.map((s) => s.trim())
+		.filter(Boolean)
+		.map((s) => (s.endsWith('/') ? s.slice(0, -1) : s));
+
+const FRONTEND_ORIGINS = parseEnvOrigins(process.env.FRONTEND_URL);
+
 // ============================================================================
 // MIDDLEWARE
 // ============================================================================
@@ -72,13 +82,10 @@ app.use(
 					process.env.NODE_ENV === 'development'
 						? 'ws://localhost:4000'
 						: null,
-					// Production-safe scheme allowances
-					'https:',
-					'wss:',
 					// Known frontends
 					'https://www.monhubimmo.fr',
 					'https://mon-hub-immo.vercel.app',
-					process.env.FRONTEND_URL?.trim() || null,
+					...FRONTEND_ORIGINS,
 				].filter((src): src is string => Boolean(src)),
 				mediaSrc: ["'self'", 'https://*.amazonaws.com'],
 				objectSrc: ["'none'"],
@@ -126,7 +133,8 @@ app.use(
 			'http://localhost:3000',
 			'http://localhost:3001',
 			'https://www.monhubimmo.fr',
-			process.env.FRONTEND_URL || 'https://mon-hub-immo.vercel.app',
+			'https://mon-hub-immo.vercel.app',
+			...FRONTEND_ORIGINS,
 		],
 		credentials: true,
 	}),
