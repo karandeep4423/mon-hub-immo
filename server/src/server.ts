@@ -62,16 +62,20 @@ app.use(
 				],
 				connectSrc: [
 					"'self'",
-					'http://localhost:3000',
-					'http://localhost:4000',
-					'ws://localhost:4000',
+					process.env.NODE_ENV === 'development'
+						? 'http://localhost:3000'
+						: null,
+					process.env.NODE_ENV === 'development'
+						? 'http://localhost:4000'
+						: null,
+					process.env.NODE_ENV === 'development'
+						? 'ws://localhost:4000'
+						: null,
 					'wss://*.vercel.app',
 					'https://www.monhubimmo.fr',
 					'https://mon-hub-immo.vercel.app',
-					...(process.env.FRONTEND_URL
-						? [process.env.FRONTEND_URL]
-						: []),
-				],
+					process.env.FRONTEND_URL?.trim() || null,
+				].filter((src): src is string => Boolean(src)),
 				mediaSrc: ["'self'", 'https://*.amazonaws.com'],
 				objectSrc: ["'none'"],
 				frameSrc: ["'none'"],
