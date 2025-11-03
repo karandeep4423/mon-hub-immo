@@ -94,6 +94,17 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 			},
 			onSubmit: async (data) => {
 				try {
+					// Validate bio length before submission
+					const bioTextContent = data.personalPitch
+						.replace(/<[^>]*>/g, '')
+						.trim();
+					if (bioTextContent.length > 1000) {
+						authToastError(
+							'La bio ne peut pas dépasser 1000 caractères',
+						);
+						return;
+					}
+
 					let identityCardData;
 
 					// Upload identity card file if provided (only in initial setup, not edit mode)
@@ -561,14 +572,26 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 					<RichTextEditor
 						label="Petite bio (pitch personnel)"
 						value={values.personalPitch}
-						onChange={(value) =>
+						onChange={(value) => {
+							// Client-side validation for maxLength
+							const textContent = value
+								.replace(/<[^>]*>/g, '')
+								.trim();
+							if (textContent.length > 1000) {
+								setFieldValue('personalPitch', value);
+								authToastError(
+									'La bio ne peut pas dépasser 1000 caractères',
+								);
+								return;
+							}
 							handleChange({
 								target: { name: 'personalPitch', value },
-							} as React.ChangeEvent<HTMLInputElement>)
-						}
+							} as React.ChangeEvent<HTMLInputElement>);
+						}}
 						placeholder={Features.Auth.AUTH_PLACEHOLDERS.BIO}
 						minHeight="120px"
 						showCharCount
+						maxLength={1000}
 					/>
 
 					<div className="mt-4 space-y-3">

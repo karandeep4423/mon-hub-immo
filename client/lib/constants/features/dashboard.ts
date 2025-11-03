@@ -16,7 +16,7 @@ export const DASHBOARD_UI_TEXT = {
 
 	// Agent dashboard
 	agentDashboard: 'Dashboard Agent',
-	welcomeAgent: 'Voici votre tableau de bord HubImmo.',
+	welcomeAgent: 'Voici votre tableau de bord monHubImmo',
 	activeProperties: 'Annonces actives',
 	totalViews: 'Vues totales',
 	messages: 'Messages',

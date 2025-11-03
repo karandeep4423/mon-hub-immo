@@ -102,7 +102,10 @@ export const updateProfileSchema = z.object({
 				.regex(/^[0-9]{14}$/, 'Format SIRET invalide (14 chiffres)')
 				.optional(),
 			yearsExperience: z.number().int().min(0).max(50).optional(),
-			personalPitch: z.string().max(1000).optional(),
+			personalPitch: z
+				.string()
+				.max(1000, 'La bio ne peut pas dépasser 1000 caractères')
+				.optional(),
 			mandateTypes: z
 				.array(z.enum(['simple', 'exclusif', 'co-mandat']))
 				.optional(),
@@ -136,7 +139,10 @@ export const completeProfileSchema = z.object({
 			.regex(/^[0-9]{14}$/, 'Format SIRET invalide (14 chiffres)')
 			.optional(),
 		yearsExperience: z.number().int().min(0).max(50).optional(),
-		personalPitch: z.string().max(1000).optional(),
+		personalPitch: z
+			.string()
+			.max(1000, 'La bio ne peut pas dépasser 1000 caractères')
+			.optional(),
 		mandateTypes: z
 			.array(z.enum(['simple', 'exclusif', 'co-mandat']))
 			.optional(),
