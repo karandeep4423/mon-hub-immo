@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { Textarea } from '../ui/Textarea';
+import { FormProvider } from '@/context/FormContext';
 import { CityAutocomplete } from '../ui/CityAutocomplete';
 import { ProfileImageUploader } from '../ui/ProfileImageUploader';
 import { FileUpload } from '../ui/FileUpload';
@@ -239,7 +241,15 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 
 	// Update the isSubmitting condition
 	if (isSubmitting) {
-		return <PageLoader message="isSubmitting..." />;
+		return (
+			<PageLoader
+				message={
+					editMode
+						? 'Mise à jour du profil...'
+						: 'Finalisation de votre profil...'
+				}
+			/>
+		);
 	}
 
 	if (!user) {
@@ -312,7 +322,8 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 					</p>
 				</div>
 
-				<form
+				<FormProvider
+					isSubmitting={isSubmitting}
 					onSubmit={handleSubmit}
 					className="bg-white rounded-2xl shadow-card border border-gray-200 p-8 space-y-8"
 				>
@@ -320,8 +331,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 					<div>
 						<h3 className="text-lg font-semibold text-gray-900 mb-4">
 							Informations personnelles
-						</h3>
-
+						</h3>{' '}
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
 							<Input
 								label="Prénom"
@@ -352,7 +362,6 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 								disabled={!editMode}
 							/>
 						</div>
-
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<Input
 								label="Email"
@@ -450,15 +459,12 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 						</div>
 
 						<div className="mt-4">
-							<label className="block text-sm font-medium text-gray-700 mb-1">
-								Communes couvertes
-							</label>
-							<textarea
+							<Textarea
+								label="Communes couvertes"
 								name="coveredCities"
 								value={values.coveredCities}
 								onChange={handleChange}
 								rows={3}
-								className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
 								placeholder={
 									Features.Auth.AUTH_PLACEHOLDERS.CITIES
 								}
@@ -655,7 +661,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 									: 'Valider mon profil et accéder à Hubimmo'}
 						</Button>
 					</div>
-				</form>
+				</FormProvider>
 			</div>
 		</div>
 	);

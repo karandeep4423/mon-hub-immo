@@ -264,7 +264,7 @@ export const SignUpForm: React.FC = () => {
 
 						<div className="bg-white rounded-2xl shadow-card border border-gray-200 p-8 transition-all duration-300">
 							<form onSubmit={handleSubmit} noValidate>
-								{/* Step Content with Slide Animation (hide horizontal overflow, allow dropdowns vertically) */}
+								{/* Step Content with Slide Animation (hide horizontal overflow, keep dropdowns visible) */}
 								<div className="relative overflow-x-hidden">
 									{/* Step 1: Basic Information */}
 									<div

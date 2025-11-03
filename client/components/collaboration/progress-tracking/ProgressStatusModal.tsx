@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from '../../ui/Button';
 import { Modal } from '../../ui/Modal';
+import { Textarea } from '../../ui/Textarea';
+import { FormProvider } from '@/context/FormContext';
 import { StepStatusIndicator } from '../../ui/StepStatusIndicator';
 import {
 	PROGRESS_STEPS_CONFIG,
@@ -162,26 +164,26 @@ export const ProgressStatusModal: React.FC<ProgressStatusModalProps> = ({
 					)}
 
 				{/* Notes */}
-				<div>
-					<label className="block text-sm font-medium text-gray-700 mb-1">
-						Note (optionnel)
-					</label>
-					<textarea
-						value={notes}
-						onChange={(e) => setNotes(e.target.value)}
-						placeholder={
-							Features.Collaboration
-								.COLLABORATION_FORM_PLACEHOLDERS
-								.STATUS_UPDATE_NOTE
-						}
-						rows={3}
-						maxLength={500}
-						className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-transparent"
-					/>
-					<p className="text-xs text-gray-500 mt-1">
-						{notes.length}/500 caractères
-					</p>
-				</div>
+				<FormProvider isSubmitting={isUpdating}>
+					<div>
+						<label className="block text-sm font-medium text-gray-700 mb-1">
+							Note (optionnel)
+						</label>
+						<Textarea
+							value={notes}
+							onChange={(e) => setNotes(e.target.value)}
+							placeholder={
+								Features.Collaboration
+									.COLLABORATION_FORM_PLACEHOLDERS
+									.STATUS_UPDATE_NOTE
+							}
+							rows={3}
+							maxLength={500}
+							showCharCount={true}
+							maxCharCount={500}
+						/>
+					</div>
+				</FormProvider>
 
 				{/* Actions */}
 				<div className="flex justify-end space-x-3 pt-4 border-t">

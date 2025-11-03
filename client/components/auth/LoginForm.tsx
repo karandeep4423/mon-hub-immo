@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { FormProvider } from '@/context/FormContext';
 import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/lib/api/authApi';
 import { loginSchema } from '@/lib/validation';
@@ -407,7 +408,11 @@ export const LoginWithUserType: React.FC = () => {
 							</div>
 
 							{/* Login Form */}
-							<form onSubmit={handleSubmit} className="space-y-5">
+							<FormProvider
+								isSubmitting={isSubmitting}
+								onSubmit={handleSubmit}
+								className="space-y-5"
+							>
 								<div>
 									<Input
 										label=""
@@ -465,7 +470,7 @@ export const LoginWithUserType: React.FC = () => {
 										? 'Accès Partenaire'
 										: `${Features.Auth.AUTH_UI_TEXT.loginButton} ${selectedType?.title.split(' ')[0]}`}
 								</Button>
-							</form>
+							</FormProvider>
 
 							{/* Divider */}
 							<div className="relative my-6">

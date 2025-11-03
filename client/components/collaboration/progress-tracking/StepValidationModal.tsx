@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from '../../ui/Button';
 import { Modal } from '../../ui/Modal';
+import { Textarea } from '../../ui/Textarea';
+import { FormProvider } from '@/context/FormContext';
 import { logger } from '@/lib/utils/logger';
 
 interface StepValidationModalProps {
@@ -63,26 +65,26 @@ export const StepValidationModal: React.FC<StepValidationModalProps> = ({
 				</div>
 
 				{/* Note Input */}
-				<div>
-					<label
-						htmlFor="note"
-						className="block text-sm font-medium text-gray-700 mb-2"
-					>
-						Note (optionnelle)
-					</label>
-					<textarea
-						id="note"
-						value={note}
-						onChange={(e) => setNote(e.target.value)}
-						placeholder="Ajoutez une note pour cette étape..."
-						rows={4}
-						maxLength={500}
-						className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-transparent resize-none"
-					/>
-					<p className="text-xs text-gray-500 mt-1">
-						{note.length}/500 caractères
-					</p>
-				</div>
+				<FormProvider isSubmitting={isSubmitting}>
+					<div>
+						<label
+							htmlFor="note"
+							className="block text-sm font-medium text-gray-700 mb-2"
+						>
+							Note (optionnelle)
+						</label>
+						<Textarea
+							id="note"
+							value={note}
+							onChange={(e) => setNote(e.target.value)}
+							placeholder="Ajoutez une note pour cette étape..."
+							rows={4}
+							maxLength={500}
+							showCharCount={true}
+							maxCharCount={500}
+						/>
+					</div>
+				</FormProvider>
 
 				{/* Actions */}
 				<div className="flex justify-end space-x-3 pt-4 border-t">
