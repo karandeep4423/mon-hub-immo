@@ -19,10 +19,15 @@ import {
  */
 
 /**
- * Check if user has a valid access token cookie
+ * Check if request has an active session indicator.
+ * We allow passage when either:
+ * - accessToken exists (fresh session), or
+ * - refreshToken exists (expired access token but refreshable session)
  */
-const hasAccessToken = (request: NextRequest): boolean => {
-	return !!request.cookies.get('accessToken')?.value;
+const hasSession = (request: NextRequest): boolean => {
+	const hasAccess = !!request.cookies.get('accessToken')?.value;
+	const hasRefresh = !!request.cookies.get('refreshToken')?.value;
+	return hasAccess || hasRefresh;
 };
 
 /**
@@ -30,7 +35,7 @@ const hasAccessToken = (request: NextRequest): boolean => {
  */
 export function middleware(request: NextRequest) {
 	const { pathname } = request.nextUrl;
-	const isAuthenticated = hasAccessToken(request);
+	const isAuthenticated = hasSession(request);
 
 	// Skip middleware for:
 	// 1. Static files (_next/static, favicon, etc.)

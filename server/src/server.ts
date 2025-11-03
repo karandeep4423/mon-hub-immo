@@ -87,6 +87,7 @@ app.use(
 						? 'ws://localhost:4000'
 						: null,
 					// Known frontends
+					'https://monhubimmo.fr',
 					'https://www.monhubimmo.fr',
 					'https://mon-hub-immo.vercel.app',
 					...FRONTEND_ORIGINS,
@@ -136,6 +137,7 @@ app.use(
 		origin: [
 			'http://localhost:3000',
 			'http://localhost:3001',
+			'https://monhubimmo.fr',
 			'https://www.monhubimmo.fr',
 			'https://mon-hub-immo.vercel.app',
 			...FRONTEND_ORIGINS,
