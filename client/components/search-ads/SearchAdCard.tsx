@@ -10,7 +10,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { Features, Components } from '@/lib/constants';
 import { useSearchAdMutations } from '@/hooks/useSearchAds';
 import { formatDateShort } from '@/lib/utils/date';
-import { truncateRichText } from '@/lib/utils/richTextUtils';
 import { Select } from '@/components/ui/CustomSelect';
 
 interface SearchAdCardProps {
@@ -237,13 +236,6 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 						</div>
 					)}
 				</div>
-
-				{searchAd.description && (
-					<p className="text-sm text-gray-600 italic bg-gray-50 p-3 rounded-lg">
-						&quot;{truncateRichText(searchAd.description, 100)}
-						&quot;
-					</p>
-				)}
 
 				{/* Priority indicators */}
 				{searchAd.priorities?.mustHaves &&

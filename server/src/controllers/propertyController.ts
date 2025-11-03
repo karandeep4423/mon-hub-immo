@@ -15,6 +15,8 @@ interface AuthenticatedRequest extends Request {
 		id: string;
 		userType: 'agent' | 'apporteur';
 	};
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	resource?: any; // Attached by authorization middleware
 }
 
 // Simple validation function for combined upload with type conversion
@@ -493,21 +495,12 @@ export const updateProperty = async (
 			return;
 		}
 
-		// Get existing property
-		const existingProperty = await Property.findById(id);
+		// Ownership already verified by requireOwnership middleware
+		const existingProperty = req.resource || (await Property.findById(id));
 		if (!existingProperty) {
 			res.status(404).json({
 				success: false,
 				message: 'Bien non trouvé',
-			});
-			return;
-		}
-
-		// Check ownership
-		if (existingProperty.owner.toString() !== req.user!.id) {
-			res.status(403).json({
-				success: false,
-				message: "Vous n'êtes pas autorisé à modifier ce bien",
 			});
 			return;
 		}
@@ -729,21 +722,13 @@ export const deleteProperty = async (
 			return;
 		}
 
-		const property = await Property.findById(id);
+		// Ownership already verified by requireOwnership middleware
+		const property = req.resource || (await Property.findById(id));
 
 		if (!property) {
 			res.status(404).json({
 				success: false,
 				message: 'Bien non trouvé',
-			});
-			return;
-		}
-
-		// Check if user is the owner
-		if (property.owner.toString() !== req.user!.id) {
-			res.status(403).json({
-				success: false,
-				message: "Vous n'êtes pas autorisé à supprimer ce bien",
 			});
 			return;
 		}
@@ -758,11 +743,13 @@ export const deleteProperty = async (
 
 		// Add gallery images keys if exist
 		if (property.galleryImages && property.galleryImages.length > 0) {
-			property.galleryImages.forEach((image) => {
-				if (image.key) {
-					imagesToDelete.push(image.key);
-				}
-			});
+			property.galleryImages.forEach(
+				(image: { url: string; key: string }) => {
+					if (image.key) {
+						imagesToDelete.push(image.key);
+					}
+				},
+			);
 		}
 
 		// Delete images from S3
@@ -885,21 +872,13 @@ export const updatePropertyStatus = async (
 			return;
 		}
 
-		const property = await Property.findById(id);
+		// Ownership already verified by requireOwnership middleware
+		const property = req.resource || (await Property.findById(id));
 
 		if (!property) {
 			res.status(404).json({
 				success: false,
 				message: 'Bien non trouvé',
-			});
-			return;
-		}
-
-		// Check if user is the owner
-		if (property.owner.toString() !== req.user!.id) {
-			res.status(403).json({
-				success: false,
-				message: "Vous n'êtes pas autorisé à modifier ce bien",
 			});
 			return;
 		}
