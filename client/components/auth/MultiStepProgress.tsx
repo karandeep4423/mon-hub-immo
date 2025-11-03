@@ -17,7 +17,7 @@ export const MultiStepProgress: React.FC<StepIndicatorProps> = ({
 	currentStep,
 }) => {
 	return (
-		<div className="w-full max-w-3xl mx-auto px-4 py-6">
+		<div className="w-full max-w-3xl mx-auto px-0 sm:px-4 py-6">
 			<div className="relative flex items-start justify-between w-full">
 				{steps.map((step, index) => {
 					const isCompleted = currentStep > step.id;
@@ -28,7 +28,7 @@ export const MultiStepProgress: React.FC<StepIndicatorProps> = ({
 					return (
 						<div
 							key={step.id}
-							className="relative flex-1 flex flex-col items-center min-w-[72px]"
+							className="relative flex-1 flex flex-col items-center min-w-[2px] sm:min-w-[72px]"
 						>
 							{showConnector && (
 								<>

@@ -11,7 +11,8 @@ import {
 	FeatureCards,
 	AgentsListSection,
 } from '@/components/accueil';
-
+import Link from 'next/link';
+import { Footer } from '@/components/footer/footer';
 export default function MonAgentImmoPage() {
 	// Fetch agents using useFetch hook (replaces manual state management)
 	const { data: agents = [], loading } = useFetch<Agent[]>(
@@ -401,9 +402,12 @@ export default function MonAgentImmoPage() {
 											les projets immobiliers des
 											particuliers.
 										</p>
-										<button className="bg-white text-brand hover:bg-gray-100 px-6 sm:px-8 py-2.5 sm:py-3 rounded-full font-medium text-sm sm:text-base transition-colors w-full sm:w-auto">
+										<Link
+											href="/accueil"
+											className="bg-white text-brand hover:bg-gray-100 px-6 sm:px-8 py-2.5 sm:py-3 rounded-full font-medium text-sm sm:text-base transition-colors w-full sm:w-auto inline-block text-center"
+										>
 											EN SAVOIR PLUS
-										</button>
+										</Link>
 									</div>
 								</div>
 							</div>
@@ -411,6 +415,8 @@ export default function MonAgentImmoPage() {
 					</div>
 				)}
 
+				{/* Footer */}
+				<Footer />
 				{/* Close page wrapper */}
 			</div>
 

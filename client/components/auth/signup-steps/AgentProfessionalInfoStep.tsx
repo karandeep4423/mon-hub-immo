@@ -31,12 +31,12 @@ export const AgentProfessionalInfoStep: React.FC<
 	onFileChange,
 }) => {
 	return (
-		<div className="space-y-4 min-h-[300px]">
-			<div className="text-center mb-6">
-				<h2 className="text-xl font-semibold text-gray-800">
+		<div className="space-y-3 sm:space-y-4 min-h-[300px]">
+			<div className="text-center mb-4 sm:mb-6">
+				<h2 className="text-lg sm:text-xl font-semibold text-gray-800">
 					Informations professionnelles
 				</h2>
-				<p className="text-sm text-gray-500 mt-1">
+				<p className="text-xs sm:text-sm text-gray-500 mt-1">
 					Détails de votre activité d&apos;agent
 				</p>
 			</div>
@@ -44,7 +44,7 @@ export const AgentProfessionalInfoStep: React.FC<
 			<div>
 				<label
 					htmlFor="agentType"
-					className="block text-sm font-semibold text-gray-700 mb-2"
+					className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2"
 				>
 					Type d&apos;agent immobilier *
 				</label>
@@ -83,7 +83,7 @@ export const AgentProfessionalInfoStep: React.FC<
 			</div>
 
 			{agentType === 'independent' && (
-				<div className="space-y-4 p-4 bg-brand-50 rounded-lg border border-brand-200">
+				<div className="space-y-3 sm:space-y-4 p-3 sm:p-4 bg-brand-50 rounded-lg border border-brand-200">
 					<Input
 						label="Carte professionnelle (T card) *"
 						type="text"
@@ -107,7 +107,7 @@ export const AgentProfessionalInfoStep: React.FC<
 			)}
 
 			{agentType === 'commercial' && (
-				<div className="space-y-4 p-4 bg-brand-50 rounded-lg border border-brand-200">
+				<div className="space-y-3 sm:space-y-4 p-3 sm:p-4 bg-brand-50 rounded-lg border border-brand-200">
 					<Input
 						label="Numéro SIREN *"
 						type="text"
@@ -140,7 +140,7 @@ export const AgentProfessionalInfoStep: React.FC<
 			)}
 
 			{agentType === 'employee' && (
-				<div className="space-y-4 p-4 bg-brand-50 rounded-lg border border-brand-200">
+				<div className="space-y-3 sm:space-y-4 p-3 sm:p-4 bg-brand-50 rounded-lg border border-brand-200">
 					<Input
 						label="Certificat d'autorisation *"
 						type="text"

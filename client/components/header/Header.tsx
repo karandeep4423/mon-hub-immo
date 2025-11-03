@@ -154,7 +154,7 @@ export default function Header() {
 							<div className="grid grid-cols-2 gap-2">
 								{pathname === '/' ? (
 									<Link
-										href={Features.Auth.AUTH_ROUTES.SIGNUP}
+										href="/accueil"
 										className="col-span-2 px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm text-center font-semibold hover:bg-gray-200 transition-all duration-200"
 										onClick={() =>
 											setIsMobileMenuOpen(false)
