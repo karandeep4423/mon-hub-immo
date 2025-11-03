@@ -24,10 +24,15 @@ import {
  * - accessToken exists (fresh session), or
  * - refreshToken exists (expired access token but refreshable session)
  */
-const hasSession = (request: NextRequest): boolean => {
+const getSessionFlags = (
+	request: NextRequest,
+): {
+	hasAccess: boolean;
+	hasRefresh: boolean;
+} => {
 	const hasAccess = !!request.cookies.get('accessToken')?.value;
 	const hasRefresh = !!request.cookies.get('refreshToken')?.value;
-	return hasAccess || hasRefresh;
+	return { hasAccess, hasRefresh };
 };
 
 /**
@@ -35,7 +40,8 @@ const hasSession = (request: NextRequest): boolean => {
  */
 export function middleware(request: NextRequest) {
 	const { pathname } = request.nextUrl;
-	const isAuthenticated = hasSession(request);
+	const { hasAccess, hasRefresh } = getSessionFlags(request);
+	const canAccessProtected = hasAccess || hasRefresh;
 
 	// Skip middleware for:
 	// 1. Static files (_next/static, favicon, etc.)
@@ -52,7 +58,7 @@ export function middleware(request: NextRequest) {
 
 	// Protected routes - require authentication
 	if (isProtectedRoute(pathname)) {
-		if (!isAuthenticated) {
+		if (!canAccessProtected) {
 			// Redirect to login with return URL
 			const loginUrl = new URL(REDIRECT_PATHS.LOGIN, request.url);
 			loginUrl.searchParams.set('from', pathname);
@@ -63,7 +69,9 @@ export function middleware(request: NextRequest) {
 
 	// Auth routes - redirect if already authenticated
 	if (shouldRedirectAuthenticated(pathname)) {
-		if (isAuthenticated) {
+		// Only redirect away from auth pages when a fresh access token exists.
+		// A refresh-only session should be allowed to load the page so the client can refresh silently.
+		if (hasAccess) {
 			return NextResponse.redirect(
 				new URL(REDIRECT_PATHS.DASHBOARD, request.url),
 			);
@@ -71,7 +79,7 @@ export function middleware(request: NextRequest) {
 	}
 
 	// Redirect authenticated users from landing page to home
-	if (pathname === '/' && isAuthenticated) {
+	if (pathname === '/' && hasAccess) {
 		return NextResponse.redirect(new URL(REDIRECT_PATHS.HOME, request.url));
 	}
 
