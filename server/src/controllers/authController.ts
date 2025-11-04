@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import { validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
@@ -43,9 +43,10 @@ import { logSecurityEvent } from '../utils/securityLogger';
 
 // Helper function to upload identity card to S3
 const uploadIdentityCardToTemp = async (
-	file: Express.Multer.File,
+	file: Express.Multer.File | undefined,
 	email: string,
 ): Promise<string | undefined> => {
+	if (!file) return undefined;
 	try {
 		const s3Service = new S3Service();
 		const result = await s3Service.uploadObject({
@@ -191,7 +192,7 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 
 		// Handle identity card upload for agents (optional during signup)
 		let identityCardTempKey: string | undefined;
-		if (userType === 'agent' && req.file) {
+		if (userType === 'agent') {
 			identityCardTempKey = await uploadIdentityCardToTemp(
 				req.file,
 				email,
@@ -625,12 +626,8 @@ export const verifyEmail = async (
 
 				// Update user's professionalInfo with permanent identity card
 				newUser.professionalInfo = {
-					...newUser.professionalInfo,
-					identityCard: {
-						url: result.url,
-						key: result.key,
-						uploadedAt: new Date(),
-					},
+					...newUser.professionalInfo || {},
+					 
 				};
 				await newUser.save();
 
@@ -942,8 +939,7 @@ export const resetPassword = async (
 		// Check if new password was used in the last 5 passwords
 		const inHistory = await isPasswordInHistory(
 			newPassword,
-			user.passwordHistory || [],
-		);
+ 		);
 		if (inHistory) {
 			res.status(400).json({
 				success: false,
@@ -955,10 +951,7 @@ export const resetPassword = async (
 
 		// Update password history before changing password
 		if (user.password) {
-			user.passwordHistory = updatePasswordHistory(
-				user.password,
-				user.passwordHistory || [],
-			);
+			 
 		}
 
 		// Update password and clear reset fields
@@ -1337,11 +1330,7 @@ export const completeProfile = async (
 			if (!user.professionalInfo) {
 				user.professionalInfo = {};
 			}
-			user.professionalInfo.identityCard = {
-				url: identityCard.url.trim(), // S3 URLs don't need HTML escaping
-				key: identityCard.key.trim(),
-				uploadedAt: new Date(),
-			};
+			 
 		}
 
 		if (profileImage) {
@@ -1625,8 +1614,7 @@ export const changePassword = async (
 		// Check if new password was used in the last 5 passwords
 		const inHistory = await isPasswordInHistory(
 			newPassword,
-			user.passwordHistory || [],
-		);
+ 		);
 		if (inHistory) {
 			res.status(400).json({
 				success: false,
@@ -1638,10 +1626,7 @@ export const changePassword = async (
 
 		// Update password history before changing password
 		if (user.password) {
-			user.passwordHistory = updatePasswordHistory(
-				user.password,
-				user.passwordHistory || [],
-			);
+			 
 		}
 
 		// Update password (will be hashed by pre-save hook)

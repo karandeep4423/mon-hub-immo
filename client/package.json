@@ -31,6 +31,7 @@
 	"dependencies": {
 		"@stripe/react-stripe-js": "^5.0.0",
 		"@stripe/stripe-js": "^8.0.0",
+		"@tanstack/react-table": "^8.21.3",
 		"@types/react-dropzone": "^5.1.0",
 		"@typescript-eslint/eslint-plugin": "^8.37.0",
 		"@typescript-eslint/parser": "^8.37.0",
@@ -38,6 +39,7 @@
 		"emoji-picker-react": "^4.15.0",
 		"eslint-config-prettier": "^10.1.5",
 		"eslint-plugin-prettier": "^5.5.1",
+		"fetcher": "^0.3.0",
 		"husky": "^9.1.7",
 		"lint-staged": "^16.1.2",
 		"lucide-react": "^0.548.0",

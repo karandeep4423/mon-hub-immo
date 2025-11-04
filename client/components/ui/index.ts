@@ -4,6 +4,7 @@ export { FileUpload } from './FileUpload';
 export { ImageLightbox } from './ImageLightbox';
 export { ProfileImageUploader } from './ProfileImageUploader';
 export { ProfileAvatar } from './ProfileAvatar';
+export { Select } from './Select';
 export { LoadingSpinner, PageLoader, ButtonLoader } from './LoadingSpinner';
 export {
 	LoadingOverlay,

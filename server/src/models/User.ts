@@ -7,9 +7,8 @@ export interface IUser extends Document {
 	email: string;
 	password: string;
 	phone?: string;
-	userType: 'agent' | 'apporteur' | 'guest';
+	userType: 'agent' | 'apporteur' | 'admin' ;
 	isEmailVerified: boolean;
-	isGuest: boolean; // True for guest users created from anonymous bookings
 	profileImage?: string;
 	lastSeen?: Date;
 
@@ -32,24 +31,6 @@ export interface IUser extends Document {
 		independentAgent?: boolean;
 		alertsEnabled?: boolean;
 		alertFrequency?: 'quotidien' | 'hebdomadaire';
-		identityCard?: {
-			url: string;
-			key: string;
-			uploadedAt: Date;
-		};
-	};
-
-	// Search preferences
-	searchPreferences?: {
-		preferredRadius?: number; // Preferred search radius in km
-		lastSearchLocations?: Array<{
-			city: string;
-			postcode: string;
-			coordinates?: {
-				lat: number;
-				lon: number;
-			};
-		}>;
 	};
 
 	// Email verification
@@ -60,23 +41,38 @@ export interface IUser extends Document {
 	passwordResetCode?: string;
 	passwordResetExpires?: Date;
 
-	// Account security
-	failedLoginAttempts?: number;
-	accountLockedUntil?: Date;
-
-	// Password history (store last 5 password hashes)
-	passwordHistory?: Array<{
-		hash: string;
-		changedAt: Date;
-	}>;
-
 	createdAt: Date;
 	updatedAt: Date;
 	comparePassword(candidatePassword: string): Promise<boolean>;
+
+	accountLockedUntil?: Date;
+	failedLoginAttempts?: number;
+	passwordHistory?: string[];
+	identityCard?: {
+		number?: string;
+		issuedBy?: string;
+		issuedDate?: Date;
+	};
+	searchPreferences?: {
+		preferredRadius?: number;
+		lastSearchLocations?: string[];
+	};
 }
 
 const userSchema = new Schema<IUser>(
 	{
+		accountLockedUntil: { type: Date, default: null },
+		failedLoginAttempts: { type: Number, default: 0 },
+		passwordHistory: [{ type: String }],
+		identityCard: {
+		number: String,
+		issuedBy: String,
+		issuedDate: Date,
+		},
+		searchPreferences: {
+		preferredRadius: { type: Number, default: 20 },
+		lastSearchLocations: [String],
+		},
 		firstName: {
 			type: String,
 			trim: true,
@@ -100,17 +96,16 @@ const userSchema = new Schema<IUser>(
 			trim: true,
 		},
 		userType: {
-			type: String,
-			enum: ['agent', 'apporteur', 'guest'],
+		type: String,
+		enum: {
+			values: ['agent', 'apporteur', 'admin'],
+			message: 'Type d\'utilisateur invalide',
+		},
+		required: [true, 'Le type d\'utilisateur est requis'],
 		},
 		isEmailVerified: {
 			type: Boolean,
 			default: false,
-		},
-		isGuest: {
-			type: Boolean,
-			default: false,
-			index: true,
 		},
 		profileImage: {
 			type: String,
@@ -174,7 +169,17 @@ const userSchema = new Schema<IUser>(
 			],
 			network: {
 				type: String,
-				trim: true,
+				enum: {
+					values: [
+						'IAD',
+						'Century21',
+						'Orpi',
+						'Independant',
+						'Autre',
+					],
+					message: 'Réseau invalide',
+				},
+				default: 'IAD',
 			},
 			siretNumber: {
 				type: String,
@@ -229,66 +234,6 @@ const userSchema = new Schema<IUser>(
 				},
 				default: 'quotidien',
 			},
-			identityCard: {
-				url: {
-					type: String,
-					trim: true,
-					validate: {
-						validator: function (url: string) {
-							if (!url) return true;
-							try {
-								new URL(url);
-								return (
-									url.startsWith('http://') ||
-									url.startsWith('https://')
-								);
-							} catch {
-								return false;
-							}
-						},
-						message: "URL de carte d'identité invalide",
-					},
-				},
-				key: {
-					type: String,
-					trim: true,
-				},
-				uploadedAt: {
-					type: Date,
-				},
-			},
-		},
-		searchPreferences: {
-			preferredRadius: {
-				type: Number,
-				min: [1, 'Rayon de recherche minimum 1 km'],
-				max: [100, 'Rayon de recherche maximum 100 km'],
-				default: 10,
-			},
-			lastSearchLocations: [
-				{
-					city: {
-						type: String,
-						trim: true,
-					},
-					postcode: {
-						type: String,
-						match: [/^[0-9]{5}$/, 'Code postal invalide'],
-					},
-					coordinates: {
-						lat: {
-							type: Number,
-							min: [-90, 'Latitude invalide'],
-							max: [90, 'Latitude invalide'],
-						},
-						lon: {
-							type: Number,
-							min: [-180, 'Longitude invalide'],
-							max: [180, 'Longitude invalide'],
-						},
-					},
-				},
-			],
 		},
 		emailVerificationCode: {
 			type: String,
@@ -308,32 +253,6 @@ const userSchema = new Schema<IUser>(
 			type: Date,
 			select: false,
 		},
-		failedLoginAttempts: {
-			type: Number,
-			default: 0,
-			select: false,
-		},
-		accountLockedUntil: {
-			type: Date,
-			select: false,
-		},
-		passwordHistory: {
-			type: [
-				{
-					hash: {
-						type: String,
-						required: true,
-					},
-					changedAt: {
-						type: Date,
-						required: true,
-						default: Date.now,
-					},
-				},
-			],
-			select: false,
-			default: [],
-		},
 	},
 	{
 		timestamps: true,
@@ -350,7 +269,6 @@ userSchema.index({ userType: 1 });
 userSchema.index({ profileCompleted: 1 });
 userSchema.index({ 'professionalInfo.postalCode': 1 });
 userSchema.index({ 'professionalInfo.city': 1 });
-userSchema.index({ accountLockedUntil: 1 });
 
 // Compound indexes
 userSchema.index({
@@ -367,18 +285,9 @@ userSchema.index({
 
 // Pre-save middleware for password hashing
 userSchema.pre('save', async function (next) {
-	// Skip if password not modified or if it's a guest user with no password
-	if (!this.isModified('password') || !this.password || this.isGuest) {
-		return next();
-	}
+	if (!this.isModified('password')) return next();
 
 	try {
-		// Avoid double-hashing if password is already a bcrypt hash (e.g., migrated from PendingVerification)
-		const isBcryptHash = /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/;
-		if (isBcryptHash.test(this.password)) {
-			return next();
-		}
-
 		const salt = await bcrypt.genSalt(12);
 		this.password = await bcrypt.hash(this.password, salt);
 		next();
