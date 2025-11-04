@@ -300,7 +300,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
 			res.status(400).json({
 				success: false,
-				message: 'Invalid credentials',
+				message: 'Identifiants invalides',
 			});
 			return;
 		}
@@ -433,8 +433,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 				success: false,
 				message:
 					failedAttempts >= 5
-						? 'Too many failed attempts. Account locked for 30 minutes.'
-						: 'Invalid credentials',
+						? 'Trop de tentatives échouées. Compte verrouillé pour 30 minutes.'
+						: 'Identifiants invalides',
 			});
 			return;
 		}
@@ -535,7 +535,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
 		res.status(200).json({
 			success: true,
-			message: 'Login successful',
+			message: 'Connexion réussie',
 			user: {
 				_id: user._id,
 				firstName: user.firstName,
@@ -1237,7 +1237,7 @@ export const updateProfile = async (
 
 		res.json({
 			success: true,
-			message: 'Profile updated successfully',
+			message: 'Profil mis à jour avec succès',
 			user: {
 				_id: user._id,
 				firstName: user.firstName,
@@ -1484,7 +1484,7 @@ export const getAllAgents = async (
 		});
 	} catch (error) {
 		logger.error('[AuthController] Error fetching agents', error);
-		res.status(500).json({ success: false, message: 'Server error' });
+		res.status(500).json({ success: false, message: 'Erreur serveur' });
 	}
 };
 

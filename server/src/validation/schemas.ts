@@ -359,7 +359,8 @@ export const proposeCollaborationSchema = z
 		compensationAmount: z.number().min(0).optional(),
 	})
 	.refine((data) => data.propertyId || data.searchAdId, {
-		message: 'Either propertyId or searchAdId must be provided',
+		message:
+			'Vous devez fournir soit un identifiant de propriété, soit un identifiant de recherche',
 		path: ['propertyId'],
 	})
 	.refine(
@@ -376,7 +377,7 @@ export const proposeCollaborationSchema = z
 		},
 		{
 			message:
-				'commissionPercentage required for percentage type, compensationAmount required for other types',
+				'Le pourcentage de commission est requis pour le type pourcentage, le montant de compensation est requis pour les autres types',
 			path: ['commissionPercentage'],
 		},
 	);

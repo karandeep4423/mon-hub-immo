@@ -87,7 +87,7 @@ export function useFetch<T>(
 		retryAttempts = 3,
 		retryDelay = 1000,
 		showErrorToast = false,
-		errorMessage = 'Failed to fetch data',
+		errorMessage = 'Échec du chargement des données',
 		deps = [],
 		onSuccess,
 		onError,

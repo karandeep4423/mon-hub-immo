@@ -46,7 +46,7 @@ export const signContract = async (
 		if (!collaboration) {
 			res.status(404).json({
 				success: false,
-				message: 'Collaboration not found',
+				message: 'Collaboration introuvable',
 			});
 			return;
 		}
@@ -54,7 +54,7 @@ export const signContract = async (
 		if (collaboration.status !== 'accepted') {
 			res.status(400).json({
 				success: false,
-				message: 'Collaboration must be accepted first',
+				message: 'La collaboration doit être acceptée avant de signer',
 			});
 			return;
 		}
@@ -150,7 +150,7 @@ export const signContract = async (
 
 		res.status(200).json({
 			success: true,
-			message: 'Contract signed successfully',
+			message: 'Contrat signé avec succès',
 			contract: contractData,
 		});
 
@@ -201,7 +201,7 @@ export const signContract = async (
 		logger.error('[ContractController] Error signing contract', error);
 		res.status(500).json({
 			success: false,
-			message: 'Internal server error',
+			message: 'Une erreur est survenue lors de la signature du contrat',
 		});
 	}
 };
@@ -216,7 +216,7 @@ export const updateContract = async (
 		const userId = req.user?.id;
 
 		if (!userId) {
-			res.status(401).json({ success: false, message: 'Unauthorized' });
+			res.status(401).json({ success: false, message: 'Non autorisé' });
 			return;
 		}
 
@@ -230,7 +230,7 @@ export const updateContract = async (
 		if (!collaboration) {
 			res.status(404).json({
 				success: false,
-				message: 'Collaboration not found',
+				message: 'Collaboration introuvable',
 			});
 			return;
 		}
@@ -239,7 +239,7 @@ export const updateContract = async (
 			res.status(400).json({
 				success: false,
 				message:
-					'Contract can only be edited for accepted collaborations',
+					'Le contrat ne peut être modifié que pour les collaborations acceptées',
 			});
 			return;
 		}
@@ -252,7 +252,7 @@ export const updateContract = async (
 		if (!isOwner && !isCollaborator) {
 			res.status(403).json({
 				success: false,
-				message: 'You are not authorized to update this contract',
+				message: "Vous n'êtes pas autorisé à modifier ce contrat",
 			});
 			return;
 		}
@@ -331,8 +331,8 @@ export const updateContract = async (
 		res.status(200).json({
 			success: true,
 			message: contractChanged
-				? 'Contract updated successfully - both parties must sign again'
-				: 'Contract updated successfully',
+				? 'Contrat mis à jour - les deux parties doivent signer à nouveau'
+				: 'Contrat mis à jour avec succès',
 			contract: contractData,
 			requiresResigning: contractChanged,
 		});
@@ -368,7 +368,8 @@ export const updateContract = async (
 		logger.error('[ContractController] Error updating contract', error);
 		res.status(500).json({
 			success: false,
-			message: 'Internal server error',
+			message:
+				'Une erreur est survenue lors de la mise à jour du contrat',
 		});
 	}
 };
@@ -412,7 +413,7 @@ export const getContract = async (
 		if (!isOwner && !isCollaborator) {
 			res.status(403).json({
 				success: false,
-				message: 'You are not authorized to view this contract',
+				message: "Vous n'êtes pas autorisé à consulter ce contrat",
 			});
 			return;
 		}
@@ -523,7 +524,7 @@ Date : ${new Date().toLocaleDateString('fr-FR')}`;
 		logger.error('[ContractController] Error fetching contract', error);
 		res.status(500).json({
 			success: false,
-			message: 'Internal server error',
+			message: 'Une erreur est survenue lors du chargement du contrat',
 		});
 	}
 };

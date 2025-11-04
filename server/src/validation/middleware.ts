@@ -17,7 +17,7 @@ export const validate =
 			}));
 			res.status(400).json({
 				success: false,
-				message: 'Validation error',
+				message: 'Les données fournies ne sont pas valides',
 				errors: issues,
 			});
 			return;

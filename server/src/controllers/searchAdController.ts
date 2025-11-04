@@ -11,7 +11,7 @@ export const createSearchAd = async (
 		if (!req.user?.id) {
 			res.status(401).json({
 				success: false,
-				message: 'Authentication required',
+				message: 'Authentification requise',
 			});
 			return;
 		}
@@ -27,7 +27,7 @@ export const createSearchAd = async (
 	} catch (error) {
 		res.status(400).json({
 			success: false,
-			message: 'Error creating search ad',
+			message: "Échec de la création de l'annonce de recherche",
 			error: (error as Error).message,
 		});
 	}
@@ -132,7 +132,7 @@ export const getAllSearchAds = async (
 	} catch (error) {
 		res.status(500).json({
 			success: false,
-			message: 'Error fetching search ads',
+			message: 'Échec du chargement des annonces de recherche',
 			error: (error as Error).message,
 		});
 	}
@@ -146,7 +146,7 @@ export const getMySearchAds = async (
 		if (!req.user?.id) {
 			res.status(401).json({
 				success: false,
-				message: 'Authentication required',
+				message: 'Authentification requise',
 			});
 			return;
 		}
@@ -162,7 +162,7 @@ export const getMySearchAds = async (
 		});
 		res.status(500).json({
 			success: false,
-			message: 'Error fetching search ads',
+			message: 'Échec du chargement de vos annonces de recherche',
 			error: (error as Error).message,
 		});
 	}
@@ -180,7 +180,7 @@ export const getSearchAdById = async (
 		if (!searchAd) {
 			res.status(404).json({
 				success: false,
-				message: 'Search ad not found',
+				message: 'Annonce de recherche introuvable',
 			});
 			return;
 		}
@@ -188,7 +188,7 @@ export const getSearchAdById = async (
 	} catch (error) {
 		res.status(500).json({
 			success: false,
-			message: 'Error fetching search ad',
+			message: "Échec du chargement de l'annonce de recherche",
 			error: (error as Error).message,
 		});
 	}
@@ -207,7 +207,7 @@ export const updateSearchAd = async (
 		if (!searchAd) {
 			res.status(404).json({
 				success: false,
-				message: 'Search ad not found',
+				message: 'Annonce de recherche introuvable',
 			});
 			return;
 		}
@@ -218,7 +218,7 @@ export const updateSearchAd = async (
 	} catch (error) {
 		res.status(400).json({
 			success: false,
-			message: 'Error updating search ad',
+			message: "Échec de la mise à jour de l'annonce de recherche",
 			error: (error as Error).message,
 		});
 	}
@@ -236,17 +236,20 @@ export const deleteSearchAd = async (
 		if (!searchAd) {
 			res.status(404).json({
 				success: false,
-				message: 'Search ad not found',
+				message: 'Annonce de recherche introuvable',
 			});
 			return;
 		}
 
 		await searchAd.deleteOne();
-		res.status(200).json({ success: true, message: 'Search ad deleted' });
+		res.status(200).json({
+			success: true,
+			message: 'Annonce de recherche supprimée',
+		});
 	} catch (error) {
 		res.status(500).json({
 			success: false,
-			message: 'Error deleting search ad',
+			message: "Échec de la suppression de l'annonce de recherche",
 			error: (error as Error).message,
 		});
 	}
@@ -259,7 +262,7 @@ export const updateSearchAdStatus = async (req: AuthRequest, res: Response) => {
 		if (!status) {
 			res.status(400).json({
 				success: false,
-				message: 'Status is required',
+				message: 'Le statut est requis',
 			});
 			return;
 		}
@@ -270,7 +273,7 @@ export const updateSearchAdStatus = async (req: AuthRequest, res: Response) => {
 		if (!searchAd) {
 			res.status(404).json({
 				success: false,
-				message: 'Search ad not found',
+				message: 'Annonce de recherche introuvable',
 			});
 			return;
 		}
@@ -279,13 +282,13 @@ export const updateSearchAdStatus = async (req: AuthRequest, res: Response) => {
 		await searchAd.save();
 		res.status(200).json({
 			success: true,
-			message: 'Search ad status updated',
+			message: "Statut de l'annonce mis à jour",
 			searchAd,
 		});
 	} catch (error) {
 		res.status(500).json({
 			success: false,
-			message: 'Error updating search ad status',
+			message: 'Échec de la mise à jour du statut',
 			error: (error as Error).message,
 		});
 	}

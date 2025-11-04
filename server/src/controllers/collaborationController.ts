@@ -33,7 +33,7 @@ export const proposeCollaboration = async (
 		const userType = req.user?.userType;
 
 		if (!userId) {
-			res.status(401).json({ success: false, message: 'Unauthorized' });
+			res.status(401).json({ success: false, message: 'Non autorisé' });
 			return;
 		}
 
@@ -42,7 +42,7 @@ export const proposeCollaboration = async (
 			res.status(403).json({
 				success: false,
 				message:
-					'Apporteurs cannot propose collaborations. Only agents can propose collaborations.',
+					'Les apporteurs ne peuvent pas proposer de collaborations. Seuls les agents peuvent proposer des collaborations.',
 			});
 			return;
 		}
@@ -54,7 +54,8 @@ export const proposeCollaboration = async (
 		if (!postId) {
 			res.status(400).json({
 				success: false,
-				message: 'Either propertyId or searchAdId must be provided',
+				message:
+					"Un identifiant de propriété ou d'annonce de recherche est requis",
 			});
 			return;
 		}
@@ -67,7 +68,7 @@ export const proposeCollaboration = async (
 			if (!property) {
 				res.status(404).json({
 					success: false,
-					message: 'Property not found',
+					message: 'Propriété introuvable',
 				});
 				return;
 			}
@@ -76,7 +77,8 @@ export const proposeCollaboration = async (
 			if (property.owner.toString() === userId) {
 				res.status(400).json({
 					success: false,
-					message: 'Cannot collaborate on your own property',
+					message:
+						'Vous ne pouvez pas collaborer sur votre propre propriété',
 				});
 				return;
 			}
@@ -88,7 +90,7 @@ export const proposeCollaboration = async (
 			if (!searchAd) {
 				res.status(404).json({
 					success: false,
-					message: 'Search ad not found',
+					message: 'Annonce de recherche introuvable',
 				});
 				return;
 			}
@@ -97,7 +99,8 @@ export const proposeCollaboration = async (
 			if (searchAd.authorId.toString() === userId) {
 				res.status(400).json({
 					success: false,
-					message: 'Cannot collaborate on your own search ad',
+					message:
+						'Vous ne pouvez pas collaborer sur votre propre annonce',
 				});
 				return;
 			}
@@ -115,7 +118,7 @@ export const proposeCollaboration = async (
 		if (existingCollaboration) {
 			res.status(400).json({
 				success: false,
-				message: 'Collaboration already exists',
+				message: 'Une collaboration existe déjà pour cette annonce',
 			});
 			return;
 		}
@@ -130,7 +133,7 @@ export const proposeCollaboration = async (
 		if (collabWithAnother) {
 			res.status(409).json({
 				success: false,
-				message: `${postType === 'Property' ? 'Property' : 'Search ad'} already under collaboration`,
+				message: `${postType === 'Property' ? 'Cette propriété' : 'Cette annonce de recherche'} est déjà en collaboration`,
 			});
 			return;
 		}
@@ -146,7 +149,7 @@ export const proposeCollaboration = async (
 					res.status(400).json({
 						success: false,
 						message:
-							'Commission percentage must be less than 50% for apporteur posts',
+							"Le pourcentage de commission doit être inférieur à 50% pour les annonces d'apporteur",
 					});
 					return;
 				}
@@ -157,7 +160,8 @@ export const proposeCollaboration = async (
 				if (!compensationAmount || compensationAmount <= 0) {
 					res.status(400).json({
 						success: false,
-						message: 'Compensation amount must be greater than 0',
+						message:
+							'Le montant de compensation doit être supérieur à 0',
 					});
 					return;
 				}
@@ -242,7 +246,7 @@ export const proposeCollaboration = async (
 
 			res.status(201).json({
 				success: true,
-				message: 'Collaboration proposed successfully',
+				message: 'Proposition de collaboration envoyée avec succès',
 				collaboration,
 			});
 		} catch (txError) {
@@ -259,7 +263,8 @@ export const proposeCollaboration = async (
 		);
 		res.status(500).json({
 			success: false,
-			message: 'Internal server error',
+			message:
+				'Une erreur est survenue lors de la proposition de collaboration',
 		});
 	}
 };
@@ -298,7 +303,8 @@ export const getUserCollaborations = async (
 		);
 		res.status(500).json({
 			success: false,
-			message: 'Internal server error',
+			message:
+				'Une erreur est survenue lors du chargement des collaborations',
 		});
 	}
 };
@@ -312,7 +318,7 @@ export const respondToCollaboration = async (
 		const userId = req.user?.id;
 
 		if (!userId) {
-			res.status(401).json({ success: false, message: 'Unauthorized' });
+			res.status(401).json({ success: false, message: 'Non autorisé' });
 			return;
 		}
 
@@ -320,7 +326,7 @@ export const respondToCollaboration = async (
 		if (!collaboration) {
 			res.status(404).json({
 				success: false,
-				message: 'Collaboration not found',
+				message: 'Collaboration introuvable',
 			});
 			return;
 		}
@@ -328,7 +334,7 @@ export const respondToCollaboration = async (
 		if (collaboration.postOwnerId.toString() !== userId) {
 			res.status(403).json({
 				success: false,
-				message: 'Only post owner can respond',
+				message: 'Seul le propriétaire peut répondre',
 			});
 			return;
 		}
@@ -336,7 +342,8 @@ export const respondToCollaboration = async (
 		if (collaboration.status !== 'pending') {
 			res.status(400).json({
 				success: false,
-				message: 'Can only respond to pending proposals',
+				message:
+					"Vous ne pouvez répondre qu'aux propositions en attente",
 			});
 			return;
 		}
@@ -404,7 +411,8 @@ export const respondToCollaboration = async (
 		);
 		res.status(500).json({
 			success: false,
-			message: 'Internal server error',
+			message:
+				'Une erreur est survenue lors de la réponse à la collaboration',
 		});
 	}
 };
@@ -418,7 +426,7 @@ export const addCollaborationNote = async (
 		const userId = req.user?.id;
 
 		if (!userId) {
-			res.status(401).json({ success: false, message: 'Unauthorized' });
+			res.status(401).json({ success: false, message: 'Non autorisé' });
 			return;
 		}
 
@@ -426,7 +434,7 @@ export const addCollaborationNote = async (
 		if (!collaboration) {
 			res.status(404).json({
 				success: false,
-				message: 'Collaboration not found',
+				message: 'Collaboration introuvable',
 			});
 			return;
 		}
@@ -436,7 +444,7 @@ export const addCollaborationNote = async (
 			collaboration.collaboratorId.toString() === userId;
 
 		if (!isOwner && !isCollaborator) {
-			res.status(403).json({ success: false, message: 'Not authorized' });
+			res.status(403).json({ success: false, message: 'Non autorisé' });
 			return;
 		}
 
@@ -444,7 +452,8 @@ export const addCollaborationNote = async (
 		if (collaboration.status !== 'active') {
 			res.status(400).json({
 				success: false,
-				message: 'Cannot add activities until collaboration is active',
+				message:
+					'Les notes ne peuvent être ajoutées que lorsque la collaboration est active',
 			});
 			return;
 		}
@@ -460,7 +469,7 @@ export const addCollaborationNote = async (
 
 		res.status(200).json({
 			success: true,
-			message: 'Note added successfully',
+			message: 'Note ajoutée avec succès',
 			collaboration,
 		});
 

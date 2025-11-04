@@ -273,7 +273,7 @@ export const getPropertyById = async (
 		if (!isValidObjectId(id)) {
 			res.status(400).json({
 				success: false,
-				message: 'Invalid property ID format',
+				message: "Format d'identifiant de propriété invalide",
 			});
 			return;
 		}

@@ -48,11 +48,11 @@ export const IMAGE_UPLOADER_MESSAGES = {
 // ============================================================================
 
 export const IMAGE_ALT_TEXT = {
-	preview: 'Preview',
+	preview: 'Aperçu',
 	searchAdImage: 'Recherche de bien',
-	profileImage: 'Current profile',
+	profileImage: 'Profil actuel',
 	mainPropertyImage: 'Image principale actuelle',
-	appointmentIllustration: 'Appointment scheduling illustration',
+	appointmentIllustration: 'Illustration de prise de rendez-vous',
 	estimateHouse: 'Estimer ma maison',
 	sellProperty: 'Mettre en vente',
 	searchProperty: 'Chercher un bien',
