@@ -98,8 +98,15 @@ export const updateProfileSchema = z.object({
 			interventionRadius: z.number().int().min(1).max(200).optional(),
 			network: z.string().trim().optional(),
 			siretNumber: z
-				.string()
-				.regex(/^[0-9]{14}$/, 'Format SIRET invalide (14 chiffres)')
+				.union([
+					z.literal(''),
+					z
+						.string()
+						.regex(
+							/^[0-9]{14}$/,
+							'Le numéro SIRET doit contenir exactement 14 chiffres',
+						),
+				])
 				.optional(),
 			yearsExperience: z.number().int().min(0).max(50).optional(),
 			personalPitch: z
@@ -132,13 +139,31 @@ export const completeProfileSchema = z.object({
 				'Format de ville invalide',
 			),
 		network: z.string().trim().min(1, 'Le réseau est requis'),
+		interventionRadius: z
+			.number()
+			.int()
+			.min(1, "Le rayon d'intervention est requis (minimum 1 km)")
+			.max(200, "Le rayon d'intervention ne peut pas dépasser 200 km"),
+		coveredCities: z
+			.array(z.string().min(2, 'Nom de ville invalide').max(100))
+			.min(1, 'Au moins une commune couverte est requise'),
+		yearsExperience: z
+			.number()
+			.int()
+			.min(0, "Les années d'expérience sont requises")
+			.max(50, "Les années d'expérience ne peuvent pas dépasser 50 ans"),
 		// Optional fields
-		interventionRadius: z.number().int().min(1).max(200).optional(),
 		siretNumber: z
-			.string()
-			.regex(/^[0-9]{14}$/, 'Format SIRET invalide (14 chiffres)')
+			.union([
+				z.literal(''),
+				z
+					.string()
+					.regex(
+						/^[0-9]{14}$/,
+						'Le numéro SIRET doit contenir exactement 14 chiffres',
+					),
+			])
 			.optional(),
-		yearsExperience: z.number().int().min(0).max(50).optional(),
 		personalPitch: z
 			.string()
 			.max(1000, 'La bio ne peut pas dépasser 1000 caractères')
@@ -146,7 +171,6 @@ export const completeProfileSchema = z.object({
 		mandateTypes: z
 			.array(z.enum(['simple', 'exclusif', 'co-mandat']))
 			.optional(),
-		coveredCities: z.array(z.string().min(2).max(100)).optional(),
 		collaborateWithAgents: z.boolean().optional(),
 		shareCommission: z.boolean().optional(),
 		independentAgent: z.boolean().optional(),

@@ -18,7 +18,6 @@ import { PageLoader } from '../ui/LoadingSpinner';
 import { Features } from '@/lib/constants';
 import { Select } from '@/components/ui/CustomSelect';
 import {
-	handleAuthError,
 	showProfileCompletionSuccess,
 	authToastError,
 	authToastSuccess,
@@ -61,176 +60,312 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 	// Ensure authenticated users only; redirects to login if not
 	useRequireAuth();
 
-	const { values, errors, isSubmitting, setFieldValue, handleSubmit } =
-		useForm<ProfileCompletionFormData>({
-			initialValues: {
-				firstName: user?.firstName || '',
-				lastName: user?.lastName || '',
-				email: user?.email || '',
-				phone: user?.phone || '',
-				profileImage: user?.profileImage || '',
-				postalCode: user?.professionalInfo?.postalCode || '',
-				city: user?.professionalInfo?.city || '',
-				interventionRadius:
-					user?.professionalInfo?.interventionRadius || 20,
-				coveredCities:
-					user?.professionalInfo?.coveredCities?.join(', ') || '',
-				network: user?.professionalInfo?.network || '',
-				siretNumber: user?.professionalInfo?.siretNumber || '',
-				mandateTypes: user?.professionalInfo?.mandateTypes || [],
-				yearsExperience:
-					user?.professionalInfo?.yearsExperience?.toString() || '',
-				personalPitch: user?.professionalInfo?.personalPitch || '',
-				collaborateWithAgents:
-					user?.professionalInfo?.collaborateWithAgents ?? true,
-				shareCommission:
-					user?.professionalInfo?.shareCommission ?? false,
-				independentAgent:
-					user?.professionalInfo?.independentAgent ?? false,
-				alertsEnabled: user?.professionalInfo?.alertsEnabled ?? false,
-				alertFrequency:
-					user?.professionalInfo?.alertFrequency || 'quotidien',
-				acceptTerms: editMode ? true : false,
-			},
-			onSubmit: async (data) => {
-				try {
-					// Validate bio length before submission
-					const bioTextContent = data.personalPitch
-						.replace(/<[^>]*>/g, '')
-						.trim();
-					if (bioTextContent.length > 1000) {
+	const {
+		values,
+		errors,
+		isSubmitting,
+		setFieldValue,
+		setFieldError,
+		handleSubmit,
+	} = useForm<ProfileCompletionFormData>({
+		initialValues: {
+			firstName: user?.firstName || '',
+			lastName: user?.lastName || '',
+			email: user?.email || '',
+			phone: user?.phone || '',
+			profileImage: user?.profileImage || '',
+			postalCode: user?.professionalInfo?.postalCode || '',
+			city: user?.professionalInfo?.city || '',
+			interventionRadius:
+				user?.professionalInfo?.interventionRadius || 20,
+			coveredCities:
+				user?.professionalInfo?.coveredCities?.join(', ') || '',
+			network: user?.professionalInfo?.network || '',
+			siretNumber: user?.professionalInfo?.siretNumber || '',
+			mandateTypes: user?.professionalInfo?.mandateTypes || [],
+			yearsExperience:
+				user?.professionalInfo?.yearsExperience?.toString() || '',
+			personalPitch: user?.professionalInfo?.personalPitch || '',
+			collaborateWithAgents:
+				user?.professionalInfo?.collaborateWithAgents ?? true,
+			shareCommission: user?.professionalInfo?.shareCommission ?? false,
+			independentAgent: user?.professionalInfo?.independentAgent ?? false,
+			alertsEnabled: user?.professionalInfo?.alertsEnabled ?? false,
+			alertFrequency:
+				user?.professionalInfo?.alertFrequency || 'quotidien',
+			acceptTerms: editMode ? true : false,
+		},
+		onSubmit: async (data) => {
+			try {
+				// Validate required fields
+				const newErrors: Record<string, string> = {};
+
+				if (!data.city || data.city.trim() === '') {
+					newErrors.city = 'La ville principale est requise';
+				}
+
+				if (!data.postalCode || data.postalCode.trim() === '') {
+					newErrors.postalCode = 'Le code postal est requis';
+				}
+
+				if (!data.interventionRadius || data.interventionRadius <= 0) {
+					newErrors.interventionRadius =
+						"Le rayon d'intervention est requis";
+				}
+
+				if (!data.coveredCities || data.coveredCities.trim() === '') {
+					newErrors.coveredCities =
+						'Au moins une commune couverte est requise';
+				}
+
+				if (
+					!data.yearsExperience ||
+					data.yearsExperience.trim() === ''
+				) {
+					newErrors.yearsExperience =
+						"Les années d'expérience sont requises";
+				}
+
+				if (!data.network || data.network.trim() === '') {
+					newErrors.network = 'Le réseau ou statut est requis';
+				}
+
+				if (Object.keys(newErrors).length > 0) {
+					// Set errors using setFieldError for each field
+					Object.entries(newErrors).forEach(([field, message]) => {
+						setFieldError(field, message);
+					});
+					authToastError(
+						'Veuillez remplir tous les champs obligatoires',
+					);
+					return;
+				}
+
+				// Validate bio length before submission
+				const bioTextContent = data.personalPitch
+					.replace(/<[^>]*>/g, '')
+					.trim();
+				if (bioTextContent.length > 1000) {
+					authToastError(
+						'La bio ne peut pas dépasser 1000 caractères',
+					);
+					return;
+				}
+
+				let identityCardData;
+
+				// Upload identity card file if provided (only in initial setup, not edit mode)
+				if (identityCardFile && !editMode) {
+					setIsUploadingFile(true);
+					const uploadResponse =
+						await authService.uploadIdentityCard(identityCardFile);
+					if (uploadResponse.success) {
+						identityCardData = {
+							url: uploadResponse.data.url,
+							key: uploadResponse.data.key,
+						};
+					} else {
 						authToastError(
-							'La bio ne peut pas dépasser 1000 caractères',
+							Features.Auth.AUTH_TOAST_MESSAGES
+								.IDENTITY_CARD_UPLOAD_ERROR,
 						);
+					}
+					setIsUploadingFile(false);
+				}
+
+				// Use updateProfile in edit mode, completeProfile in initial setup
+				const response = editMode
+					? await authService.updateProfile({
+							firstName: data.firstName,
+							lastName: data.lastName,
+							phone: data.phone,
+							profileImage: data.profileImage,
+							professionalInfo: {
+								postalCode: data.postalCode,
+								city: data.city,
+								interventionRadius:
+									typeof data.interventionRadius === 'string'
+										? parseInt(data.interventionRadius, 10)
+										: data.interventionRadius,
+								coveredCities: data.coveredCities
+									? data.coveredCities
+											.split(',')
+											.map((c: string) => c.trim())
+											.filter(Boolean)
+									: [],
+								network: data.network,
+								siretNumber: data.siretNumber,
+								mandateTypes: data.mandateTypes as Array<
+									'simple' | 'exclusif' | 'co-mandat'
+								>,
+								yearsExperience:
+									typeof data.yearsExperience === 'string'
+										? parseInt(data.yearsExperience, 10)
+										: data.yearsExperience,
+								personalPitch: data.personalPitch,
+								collaborateWithAgents:
+									data.collaborateWithAgents,
+								shareCommission: data.shareCommission,
+								independentAgent: data.independentAgent,
+								alertsEnabled: data.alertsEnabled,
+								alertFrequency: data.alertFrequency,
+							},
+						})
+					: await authService.completeProfile({
+							professionalInfo: {
+								postalCode: data.postalCode,
+								city: data.city,
+								interventionRadius:
+									typeof data.interventionRadius === 'string'
+										? parseInt(data.interventionRadius, 10)
+										: data.interventionRadius,
+								coveredCities: data.coveredCities
+									? data.coveredCities
+											.split(',')
+											.map((c: string) => c.trim())
+											.filter(Boolean)
+									: [],
+								network: data.network,
+								siretNumber: data.siretNumber,
+								mandateTypes: data.mandateTypes as Array<
+									'simple' | 'exclusif' | 'co-mandat'
+								>,
+								yearsExperience:
+									typeof data.yearsExperience === 'string'
+										? parseInt(data.yearsExperience, 10)
+										: data.yearsExperience,
+								personalPitch: data.personalPitch,
+								collaborateWithAgents:
+									data.collaborateWithAgents,
+								shareCommission: data.shareCommission,
+								independentAgent: data.independentAgent,
+								alertsEnabled: data.alertsEnabled,
+								alertFrequency: data.alertFrequency,
+							},
+							profileImage: data.profileImage,
+							identityCard: identityCardData,
+						});
+
+				if (response.success && response.user) {
+					updateUser(response.user);
+					if (editMode) {
+						authToastSuccess('✅ Profil mis à jour avec succès');
+						router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
+					} else {
+						showProfileCompletionSuccess();
+						router.push(Features.Auth.AUTH_ROUTES.WELCOME);
+					}
+				} else {
+					// Handle validation errors from response
+					interface ValidationError {
+						path: string;
+						message: string;
+					}
+					interface ErrorResponse {
+						errors?: ValidationError[];
+						message?: string;
+					}
+					const responseData = response as unknown as ErrorResponse;
+					if (
+						responseData.errors &&
+						Array.isArray(responseData.errors)
+					) {
+						const validationErrors = responseData.errors;
+						if (validationErrors.length > 0) {
+							// Show the first error in toast
+							authToastError(validationErrors[0].message);
+
+							// Set all field errors
+							validationErrors.forEach((err: ValidationError) => {
+								const fieldName = err.path.replace(
+									'professionalInfo.',
+									'',
+								);
+								setFieldError(fieldName, err.message);
+							});
+							return;
+						}
+					}
+
+					const errorMessage =
+						response.message || 'Une erreur est survenue';
+					authToastError(errorMessage);
+				}
+			} catch (error: unknown) {
+				setIsUploadingFile(false);
+				interface ValidationError {
+					path?: string;
+					field?: string;
+					message: string;
+				}
+				interface ApiError {
+					errors?: ValidationError[];
+					message?: string;
+					response?: {
+						data?: {
+							message?: string;
+							errors?: ValidationError[];
+						};
+					};
+				}
+				const apiError = error as ApiError;
+
+				// Check if ApiError has errors property (from handleApiError)
+				if (apiError?.errors && Array.isArray(apiError.errors)) {
+					const validationErrors = apiError.errors;
+					if (validationErrors.length > 0) {
+						// Show the first error in toast
+						authToastError(validationErrors[0].message);
+
+						// Set all field errors
+						validationErrors.forEach((err) => {
+							const fieldName = (
+								err.path ||
+								err.field ||
+								''
+							).replace('professionalInfo.', '');
+							if (fieldName) {
+								setFieldError(fieldName, err.message);
+							}
+						});
 						return;
 					}
-
-					let identityCardData;
-
-					// Upload identity card file if provided (only in initial setup, not edit mode)
-					if (identityCardFile && !editMode) {
-						setIsUploadingFile(true);
-						const uploadResponse =
-							await authService.uploadIdentityCard(
-								identityCardFile,
-							);
-						if (uploadResponse.success) {
-							identityCardData = {
-								url: uploadResponse.data.url,
-								key: uploadResponse.data.key,
-							};
-						} else {
-							authToastError(
-								Features.Auth.AUTH_TOAST_MESSAGES
-									.IDENTITY_CARD_UPLOAD_ERROR,
-							);
-						}
-						setIsUploadingFile(false);
-					}
-
-					// Use updateProfile in edit mode, completeProfile in initial setup
-					const response = editMode
-						? await authService.updateProfile({
-								firstName: data.firstName,
-								lastName: data.lastName,
-								phone: data.phone,
-								profileImage: data.profileImage,
-								professionalInfo: {
-									postalCode: data.postalCode,
-									city: data.city,
-									interventionRadius:
-										typeof data.interventionRadius ===
-										'string'
-											? parseInt(
-													data.interventionRadius,
-													10,
-												)
-											: data.interventionRadius,
-									coveredCities: data.coveredCities
-										? data.coveredCities
-												.split(',')
-												.map((c: string) => c.trim())
-												.filter(Boolean)
-										: [],
-									network: data.network,
-									siretNumber: data.siretNumber,
-									mandateTypes: data.mandateTypes as Array<
-										'simple' | 'exclusif' | 'co-mandat'
-									>,
-									yearsExperience:
-										typeof data.yearsExperience === 'string'
-											? parseInt(data.yearsExperience, 10)
-											: data.yearsExperience,
-									personalPitch: data.personalPitch,
-									collaborateWithAgents:
-										data.collaborateWithAgents,
-									shareCommission: data.shareCommission,
-									independentAgent: data.independentAgent,
-									alertsEnabled: data.alertsEnabled,
-									alertFrequency: data.alertFrequency,
-								},
-							})
-						: await authService.completeProfile({
-								professionalInfo: {
-									postalCode: data.postalCode,
-									city: data.city,
-									interventionRadius:
-										typeof data.interventionRadius ===
-										'string'
-											? parseInt(
-													data.interventionRadius,
-													10,
-												)
-											: data.interventionRadius,
-									coveredCities: data.coveredCities
-										? data.coveredCities
-												.split(',')
-												.map((c: string) => c.trim())
-												.filter(Boolean)
-										: [],
-									network: data.network,
-									siretNumber: data.siretNumber,
-									mandateTypes: data.mandateTypes as Array<
-										'simple' | 'exclusif' | 'co-mandat'
-									>,
-									yearsExperience:
-										typeof data.yearsExperience === 'string'
-											? parseInt(data.yearsExperience, 10)
-											: data.yearsExperience,
-									personalPitch: data.personalPitch,
-									collaborateWithAgents:
-										data.collaborateWithAgents,
-									shareCommission: data.shareCommission,
-									independentAgent: data.independentAgent,
-									alertsEnabled: data.alertsEnabled,
-									alertFrequency: data.alertFrequency,
-								},
-								profileImage: data.profileImage,
-								identityCard: identityCardData,
-							});
-
-					if (response.success && response.user) {
-						updateUser(response.user);
-						if (editMode) {
-							authToastSuccess(
-								'✅ Profil mis à jour avec succès',
-							);
-							router.push(
-								Features.Dashboard.DASHBOARD_ROUTES.BASE,
-							);
-						} else {
-							showProfileCompletionSuccess();
-							router.push(Features.Auth.AUTH_ROUTES.WELCOME);
-						}
-					} else {
-						handleAuthError(new Error(response.message));
-					}
-				} catch (error) {
-					setIsUploadingFile(false);
-					handleAuthError(error);
 				}
-			},
-		});
+
+				// Handle validation errors with specific field messages from response.data
+				if (
+					apiError?.response?.data?.errors &&
+					Array.isArray(apiError.response.data.errors)
+				) {
+					const validationErrors = apiError.response.data.errors;
+					if (validationErrors.length > 0) {
+						// Show the first error in toast
+						authToastError(validationErrors[0].message);
+
+						// Set all field errors
+						validationErrors.forEach((err) => {
+							const fieldName = (
+								err.path ||
+								err.field ||
+								''
+							).replace('professionalInfo.', '');
+							if (fieldName) {
+								setFieldError(fieldName, err.message);
+							}
+						});
+						return;
+					}
+				}
+
+				// Fallback to generic error message
+				const errorMessage =
+					apiError?.response?.data?.message ||
+					apiError?.message ||
+					'Erreur lors de la mise à jour du profil';
+				authToastError(errorMessage);
+			}
+		},
+	});
 
 	useEffect(() => {
 		// Only proceed with role/completion checks when we have a user
@@ -345,7 +480,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 						</h3>{' '}
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
 							<Input
-								label="Prénom"
+								label="Prénom *"
 								name="firstName"
 								value={values.firstName}
 								onChange={handleChange}
@@ -365,7 +500,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 							</div>
 
 							<Input
-								label="Nom"
+								label="Nom *"
 								name="lastName"
 								value={values.lastName}
 								onChange={handleChange}
@@ -375,7 +510,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 						</div>
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<Input
-								label="Email"
+								label="Email *"
 								name="email"
 								value={values.email}
 								onChange={handleChange}
@@ -384,7 +519,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 							/>
 
 							<Input
-								label="Téléphone pro"
+								label="Téléphone pro *"
 								name="phone"
 								value={values.phone}
 								onChange={handleChange}
@@ -404,7 +539,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<CityAutocomplete
-								label="Ville principale"
+								label="Ville principale *"
 								value={values.city}
 								onCitySelect={(cityName, postalCode) => {
 									handleChange({
@@ -427,7 +562,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 							/>
 
 							<Input
-								label="Code postal"
+								label="Code postal *"
 								name="postalCode"
 								value={values.postalCode}
 								onChange={handleChange}
@@ -440,7 +575,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 
 							<div>
 								<label className="block text-sm font-medium text-gray-700 mb-1">
-									Rayon d&apos;intervention
+									Rayon d&apos;intervention *
 								</label>
 								<Select
 									label=""
@@ -465,13 +600,14 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 										{ value: '50', label: '50 km' },
 										{ value: '100', label: '100 km' },
 									]}
+									error={errors.interventionRadius}
 								/>
 							</div>
 						</div>
 
 						<div className="mt-4">
 							<Textarea
-								label="Communes couvertes"
+								label="Communes couvertes *"
 								name="coveredCities"
 								value={values.coveredCities}
 								onChange={handleChange}
@@ -479,6 +615,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 								placeholder={
 									Features.Auth.AUTH_PLACEHOLDERS.CITIES
 								}
+								error={errors.coveredCities}
 							/>
 						</div>
 					</div>
@@ -491,7 +628,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<Input
-								label="Réseau ou statut"
+								label="Réseau ou statut *"
 								name="network"
 								value={values.network}
 								onChange={handleChange}
@@ -554,7 +691,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 							</div>
 
 							<Input
-								label="Années d'expérience"
+								label="Années d'expérience *"
 								name="yearsExperience"
 								type="number"
 								value={values.yearsExperience}

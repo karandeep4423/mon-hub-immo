@@ -1399,7 +1399,11 @@ export const completeProfile = async (
 			user.userType === 'agent' &&
 			user.professionalInfo?.city &&
 			user.professionalInfo?.postalCode &&
-			user.professionalInfo?.network
+			user.professionalInfo?.network &&
+			user.professionalInfo?.interventionRadius &&
+			user.professionalInfo?.coveredCities &&
+			user.professionalInfo.coveredCities.length > 0 &&
+			typeof user.professionalInfo?.yearsExperience === 'number'
 		) {
 			user.profileCompleted = true;
 		} else if (user.userType !== 'agent') {
