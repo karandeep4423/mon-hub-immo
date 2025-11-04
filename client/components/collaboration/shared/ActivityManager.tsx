@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Textarea } from '@/components/ui/Textarea';
+import { FormProvider } from '@/context/FormContext';
 import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 import { logger } from '@/lib/utils/logger';
 import { formatDateTimeShort } from '@/lib/utils/date';
@@ -137,12 +139,16 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 			{showAddForm && canAddActivity && (
 				<Card className="mb-6 border border-brand-200 bg-brand-50">
 					<div className="p-1">
-						<form onSubmit={handleAddNote} className="space-y-2">
+						<FormProvider
+							isSubmitting={isAdding}
+							onSubmit={handleAddNote}
+							className="space-y-2"
+						>
 							<div>
 								<label className="block text-sm font-medium text-gray-700 mb-2">
 									Nouvelle note
 								</label>
-								<textarea
+								<Textarea
 									value={newNote}
 									onChange={(e) => setNewNote(e.target.value)}
 									placeholder={
@@ -151,7 +157,6 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 											.ACTIVITY_NOTE
 									}
 									rows={3}
-									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand/20 focus:border-transparent "
 									required
 								/>
 							</div>
@@ -178,7 +183,7 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 									{Components.UI.BUTTON_TEXT.add}
 								</Button>
 							</div>
-						</form>
+						</FormProvider>
 					</div>
 				</Card>
 			)}

@@ -47,12 +47,12 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({
 	};
 
 	return (
-		<div className="space-y-4">
-			<div className="text-center mb-6">
-				<h2 className="text-xl font-semibold text-gray-800">
+		<div className="space-y-3 sm:space-y-4">
+			<div className="text-center mb-4 sm:mb-6">
+				<h2 className="text-lg sm:text-xl font-semibold text-gray-800">
 					Sécurisez votre compte
 				</h2>
-				<p className="text-sm text-gray-500 mt-1">
+				<p className="text-xs sm:text-sm text-gray-500 mt-1">
 					Créez un mot de passe sécurisé
 				</p>
 			</div>

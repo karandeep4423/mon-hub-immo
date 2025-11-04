@@ -81,7 +81,7 @@ export const requireRole = (allowedRoles: Array<'agent' | 'apporteur'>) => {
  * import { SearchAd } from '../models/SearchAd';
  * router.delete('/:id', authenticateToken, requireOwnership(SearchAd), deleteSearchAd);
  *
- * Note: Assumes resource ID is in req.params.id and ownership field is 'authorId'
+ * Note: Assumes resource ID is in req.params.id and ownership field is 'authorId' or 'owner'
  * If you need custom parameters, extend this function when the need arises (YAGNI)
  */
 export const requireOwnership = (
@@ -140,12 +140,14 @@ export const requireOwnership = (
 				return;
 			}
 
-			if (!isOwner(req.userId, resource.authorId)) {
+			// Check ownership - handle both 'authorId' (SearchAd) and 'owner' (Property) fields
+			const ownerField = resource.authorId || resource.owner;
+			if (!isOwner(req.userId, ownerField)) {
 				logger.warn('[Authorization] Ownership check failed', {
 					event: 'ownership_check_failed',
 					userId: req.userId,
 					resourceId,
-					resourceOwnerId: resource.authorId?.toString(),
+					resourceOwnerId: ownerField?.toString(),
 					path: req.path,
 					method: req.method,
 					ip: req.ip,

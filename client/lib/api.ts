@@ -111,15 +111,13 @@ api.interceptors.response.use(
 
 		// Handle 401 Unauthorized - try to refresh token
 		// Skip refresh for auth endpoints (login, signup, etc.) and refresh endpoint itself
-		// Also skip for profile endpoint when initializing (to avoid console errors on page load)
 		const isAuthEndpoint =
 			originalRequest.url?.includes('/auth/login') ||
 			originalRequest.url?.includes('/auth/signup') ||
 			originalRequest.url?.includes('/auth/verify-email') ||
 			originalRequest.url?.includes('/auth/forgot-password') ||
 			originalRequest.url?.includes('/auth/reset-password') ||
-			originalRequest.url?.includes('/auth/refresh') ||
-			originalRequest.url?.includes('/auth/profile');
+			originalRequest.url?.includes('/auth/refresh');
 
 		if (
 			error.response?.status === 401 &&

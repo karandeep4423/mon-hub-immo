@@ -24,7 +24,7 @@ export interface SearchAd {
 	projectType?: 'primary' | 'secondary' | 'investment';
 
 	// --- Localisation ---
-	location: {
+	location?: {
 		cities: string[];
 		postalCodes?: string[];
 		maxDistance?: number;
@@ -41,7 +41,7 @@ export interface SearchAd {
 	desiredState?: ('new' | 'good' | 'refresh' | 'renovate')[];
 
 	// --- Budget & financement ---
-	budget: {
+	budget?: {
 		max: number;
 		ideal?: number;
 		financingType?: 'loan' | 'cash' | 'pending';

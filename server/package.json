@@ -10,7 +10,8 @@
 		"build": "tsc",
 		"lint": "eslint .",
 		"migrate:progress-steps": "ts-node src/scripts/migrateProgressSteps.ts",
-		"migrate:clear-appointments": "ts-node src/scripts/clearAppointments.ts"
+		"migrate:clear-appointments": "ts-node src/scripts/clearAppointments.ts",
+		"script:fix-locks": "ts-node scripts/fix-account-locks.ts"
 	},
 	"lint-staged": {
 		"**/*.{js,jsx,ts,tsx}": "eslint --fix",
@@ -79,6 +80,7 @@
 		"husky": "^8.0.0",
 		"jest": "^30.0.4",
 		"lint-staged": "^15.2.10",
+		"mongodb-memory-server": "^10.3.0",
 		"nodemon": "^3.1.10",
 		"prettier": "^3.3.3",
 		"supertest": "^7.1.3",

@@ -181,33 +181,26 @@ export const useSignUpForm = () => {
 			}
 
 			// Validation based on agent type
-			if (
-				formData.agentType &&
-				['agent_mandataire', 'agent_commercial'].includes(
-					formData.agentType,
-				)
-			) {
-				if (!formData.tCard) {
+			if (formData.agentType === 'independent') {
+				if (!formData.tCard || formData.tCard.trim() === '') {
 					newErrors.tCard =
-						'Carte T requise pour agent mandataire/commercial';
+						'Carte professionnelle (T card) requise pour agent immobilier indépendant';
 				}
-				if (!identityCardFile) {
-					newErrors.identityCard =
-						"Carte d'identité requise pour agent mandataire/commercial";
-				}
-			} else if (formData.agentType === 'agent_independant') {
-				if (!formData.sirenNumber) {
+			} else if (formData.agentType === 'commercial') {
+				if (
+					!formData.sirenNumber ||
+					formData.sirenNumber.trim() === ''
+				) {
 					newErrors.sirenNumber =
-						'Numéro SIREN requis pour agent indépendant';
+						'Numéro SIREN requis pour agent commercial immobilier';
 				}
-				if (!formData.rsacNumber) {
-					newErrors.rsacNumber =
-						'Numéro RSAC requis pour agent indépendant';
-				}
-			} else if (formData.agentType === 'collaborateur_agent') {
-				if (!formData.collaboratorCertificate) {
+			} else if (formData.agentType === 'employee') {
+				if (
+					!formData.collaboratorCertificate ||
+					formData.collaboratorCertificate.trim() === ''
+				) {
 					newErrors.collaboratorCertificate =
-						"Attestation de l'employeur requise pour collaborateur";
+						"Certificat d'autorisation requis pour négociateur VRP employé d'agence";
 				}
 			}
 
@@ -258,33 +251,27 @@ export const useSignUpForm = () => {
 				newErrors.agentType = "Type d'agent requis";
 			}
 
-			if (
-				formData.agentType &&
-				['agent_mandataire', 'agent_commercial'].includes(
-					formData.agentType,
-				)
-			) {
-				if (!formData.tCard) {
+			// Validation based on agent type
+			if (formData.agentType === 'independent') {
+				if (!formData.tCard || formData.tCard.trim() === '') {
 					newErrors.tCard =
-						'Carte T requise pour agent mandataire/commercial';
+						'Carte professionnelle (T card) requise pour agent immobilier indépendant';
 				}
-				if (!identityCardFile) {
-					newErrors.identityCard =
-						"Carte d'identité requise pour agent mandataire/commercial";
-				}
-			} else if (formData.agentType === 'agent_independant') {
-				if (!formData.sirenNumber) {
+			} else if (formData.agentType === 'commercial') {
+				if (
+					!formData.sirenNumber ||
+					formData.sirenNumber.trim() === ''
+				) {
 					newErrors.sirenNumber =
-						'Numéro SIREN requis pour agent indépendant';
+						'Numéro SIREN requis pour agent commercial immobilier';
 				}
-				if (!formData.rsacNumber) {
-					newErrors.rsacNumber =
-						'Numéro RSAC requis pour agent indépendant';
-				}
-			} else if (formData.agentType === 'collaborateur_agent') {
-				if (!formData.collaboratorCertificate) {
+			} else if (formData.agentType === 'employee') {
+				if (
+					!formData.collaboratorCertificate ||
+					formData.collaboratorCertificate.trim() === ''
+				) {
 					newErrors.collaboratorCertificate =
-						"Attestation de l'employeur requise pour collaborateur";
+						"Certificat d'autorisation requis pour négociateur VRP employé d'agence";
 				}
 			}
 

@@ -3,6 +3,41 @@ import { api } from '../api';
 import { handleApiError } from '../utils/errorHandler';
 
 /**
+ * Sanitize clientInfo to remove empty strings from enum fields
+ * Backend validation requires valid enum values or undefined, not empty strings
+ */
+const sanitizeClientInfo = (
+	clientInfo: Property['clientInfo'],
+): Property['clientInfo'] => {
+	if (!clientInfo) return clientInfo;
+
+	const sanitized = { ...clientInfo };
+
+	// Clean commercialDetails
+	if (sanitized.commercialDetails) {
+		const commercial = { ...sanitized.commercialDetails };
+		if (
+			!commercial.occupancyStatus ||
+			commercial.occupancyStatus === ('' as unknown)
+		) {
+			delete commercial.occupancyStatus;
+		}
+		sanitized.commercialDetails = commercial;
+	}
+
+	// Clean ownerInfo
+	if (sanitized.ownerInfo) {
+		const owner = { ...sanitized.ownerInfo };
+		if (!owner.mandateType || owner.mandateType === ('' as unknown)) {
+			delete owner.mandateType;
+		}
+		sanitized.ownerInfo = owner;
+	}
+
+	return sanitized;
+};
+
+/**
  * Property interface representing a real estate listing
  *
  * @interface Property
@@ -474,8 +509,14 @@ export class PropertyService {
 		try {
 			const formData = new FormData();
 
+			// Sanitize clientInfo before sending
+			const sanitizedData = {
+				...propertyData,
+				clientInfo: sanitizeClientInfo(propertyData.clientInfo),
+			};
+
 			// Add property data
-			Object.entries(propertyData).forEach(([key, value]) => {
+			Object.entries(sanitizedData).forEach(([key, value]) => {
 				if (value !== undefined && value !== null) {
 					if (Array.isArray(value)) {
 						value.forEach((item, index) => {
@@ -560,8 +601,14 @@ export class PropertyService {
 		try {
 			const formData = new FormData();
 
+			// Sanitize clientInfo before sending
+			const sanitizedData = {
+				...propertyData,
+				clientInfo: sanitizeClientInfo(propertyData.clientInfo),
+			};
+
 			// Add property data
-			Object.entries(propertyData).forEach(([key, value]) => {
+			Object.entries(sanitizedData).forEach(([key, value]) => {
 				if (value !== undefined && value !== null) {
 					if (Array.isArray(value)) {
 						value.forEach((item, index) => {

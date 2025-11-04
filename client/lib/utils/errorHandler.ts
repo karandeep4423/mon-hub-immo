@@ -93,44 +93,49 @@ export function handleApiError(
 		switch (statusCode) {
 			case 400:
 				return new ApiError(
-					'Requête invalide',
+					'Les données envoyées sont invalides. Veuillez vérifier votre saisie.',
 					statusCode,
 					undefined,
 					error,
 				);
 			case 401:
 				return new ApiError(
-					'Non autorisé',
+					'Vous devez vous connecter pour accéder à cette ressource',
 					statusCode,
 					undefined,
 					error,
 				);
 			case 403:
 				return new ApiError(
-					'Accès refusé',
+					"Vous n'avez pas les permissions nécessaires pour effectuer cette action",
 					statusCode,
 					undefined,
 					error,
 				);
 			case 404:
 				return new ApiError(
-					'Ressource non trouvée',
+					"La ressource demandée n'existe pas ou a été supprimée",
 					statusCode,
 					undefined,
 					error,
 				);
 			case 409:
-				return new ApiError('Conflit', statusCode, undefined, error);
+				return new ApiError(
+					'Cette opération est en conflit avec une ressource existante',
+					statusCode,
+					undefined,
+					error,
+				);
 			case 422:
 				return new ApiError(
-					'Données invalides',
+					'Les informations fournies ne sont pas valides. Veuillez corriger les erreurs.',
 					statusCode,
 					undefined,
 					error,
 				);
 			case 500:
 				return new ApiError(
-					'Erreur serveur',
+					'Une erreur est survenue sur le serveur. Veuillez réessayer dans quelques instants.',
 					statusCode,
 					undefined,
 					error,

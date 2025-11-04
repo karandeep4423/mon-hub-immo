@@ -72,13 +72,15 @@ const baseRules = {
 // Professional info validation rules
 const professionalInfoRules = {
 	postalCode: body('professionalInfo.postalCode')
-		.optional()
+		.exists({ checkFalsy: true })
+		.withMessage('Le code postal est requis')
 		.trim()
 		.matches(/^[0-9]{5}$/)
 		.withMessage('Le code postal doit contenir exactement 5 chiffres'),
 
 	city: body('professionalInfo.city')
-		.optional()
+		.exists({ checkFalsy: true })
+		.withMessage('La ville est requise')
 		.trim()
 		.escape()
 		.isLength({ min: 2, max: 100 })
@@ -91,7 +93,8 @@ const professionalInfoRules = {
 		),
 
 	interventionRadius: body('professionalInfo.interventionRadius')
-		.optional()
+		.exists({ checkFalsy: true })
+		.withMessage("Le rayon d'intervention est requis")
 		.isInt({ min: 1, max: 200 })
 		.withMessage("Le rayon d'intervention doit être entre 1 et 200 km")
 		.toInt(),
@@ -103,13 +106,14 @@ const professionalInfoRules = {
 		.withMessage('Le réseau doit être une chaîne de caractères'),
 
 	siretNumber: body('professionalInfo.siretNumber')
-		.optional()
+		.optional({ checkFalsy: true })
 		.trim()
 		.matches(/^[0-9]{14}$/)
 		.withMessage('Le numéro SIRET doit contenir exactement 14 chiffres'),
 
 	yearsExperience: body('professionalInfo.yearsExperience')
-		.optional()
+		.exists({ checkFalsy: true })
+		.withMessage("Les années d'expérience sont requises")
 		.isInt({ min: 0, max: 50 })
 		.withMessage("Les années d'expérience doivent être entre 0 et 50")
 		.toInt(),
@@ -135,11 +139,13 @@ const professionalInfoRules = {
 		.withMessage('Types de mandat invalides'),
 
 	coveredCities: body('professionalInfo.coveredCities')
-		.optional()
+		.exists({ checkFalsy: true })
+		.withMessage('Au moins une commune couverte est requise')
 		.isArray()
 		.withMessage('Les villes couvertes doivent être un tableau')
 		.custom((value) => {
 			if (!Array.isArray(value)) return false;
+			if (value.length === 0) return false;
 			return value.every(
 				(city) =>
 					typeof city === 'string' &&

@@ -44,11 +44,11 @@ export const validatePasswordStrength = (
 		if (pattern.test(password)) {
 			return {
 				isValid: false,
-				message: 'This password is too common and easily guessable',
+				message: 'Ce mot de passe est trop commun et facile à deviner',
 				score: 0,
 				suggestions: [
-					'Choose a more unique password',
-					'Avoid common words and patterns',
+					'Choisissez un mot de passe plus unique',
+					'Évitez les mots et motifs courants',
 				],
 			};
 		}
@@ -63,11 +63,11 @@ export const validatePasswordStrength = (
 			isValid: false,
 			message:
 				result.feedback.warning ||
-				'Password is too weak. Please choose a stronger password.',
+				'Le mot de passe est trop faible. Veuillez choisir un mot de passe plus fort.',
 			score: result.score,
 			suggestions: result.feedback.suggestions || [
-				'Use a mix of uppercase and lowercase letters',
-				'Include numbers and special characters',
+				'Utilisez un mélange de majuscules et minuscules',
+				'Incluez des chiffres et des caractères spéciaux',
 				'Make it at least 12 characters long',
 				'Avoid common words and patterns',
 			],

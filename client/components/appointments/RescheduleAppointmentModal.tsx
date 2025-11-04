@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Textarea } from '@/components/ui/Textarea';
 import type { Appointment } from '@/types/appointment';
 import { toast } from 'react-toastify';
 import { APPOINTMENT_TOAST_MESSAGES } from '@/lib/constants/features/appointments';
@@ -338,7 +339,8 @@ export const RescheduleAppointmentModal: React.FC<
 									Raison du report (optionnel)
 								</div>
 							</label>
-							<textarea
+							<Textarea
+								label=""
 								value={rescheduleReason}
 								onChange={(e) =>
 									setRescheduleReason(e.target.value)
@@ -346,7 +348,6 @@ export const RescheduleAppointmentModal: React.FC<
 								maxLength={500}
 								rows={3}
 								placeholder="Ex: Conflit d'agenda, rendez-vous imprévu..."
-								className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-all text-sm md:text-base resize-none"
 							/>
 							<p className="text-xs text-gray-500 mt-1.5">
 								Cette raison sera communiquée au client par

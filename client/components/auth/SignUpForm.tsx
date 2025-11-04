@@ -240,7 +240,7 @@ export const SignUpForm: React.FC = () => {
 				</div>
 
 				{/* Form Container */}
-				<div className="flex-1 px-6 py-8">
+				<div className="flex-1 px-4 sm:px-6 py-6 sm:py-8">
 					<div className="max-w-lg mx-auto">
 						{/* Desktop Header */}
 						<div className="hidden lg:block mb-8">
@@ -262,10 +262,10 @@ export const SignUpForm: React.FC = () => {
 							</p>
 						</div>
 
-						<div className="bg-white rounded-2xl shadow-card border border-gray-200 p-8 transition-all duration-300">
+						<div className="bg-white rounded-2xl shadow-card border border-gray-200 p-4 sm:p-6 lg:p-8 transition-all duration-300">
 							<form onSubmit={handleSubmit} noValidate>
-								{/* Step Content with Slide Animation (hide horizontal overflow, allow dropdowns vertically) */}
-								<div className="relative overflow-x-hidden">
+								{/* Step Content with Slide Animation (hide horizontal overflow, keep dropdowns visible) */}
+								<div className="relative overflow-hidden">
 									{/* Step 1: Basic Information */}
 									<div
 										className={`transition-all duration-500 ease-in-out ${
@@ -382,17 +382,17 @@ export const SignUpForm: React.FC = () => {
 								</div>
 
 								{/* Navigation Buttons */}
-								<div className="flex gap-3 mt-8">
+								<div className="flex gap-2 sm:gap-3 mt-6 sm:mt-8">
 									{currentStep > 1 && (
 										<Button
 											type="button"
 											onClick={handlePrevious}
 											variant="outline"
-											className="flex-1"
+											className="flex-1 text-sm sm:text-base"
 											disabled={loading}
 										>
 											<svg
-												className="w-5 h-5 mr-2"
+												className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2"
 												fill="none"
 												stroke="currentColor"
 												viewBox="0 0 24 24"
@@ -416,11 +416,11 @@ export const SignUpForm: React.FC = () => {
 												currentStep === 1
 													? 'w-full'
 													: 'flex-1'
-											}`}
+											} text-sm sm:text-base`}
 										>
 											Suivant
 											<svg
-												className="w-5 h-5 ml-2"
+												className="w-4 h-4 sm:w-5 sm:h-5 ml-1 sm:ml-2"
 												fill="none"
 												stroke="currentColor"
 												viewBox="0 0 24 24"
@@ -437,7 +437,7 @@ export const SignUpForm: React.FC = () => {
 										<Button
 											type="submit"
 											loading={loading}
-											className="flex-1"
+											className="flex-1 text-sm sm:text-base"
 										>
 											Créer mon compte
 										</Button>

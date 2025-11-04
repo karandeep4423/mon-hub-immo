@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { SearchAd } from '@/types/searchAd';
 import { SearchAdCard } from '@/components/search-ads/SearchAdCard';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
 import Link from 'next/link';
@@ -51,14 +50,15 @@ export default function SearchAdsPage() {
 						(loc) => loc.postcode,
 					);
 
-					const matchesCity = searchAd.location.cities.some((city) =>
-						cities.some((filterCity) =>
-							city.toLowerCase().includes(filterCity),
-						),
-					);
+					const matchesCity =
+						searchAd.location?.cities?.some((city) =>
+							cities.some((filterCity) =>
+								city.toLowerCase().includes(filterCity),
+							),
+						) || false;
 
 					const matchesPostalCode =
-						searchAd.location.postalCodes &&
+						searchAd.location?.postalCodes &&
 						searchAd.location.postalCodes.some((pc) =>
 							postalCodes.includes(pc),
 						);

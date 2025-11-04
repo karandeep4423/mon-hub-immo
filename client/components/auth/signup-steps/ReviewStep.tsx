@@ -6,22 +6,22 @@ interface ReviewStepProps {
 
 export const ReviewStep: React.FC<ReviewStepProps> = ({ formData }) => {
 	return (
-		<div className="space-y-6">
-			<div className="text-center mb-6">
-				<h2 className="text-xl font-semibold text-gray-800">
+		<div className="space-y-4 sm:space-y-6">
+			<div className="text-center mb-4 sm:mb-6">
+				<h2 className="text-lg sm:text-xl font-semibold text-gray-800">
 					Vérifiez vos informations
 				</h2>
-				<p className="text-sm text-gray-500 mt-1">
+				<p className="text-xs sm:text-sm text-gray-500 mt-1">
 					Confirmez avant de créer votre compte
 				</p>
 			</div>
 
-			<div className="space-y-4">
-				<div className="bg-gray-50 rounded-lg p-4">
-					<h3 className="text-sm font-semibold text-gray-700 mb-3">
+			<div className="space-y-3 sm:space-y-4">
+				<div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+					<h3 className="text-xs sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-3">
 						Informations personnelles
 					</h3>
-					<div className="space-y-2 text-sm">
+					<div className="space-y-2 text-xs sm:text-sm">
 						<p>
 							<span className="text-gray-600">Nom:</span>{' '}
 							<span className="font-medium">
@@ -30,7 +30,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData }) => {
 						</p>
 						<p>
 							<span className="text-gray-600">Email:</span>{' '}
-							<span className="font-medium">
+							<span className="font-medium break-all">
 								{formData.email}
 							</span>
 						</p>
@@ -43,12 +43,12 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData }) => {
 					</div>
 				</div>
 
-				<div className="bg-gray-50 rounded-lg p-4">
-					<h3 className="text-sm font-semibold text-gray-700 mb-3">
+				<div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+					<h3 className="text-xs sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-3">
 						Rôle
 					</h3>
-					<p className="text-sm">
-						<span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-brand text-white">
+					<p className="text-xs sm:text-sm">
+						<span className="inline-flex items-center px-2.5 py-1 sm:px-3 rounded-full text-xs sm:text-sm font-medium bg-brand text-white">
 							{formData.userType === 'agent'
 								? 'Agent immobilier'
 								: 'Apporteur'}
@@ -57,11 +57,11 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData }) => {
 				</div>
 
 				{formData.userType === 'agent' && formData.agentType && (
-					<div className="bg-gray-50 rounded-lg p-4">
-						<h3 className="text-sm font-semibold text-gray-700 mb-3">
+					<div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+						<h3 className="text-xs sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-3">
 							Informations professionnelles
 						</h3>
-						<p className="text-sm text-gray-600 mb-2">
+						<p className="text-xs sm:text-sm text-gray-600 mb-2">
 							Type:{' '}
 							<span className="font-medium text-gray-900">
 								{formData.agentType === 'independent'
@@ -72,7 +72,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData }) => {
 							</span>
 						</p>
 						{formData.tCard && (
-							<p className="text-sm text-gray-600">
+							<p className="text-xs sm:text-sm text-gray-600">
 								Carte T:{' '}
 								<span className="font-medium text-gray-900">
 									{formData.tCard}
@@ -80,7 +80,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData }) => {
 							</p>
 						)}
 						{formData.sirenNumber && (
-							<p className="text-sm text-gray-600">
+							<p className="text-xs sm:text-sm text-gray-600">
 								SIREN:{' '}
 								<span className="font-medium text-gray-900">
 									{formData.sirenNumber}
@@ -88,7 +88,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData }) => {
 							</p>
 						)}
 						{formData.rsacNumber && (
-							<p className="text-sm text-gray-600">
+							<p className="text-xs sm:text-sm text-gray-600">
 								RSAC:{' '}
 								<span className="font-medium text-gray-900">
 									{formData.rsacNumber}
@@ -96,7 +96,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ formData }) => {
 							</p>
 						)}
 						{formData.collaboratorCertificate && (
-							<p className="text-sm text-gray-600">
+							<p className="text-xs sm:text-sm text-gray-600">
 								Certificat:{' '}
 								<span className="font-medium text-gray-900">
 									{formData.collaboratorCertificate}

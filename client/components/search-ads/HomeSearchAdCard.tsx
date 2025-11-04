@@ -112,10 +112,16 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 						<span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-1 rounded">
 							{formatPropertyTypes(searchAd.propertyTypes)}
 						</span>
-						<span className="bg-gray-100 text-gray-800 text-xs font-semibold px-2 py-1 rounded">
-							{searchAd.location.cities.slice(0, 1).join(', ')}
-							{searchAd.location.cities.length > 1 ? '...' : ''}
-						</span>
+						{searchAd.location?.cities && (
+							<span className="bg-gray-100 text-gray-800 text-xs font-semibold px-2 py-1 rounded">
+								{searchAd.location.cities
+									.slice(0, 1)
+									.join(', ')}
+								{searchAd.location.cities.length > 1
+									? '...'
+									: ''}
+							</span>
+						)}
 						{searchAd.minRooms && (
 							<span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">
 								{searchAd.minRooms}+ pièces

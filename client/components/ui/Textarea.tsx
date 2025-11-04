@@ -1,14 +1,17 @@
 import React, { useId } from 'react';
 import { useFormContext } from '@/context/FormContext';
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface TextareaProps
+	extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
 	label?: string;
 	error?: string;
 	helperText?: string;
 	icon?: React.ReactNode;
+	showCharCount?: boolean;
+	maxCharCount?: number;
 }
 
-export const Input: React.FC<InputProps> = ({
+export const Textarea: React.FC<TextareaProps> = ({
 	label,
 	error,
 	helperText,
@@ -16,32 +19,42 @@ export const Input: React.FC<InputProps> = ({
 	id,
 	icon,
 	disabled,
+	showCharCount = false,
+	maxCharCount,
+	value,
 	...props
 }) => {
 	const generatedId = useId();
-	const inputId = id || generatedId;
+	const textareaId = id || generatedId;
 	const { isSubmitting } = useFormContext();
 	const isDisabled = disabled || isSubmitting;
+
+	const charCount =
+		typeof value === 'string'
+			? value.length
+			: value?.toString().length || 0;
 
 	return (
 		<div className="w-full">
 			{label && (
 				<label
-					htmlFor={inputId}
+					htmlFor={textareaId}
 					className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2"
 				>
 					{icon}
 					{label}
 				</label>
 			)}
-			<input
-				id={inputId}
+			<textarea
+				id={textareaId}
 				disabled={isDisabled}
+				value={value}
 				className={`
           block w-full px-4 py-3 sm:py-2.5 text-base
           border-2 rounded-xl
           transition-smooth
           outline-none
+          resize-vertical
           ${isDisabled ? 'opacity-60 cursor-not-allowed bg-gray-50' : ''}
           ${
 				error
@@ -68,7 +81,12 @@ export const Input: React.FC<InputProps> = ({
 					{error}
 				</p>
 			)}
-			{helperText && !error && (
+			{showCharCount && maxCharCount && (
+				<div className="text-xs text-gray-500 mt-1">
+					{charCount}/{maxCharCount} caractères
+				</div>
+			)}
+			{helperText && !error && !showCharCount && (
 				<p className="mt-2 text-sm text-gray-500">{helperText}</p>
 			)}
 		</div>

@@ -31,6 +31,7 @@ interface RichTextEditorProps {
 	error?: string;
 	minHeight?: string;
 	showCharCount?: boolean;
+	maxLength?: number;
 	label?: string;
 }
 
@@ -41,6 +42,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 	error,
 	minHeight = '120px',
 	showCharCount = false,
+	maxLength,
 	label,
 }) => {
 	const editorRef = useRef<HTMLDivElement>(null);
@@ -140,9 +142,24 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 
 	const handleInput = () => {
 		if (editorRef.current) {
+			const text = editorRef.current.innerText || '';
+
+			// Enforce maxLength if specified
+			if (maxLength && text.length > maxLength) {
+				// Prevent further input
+				editorRef.current.innerText = text.substring(0, maxLength);
+				// Move cursor to end
+				const range = document.createRange();
+				const sel = window.getSelection();
+				range.selectNodeContents(editorRef.current);
+				range.collapse(false);
+				sel?.removeAllRanges();
+				sel?.addRange(range);
+				return;
+			}
+
 			const html = editorRef.current.innerHTML;
 			onChange(html);
-			const text = editorRef.current.innerText || '';
 			setCharCount(text.length);
 		}
 	};
@@ -543,8 +560,17 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 				{/* Character count & error */}
 				<div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-t border-gray-200 text-xs">
 					{showCharCount && (
-						<span className="text-gray-500">
-							{charCount} caractères
+						<span
+							className={`${
+								maxLength && charCount > maxLength * 0.9
+									? charCount >= maxLength
+										? 'text-red-600 font-semibold'
+										: 'text-orange-500 font-medium'
+									: 'text-gray-500'
+							}`}
+						>
+							{charCount}
+							{maxLength && ` / ${maxLength}`} caractères
 						</span>
 					)}
 					{error && (

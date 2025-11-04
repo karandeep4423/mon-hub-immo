@@ -17,7 +17,7 @@ export interface ISearchAd extends Document {
 	projectType: 'primary' | 'secondary' | 'investment'; // Résidence principale, etc.
 
 	// --- Localisation ---
-	location: {
+	location?: {
 		cities: string[];
 		postalCodes?: string[]; // Codes postaux
 		maxDistance?: number; // Distance max travail/écoles
@@ -34,7 +34,7 @@ export interface ISearchAd extends Document {
 	desiredState: ('new' | 'good' | 'refresh' | 'renovate')[]; // neuf, bon état, à rafraichir, à rénover
 
 	// --- Budget & financement ---
-	budget: {
+	budget?: {
 		max: number;
 		ideal?: number;
 		financingType: 'loan' | 'cash' | 'pending';
@@ -103,10 +103,13 @@ const SearchAdSchema = new Schema<ISearchAd>(
 		projectType: { type: String },
 
 		location: {
-			cities: [{ type: String, required: true }],
-			postalCodes: [{ type: String }],
-			maxDistance: { type: Number },
-			openToOtherAreas: { type: Boolean, default: false },
+			type: {
+				cities: [{ type: String }],
+				postalCodes: [{ type: String }],
+				maxDistance: { type: Number },
+				openToOtherAreas: { type: Boolean, default: false },
+			},
+			required: false,
 		},
 
 		minRooms: { type: Number },
@@ -118,11 +121,14 @@ const SearchAdSchema = new Schema<ISearchAd>(
 		desiredState: [{ type: String }],
 
 		budget: {
-			max: { type: Number, required: true },
-			ideal: { type: Number },
-			financingType: { type: String },
-			isSaleInProgress: { type: Boolean },
-			hasBankApproval: { type: Boolean },
+			type: {
+				max: { type: Number },
+				ideal: { type: Number },
+				financingType: { type: String },
+				isSaleInProgress: { type: Boolean },
+				hasBankApproval: { type: Boolean },
+			},
+			required: false,
 		},
 
 		priorities: {
@@ -132,7 +138,7 @@ const SearchAdSchema = new Schema<ISearchAd>(
 		},
 
 		title: { type: String, required: true, trim: true },
-		description: { type: String, trim: true },
+		description: { type: String, required: true, trim: true },
 		badges: [{ type: String }],
 
 		clientInfo: {

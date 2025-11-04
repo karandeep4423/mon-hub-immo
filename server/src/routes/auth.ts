@@ -28,10 +28,10 @@ import {
 } from '../validation/schemas';
 import { uploadIdentityDoc } from '../middleware/uploadMiddleware';
 import {
-	authLimiter,
 	passwordResetLimiter,
 	emailVerificationLimiter,
 } from '../middleware/rateLimiter';
+import { checkLoginRateLimit } from '../middleware/loginRateLimiter';
 
 const router = Router();
 
@@ -40,8 +40,8 @@ const router = Router();
 // ============================================================================
 
 // Auth routes with rate limiting
-router.post('/signup', authLimiter, uploadIdentityDoc, signup);
-router.post('/login', authLimiter, validate(loginSchema), login);
+router.post('/signup', emailVerificationLimiter, uploadIdentityDoc, signup);
+router.post('/login', checkLoginRateLimit, validate(loginSchema), login);
 router.post(
 	'/forgot-password',
 	passwordResetLimiter,

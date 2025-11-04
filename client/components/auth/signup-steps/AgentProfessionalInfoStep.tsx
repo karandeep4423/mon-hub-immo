@@ -31,12 +31,12 @@ export const AgentProfessionalInfoStep: React.FC<
 	onFileChange,
 }) => {
 	return (
-		<div className="space-y-4">
-			<div className="text-center mb-6">
-				<h2 className="text-xl font-semibold text-gray-800">
+		<div className="space-y-3 sm:space-y-4 min-h-[300px]">
+			<div className="text-center mb-4 sm:mb-6">
+				<h2 className="text-lg sm:text-xl font-semibold text-gray-800">
 					Informations professionnelles
 				</h2>
-				<p className="text-sm text-gray-500 mt-1">
+				<p className="text-xs sm:text-sm text-gray-500 mt-1">
 					Détails de votre activité d&apos;agent
 				</p>
 			</div>
@@ -44,7 +44,7 @@ export const AgentProfessionalInfoStep: React.FC<
 			<div>
 				<label
 					htmlFor="agentType"
-					className="block text-sm font-semibold text-gray-700 mb-2"
+					className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2"
 				>
 					Type d&apos;agent immobilier *
 				</label>
@@ -69,7 +69,7 @@ export const AgentProfessionalInfoStep: React.FC<
 						},
 						{
 							value: 'employee',
-							label: 'Négociateur VRP employé d&apos;agence',
+							label: "Négociateur VRP employé d'agence",
 						},
 					]}
 					disabled={false}
@@ -83,15 +83,16 @@ export const AgentProfessionalInfoStep: React.FC<
 			</div>
 
 			{agentType === 'independent' && (
-				<div className="space-y-4 p-4 bg-brand-50 rounded-lg border border-brand-200">
+				<div className="space-y-3 sm:space-y-4 p-3 sm:p-4 bg-brand-50 rounded-lg border border-brand-200">
 					<Input
-						label="Carte professionnelle (T card)"
+						label="Carte professionnelle (T card) *"
 						type="text"
 						name="tCard"
 						value={tCard}
 						onChange={onChange}
 						error={errors.tCard}
 						placeholder={Features.Auth.AUTH_PLACEHOLDERS.CARTE_T}
+						required
 					/>
 					<FileUpload
 						label="Carte d'identité"
@@ -106,15 +107,16 @@ export const AgentProfessionalInfoStep: React.FC<
 			)}
 
 			{agentType === 'commercial' && (
-				<div className="space-y-4 p-4 bg-brand-50 rounded-lg border border-brand-200">
+				<div className="space-y-3 sm:space-y-4 p-3 sm:p-4 bg-brand-50 rounded-lg border border-brand-200">
 					<Input
-						label="Numéro SIREN"
+						label="Numéro SIREN *"
 						type="text"
 						name="sirenNumber"
 						value={sirenNumber}
 						onChange={onChange}
 						error={errors.sirenNumber}
 						placeholder={Features.Auth.AUTH_PLACEHOLDERS.SIREN}
+						required
 					/>
 					<Input
 						label="Numéro RSAC"
@@ -132,15 +134,15 @@ export const AgentProfessionalInfoStep: React.FC<
 						helperText="Photo ou PDF de votre carte d'identité (optionnel)"
 					/>
 					<p className="text-xs text-gray-600">
-						* Au moins un numéro SIREN ou RSAC requis
+						* Numéro SIREN requis pour agent commercial
 					</p>
 				</div>
 			)}
 
 			{agentType === 'employee' && (
-				<div className="space-y-4 p-4 bg-brand-50 rounded-lg border border-brand-200">
+				<div className="space-y-3 sm:space-y-4 p-3 sm:p-4 bg-brand-50 rounded-lg border border-brand-200">
 					<Input
-						label="Certificat d'autorisation"
+						label="Certificat d'autorisation *"
 						type="text"
 						name="collaboratorCertificate"
 						value={collaboratorCertificate}
@@ -149,6 +151,7 @@ export const AgentProfessionalInfoStep: React.FC<
 						placeholder={
 							Features.Auth.AUTH_PLACEHOLDERS.CERTIFICATE_REF
 						}
+						required
 					/>
 					<FileUpload
 						label="Carte d'identité"

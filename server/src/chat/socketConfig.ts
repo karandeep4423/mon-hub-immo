@@ -14,12 +14,22 @@ import { getAccessTokenFromCookies } from '../utils/cookieHelper';
  * @returns Configured Socket.IO server
  */
 export function createSocketServer(httpServer: HttpServer): Server {
+	const parseEnvOrigins = (csv?: string): string[] =>
+		(csv || '')
+			.split(',')
+			.map((s) => s.trim())
+			.filter(Boolean)
+			.map((s) => (s.endsWith('/') ? s.slice(0, -1) : s));
+
+	const FRONTEND_ORIGINS = parseEnvOrigins(process.env.FRONTEND_URL);
+
 	const io = new Server(httpServer, {
 		cors: {
 			origin: [
 				'http://localhost:3000',
 				'http://localhost:3001',
-				process.env.FRONTEND_URL || 'https://mon-hub-immo.vercel.app',
+				'https://mon-hub-immo.vercel.app',
+				...FRONTEND_ORIGINS,
 			],
 			methods: ['GET', 'POST'],
 			credentials: true,

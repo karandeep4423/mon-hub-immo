@@ -18,7 +18,7 @@ interface BudgetSectionProps {
 
 const FINANCING_TYPE_LABELS: Record<string, string> = {
 	loan: 'Prêt bancaire',
-	cash: 'Cash',
+	cash: 'Paiement comptant',
 	pending: "En attente d'accord",
 };
 

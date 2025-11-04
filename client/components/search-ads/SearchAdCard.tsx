@@ -10,7 +10,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { Features, Components } from '@/lib/constants';
 import { useSearchAdMutations } from '@/hooks/useSearchAds';
 import { formatDateShort } from '@/lib/utils/date';
-import { truncateRichText } from '@/lib/utils/richTextUtils';
 import { Select } from '@/components/ui/CustomSelect';
 
 interface SearchAdCardProps {
@@ -184,24 +183,36 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 				</div>
 
 				<div className="grid grid-cols-2 gap-4 text-sm">
-					<div>
-						<p className="font-semibold text-gray-700 flex items-center gap-1">
-							📍 {Features.SearchAds.SEARCH_AD_UI_TEXT.location}
-						</p>
-						<p className="text-gray-600">
-							{searchAd.location.cities.slice(0, 2).join(', ')}
-							{searchAd.location.cities.length > 2 ? '...' : ''}
-						</p>
-					</div>
-					<div>
-						<p className="font-semibold text-gray-700 flex items-center gap-1">
-							💰{' '}
-							{Features.SearchAds.SEARCH_AD_UI_TEXT.budgetLabel}
-						</p>
-						<p className="text-gray-600">
-							{searchAd.budget.max.toLocaleString('fr-FR')} €
-						</p>
-					</div>
+					{searchAd.location && searchAd.location.cities && (
+						<div>
+							<p className="font-semibold text-gray-700 flex items-center gap-1">
+								📍{' '}
+								{Features.SearchAds.SEARCH_AD_UI_TEXT.location}
+							</p>
+							<p className="text-gray-600">
+								{searchAd.location.cities
+									.slice(0, 2)
+									.join(', ')}
+								{searchAd.location.cities.length > 2
+									? '...'
+									: ''}
+							</p>
+						</div>
+					)}
+					{searchAd.budget && searchAd.budget.max && (
+						<div>
+							<p className="font-semibold text-gray-700 flex items-center gap-1">
+								💰{' '}
+								{
+									Features.SearchAds.SEARCH_AD_UI_TEXT
+										.budgetLabel
+								}
+							</p>
+							<p className="text-gray-600">
+								{searchAd.budget.max.toLocaleString('fr-FR')} €
+							</p>
+						</div>
+					)}
 					<div>
 						<p className="font-semibold text-gray-700 flex items-center gap-1">
 							🏡 Type de bien
@@ -237,13 +248,6 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 						</div>
 					)}
 				</div>
-
-				{searchAd.description && (
-					<p className="text-sm text-gray-600 italic bg-gray-50 p-3 rounded-lg">
-						&quot;{truncateRichText(searchAd.description, 100)}
-						&quot;
-					</p>
-				)}
 
 				{/* Priority indicators */}
 				{searchAd.priorities?.mustHaves &&

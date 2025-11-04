@@ -8,7 +8,6 @@ import {
 	deleteMessage,
 } from '../controllers/chatController';
 import { authenticateToken } from '../middleware/auth';
-import { generalLimiter } from '../middleware/rateLimiter';
 
 const router: Router = express.Router();
 
@@ -16,8 +15,7 @@ const router: Router = express.Router();
 // PROTECTED ROUTES (All chat routes require authentication)
 // ============================================================================
 
-// Apply rate limiting and authentication to all routes
-router.use(generalLimiter);
+// Apply authentication to all routes
 router.use(authenticateToken);
 
 // @route   GET api/message/users

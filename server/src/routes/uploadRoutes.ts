@@ -7,7 +7,6 @@ import {
 import { s3Service } from '../services/s3Service';
 import { authenticateToken } from '../middleware/auth';
 import { AuthRequest } from '../types/auth';
-import { generalLimiter } from '../middleware/rateLimiter';
 import { logger } from '../utils/logger';
 
 interface UploadedImageData {
@@ -21,8 +20,7 @@ const router = Router();
 // PROTECTED ROUTES (All upload routes require authentication)
 // ============================================================================
 
-// Apply rate limiting and authentication to all routes
-router.use(generalLimiter);
+// Apply authentication to all routes
 router.use(authenticateToken);
 
 // @route   POST api/upload/single

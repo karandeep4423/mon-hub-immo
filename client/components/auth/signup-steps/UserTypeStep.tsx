@@ -10,11 +10,11 @@ export const UserTypeStep: React.FC<UserTypeStepProps> = ({
 	onChange,
 }) => {
 	return (
-		<div className="space-y-6">
-			<div className="text-center mb-8">
-				<div className="inline-flex items-center justify-center w-14 h-14 bg-brand rounded-2xl mb-4 shadow-brand transition-all duration-200 hover:scale-105">
+		<div className="space-y-4 sm:space-y-6">
+			<div className="text-center mb-6 sm:mb-8">
+				<div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 bg-brand rounded-2xl mb-3 sm:mb-4 shadow-brand transition-all duration-200 hover:scale-105">
 					<svg
-						className="w-7 h-7 text-white"
+						className="w-6 h-6 sm:w-7 sm:h-7 text-white"
 						fill="none"
 						stroke="currentColor"
 						viewBox="0 0 24 24"
@@ -27,17 +27,17 @@ export const UserTypeStep: React.FC<UserTypeStepProps> = ({
 						/>
 					</svg>
 				</div>
-				<h2 className="text-2xl font-bold text-gray-900 mb-2">
+				<h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
 					Choisissez votre rôle
 				</h2>
-				<p className="text-sm text-gray-600">
+				<p className="text-xs sm:text-sm text-gray-600">
 					Sélectionnez votre type de profil professionnel
 				</p>
 			</div>
 
-			<div className="space-y-4">
+			<div className="space-y-3 sm:space-y-4">
 				<label
-					className={`group block p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-card ${
+					className={`group block p-4 sm:p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-card ${
 						userType === 'apporteur'
 							? 'border-brand bg-brand-subtle shadow-brand'
 							: 'border-gray-200 hover:border-brand bg-white'
@@ -53,14 +53,14 @@ export const UserTypeStep: React.FC<UserTypeStepProps> = ({
 					/>
 					<div className="flex items-start">
 						<div
-							className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center mr-4 transition-all duration-200 ${
+							className={`flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mr-3 sm:mr-4 transition-all duration-200 ${
 								userType === 'apporteur'
 									? 'bg-brand text-white'
 									: 'bg-gray-100 text-gray-400 group-hover:bg-brand-100 group-hover:text-brand'
 							}`}
 						>
 							<svg
-								className="w-6 h-6"
+								className="w-5 h-5 sm:w-6 sm:h-6"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -73,18 +73,18 @@ export const UserTypeStep: React.FC<UserTypeStepProps> = ({
 								/>
 							</svg>
 						</div>
-						<div className="flex-1">
-							<p className="text-lg font-bold text-gray-900 mb-1">
+						<div className="flex-1 min-w-0">
+							<p className="text-base sm:text-lg font-bold text-gray-900 mb-1">
 								Apporteur d&apos;affaires
 							</p>
-							<p className="text-sm text-gray-600">
+							<p className="text-xs sm:text-sm text-gray-600">
 								Je souhaite proposer des opportunités
 								immobilières et collaborer avec des agents
 							</p>
 						</div>
 						{userType === 'apporteur' && (
 							<svg
-								className="w-6 h-6 text-brand flex-shrink-0 ml-2"
+								className="w-5 h-5 sm:w-6 sm:h-6 text-brand flex-shrink-0 ml-2"
 								fill="currentColor"
 								viewBox="0 0 20 20"
 							>
@@ -99,7 +99,7 @@ export const UserTypeStep: React.FC<UserTypeStepProps> = ({
 				</label>
 
 				<label
-					className={`group block p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-card ${
+					className={`group block p-4 sm:p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-card ${
 						userType === 'agent'
 							? 'border-brand bg-brand-subtle shadow-brand'
 							: 'border-gray-200 hover:border-brand bg-white'
@@ -115,14 +115,14 @@ export const UserTypeStep: React.FC<UserTypeStepProps> = ({
 					/>
 					<div className="flex items-start">
 						<div
-							className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center mr-4 transition-all duration-200 ${
+							className={`flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mr-3 sm:mr-4 transition-all duration-200 ${
 								userType === 'agent'
 									? 'bg-brand text-white'
 									: 'bg-gray-100 text-gray-400 group-hover:bg-brand-100 group-hover:text-brand'
 							}`}
 						>
 							<svg
-								className="w-6 h-6"
+								className="w-5 h-5 sm:w-6 sm:h-6"
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
@@ -135,18 +135,18 @@ export const UserTypeStep: React.FC<UserTypeStepProps> = ({
 								/>
 							</svg>
 						</div>
-						<div className="flex-1">
-							<p className="text-lg font-bold text-gray-900 mb-1">
+						<div className="flex-1 min-w-0">
+							<p className="text-base sm:text-lg font-bold text-gray-900 mb-1">
 								Agent immobilier
 							</p>
-							<p className="text-sm text-gray-600">
+							<p className="text-xs sm:text-sm text-gray-600">
 								Je suis un professionnel de l&apos;immobilier et
 								je souhaite développer mon réseau
 							</p>
 						</div>
 						{userType === 'agent' && (
 							<svg
-								className="w-6 h-6 text-brand flex-shrink-0 ml-2"
+								className="w-5 h-5 sm:w-6 sm:h-6 text-brand flex-shrink-0 ml-2"
 								fill="currentColor"
 								viewBox="0 0 20 20"
 							>
@@ -162,7 +162,7 @@ export const UserTypeStep: React.FC<UserTypeStepProps> = ({
 			</div>
 
 			{error && (
-				<p className="text-sm text-error font-medium text-center">
+				<p className="text-xs sm:text-sm text-error font-medium text-center">
 					{error}
 				</p>
 			)}

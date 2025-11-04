@@ -110,7 +110,7 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 	const postLocation = property
 		? `${property.city}${property.postalCode ? ' (' + property.postalCode + ')' : ''}`
 		: searchAd
-			? searchAd.location.cities.join(', ')
+			? searchAd.location?.cities?.join(', ') || 'Non spécifiée'
 			: 'Location inconnue';
 
 	const postImage =

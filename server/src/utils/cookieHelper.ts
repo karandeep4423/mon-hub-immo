@@ -13,6 +13,7 @@ export interface CookieOptions {
 	maxAge?: number;
 	expires?: Date;
 	path?: string;
+	domain?: string;
 }
 
 export const COOKIE_NAMES = {
@@ -32,14 +33,31 @@ export const COOKIE_MAX_AGE = {
 export const getSecureCookieOptions = (maxAge: number): CookieOptions => {
 	const isProduction = process.env.NODE_ENV === 'production';
 
-	return {
-		httpOnly: true, // Prevents XSS attacks by making cookie inaccessible to JavaScript
-		secure: isProduction, // Only send over HTTPS in production
-		sameSite: isProduction ? 'none' : 'lax', // 'none' for cross-site in production, 'lax' for localhost
-		maxAge, // Cookie expiration in milliseconds
-		expires: new Date(Date.now() + maxAge), // Explicit expiration date for persistent cookies
-		path: '/', // Cookie available for entire domain
+	// Allow configuring cookie behavior per environment/deployment
+	const cookieDomain =
+		process.env.COOKIE_DOMAIN ||
+		(isProduction ? '.monhubimmo.fr' : undefined);
+	const crossSite = process.env.CROSS_SITE_COOKIES === 'true'; // set to true for preview domains (e.g., Vercel)
+	const forceSecure = process.env.FORCE_SECURE_COOKIES === 'true';
+
+	// If SameSite is 'none', cookies MUST be secure
+	const secure = crossSite ? true : isProduction || forceSecure;
+	const sameSite: 'strict' | 'lax' | 'none' = crossSite ? 'none' : 'lax';
+
+	const options: CookieOptions = {
+		httpOnly: true,
+		secure,
+		sameSite,
+		maxAge,
+		expires: new Date(Date.now() + maxAge),
+		path: '/',
 	};
+
+	if (cookieDomain) {
+		options.domain = cookieDomain;
+	}
+
+	return options;
 };
 
 /**
@@ -96,7 +114,12 @@ export const setAuthCookies = (
  */
 export const clearAccessTokenCookie = (res: Response): void => {
 	try {
-		res.clearCookie(COOKIE_NAMES.ACCESS_TOKEN, { path: '/' });
+		const isProduction = process.env.NODE_ENV === 'production';
+		const clearOptions: CookieOptions = { path: '/' };
+		if (isProduction) {
+			clearOptions.domain = '.monhubimmo.fr';
+		}
+		res.clearCookie(COOKIE_NAMES.ACCESS_TOKEN, clearOptions);
 		logger.debug('[CookieHelper] Access token cookie cleared');
 	} catch (error) {
 		logger.error(
@@ -111,7 +134,12 @@ export const clearAccessTokenCookie = (res: Response): void => {
  */
 export const clearRefreshTokenCookie = (res: Response): void => {
 	try {
-		res.clearCookie(COOKIE_NAMES.REFRESH_TOKEN, { path: '/' });
+		const isProduction = process.env.NODE_ENV === 'production';
+		const clearOptions: CookieOptions = { path: '/' };
+		if (isProduction) {
+			clearOptions.domain = '.monhubimmo.fr';
+		}
+		res.clearCookie(COOKIE_NAMES.REFRESH_TOKEN, clearOptions);
 		logger.debug('[CookieHelper] Refresh token cookie cleared');
 	} catch (error) {
 		logger.error(

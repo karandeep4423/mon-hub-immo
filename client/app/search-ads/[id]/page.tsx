@@ -3,7 +3,6 @@
 import { useParams, useRouter } from 'next/navigation';
 import { SearchAdDetails } from '@/components/search-ads/SearchAdDetails';
 import { useAuth } from '@/hooks/useAuth';
-import type { SearchAd } from '@/types/searchAd';
 import { useSearchAd } from '@/hooks/useSearchAds';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
 import { Features } from '@/lib/constants';

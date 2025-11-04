@@ -98,11 +98,21 @@ export const updateProfileSchema = z.object({
 			interventionRadius: z.number().int().min(1).max(200).optional(),
 			network: z.string().trim().optional(),
 			siretNumber: z
-				.string()
-				.regex(/^[0-9]{14}$/, 'Format SIRET invalide (14 chiffres)')
+				.union([
+					z.literal(''),
+					z
+						.string()
+						.regex(
+							/^[0-9]{14}$/,
+							'Le numéro SIRET doit contenir exactement 14 chiffres',
+						),
+				])
 				.optional(),
 			yearsExperience: z.number().int().min(0).max(50).optional(),
-			personalPitch: z.string().max(1000).optional(),
+			personalPitch: z
+				.string()
+				.max(1000, 'La bio ne peut pas dépasser 1000 caractères')
+				.optional(),
 			mandateTypes: z
 				.array(z.enum(['simple', 'exclusif', 'co-mandat']))
 				.optional(),
@@ -129,18 +139,38 @@ export const completeProfileSchema = z.object({
 				'Format de ville invalide',
 			),
 		network: z.string().trim().min(1, 'Le réseau est requis'),
+		interventionRadius: z
+			.number()
+			.int()
+			.min(1, "Le rayon d'intervention est requis (minimum 1 km)")
+			.max(200, "Le rayon d'intervention ne peut pas dépasser 200 km"),
+		coveredCities: z
+			.array(z.string().min(2, 'Nom de ville invalide').max(100))
+			.min(1, 'Au moins une commune couverte est requise'),
+		yearsExperience: z
+			.number()
+			.int()
+			.min(0, "Les années d'expérience sont requises")
+			.max(50, "Les années d'expérience ne peuvent pas dépasser 50 ans"),
 		// Optional fields
-		interventionRadius: z.number().int().min(1).max(200).optional(),
 		siretNumber: z
-			.string()
-			.regex(/^[0-9]{14}$/, 'Format SIRET invalide (14 chiffres)')
+			.union([
+				z.literal(''),
+				z
+					.string()
+					.regex(
+						/^[0-9]{14}$/,
+						'Le numéro SIRET doit contenir exactement 14 chiffres',
+					),
+			])
 			.optional(),
-		yearsExperience: z.number().int().min(0).max(50).optional(),
-		personalPitch: z.string().max(1000).optional(),
+		personalPitch: z
+			.string()
+			.max(1000, 'La bio ne peut pas dépasser 1000 caractères')
+			.optional(),
 		mandateTypes: z
 			.array(z.enum(['simple', 'exclusif', 'co-mandat']))
 			.optional(),
-		coveredCities: z.array(z.string().min(2).max(100)).optional(),
 		collaborateWithAgents: z.boolean().optional(),
 		shareCommission: z.boolean().optional(),
 		independentAgent: z.boolean().optional(),
@@ -329,7 +359,8 @@ export const proposeCollaborationSchema = z
 		compensationAmount: z.number().min(0).optional(),
 	})
 	.refine((data) => data.propertyId || data.searchAdId, {
-		message: 'Either propertyId or searchAdId must be provided',
+		message:
+			'Vous devez fournir soit un identifiant de propriété, soit un identifiant de recherche',
 		path: ['propertyId'],
 	})
 	.refine(
@@ -346,7 +377,7 @@ export const proposeCollaborationSchema = z
 		},
 		{
 			message:
-				'commissionPercentage required for percentage type, compensationAmount required for other types',
+				'Le pourcentage de commission est requis pour le type pourcentage, le montant de compensation est requis pour les autres types',
 			path: ['commissionPercentage'],
 		},
 	);
@@ -364,17 +395,19 @@ export type ProposeCollaborationInput = z.infer<
 // Search Ads
 export const searchAdBaseSchema = z.object({
 	title: z.string().min(5).max(200),
-	description: z.string().min(10).max(2000).optional(),
+	description: z.string().min(10).max(2000),
 	propertyTypes: z
 		.array(z.enum(['house', 'apartment', 'land', 'building', 'commercial']))
 		.min(1),
 	propertyState: z.array(z.enum(['new', 'old'])).optional(),
 	projectType: z.enum(['primary', 'secondary', 'investment']).optional(),
-	location: z.object({
-		cities: z.array(z.string()).min(1),
-		maxDistance: z.number().min(0).max(500).optional(),
-		openToOtherAreas: z.boolean().optional(),
-	}),
+	location: z
+		.object({
+			cities: z.array(z.string()).min(1),
+			maxDistance: z.number().min(0).max(500).optional(),
+			openToOtherAreas: z.boolean().optional(),
+		})
+		.optional(),
 	minRooms: z.number().int().min(1).max(50).optional(),
 	minBedrooms: z.number().int().min(1).max(20).optional(),
 	minSurface: z.number().min(1).max(10000).optional(),
@@ -384,13 +417,15 @@ export const searchAdBaseSchema = z.object({
 	desiredState: z
 		.array(z.enum(['new', 'good', 'refresh', 'renovate']))
 		.optional(),
-	budget: z.object({
-		max: z.number().min(1000).max(100_000_000),
-		ideal: z.number().min(1000).max(100_000_000).optional(),
-		financingType: z.enum(['loan', 'cash', 'pending']).optional(),
-		isSaleInProgress: z.boolean().optional(),
-		hasBankApproval: z.boolean().optional(),
-	}),
+	budget: z
+		.object({
+			max: z.number().min(1000).max(100_000_000),
+			ideal: z.number().min(1000).max(100_000_000).optional(),
+			financingType: z.enum(['loan', 'cash', 'pending']).optional(),
+			isSaleInProgress: z.boolean().optional(),
+			hasBankApproval: z.boolean().optional(),
+		})
+		.optional(),
 	priorities: z
 		.object({
 			mustHaves: z.array(z.string()).optional(),
@@ -431,9 +466,8 @@ export const searchAdBaseSchema = z.object({
 
 export const createSearchAdSchema = searchAdBaseSchema.required({
 	title: true,
+	description: true,
 	propertyTypes: true,
-	location: true,
-	budget: true,
 });
 
 export const updateSearchAdSchema = searchAdBaseSchema.partial();

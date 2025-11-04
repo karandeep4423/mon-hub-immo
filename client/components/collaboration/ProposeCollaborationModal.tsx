@@ -3,6 +3,8 @@ import React from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { Textarea } from '../ui/Textarea';
+import { FormProvider } from '@/context/FormContext';
 import { RichTextDisplay } from '../ui';
 import { useCollaborationMutations } from '@/hooks/useCollaborations';
 import type { Property } from '@/lib/api/propertyApi';
@@ -194,11 +196,17 @@ export const ProposeCollaborationModal: React.FC<
 						</div>
 					)}
 					<div className="flex flex-wrap gap-2 text-sm text-gray-500">
-						<span>📍 {searchAd.location.cities.join(', ')}</span>
-						<span>
-							💰 Budget max:{' '}
-							{searchAd.budget.max.toLocaleString()}€
-						</span>
+						{searchAd.location?.cities && (
+							<span>
+								📍 {searchAd.location.cities.join(', ')}
+							</span>
+						)}
+						{searchAd.budget?.max && (
+							<span>
+								💰 Budget max:{' '}
+								{searchAd.budget.max.toLocaleString()}€
+							</span>
+						)}
 					</div>
 					<div className="flex items-center gap-2 text-xs">
 						{searchAd.propertyTypes.map((type) => (
@@ -243,7 +251,11 @@ export const ProposeCollaborationModal: React.FC<
 						: 'Définissez le pourcentage de commission que vous souhaitez recevoir.'}
 				</div>
 
-				<form onSubmit={handleSubmit} className="space-y-4">
+				<FormProvider
+					isSubmitting={isSubmitting}
+					onSubmit={handleSubmit}
+					className="space-y-4"
+				>
 					{/* Compensation Type Selection for Apporteur Posts */}
 					{isApporteurPost && (
 						<div className="space-y-3">
@@ -405,7 +417,7 @@ export const ProposeCollaborationModal: React.FC<
 						>
 							Message (optionnel)
 						</label>
-						<textarea
+						<Textarea
 							id="message"
 							rows={4}
 							value={values.message}
@@ -413,12 +425,10 @@ export const ProposeCollaborationModal: React.FC<
 								setFieldValue('message', e.target.value)
 							}
 							placeholder="Expliquez pourquoi cette collaboration serait bénéfique..."
-							className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand/20 focus:border-brand"
 							maxLength={500}
+							showCharCount={true}
+							maxCharCount={500}
 						/>
-						<div className="text-xs text-gray-500 mt-1">
-							{values.message.length}/500 caractères
-						</div>
 					</div>
 
 					<div className="bg-brand-50 border border-brand-200 rounded-lg p-4">
@@ -466,7 +476,7 @@ export const ProposeCollaborationModal: React.FC<
 							Proposer la collaboration
 						</Button>
 					</div>
-				</form>
+				</FormProvider>
 			</div>
 		</Modal>
 	);

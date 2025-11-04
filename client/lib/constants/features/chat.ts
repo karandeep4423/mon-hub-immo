@@ -140,7 +140,7 @@ export const CHAT_TOAST_MESSAGES = {
 	SEND_SUCCESS: 'Message envoyé',
 	SEND_ERROR: "Erreur lors de l'envoi du message",
 	DELETE_SUCCESS: 'Message supprimé',
-	DELETE_ERROR: 'Failed to delete message',
+	DELETE_ERROR: 'Échec de la suppression du message',
 	FETCH_ERROR: 'Erreur lors du chargement des messages',
 	FILE_TOO_LARGE: 'Fichier trop volumineux (max 10MB)',
 	FILE_UPLOAD_ERROR: 'Erreur lors du téléchargement du fichier',

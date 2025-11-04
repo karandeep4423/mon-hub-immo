@@ -40,6 +40,12 @@ import {
 	updatePasswordHistory,
 } from '../utils/passwordHistory';
 import { logSecurityEvent } from '../utils/securityLogger';
+import {
+	trackFailedLogin,
+	clearFailedAttempts,
+	clearFailedAttemptsForEmail,
+} from '../middleware/loginRateLimiter';
+import { getClientIp } from '../utils/ipHelper';
 
 // Helper function to upload identity card to S3
 const uploadIdentityCardToTemp = async (
@@ -295,7 +301,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
 			res.status(400).json({
 				success: false,
-				message: 'Invalid credentials',
+				message: 'Identifiants invalides',
 			});
 			return;
 		}
@@ -313,7 +319,27 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 			return;
 		}
 
-		// Check password
+		// If lock has expired, clear it and reset failed attempts
+		if (user.accountLockedUntil && user.accountLockedUntil <= new Date()) {
+			await User.updateOne(
+				{ _id: user._id },
+				{
+					$set: { failedLoginAttempts: 0 },
+					$unset: { accountLockedUntil: '' },
+				},
+				{ runValidators: false },
+			);
+			// Refresh user object with cleared lock
+			user.failedLoginAttempts = 0;
+			user.accountLockedUntil = undefined;
+
+			logger.info(
+				'[AuthController] Expired account lock automatically cleared',
+				{
+					email: user.email,
+				},
+			);
+		} // Check password
 		const isPasswordValid = await user.comparePassword(password);
 		if (!isPasswordValid) {
 			// Increment failed login attempts
@@ -400,12 +426,16 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 				locked: failedAttempts >= 5,
 			});
 
+			// Track failed login for IP-based rate limiting (IP + Email)
+			const ip = getClientIp(req);
+			await trackFailedLogin(ip, email);
+
 			res.status(400).json({
 				success: false,
 				message:
 					failedAttempts >= 5
-						? 'Too many failed attempts. Account locked for 30 minutes.'
-						: 'Invalid credentials',
+						? 'Trop de tentatives échouées. Compte verrouillé pour 30 minutes.'
+						: 'Identifiants invalides',
 			});
 			return;
 		}
@@ -481,6 +511,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 			{ runValidators: false },
 		);
 
+		// Clear IP-based rate limit tracking for successful login (IP + Email)
+		const ip = getClientIp(req);
+		await clearFailedAttempts(ip, email);
+
 		// Log successful login
 		await logSecurityEvent({
 			userId: (user._id as unknown as string).toString(),
@@ -500,9 +534,9 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 		// Set tokens in httpOnly cookies
 		setAuthCookies(res, token, refreshToken);
 
-		res.json({
+		res.status(200).json({
 			success: true,
-			message: 'Login successful',
+			message: 'Connexion réussie',
 			user: {
 				_id: user._id,
 				firstName: user.firstName,
@@ -925,9 +959,9 @@ export const resetPassword = async (
 		const user = await User.findOne({
 			email,
 			passwordResetExpires: { $gt: new Date() },
-		}).select('+passwordResetCode +password +passwordHistory');
-
-		// Use timing-safe comparison for the code
+		}).select(
+			'+passwordResetCode +password +passwordHistory +failedLoginAttempts +accountLockedUntil',
+		); // Use timing-safe comparison for the code
 		if (!user || !compareVerificationCode(code, user.passwordResetCode)) {
 			res.status(400).json({
 				success: false,
@@ -944,7 +978,7 @@ export const resetPassword = async (
 			res.status(400).json({
 				success: false,
 				message:
-					'Cannot reuse any of your last 5 passwords. Please choose a different password.',
+					'Ce mot de passe a déjà été utilisé récemment. Veuillez en choisir un nouveau pour votre sécurité.',
 			});
 			return;
 		}
@@ -958,7 +992,19 @@ export const resetPassword = async (
 		user.password = newPassword; // This will be hashed by your User model pre-save hook
 		user.passwordResetCode = undefined;
 		user.passwordResetExpires = undefined;
+
+		// Clear account lock and failed login attempts after successful password reset
+		user.failedLoginAttempts = 0;
+		user.accountLockedUntil = undefined;
+
 		await user.save();
+
+		// Clear IP-based rate limit tracking after successful password reset
+		// Clear for ALL IPs since password was reset (email-based clear)
+		await clearFailedAttemptsForEmail(email);
+		logger.info(
+			`[AuthController] Cleared rate limits for email ${email} after password reset`,
+		);
 
 		// Log successful password reset
 		await logSecurityEvent({
@@ -1184,7 +1230,7 @@ export const updateProfile = async (
 
 		res.json({
 			success: true,
-			message: 'Profile updated successfully',
+			message: 'Profil mis à jour avec succès',
 			user: {
 				_id: user._id,
 				firstName: user.firstName,
@@ -1342,7 +1388,11 @@ export const completeProfile = async (
 			user.userType === 'agent' &&
 			user.professionalInfo?.city &&
 			user.professionalInfo?.postalCode &&
-			user.professionalInfo?.network
+			user.professionalInfo?.network &&
+			user.professionalInfo?.interventionRadius &&
+			user.professionalInfo?.coveredCities &&
+			user.professionalInfo.coveredCities.length > 0 &&
+			typeof user.professionalInfo?.yearsExperience === 'number'
 		) {
 			user.profileCompleted = true;
 		} else if (user.userType !== 'agent') {
@@ -1423,7 +1473,7 @@ export const getAllAgents = async (
 		});
 	} catch (error) {
 		logger.error('[AuthController] Error fetching agents', error);
-		res.status(500).json({ success: false, message: 'Server error' });
+		res.status(500).json({ success: false, message: 'Erreur serveur' });
 	}
 };
 
@@ -1619,7 +1669,7 @@ export const changePassword = async (
 			res.status(400).json({
 				success: false,
 				message:
-					'Cannot reuse any of your last 5 passwords. Please choose a different password.',
+					'Ce mot de passe a déjà été utilisé récemment. Veuillez en choisir un nouveau pour votre sécurité.',
 			});
 			return;
 		}

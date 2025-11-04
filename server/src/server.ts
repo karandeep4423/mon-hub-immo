@@ -23,6 +23,7 @@ import {
 	generateCsrfToken,
 	csrfErrorHandler,
 } from './middleware/csrf';
+import { generalLimiter } from './middleware/rateLimiter';
 
 dotenv.config();
 
@@ -37,9 +38,23 @@ const io = createSocketServer(server);
 // Initialize socket service using functional factory
 const socketService = createSocketService(io);
 
+// Helper to parse comma-separated FRONTEND_URL env into a clean string[]
+const parseEnvOrigins = (csv?: string): string[] =>
+	(csv || '')
+		.split(',')
+		.map((s) => s.trim())
+		.filter(Boolean)
+		.map((s) => (s.endsWith('/') ? s.slice(0, -1) : s));
+
+const FRONTEND_ORIGINS = parseEnvOrigins(process.env.FRONTEND_URL);
+
 // ============================================================================
 // MIDDLEWARE
 // ============================================================================
+
+// Trust proxy - required for apps behind reverse proxies (Render, Heroku, etc.)
+// This allows Express to correctly read X-Forwarded-* headers for rate limiting and IP detection
+app.set('trust proxy', 1);
 
 app.use(
 	helmet({
@@ -62,20 +77,27 @@ app.use(
 				],
 				connectSrc: [
 					"'self'",
-					'http://localhost:3000',
-					'http://localhost:4000',
-					'ws://localhost:4000',
-					'wss://*.vercel.app',
-					process.env.FRONTEND_URL ||
-						'https://mon-hub-immo.vercel.app',
-				],
+					// Allow localhost during development
+					process.env.NODE_ENV === 'development'
+						? 'http://localhost:3000'
+						: null,
+					process.env.NODE_ENV === 'development'
+						? 'http://localhost:4000'
+						: null,
+					process.env.NODE_ENV === 'development'
+						? 'ws://localhost:4000'
+						: null,
+					// Known frontends
+					'https://monhubimmo.fr',
+					'https://www.monhubimmo.fr',
+					'https://mon-hub-immo.vercel.app',
+					...FRONTEND_ORIGINS,
+				].filter((src): src is string => Boolean(src)),
 				mediaSrc: ["'self'", 'https://*.amazonaws.com'],
 				objectSrc: ["'none'"],
 				frameSrc: ["'none'"],
 				baseUri: ["'self'"],
 				formAction: ["'self'"],
-				upgradeInsecureRequests:
-					process.env.NODE_ENV === 'production' ? [] : null,
 			},
 		},
 		hsts: {
@@ -116,7 +138,10 @@ app.use(
 		origin: [
 			'http://localhost:3000',
 			'http://localhost:3001',
-			process.env.FRONTEND_URL || 'https://mon-hub-immo.vercel.app',
+			'https://monhubimmo.fr',
+			'https://www.monhubimmo.fr',
+			'https://mon-hub-immo.vercel.app',
+			...FRONTEND_ORIGINS,
 		],
 		credentials: true,
 	}),
@@ -143,6 +168,9 @@ if (
 ) {
 	app.use(requestLogger);
 }
+
+// Apply global rate limiting to all API routes
+app.use('/api', generalLimiter);
 
 // ============================================================================
 // ROUTES
@@ -181,7 +209,7 @@ app.use(csrfErrorHandler);
 app.use('*', (req, res) => {
 	res.status(404).json({
 		success: false,
-		message: 'Route not found',
+		message: "Cette route n'existe pas",
 	});
 });
 

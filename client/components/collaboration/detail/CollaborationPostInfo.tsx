@@ -503,9 +503,11 @@ export const CollaborationPostInfo: React.FC<CollaborationPostInfoProps> = ({
 									Budget:
 								</span>
 								<p className="font-bold text-brand text-2xl mt-1 ml-7">
-									{searchAd.budget.ideal
+									{searchAd.budget?.ideal
 										? `Idéal: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(searchAd.budget.ideal)}`
-										: `Max: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(searchAd.budget.max)}`}
+										: searchAd.budget?.max
+											? `Max: ${new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(searchAd.budget.max)}`
+											: 'Non spécifié'}
 								</p>
 							</div>
 						)}
@@ -632,11 +634,12 @@ export const CollaborationPostInfo: React.FC<CollaborationPostInfoProps> = ({
 									Localisation recherchée:
 								</span>
 								<p className="font-medium mt-1 ml-6">
-									{Array.isArray(searchAd.location.cities)
+									{searchAd.location?.cities &&
+									Array.isArray(searchAd.location.cities)
 										? searchAd.location.cities.join(', ')
-										: 'Localisation'}
+										: 'Non spécifiée'}
 								</p>
-								{searchAd.location.maxDistance && (
+								{searchAd.location?.maxDistance && (
 									<p className="text-xs text-gray-500 mt-1 ml-6 flex items-center gap-1">
 										<svg
 											className="w-3 h-3"

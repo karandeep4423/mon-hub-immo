@@ -30,7 +30,7 @@ export const errorHandler = (
 
 	// Mongoose bad ObjectId
 	if (err.name === 'CastError') {
-		const message = 'Resource not found';
+		const message = 'Ressource non trouvée';
 		error = new AppError(message, 404);
 	}
 
@@ -40,7 +40,7 @@ export const errorHandler = (
 		typeof (err as MongoServerError).code !== 'undefined' &&
 		(err as MongoServerError).code === 11000
 	) {
-		const message = 'Duplicate field value entered';
+		const message = 'Cette valeur existe déjà dans le système';
 		error = new AppError(message, 400);
 	}
 
@@ -55,6 +55,8 @@ export const errorHandler = (
 
 	res.status(error.statusCode || 500).json({
 		success: false,
-		message: error.message || 'Internal Server Error',
+		message:
+			error.message ||
+			'Une erreur est survenue sur le serveur. Veuillez réessayer dans quelques instants.',
 	});
 };

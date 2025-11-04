@@ -2,7 +2,8 @@ import { z } from 'zod';
 
 /**
  * Shared Search Ad validation schema
- * Matches server-side validation in server/src/validation/schemas.ts
+ * Only 3 fields are mandatory: title, description, propertyTypes
+ * All other fields are optional
  */
 export const searchAdValidationSchema = z.object({
 	title: z
@@ -16,8 +17,8 @@ export const searchAdValidationSchema = z.object({
 	propertyTypes: z
 		.array(z.string())
 		.min(1, 'Veuillez sélectionner au moins un type de bien.'),
-	cities: z.string().min(2, 'La localisation est requise.'),
-	budgetMax: z.number().min(1, 'Le budget maximum doit être positif.'),
+	cities: z.string().optional(),
+	budgetMax: z.number().optional(),
 	budgetIdeal: z.number().optional(),
 	minSurface: z.number().min(1).optional(),
 	minRooms: z.number().int().min(1).optional(),
