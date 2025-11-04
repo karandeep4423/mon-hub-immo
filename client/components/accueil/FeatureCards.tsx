@@ -8,7 +8,7 @@ interface FeatureCardsProps {
 export const FeatureCards = ({ onBookingClick }: FeatureCardsProps) => {
 	return (
 		<div className="bg-gray-50 pt-0 pb-8 sm:pb-12 lg:pb-16">
-			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 sm:-mt-10 relative z-20">
+			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 sm:-mt-10 relative ">
 				<div className="bg-white/95 backdrop-blur-sm rounded-xl sm:rounded-2xl border border-gray-100 shadow-md p-4 sm:p-6 md:p-8">
 					<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
 						{/* Estimer ma maison */}

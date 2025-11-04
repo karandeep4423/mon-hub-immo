@@ -39,24 +39,14 @@ export default function MonAgentImmoPage() {
 
 	// Filtered agents based on search (using useMemo for performance)
 	const filteredAgents = useMemo(() => {
-		// Filter to show only agents from specific cities (case-insensitive)
-		const allowedCities = ['rennes', 'dinan', 'saint-malo'];
-
-		const specificAgents = agents.filter((agent) => {
-			const agentCity = (agent.professionalInfo?.city || '')
-				.toLowerCase()
-				.trim();
-			return allowedCities.includes(agentCity);
-		});
-
 		if (!searchPerformed || (!searchCity && !searchPostalCode)) {
-			return specificAgents;
+			return agents;
 		}
 
 		const cityQuery = searchCity.toLowerCase().trim();
 		const postalQuery = searchPostalCode.trim();
 
-		return specificAgents.filter((agent) => {
+		return agents.filter((agent) => {
 			const agentCity = agent.professionalInfo?.city?.toLowerCase() || '';
 			const agentPostalCode = agent.professionalInfo?.postalCode || '';
 
@@ -314,8 +304,8 @@ export default function MonAgentImmoPage() {
 										immobilier :
 									</h2>
 									<p className="text-base sm:text-xl text-gray-700 mb-6 sm:mb-8">
-										simple, rapide, et convenablement à
-										toutes vos contraintes.
+										simple, rapide, et connectée à toute une
+										communauté.
 									</p>
 									<div className="flex justify-center lg:justify-start">
 										<button

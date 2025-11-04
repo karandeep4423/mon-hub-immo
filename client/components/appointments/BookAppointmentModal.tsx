@@ -324,7 +324,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 									type="button"
 									onClick={() => setStep(step - 1)}
 									variant="outline"
-									className="flex-1"
+									className="flex-1 text-xs sm:text-base"
 								>
 									← Retour
 								</Button>
@@ -337,7 +337,7 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 										(step === 1 && !values.scheduledDate) ||
 										(step === 2 && !values.scheduledTime)
 									}
-									className="flex-1 bg-brand hover:bg-brand-dark text-white font-semibold"
+									className="flex-1 text-xs sm:text-base bg-brand hover:bg-brand-dark text-white font-semibold"
 								>
 									Continuer →
 								</Button>
@@ -346,9 +346,9 @@ export const BookAppointmentModal: React.FC<BookAppointmentModalProps> = ({
 									type="submit"
 									onClick={handleSubmit}
 									loading={isSubmitting}
-									className="flex-1 bg-brand hover:bg-brand-dark text-white font-semibold"
+									className="flex-1 bg-brand hover:bg-brand-dark text-white text-xs sm:text-base font-semibold"
 								>
-									✓ Confirmer le rendez-vous
+									✓ Confirmer
 								</Button>
 							)}
 						</div>

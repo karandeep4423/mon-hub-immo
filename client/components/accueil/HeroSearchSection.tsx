@@ -20,8 +20,8 @@ export const HeroSearchSection = ({
 	onSearch,
 }: HeroSearchSectionProps) => {
 	return (
-		<div className="bg-brand-gradient relative overflow-hidden">
-			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 relative z-10">
+		<div className="bg-brand-gradient relative">
+			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 pb-32 sm:pb-16 relative z-10">
 				<div className="grid lg:grid-cols-2 gap-6 lg:gap-8 items-center">
 					<div className="text-white">
 						<p className="text-xs sm:text-sm mb-2 opacity-90">
@@ -30,8 +30,8 @@ export const HeroSearchSection = ({
 							<span className="font-semibold">MonHubImmo</span>
 						</p>
 						<p className="text-xs mb-4 sm:mb-6 opacity-75">
-							La 1ère plateforme qui met en relation vos
-							particuliers et agents immobiliers.
+							La 1ère plateforme qui met en relation particulier
+							et agents immobiliers.
 						</p>
 						<h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 leading-tight">
 							Prenez rendez-vous en ligne avec un agent
@@ -44,10 +44,10 @@ export const HeroSearchSection = ({
 						</p>
 
 						{/* Search Bar */}
-						<div className="bg-white rounded-full shadow-lg p-2 flex items-center gap-2 max-w-2xl relative z-50">
-							<div className="flex-1 flex items-center gap-2 pl-2 relative">
+						<div className="bg-white rounded-2xl sm:rounded-full mb-4 sm:mb-16 shadow-lg p-3 sm:p-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-2 relative z-[100]">
+							<div className="flex justify-between items-center gap-2  relative flex-1 min-w-0">
 								<svg
-									className="w-5 h-5 text-gray-400 flex-shrink-0 absolute left-4 top-1/2 -translate-y-1/2 z-10 pointer-events-none"
+									className="w-5 h-5 text-gray-400 flex-shrink-0 left-2  absolute  top-1/2 -translate-y-1/2 z-10 pointer-events-none"
 									fill="none"
 									stroke="currentColor"
 									viewBox="0 0 24 24"
@@ -73,7 +73,7 @@ export const HeroSearchSection = ({
 										Components.UI.FORM_PLACEHOLDERS
 											.CITY_SEARCH
 									}
-									className="border-0 shadow-none focus:ring-0 pl-8 py-2.5 text-gray-900"
+									className="border-0 shadow-none focus:ring-0 pl-8 py-2.5 text-gray-900 w-full"
 									showPostalCode={false}
 								/>
 							</div>
@@ -84,7 +84,7 @@ export const HeroSearchSection = ({
 									!searchCity.trim() &&
 									!searchPostalCode.trim()
 								}
-								className="bg-gradient-to-r from-pink-400 via-pink-500 to-pink-600 text-white px-6 sm:px-8 py-3 rounded-full font-semibold text-sm sm:text-base hover:from-pink-500 hover:via-pink-600 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl active:scale-95 flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0"
+								className="bg-gradient-to-r from-pink-400 via-pink-500 to-pink-600 text-white px-6 sm:px-8 py-3 rounded-full font-semibold text-sm sm:text-base hover:from-pink-500 hover:via-pink-600 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl active:scale-95 flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0 w-full sm:w-auto"
 							>
 								<svg
 									className="w-5 h-5"
@@ -102,11 +102,6 @@ export const HeroSearchSection = ({
 								<span>Rechercher</span>
 							</Button>
 						</div>
-						<p className="text-xs mt-2 sm:mt-3 opacity-75">
-							*Réservez vos rendez-vous en ligne, notre
-							rendez-vous avec un agent immobilier n&apos;aura
-							jamais été aussi simple.
-						</p>
 					</div>
 
 					{/* Show illustration only when no search performed */}
