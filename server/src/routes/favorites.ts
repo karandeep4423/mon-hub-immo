@@ -10,12 +10,10 @@ import {
 	getUserMixedFavorites,
 } from '../controllers/favoritesController';
 import { authenticateToken } from '../middleware/auth';
-import { generalLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
-// Apply authentication middleware and rate limiting to all routes
-router.use(generalLimiter);
+// Apply authentication middleware to all routes
 router.use(authenticateToken);
 
 // Toggle favorite status for a property

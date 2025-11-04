@@ -138,11 +138,18 @@ export const handleAuthError = (error: unknown): void => {
 			return;
 		}
 
+		// Rate limiting errors - backend sends user-friendly French messages with exact timing
+		// Example: "Trop de tentatives de connexion. Veuillez réessayer dans 28 minutes."
 		if (
-			message.includes('too many') ||
-			message.includes('multiple failed')
+			message.includes('trop de tentatives') ||
+			message.includes('trop de demandes') ||
+			message.includes('trop de requêtes') ||
+			message.includes('veuillez réessayer dans') ||
+			message.includes('multiple failed') ||
+			message.includes('too many')
 		) {
-			authToastError(Features.Auth.AUTH_TOAST_MESSAGES.TOO_MANY_ATTEMPTS);
+			// Show the backend message directly (it has correct timing)
+			authToastError(error.message);
 			return;
 		}
 
@@ -182,6 +189,17 @@ export const handleAuthError = (error: unknown): void => {
 		// Password errors
 		if (message.includes('password') && message.includes('not match')) {
 			authToastError(Features.Auth.AUTH_TOAST_MESSAGES.PASSWORD_MISMATCH);
+			return;
+		}
+
+		if (
+			message.includes('cannot reuse') ||
+			message.includes('last 5 passwords') ||
+			message.includes('password history')
+		) {
+			authToastError(
+				Features.Auth.AUTH_TOAST_MESSAGES.PASSWORD_IN_HISTORY,
+			);
 			return;
 		}
 
@@ -255,6 +273,17 @@ export const handleAuthError = (error: unknown): void => {
 				authToastError(
 					Features.Auth.AUTH_TOAST_MESSAGES.VALIDATION_ERROR,
 				);
+				return;
+			case 429:
+				// Rate limiting - backend sends user-friendly message with timing
+				// Show the actual message from API (e.g., "Veuillez réessayer dans 28 minutes")
+				if (error.message) {
+					authToastError(error.message);
+				} else {
+					authToastError(
+						'⚠️ Trop de tentatives. Veuillez réessayer plus tard.',
+					);
+				}
 				return;
 			case 500:
 			case 502:

@@ -23,6 +23,7 @@ import {
 	generateCsrfToken,
 	csrfErrorHandler,
 } from './middleware/csrf';
+import { generalLimiter } from './middleware/rateLimiter';
 
 dotenv.config();
 
@@ -167,6 +168,9 @@ if (
 ) {
 	app.use(requestLogger);
 }
+
+// Apply global rate limiting to all API routes
+app.use('/api', generalLimiter);
 
 // ============================================================================
 // ROUTES

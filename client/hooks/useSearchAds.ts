@@ -266,7 +266,7 @@ export function useFilteredSearchAds(
 
 			if (filters.city) {
 				filtered = filtered.filter((ad) =>
-					ad.location.cities.some((city) =>
+					ad.location?.cities.some((city) =>
 						city
 							.toLowerCase()
 							.includes(filters.city!.toLowerCase()),
@@ -276,13 +276,15 @@ export function useFilteredSearchAds(
 
 			if (filters.minBudget) {
 				filtered = filtered.filter(
-					(ad) => ad.budget.max >= filters.minBudget!,
+					(ad) =>
+						ad.budget?.max && ad.budget.max >= filters.minBudget!,
 				);
 			}
 
 			if (filters.maxBudget) {
 				filtered = filtered.filter(
-					(ad) => ad.budget.max <= filters.maxBudget!,
+					(ad) =>
+						ad.budget?.max && ad.budget.max <= filters.maxBudget!,
 				);
 			}
 

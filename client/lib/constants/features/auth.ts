@@ -89,6 +89,8 @@ export const AUTH_TOAST_MESSAGES = {
 		'❌ Mot de passe trop faible. Minimum 8 caractères requis',
 	PASSWORD_SAME_AS_OLD:
 		"❌ Le nouveau mot de passe doit être différent de l'ancien",
+	PASSWORD_IN_HISTORY:
+		'🔒 Ce mot de passe a déjà été utilisé récemment. Veuillez en choisir un nouveau pour votre sécurité.',
 	INVALID_RESET_CODE: '❌ Code de réinitialisation invalide ou expiré',
 
 	// Validation & Errors

@@ -14,13 +14,12 @@ import { requireOwnership, requireRole } from '../middleware/authorize';
 import { Property } from '../models/Property';
 import { updatePropertyStatusValidation } from '../middleware/validation';
 import { uploadProperty } from '../middleware/uploadMiddleware';
-import { generalLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
-// Public routes with rate limiting
-router.get('/', generalLimiter, getProperties);
-router.get('/:id', generalLimiter, getPropertyById);
+// Public routes (rate limiting applied globally in server.ts)
+router.get('/', getProperties);
+router.get('/:id', getPropertyById);
 
 // Combined property creation with image upload
 // Both agents and apporteurs can create properties
