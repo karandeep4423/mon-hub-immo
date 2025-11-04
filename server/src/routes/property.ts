@@ -23,11 +23,11 @@ router.get('/', generalLimiter, getProperties);
 router.get('/:id', generalLimiter, getPropertyById);
 
 // Combined property creation with image upload
-// Only agents can create properties
+// Both agents and apporteurs can create properties
 router.post(
 	'/create-property',
 	authenticateToken,
-	requireRole(['agent']),
+	requireRole(['agent', 'apporteur']),
 	uploadProperty,
 	createProperty,
 );

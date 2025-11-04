@@ -68,38 +68,51 @@ const transformFormDataToAdData = (
 	data: SearchAdFormData,
 	userId: string,
 	userType: 'agent' | 'apporteur',
-) => ({
-	...data,
-	authorId: userId,
-	status: data.status,
-	authorType: userType,
-	location: {
-		cities: data.cities.split(',').map((city) => city.trim()),
-		maxDistance: data.maxDistance,
-		openToOtherAreas: data.openToOtherAreas,
-	},
-	propertyTypes: data.propertyTypes as (
-		| 'house'
-		| 'apartment'
-		| 'land'
-		| 'building'
-		| 'commercial'
-	)[],
-	budget: {
-		max: data.budgetMax,
-		ideal: data.budgetIdeal,
-		financingType: data.financingType,
-		isSaleInProgress: data.isSaleInProgress,
-		hasBankApproval: data.hasBankApproval,
-	},
-	priorities: {
-		mustHaves: data.mustHaves,
-		niceToHaves: data.niceToHaves,
-		dealBreakers: data.dealBreakers,
-	},
-	badges: data.badges,
-	clientInfo: data.clientInfo,
-});
+) => {
+	// Build base data
+	const transformed: Record<string, unknown> = {
+		...data,
+		authorId: userId,
+		status: data.status,
+		authorType: userType,
+		propertyTypes: data.propertyTypes as (
+			| 'house'
+			| 'apartment'
+			| 'land'
+			| 'building'
+			| 'commercial'
+		)[],
+		priorities: {
+			mustHaves: data.mustHaves,
+			niceToHaves: data.niceToHaves,
+			dealBreakers: data.dealBreakers,
+		},
+		badges: data.badges,
+		clientInfo: data.clientInfo,
+	};
+
+	// Only add location if cities are provided
+	if (data.cities && data.cities.trim()) {
+		transformed.location = {
+			cities: data.cities.split(',').map((city) => city.trim()),
+			maxDistance: data.maxDistance,
+			openToOtherAreas: data.openToOtherAreas,
+		};
+	}
+
+	// Only add budget if budgetMax is provided
+	if (data.budgetMax && data.budgetMax > 0) {
+		transformed.budget = {
+			max: data.budgetMax,
+			ideal: data.budgetIdeal,
+			financingType: data.financingType,
+			isSaleInProgress: data.isSaleInProgress,
+			hasBankApproval: data.hasBankApproval,
+		};
+	}
+
+	return transformed;
+};
 
 export const useSearchAdForm = (mode: 'create' | 'edit', editId?: string) => {
 	const router = useRouter();
@@ -134,7 +147,7 @@ export const useSearchAdForm = (mode: 'create' | 'edit', editId?: string) => {
 				await searchAdApi.createSearchAd(
 					adData as Parameters<typeof searchAdApi.createSearchAd>[0],
 				);
-				router.push(Features.SearchAds.SEARCH_AD_ROUTES.MY_ADS);
+				router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
 			} else if (mode === 'edit' && editId) {
 				await searchAdApi.updateSearchAd(
 					editId,

@@ -102,7 +102,16 @@ export const getAllSearchAds = async (
 			const postalCodes = (postalCode as string)
 				.split(',')
 				.map((pc) => pc.trim());
-			filter['location.postalCodes'] = { $in: postalCodes };
+			// Check both postalCodes array and cities array (cities may contain "City (PostalCode)")
+			filter.$or = filter.$or || [];
+			filter.$or.push(
+				{ 'location.postalCodes': { $in: postalCodes } },
+				{
+					'location.cities': {
+						$in: postalCodes.map((pc) => new RegExp(pc, 'i')),
+					},
+				},
+			);
 		}
 
 		// Budget filtering (compare against budget.max)

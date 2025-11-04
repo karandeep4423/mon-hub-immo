@@ -31,7 +31,9 @@ export const LocationSection: React.FC<LocationSectionProps> = ({
 					value={cities ? cities.split(',').map((c) => c.trim()) : []}
 					onMultiSelect={(locations: LocationItem[]) =>
 						onCitiesChange(
-							locations.map((loc) => loc.name).join(', '),
+							locations
+								.map((loc) => `${loc.name} (${loc.postcode})`)
+								.join(', '),
 						)
 					}
 					placeholder={

@@ -79,9 +79,10 @@ export const MySearches = () => {
 			// Search term filter (search in cities, title would be in ad itself)
 			if (filters.searchTerm) {
 				const searchLower = filters.searchTerm.toLowerCase();
-				const citiesMatch = ad.location.cities.some((city) =>
-					city.toLowerCase().includes(searchLower),
-				);
+				const citiesMatch =
+					ad.location?.cities?.some((city) =>
+						city.toLowerCase().includes(searchLower),
+					) || false;
 				const descriptionMatch = ad.description
 					?.toLowerCase()
 					.includes(searchLower);

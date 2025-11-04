@@ -196,11 +196,17 @@ export const ProposeCollaborationModal: React.FC<
 						</div>
 					)}
 					<div className="flex flex-wrap gap-2 text-sm text-gray-500">
-						<span>📍 {searchAd.location.cities.join(', ')}</span>
-						<span>
-							💰 Budget max:{' '}
-							{searchAd.budget.max.toLocaleString()}€
-						</span>
+						{searchAd.location?.cities && (
+							<span>
+								📍 {searchAd.location.cities.join(', ')}
+							</span>
+						)}
+						{searchAd.budget?.max && (
+							<span>
+								💰 Budget max:{' '}
+								{searchAd.budget.max.toLocaleString()}€
+							</span>
+						)}
 					</div>
 					<div className="flex items-center gap-2 text-xs">
 						{searchAd.propertyTypes.map((type) => (

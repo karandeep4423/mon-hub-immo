@@ -11,9 +11,15 @@ export const LocationCard: React.FC<LocationCardProps> = ({
 	canViewFullLocation,
 }) => {
 	// Show only first 2 cities if user cannot view full location
-	const displayCities = canViewFullLocation
-		? searchAd.location.cities
-		: searchAd.location.cities.slice(0, 2);
+	const displayCities =
+		searchAd.location?.cities &&
+		(canViewFullLocation
+			? searchAd.location.cities
+			: searchAd.location.cities.slice(0, 2));
+
+	if (!searchAd.location?.cities) {
+		return null; // Don't render if no location data
+	}
 
 	return (
 		<div className="group bg-white p-5 rounded-xl shadow-md border border-gray-200/50 hover:shadow-xl hover:border-brand-200 transition-all duration-300">
@@ -31,7 +37,7 @@ export const LocationCard: React.FC<LocationCardProps> = ({
 						Zones ciblées
 					</span>
 					<p className="text-gray-900 font-medium text-base">
-						{displayCities.join(', ')}
+						{displayCities?.join(', ')}
 						{!canViewFullLocation &&
 							searchAd.location.cities.length > 2 &&
 							'...'}

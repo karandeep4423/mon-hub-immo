@@ -8,7 +8,7 @@ interface BudgetCardProps {
 const formatFinancingType = (type: string) => {
 	const typeMap: Record<string, string> = {
 		loan: 'Prêt bancaire',
-		cash: 'Cash',
+		cash: 'Paiement comptant',
 		pending: "En attente d'accord",
 	};
 	return typeMap[type] || type;
@@ -24,16 +24,18 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({ searchAd }) => {
 				<h3 className="text-lg font-bold text-gray-900">Budget</h3>
 			</div>
 			<div className="space-y-3">
-				<div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-3 rounded-lg border border-emerald-200">
-					<span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider block mb-1.5">
-						Budget maximum
-					</span>
-					<p className="text-emerald-900 text-xl font-bold">
-						{searchAd.budget.max.toLocaleString()} €
-					</p>
-				</div>
+				{searchAd.budget?.max && (
+					<div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-3 rounded-lg border border-emerald-200">
+						<span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider block mb-1.5">
+							Budget maximum
+						</span>
+						<p className="text-emerald-900 text-xl font-bold">
+							{searchAd.budget.max.toLocaleString()} €
+						</p>
+					</div>
+				)}
 
-				{searchAd.budget.ideal && (
+				{searchAd.budget?.ideal && (
 					<div>
 						<span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">
 							Budget idéal
@@ -44,7 +46,7 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({ searchAd }) => {
 					</div>
 				)}
 
-				{searchAd.budget.financingType && (
+				{searchAd.budget?.financingType && (
 					<div>
 						<span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1.5">
 							Type de financement
@@ -56,7 +58,7 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({ searchAd }) => {
 				)}
 
 				<div className="space-y-2 pt-1">
-					{searchAd.budget.isSaleInProgress && (
+					{searchAd.budget?.isSaleInProgress && (
 						<div className="flex items-center gap-2 bg-info-light px-3 py-1.5 rounded-lg">
 							<div className="w-1.5 h-1.5 bg-info rounded-full shadow-sm"></div>
 							<span className="text-xs font-medium text-info">
@@ -64,7 +66,7 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({ searchAd }) => {
 							</span>
 						</div>
 					)}
-					{searchAd.budget.hasBankApproval && (
+					{searchAd.budget?.hasBankApproval && (
 						<div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-lg">
 							<div className="w-1.5 h-1.5 bg-green-500 rounded-full shadow-sm"></div>
 							<span className="text-xs font-medium text-green-800">

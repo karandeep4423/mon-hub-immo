@@ -183,24 +183,36 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 				</div>
 
 				<div className="grid grid-cols-2 gap-4 text-sm">
-					<div>
-						<p className="font-semibold text-gray-700 flex items-center gap-1">
-							📍 {Features.SearchAds.SEARCH_AD_UI_TEXT.location}
-						</p>
-						<p className="text-gray-600">
-							{searchAd.location.cities.slice(0, 2).join(', ')}
-							{searchAd.location.cities.length > 2 ? '...' : ''}
-						</p>
-					</div>
-					<div>
-						<p className="font-semibold text-gray-700 flex items-center gap-1">
-							💰{' '}
-							{Features.SearchAds.SEARCH_AD_UI_TEXT.budgetLabel}
-						</p>
-						<p className="text-gray-600">
-							{searchAd.budget.max.toLocaleString('fr-FR')} €
-						</p>
-					</div>
+					{searchAd.location && searchAd.location.cities && (
+						<div>
+							<p className="font-semibold text-gray-700 flex items-center gap-1">
+								📍{' '}
+								{Features.SearchAds.SEARCH_AD_UI_TEXT.location}
+							</p>
+							<p className="text-gray-600">
+								{searchAd.location.cities
+									.slice(0, 2)
+									.join(', ')}
+								{searchAd.location.cities.length > 2
+									? '...'
+									: ''}
+							</p>
+						</div>
+					)}
+					{searchAd.budget && searchAd.budget.max && (
+						<div>
+							<p className="font-semibold text-gray-700 flex items-center gap-1">
+								💰{' '}
+								{
+									Features.SearchAds.SEARCH_AD_UI_TEXT
+										.budgetLabel
+								}
+							</p>
+							<p className="text-gray-600">
+								{searchAd.budget.max.toLocaleString('fr-FR')} €
+							</p>
+						</div>
+					)}
 					<div>
 						<p className="font-semibold text-gray-700 flex items-center gap-1">
 							🏡 Type de bien

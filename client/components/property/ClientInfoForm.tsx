@@ -63,7 +63,6 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								placeholder="Lumière naturelle, proximité transports, rénovation récente..."
 							/>
 						</div>
-
 						<div>
 							<Textarea
 								label="Quels sont les points faibles connus (nuisance, travaux à prévoir, vis-à-vis, etc.)"
@@ -83,7 +82,6 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								placeholder="Travaux à prévoir, nuisances sonores..."
 							/>
 						</div>
-
 						<Select
 							label="Le bien est-il encore occupé ou déjà vide ?"
 							value={
@@ -99,12 +97,14 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 							}
 							name="occupancyStatus"
 							options={[
-								{ value: '', label: 'Sélectionner...' },
+								{
+									value: '',
+									label: 'Sélectionner... (optionnel)',
+								},
 								{ value: 'occupied', label: 'Occupé' },
 								{ value: 'vacant', label: 'Vide' },
 							]}
-						/>
-
+						/>{' '}
 						<div className="flex items-center space-x-2">
 							<input
 								type="checkbox"
@@ -270,7 +270,6 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								Sont-ils pressés de vendre ou non ?
 							</label>
 						</div>
-
 						<div className="flex items-center space-x-2">
 							<input
 								type="checkbox"
@@ -297,7 +296,6 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								dans quelle mesure ?)
 							</label>
 						</div>
-
 						<Select
 							label="Y a-t-il un mandat exclusif, simple ou partagé ?"
 							value={clientInfo.ownerInfo?.mandateType || ''}
@@ -310,13 +308,15 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 							}
 							name="mandateType"
 							options={[
-								{ value: '', label: 'Sélectionner...' },
+								{
+									value: '',
+									label: 'Sélectionner... (optionnel)',
+								},
 								{ value: 'exclusive', label: 'Exclusif' },
 								{ value: 'simple', label: 'Simple' },
 								{ value: 'shared', label: 'Partagé' },
 							]}
-						/>
-
+						/>{' '}
 						<div>
 							<label className="block text-sm font-medium text-gray-700 mb-1">
 								Raisons de la vente (personnelle, financière,
@@ -337,7 +337,6 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								placeholder="Raisons de la vente..."
 							/>
 						</div>
-
 						<div className="flex items-center space-x-2">
 							<input
 								type="checkbox"
@@ -364,7 +363,6 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								visites ?
 							</label>
 						</div>
-
 						<div className="flex items-center space-x-2">
 							<input
 								type="checkbox"
@@ -390,7 +388,6 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								Sont-ils souples sur les horaires de visite ?
 							</label>
 						</div>
-
 						<div className="flex items-center space-x-2">
 							<input
 								type="checkbox"

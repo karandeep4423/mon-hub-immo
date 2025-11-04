@@ -370,17 +370,19 @@ export type ProposeCollaborationInput = z.infer<
 // Search Ads
 export const searchAdBaseSchema = z.object({
 	title: z.string().min(5).max(200),
-	description: z.string().min(10).max(2000).optional(),
+	description: z.string().min(10).max(2000),
 	propertyTypes: z
 		.array(z.enum(['house', 'apartment', 'land', 'building', 'commercial']))
 		.min(1),
 	propertyState: z.array(z.enum(['new', 'old'])).optional(),
 	projectType: z.enum(['primary', 'secondary', 'investment']).optional(),
-	location: z.object({
-		cities: z.array(z.string()).min(1),
-		maxDistance: z.number().min(0).max(500).optional(),
-		openToOtherAreas: z.boolean().optional(),
-	}),
+	location: z
+		.object({
+			cities: z.array(z.string()).min(1),
+			maxDistance: z.number().min(0).max(500).optional(),
+			openToOtherAreas: z.boolean().optional(),
+		})
+		.optional(),
 	minRooms: z.number().int().min(1).max(50).optional(),
 	minBedrooms: z.number().int().min(1).max(20).optional(),
 	minSurface: z.number().min(1).max(10000).optional(),
@@ -390,13 +392,15 @@ export const searchAdBaseSchema = z.object({
 	desiredState: z
 		.array(z.enum(['new', 'good', 'refresh', 'renovate']))
 		.optional(),
-	budget: z.object({
-		max: z.number().min(1000).max(100_000_000),
-		ideal: z.number().min(1000).max(100_000_000).optional(),
-		financingType: z.enum(['loan', 'cash', 'pending']).optional(),
-		isSaleInProgress: z.boolean().optional(),
-		hasBankApproval: z.boolean().optional(),
-	}),
+	budget: z
+		.object({
+			max: z.number().min(1000).max(100_000_000),
+			ideal: z.number().min(1000).max(100_000_000).optional(),
+			financingType: z.enum(['loan', 'cash', 'pending']).optional(),
+			isSaleInProgress: z.boolean().optional(),
+			hasBankApproval: z.boolean().optional(),
+		})
+		.optional(),
 	priorities: z
 		.object({
 			mustHaves: z.array(z.string()).optional(),
@@ -437,9 +441,8 @@ export const searchAdBaseSchema = z.object({
 
 export const createSearchAdSchema = searchAdBaseSchema.required({
 	title: true,
+	description: true,
 	propertyTypes: true,
-	location: true,
-	budget: true,
 });
 
 export const updateSearchAdSchema = searchAdBaseSchema.partial();
