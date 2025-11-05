@@ -186,6 +186,12 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({
 				);
 
 				if (!result.success || !result.data) {
+					// Extract field errors from API error
+					const fieldErrors = result.error?.fieldErrors || {};
+					setErrors({
+						submit: result.error?.message || 'Update failed',
+						...fieldErrors,
+					});
 					throw new Error(result.error?.message || 'Update failed');
 				}
 
@@ -202,6 +208,12 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({
 				);
 
 				if (!result.success || !result.data) {
+					// Extract field errors from API error
+					const fieldErrors = result.error?.fieldErrors || {};
+					setErrors({
+						submit: result.error?.message || 'Create failed',
+						...fieldErrors,
+					});
 					throw new Error(result.error?.message || 'Create failed');
 				}
 
@@ -214,12 +226,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({
 			await onSubmit(property as unknown as PropertyFormData);
 		} catch (error) {
 			logger.error('[PropertyForm] Error submitting form:', error);
-			setErrors({
-				submit:
-					error instanceof Error
-						? error.message
-						: "Erreur lors de la création de l'annonce",
-			});
+			// Errors already set in the if blocks above
 		} finally {
 			setIsUploading(false);
 		}

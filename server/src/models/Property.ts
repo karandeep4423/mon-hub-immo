@@ -393,7 +393,7 @@ const propertySchema = new Schema<IProperty>(
 			trim: true,
 			match: [
 				/^\d{2}\/\d{4}$/,
-				'Format de date invalide (MM/YYYY attendu)',
+				'Format de date invalide (MM/AAAA attendu)',
 			],
 		},
 

@@ -19,9 +19,9 @@ interface AuthenticatedRequest extends Request {
 	resource?: any; // Attached by authorization middleware
 }
 
-// Simple validation function for combined upload with type conversion
+// Enhanced validation function with field-specific error mapping
 const validatePropertyData = (data: Record<string, unknown>) => {
-	const errors: string[] = [];
+	const fieldErrors: Record<string, string> = {};
 
 	// Convert string numbers to actual numbers for form data
 	const convertedData = { ...data };
@@ -52,36 +52,124 @@ const validatePropertyData = (data: Record<string, unknown>) => {
 
 	// Convert numeric fields from strings
 	if (typeof data.price === 'string') {
-		convertedData.price = parseFloat(data.price);
+		const price = parseFloat(data.price);
+		if (isNaN(price)) {
+			fieldErrors.price = 'Le prix doit être un nombre valide';
+		} else {
+			convertedData.price = price;
+		}
 	}
 	if (typeof data.surface === 'string') {
-		convertedData.surface = parseFloat(data.surface);
+		const surface = parseFloat(data.surface);
+		if (isNaN(surface)) {
+			fieldErrors.surface = 'La surface doit être un nombre valide';
+		} else {
+			convertedData.surface = surface;
+		}
 	}
-	if (typeof data.rooms === 'string') {
-		convertedData.rooms = parseInt(data.rooms, 10) || undefined;
+	if (typeof data.rooms === 'string' && data.rooms !== '') {
+		const rooms = parseInt(data.rooms, 10);
+		if (isNaN(rooms)) {
+			fieldErrors.rooms =
+				'Le nombre de pièces doit être un nombre valide';
+		} else {
+			convertedData.rooms = rooms;
+		}
 	}
-	if (typeof data.bedrooms === 'string') {
-		convertedData.bedrooms = parseInt(data.bedrooms, 10) || undefined;
+	if (typeof data.bedrooms === 'string' && data.bedrooms !== '') {
+		const bedrooms = parseInt(data.bedrooms, 10);
+		if (isNaN(bedrooms)) {
+			fieldErrors.bedrooms =
+				'Le nombre de chambres doit être un nombre valide';
+		} else {
+			convertedData.bedrooms = bedrooms;
+		}
 	}
-	if (typeof data.bathrooms === 'string') {
-		convertedData.bathrooms = parseInt(data.bathrooms, 10) || undefined;
+	if (typeof data.bathrooms === 'string' && data.bathrooms !== '') {
+		const bathrooms = parseInt(data.bathrooms, 10);
+		if (isNaN(bathrooms)) {
+			fieldErrors.bathrooms =
+				'Le nombre de salles de bain doit être un nombre valide';
+		} else {
+			convertedData.bathrooms = bathrooms;
+		}
 	}
-	if (typeof data.levels === 'string') {
-		convertedData.levels = parseInt(data.levels, 10) || undefined;
+	if (typeof data.levels === 'string' && data.levels !== '') {
+		const levels = parseInt(data.levels, 10);
+		if (isNaN(levels)) {
+			fieldErrors.levels =
+				'Le nombre de niveaux doit être un nombre valide';
+		} else {
+			convertedData.levels = levels;
+		}
 	}
-	if (typeof data.parkingSpaces === 'string') {
-		convertedData.parkingSpaces =
-			parseInt(data.parkingSpaces, 10) || undefined;
+	if (typeof data.parkingSpaces === 'string' && data.parkingSpaces !== '') {
+		const parkingSpaces = parseInt(data.parkingSpaces, 10);
+		if (isNaN(parkingSpaces)) {
+			fieldErrors.parkingSpaces =
+				'Le nombre de places de parking doit être un nombre valide';
+		} else {
+			convertedData.parkingSpaces = parkingSpaces;
+		}
 	}
-	if (typeof data.annualCondoFees === 'string') {
-		convertedData.annualCondoFees =
-			parseFloat(data.annualCondoFees) || undefined;
+	if (
+		typeof data.annualCondoFees === 'string' &&
+		data.annualCondoFees !== ''
+	) {
+		const annualCondoFees = parseFloat(data.annualCondoFees);
+		if (isNaN(annualCondoFees)) {
+			fieldErrors.annualCondoFees =
+				'Les charges annuelles doivent être un nombre valide';
+		} else {
+			convertedData.annualCondoFees = annualCondoFees;
+		}
 	}
-	if (typeof data.yearBuilt === 'string') {
-		convertedData.yearBuilt = parseInt(data.yearBuilt, 10) || undefined;
+	if (typeof data.yearBuilt === 'string' && data.yearBuilt !== '') {
+		const yearBuilt = parseInt(data.yearBuilt, 10);
+		if (isNaN(yearBuilt)) {
+			fieldErrors.yearBuilt =
+				"L'année de construction doit être un nombre valide";
+		} else {
+			convertedData.yearBuilt = yearBuilt;
+		}
 	}
-	if (typeof data.landArea === 'string') {
-		convertedData.landArea = parseFloat(data.landArea) || undefined;
+	if (typeof data.landArea === 'string' && data.landArea !== '') {
+		const landArea = parseFloat(data.landArea);
+		if (isNaN(landArea)) {
+			fieldErrors.landArea =
+				'La surface du terrain doit être un nombre valide';
+		} else {
+			convertedData.landArea = landArea;
+		}
+	}
+	if (typeof data.floor === 'string' && data.floor !== '') {
+		const floor = parseInt(data.floor, 10);
+		if (isNaN(floor)) {
+			fieldErrors.floor = "L'étage doit être un nombre valide";
+		} else {
+			convertedData.floor = floor;
+		}
+	}
+	if (typeof data.totalFloors === 'string' && data.totalFloors !== '') {
+		const totalFloors = parseInt(data.totalFloors, 10);
+		if (isNaN(totalFloors)) {
+			fieldErrors.totalFloors =
+				"Le nombre d'étages doit être un nombre valide";
+		} else {
+			convertedData.totalFloors = totalFloors;
+		}
+	}
+	if (
+		typeof data.agencyFeesPercentage === 'string' &&
+		data.agencyFeesPercentage !== ''
+	) {
+		const agencyFeesPercentage = parseFloat(data.agencyFeesPercentage);
+		if (isNaN(agencyFeesPercentage)) {
+			fieldErrors.agencyFeesPercentage =
+				'Le pourcentage doit être un nombre valide';
+		} else {
+			convertedData.agencyFeesPercentage = agencyFeesPercentage;
+		}
 	}
 
 	// Convert boolean fields from strings
@@ -100,44 +188,157 @@ const validatePropertyData = (data: Record<string, unknown>) => {
 		}
 	});
 
-	// Validation logic
-	if (
-		!convertedData.title ||
-		(typeof convertedData.title === 'string' &&
-			convertedData.title.length < 10)
+	// Validation logic with field-specific errors
+	if (!convertedData.title) {
+		fieldErrors.title = 'Le titre est requis';
+	} else if (
+		typeof convertedData.title === 'string' &&
+		convertedData.title.length < 10
 	) {
-		errors.push('Le titre doit contenir au moins 10 caractères');
+		fieldErrors.title = 'Le titre doit contenir au moins 10 caractères';
+	} else if (
+		typeof convertedData.title === 'string' &&
+		convertedData.title.length > 200
+	) {
+		fieldErrors.title = 'Le titre doit contenir moins de 200 caractères';
 	}
-	if (
-		!convertedData.description ||
-		(typeof convertedData.description === 'string' &&
-			convertedData.description.length < 50)
+
+	if (!convertedData.description) {
+		fieldErrors.description = 'La description est requise';
+	} else if (
+		typeof convertedData.description === 'string' &&
+		convertedData.description.length < 50
 	) {
-		errors.push('La description doit contenir au moins 50 caractères');
+		fieldErrors.description =
+			'La description doit contenir au moins 50 caractères';
+	} else if (
+		typeof convertedData.description === 'string' &&
+		convertedData.description.length > 2000
+	) {
+		fieldErrors.description =
+			'La description doit contenir moins de 2000 caractères';
 	}
-	if (
-		!convertedData.price ||
-		(typeof convertedData.price === 'number' && convertedData.price < 1000)
-	) {
-		errors.push('Le prix doit être supérieur à 1000€');
+
+	if (!convertedData.price) {
+		fieldErrors.price = 'Le prix est requis';
+	} else if (typeof convertedData.price === 'number') {
+		if (convertedData.price < 1000) {
+			fieldErrors.price = 'Le prix minimum est de 1000€';
+		} else if (convertedData.price > 50000000) {
+			fieldErrors.price = 'Le prix maximum est de 50,000,000€';
+		}
 	}
-	if (
-		!convertedData.surface ||
-		(typeof convertedData.surface === 'number' && convertedData.surface < 1)
-	) {
-		errors.push('La surface doit être supérieure à 1 m²');
+
+	if (!convertedData.surface) {
+		fieldErrors.surface = 'La surface est requise';
+	} else if (typeof convertedData.surface === 'number') {
+		if (convertedData.surface < 1) {
+			fieldErrors.surface = 'La surface minimum est de 1 m²';
+		} else if (convertedData.surface > 10000) {
+			fieldErrors.surface = 'La surface maximum est de 10,000 m²';
+		}
 	}
-	if (
-		!convertedData.city ||
-		(typeof convertedData.city === 'string' &&
-			convertedData.city.length < 2)
+
+	if (!convertedData.propertyType) {
+		fieldErrors.propertyType = 'Le type de bien est requis';
+	}
+
+	if (!convertedData.transactionType) {
+		fieldErrors.transactionType = 'Le type de transaction est requis';
+	}
+
+	if (!convertedData.address) {
+		fieldErrors.address = "L'adresse est requise";
+	} else if (
+		typeof convertedData.address === 'string' &&
+		convertedData.address.length > 200
 	) {
-		errors.push('La ville est requise');
+		fieldErrors.address = "L'adresse est trop longue";
+	}
+
+	if (!convertedData.city) {
+		fieldErrors.city = 'La ville est requise';
+	} else if (
+		typeof convertedData.city === 'string' &&
+		convertedData.city.length < 2
+	) {
+		fieldErrors.city = 'La ville doit contenir au moins 2 caractères';
+	} else if (
+		typeof convertedData.city === 'string' &&
+		convertedData.city.length > 100
+	) {
+		fieldErrors.city = 'Le nom de ville est trop long';
+	}
+
+	if (!convertedData.postalCode) {
+		fieldErrors.postalCode = 'Le code postal est requis';
+	} else if (
+		typeof convertedData.postalCode === 'string' &&
+		!/^[0-9]{5}$/.test(convertedData.postalCode)
+	) {
+		fieldErrors.postalCode = 'Code postal doit contenir 5 chiffres';
+	}
+
+	if (!convertedData.sector) {
+		fieldErrors.sector = 'Le secteur est requis';
+	} else if (
+		typeof convertedData.sector === 'string' &&
+		convertedData.sector.length > 100
+	) {
+		fieldErrors.sector = 'Le secteur est trop long';
+	}
+
+	// Optional field validations
+	if (
+		convertedData.rooms !== undefined &&
+		typeof convertedData.rooms === 'number'
+	) {
+		if (convertedData.rooms < 1) {
+			fieldErrors.rooms = 'Nombre de pièces minimum: 1';
+		} else if (convertedData.rooms > 50) {
+			fieldErrors.rooms = 'Nombre de pièces maximum: 50';
+		}
+	}
+
+	if (
+		convertedData.bedrooms !== undefined &&
+		typeof convertedData.bedrooms === 'number'
+	) {
+		if (convertedData.bedrooms < 0) {
+			fieldErrors.bedrooms = 'Nombre de chambres minimum: 0';
+		} else if (convertedData.bedrooms > 20) {
+			fieldErrors.bedrooms = 'Nombre de chambres maximum: 20';
+		}
+	}
+
+	if (
+		convertedData.bathrooms !== undefined &&
+		typeof convertedData.bathrooms === 'number'
+	) {
+		if (convertedData.bathrooms < 0) {
+			fieldErrors.bathrooms = 'Nombre de salles de bain minimum: 0';
+		} else if (convertedData.bathrooms > 10) {
+			fieldErrors.bathrooms = 'Nombre de salles de bain maximum: 10';
+		}
+	}
+
+	if (
+		convertedData.availableFromDate &&
+		typeof convertedData.availableFromDate === 'string'
+	) {
+		if (!/^\d{2}\/\d{4}$/.test(convertedData.availableFromDate)) {
+			fieldErrors.availableFromDate =
+				'Format de date invalide (MM/AAAA attendu)';
+		}
 	}
 
 	return {
-		success: errors.length === 0,
-		errors: errors.length > 0 ? errors.join(', ') : undefined,
+		success: Object.keys(fieldErrors).length === 0,
+		fieldErrors,
+		errors:
+			Object.keys(fieldErrors).length > 0
+				? Object.values(fieldErrors).join(', ')
+				: undefined,
 		data: convertedData,
 	};
 };
@@ -326,8 +527,8 @@ export const createProperty = async (
 		if (!validationResult.success) {
 			res.status(400).json({
 				success: false,
-				message: 'Données invalides',
-				errors: validationResult.errors,
+				message: validationResult.errors || 'Données invalides',
+				fieldErrors: validationResult.fieldErrors,
 			});
 			return;
 		}
@@ -452,6 +653,29 @@ export const createProperty = async (
 	} catch (error) {
 		logger.error('[PropertyController] Property creation error', error);
 
+		// Handle Mongoose validation errors
+		if (error instanceof Error && error.name === 'ValidationError') {
+			const mongooseError = error as mongoose.Error.ValidationError;
+			const validationErrors: string[] = [];
+			const fieldErrors: Record<string, string> = {};
+
+			// Extract all validation error messages with field mapping
+			Object.keys(mongooseError.errors).forEach((fieldName) => {
+				const err = mongooseError.errors[fieldName];
+				if (err instanceof mongoose.Error.ValidatorError) {
+					validationErrors.push(err.message);
+					fieldErrors[fieldName] = err.message;
+				}
+			});
+
+			res.status(400).json({
+				success: false,
+				message: validationErrors.join(', ') || 'Erreur de validation',
+				fieldErrors,
+			});
+			return;
+		}
+
 		// Include more error details in development
 		const errorDetails =
 			error instanceof Error
@@ -510,8 +734,8 @@ export const updateProperty = async (
 		if (!validationResult.success) {
 			res.status(400).json({
 				success: false,
-				message: 'Données invalides',
-				errors: validationResult.errors,
+				message: validationResult.errors || 'Données invalides',
+				fieldErrors: validationResult.fieldErrors,
 			});
 			return;
 		}
@@ -701,6 +925,30 @@ export const updateProperty = async (
 			'[PropertyController] Error updating property with images',
 			error,
 		);
+
+		// Handle Mongoose validation errors
+		if (error instanceof Error && error.name === 'ValidationError') {
+			const mongooseError = error as mongoose.Error.ValidationError;
+			const validationErrors: string[] = [];
+			const fieldErrors: Record<string, string> = {};
+
+			// Extract all validation error messages with field mapping
+			Object.keys(mongooseError.errors).forEach((fieldName) => {
+				const err = mongooseError.errors[fieldName];
+				if (err instanceof mongoose.Error.ValidatorError) {
+					validationErrors.push(err.message);
+					fieldErrors[fieldName] = err.message;
+				}
+			});
+
+			res.status(400).json({
+				success: false,
+				message: validationErrors.join(', ') || 'Erreur de validation',
+				fieldErrors,
+			});
+			return;
+		}
+
 		res.status(500).json({
 			success: false,
 			message: 'Erreur lors de la mise à jour du bien',

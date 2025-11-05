@@ -130,7 +130,18 @@ export function usePropertyMutations(userId?: string) {
 				'Erreur lors de la création du bien',
 			);
 			logger.error('[useProperties] Create failed:', apiError);
+
+			// Show general error toast
 			toast.error(apiError.message);
+
+			// Log field-specific errors for debugging
+			if (apiError.fieldErrors) {
+				logger.debug(
+					'[useProperties] Field errors:',
+					apiError.fieldErrors,
+				);
+			}
+
 			return { success: false, error: apiError };
 		}
 	};
@@ -170,7 +181,18 @@ export function usePropertyMutations(userId?: string) {
 				'Erreur lors de la mise à jour du bien',
 			);
 			logger.error('[useProperties] Update failed:', apiError);
+
+			// Show general error toast
 			toast.error(apiError.message);
+
+			// Log field-specific errors for debugging
+			if (apiError.fieldErrors) {
+				logger.debug(
+					'[useProperties] Field errors:',
+					apiError.fieldErrors,
+				);
+			}
+
 			return { success: false, error: apiError };
 		}
 	};

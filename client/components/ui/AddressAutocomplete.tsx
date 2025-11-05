@@ -17,6 +17,7 @@ interface AddressAutocompleteProps {
 		postalCode: string,
 		coordinates?: { lat: number; lon: number },
 	) => void;
+	onManualInput?: (address: string) => void;
 	placeholder?: string;
 	error?: string;
 	required?: boolean;
@@ -26,6 +27,7 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
 	label,
 	value,
 	onAddressSelect,
+	onManualInput,
 	placeholder = 'Rechercher une adresse...',
 	error,
 	required,
@@ -41,10 +43,9 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
 		isLoading,
 		selectSuggestion,
 	} = useAddressSearch(value, (suggestion) => {
-		// Extract street address for the field
-		const streetAddress = suggestion.housenumber
-			? `${suggestion.housenumber} ${suggestion.name}`
-			: suggestion.name;
+		// Use the full label as the street address
+		// The label contains the complete formatted address
+		const streetAddress = suggestion.label.split(',')[0].trim();
 
 		onAddressSelect(
 			streetAddress,
@@ -66,8 +67,11 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
 	useClickOutside([dropdownRef], () => setShowDropdown(false));
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		setInputValue(e.target.value);
+		const newValue = e.target.value;
+		setInputValue(newValue);
 		setShowDropdown(true);
+		// Update parent with manual input
+		onManualInput?.(newValue);
 	};
 
 	const handleSelectAddress = (suggestion: AddressSuggestion) => {
