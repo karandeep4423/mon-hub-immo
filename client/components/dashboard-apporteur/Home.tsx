@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '../ui/Button';
 import { PropertyManager } from '../property/PropertyManager';
@@ -14,6 +15,7 @@ import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { formatNumber } from '@/lib/utils/format';
 
 const Home = () => {
+	const router = useRouter();
 	const { user } = useAuth();
 	const [activeTab, setActiveTab] = useState<
 		'overview' | 'properties' | 'collaborations' | 'searches'
@@ -275,6 +277,27 @@ const Home = () => {
 								/>
 							</svg>
 							Voir mes recherches
+						</Button>
+						<Button
+							variant="outline"
+							onClick={() => router.push('/chat')}
+							className="w-full justify-start border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200"
+							size="lg"
+						>
+							<svg
+								className="w-5 h-5 mr-3"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									strokeWidth="2"
+									d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+								/>
+							</svg>
+							Messages
 						</Button>
 					</div>
 				</div>

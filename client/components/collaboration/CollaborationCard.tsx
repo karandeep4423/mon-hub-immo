@@ -166,7 +166,9 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 	};
 
 	const handleOpenChat = () => {
-		router.push(`/chat?userId=${ownerUser._id}`);
+		// Chat with the OTHER person in the collaboration
+		const otherUserId = isOwner ? collaboratorUser._id : ownerUser._id;
+		router.push(`/chat?userId=${otherUserId}`);
 	};
 
 	return (
