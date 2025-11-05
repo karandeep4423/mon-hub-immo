@@ -10,12 +10,15 @@ export const LocationCard: React.FC<LocationCardProps> = ({
 	searchAd,
 	canViewFullLocation,
 }) => {
+	// Clean city names by removing empty brackets
+	const cleanCityName = (city: string) => city.replace(/\(\s*\)/g, '').trim();
+
 	// Show only first 2 cities if user cannot view full location
 	const displayCities =
 		searchAd.location?.cities &&
 		(canViewFullLocation
-			? searchAd.location.cities
-			: searchAd.location.cities.slice(0, 2));
+			? searchAd.location.cities.map(cleanCityName)
+			: searchAd.location.cities.slice(0, 2).map(cleanCityName));
 
 	if (!searchAd.location?.cities) {
 		return null; // Don't render if no location data

@@ -124,11 +124,11 @@ export const PropertyFeatures = ({ property }: PropertyFeaturesProps) => {
 				)}
 
 				{/* Availability */}
-				{property.availableFrom && (
+				{property.availableFromDate && (
 					<FeatureItem
 						icon="calendar"
 						color="blue"
-						label={`Disponible: ${formatMonthYear(property.availableFrom)}`}
+						label={`Disponible: ${formatMonthYear(property.availableFromDate)}`}
 					/>
 				)}
 

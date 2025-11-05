@@ -192,6 +192,9 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 							<p className="text-gray-600">
 								{searchAd.location.cities
 									.slice(0, 2)
+									.map((city) =>
+										city.replace(/\(\s*\)/g, '').trim(),
+									)
 									.join(', ')}
 								{searchAd.location.cities.length > 2
 									? '...'
