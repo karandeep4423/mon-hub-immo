@@ -73,12 +73,13 @@ export const emailVerificationLimiter = !rateLimitingEnabled
 
 /**
  * General API rate limiter for all routes
+ * Increased to 250 req/min to accommodate dashboard initial load with multiple collaborations
  */
 export const generalLimiter = !rateLimitingEnabled
 	? noOpMiddleware
 	: rateLimit({
 			windowMs: 1 * 60 * 1000, // 1 minute
-			max: 100,
+			max: 250,
 			message: {
 				success: false,
 				message: 'Trop de requêtes. Veuillez ralentir.',

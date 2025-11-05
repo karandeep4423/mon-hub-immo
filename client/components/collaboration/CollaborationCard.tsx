@@ -3,18 +3,16 @@ import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Collaboration } from '@/types/collaboration';
-import { Property, propertyService } from '@/lib/api/propertyApi';
-import type { SearchAd } from '@/types/searchAd';
-import searchAdApi from '@/lib/api/searchAdApi';
 import { PROGRESS_STEPS_CONFIG } from '@/components/collaboration/progress-tracking/types';
 import { logger } from '@/lib/utils/logger';
-import { useFetch } from '@/hooks';
 import { Features } from '@/lib/constants';
 import {
 	CollaborationPostHeader,
 	CollaborationParticipants,
 	CollaborationDetails,
 } from './index';
+import { useProperty } from '@/hooks/useProperties';
+import { useSearchAd } from '@/hooks/useSearchAds';
 
 interface CollaborationCardProps {
 	collaboration: Collaboration;
@@ -46,29 +44,37 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 		return '';
 	}, [collaboration.postId]);
 
-	// Fetch property using useFetch hook
-	const { data: property, loading: isLoadingProperty } = useFetch<Property>(
-		() => propertyService.getPropertyById(postId),
-		{
-			skip: !postId || collaboration.postType !== 'Property',
-			showErrorToast: false,
-			onError: (error) => {
-				logger.error('Error fetching property data:', error);
-			},
-		},
+	// Fetch property using SWR (with automatic deduplication)
+	const {
+		data: property,
+		isLoading: isLoadingProperty,
+		error: propertyError,
+	} = useProperty(
+		postId && collaboration.postType === 'Property' ? postId : undefined,
 	);
 
-	// Fetch search ad using useFetch hook
-	const { data: searchAd, loading: isLoadingSearchAd } = useFetch<SearchAd>(
-		() => searchAdApi.getSearchAdById(postId),
-		{
-			skip: !postId || collaboration.postType !== 'SearchAd',
-			showErrorToast: false,
-			onError: (error) => {
-				logger.error('Error fetching search ad data:', error);
-			},
-		},
+	// Fetch search ad using SWR (with automatic deduplication)
+	const {
+		data: searchAd,
+		isLoading: isLoadingSearchAd,
+		error: searchAdError,
+	} = useSearchAd(
+		postId && collaboration.postType === 'SearchAd' ? postId : undefined,
 	);
+
+	// Log errors silently
+	if (propertyError) {
+		logger.error('[CollaborationCard] Error fetching property:', {
+			postId,
+			error: propertyError,
+		});
+	}
+	if (searchAdError) {
+		logger.error('[CollaborationCard] Error fetching search ad:', {
+			postId,
+			error: searchAdError,
+		});
+	}
 
 	const isLoadingPost = isLoadingProperty || isLoadingSearchAd;
 
