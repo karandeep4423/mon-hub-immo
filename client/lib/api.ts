@@ -19,7 +19,7 @@ export const api = axios.create({
 
 let isRefreshing = false;
 let failedQueue: Array<{
-	resolve: (value?: unknown) => void;*
+	resolve: (value?: unknown) => void;
 	reject: (reason?: unknown) => void;
 }> = [];
 
