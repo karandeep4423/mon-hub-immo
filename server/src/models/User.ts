@@ -7,7 +7,7 @@ export interface IUser extends Document {
 	email: string;
 	password: string;
 	phone?: string;
-	userType: 'agent' | 'apporteur' | 'guest';
+	userType: 'agent' | 'apporteur' | 'guest' | 'admin';
 	isEmailVerified: boolean;
 	isGuest: boolean; // True for guest users created from anonymous bookings
 	profileImage?: string;
@@ -69,7 +69,9 @@ export interface IUser extends Document {
 		hash: string;
 		changedAt: Date;
 	}>;
-
+    isValidated: boolean;                   // Ajout admin
+    validatedAt?: Date;
+    validatedBy?: mongoose.Types.ObjectId;
 	createdAt: Date;
 	updatedAt: Date;
 	comparePassword(candidatePassword: string): Promise<boolean>;
@@ -101,7 +103,7 @@ const userSchema = new Schema<IUser>(
 		},
 		userType: {
 			type: String,
-			enum: ['agent', 'apporteur', 'guest'],
+			enum: ['agent', 'apporteur', 'guest','admin'],
 		},
 		isEmailVerified: {
 			type: Boolean,
@@ -334,6 +336,20 @@ const userSchema = new Schema<IUser>(
 			select: false,
 			default: [],
 		},
+        isValidated: {
+            type: Boolean,
+            default: false,
+            index: true,
+        },
+        validatedAt: {
+            type: Date,
+            default: null,
+        },
+        validatedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            default: null,
+        },
 	},
 	{
 		timestamps: true,

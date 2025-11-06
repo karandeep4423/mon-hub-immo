@@ -4,7 +4,7 @@ export interface AuthRequest extends Request {
 	userId?: string;
 	user?: {
 		id: string;
-		userType: 'agent' | 'apporteur';
+		 userType: 'agent' | 'apporteur' | 'admin' | 'guest';
 	};
 	clientIP?: string;
 	file?: Express.Multer.File;

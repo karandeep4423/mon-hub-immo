@@ -24,6 +24,7 @@ import {
 	csrfErrorHandler,
 } from './middleware/csrf';
 import { generalLimiter } from './middleware/rateLimiter';
+import adminRouter from './routes/admin';
 
 dotenv.config();
 
@@ -201,6 +202,7 @@ app.use('/api/upload', csrfProtection, uploadRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/favorites', csrfProtection, favoritesRoutes);
 app.use('/api/appointments', csrfProtection, appointmentRoutes);
+app.use('/api/admin', adminRouter);
 
 // CSRF error handler (must be after routes that use CSRF)
 app.use(csrfErrorHandler);
