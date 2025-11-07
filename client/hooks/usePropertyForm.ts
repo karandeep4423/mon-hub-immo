@@ -5,6 +5,7 @@ import {
 	commonValidationRules,
 	type StepValidationSchema,
 } from './useFormValidation';
+import { htmlTextLength } from '@/lib/utils/html';
 
 // Property form validation schema
 const propertyValidationSchema: StepValidationSchema = {
@@ -22,6 +23,17 @@ const propertyValidationSchema: StepValidationSchema = {
 				value: 50,
 				message: 'La description doit contenir au moins 50 caractères',
 			},
+			custom: [
+				{
+					validate: (value) => {
+						if (typeof value !== 'string') return false;
+						// Count visible text only (HTML entities decoded)
+						return htmlTextLength(value) <= 2000;
+					},
+					message:
+						'La description ne peut pas dépasser 2000 caractères',
+				},
+			],
 		},
 		price: {
 			required: 'Le prix est requis',

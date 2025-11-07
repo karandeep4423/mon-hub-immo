@@ -6,6 +6,8 @@ import {
 	sanitizeInput,
 	createSafeRegex,
 	isValidObjectId,
+	sanitizeHtmlContent,
+	htmlTextLength,
 } from '../utils/sanitize';
 import { logger } from '../utils/logger';
 
@@ -205,18 +207,15 @@ const validatePropertyData = (data: Record<string, unknown>) => {
 
 	if (!convertedData.description) {
 		fieldErrors.description = 'La description est requise';
-	} else if (
-		typeof convertedData.description === 'string' &&
-		convertedData.description.length < 50
-	) {
-		fieldErrors.description =
-			'La description doit contenir au moins 50 caractères';
-	} else if (
-		typeof convertedData.description === 'string' &&
-		convertedData.description.length > 2000
-	) {
-		fieldErrors.description =
-			'La description doit contenir moins de 2000 caractères';
+	} else if (typeof convertedData.description === 'string') {
+		const textLen = htmlTextLength(convertedData.description);
+		if (textLen < 50) {
+			fieldErrors.description =
+				'La description doit contenir au moins 50 caractères';
+		} else if (textLen > 2000) {
+			fieldErrors.description =
+				'La description ne peut pas dépasser 2000 caractères';
+		}
 	}
 
 	if (!convertedData.price) {
@@ -594,6 +593,13 @@ export const createProperty = async (
 			owner: req.user!.id,
 		};
 
+		// Sanitize HTML description
+		if (propertyData.description) {
+			propertyData.description = sanitizeHtmlContent(
+				propertyData.description,
+			);
+		}
+
 		// Parse clientInfo if it's a JSON string
 		if (
 			propertyData.clientInfo &&
@@ -858,6 +864,13 @@ export const updateProperty = async (
 			mainImage: mainImageData,
 			galleryImages: galleryImagesData,
 		};
+
+		// Sanitize HTML description if being updated
+		if (propertyData.description) {
+			propertyData.description = sanitizeHtmlContent(
+				propertyData.description,
+			);
+		}
 
 		// Parse clientInfo if it's a JSON string
 		if (

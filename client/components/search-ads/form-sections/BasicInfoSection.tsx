@@ -58,6 +58,7 @@ export const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
 					error={errors.description}
 					minHeight="150px"
 					showCharCount
+					maxLength={2000}
 				/>
 			</div>
 		</FormSection>

@@ -25,7 +25,7 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<html lang="en">
+		<html lang="fr">
 			<body className={inter.className}>
 				<ErrorBoundary>
 					<SWRConfig value={swrConfig}>

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { SearchAd } from '../models/SearchAd';
 import { AuthRequest } from '../types/auth';
 import { logger } from '../utils/logger'; // Corrected import
+import { sanitizeHtmlContent } from '../utils/sanitize';
 
 export const createSearchAd = async (
 	req: AuthRequest,
@@ -21,6 +22,12 @@ export const createSearchAd = async (
 			authorId: req.user.id,
 			authorType: req.user.userType,
 		};
+
+		// Sanitize HTML description
+		if (adData.description) {
+			adData.description = sanitizeHtmlContent(adData.description);
+		}
+
 		const searchAd = new SearchAd(adData);
 		await searchAd.save();
 		res.status(201).json({ success: true, data: searchAd });
@@ -212,7 +219,15 @@ export const updateSearchAd = async (
 			return;
 		}
 
-		Object.assign(searchAd, req.body);
+		// Sanitize HTML description if being updated
+		const updateData = { ...req.body };
+		if (updateData.description) {
+			updateData.description = sanitizeHtmlContent(
+				updateData.description,
+			);
+		}
+
+		Object.assign(searchAd, updateData);
 		await searchAd.save();
 		res.status(200).json({ success: true, data: searchAd });
 	} catch (error) {
