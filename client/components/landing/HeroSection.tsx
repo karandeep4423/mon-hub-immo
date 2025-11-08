@@ -40,12 +40,12 @@ export const HeroSection = () => {
 				</div>
 			</div>
 
-			<Link
+			{/* <Link
 				href="/auth/login"
 				className="bg-white text-gray-900 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors duration-200 shadow-lg"
 			>
 				Tester gratuitement pendant 3 mois
-			</Link>
+			</Link> */}
 		</section>
 	);
 };
