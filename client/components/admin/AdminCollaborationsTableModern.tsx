@@ -9,8 +9,10 @@ export interface AdminCollaboration {
 	_id: string;
 	agent?: { _id: string; firstName?: string; lastName?: string } | string;
 	agentId?: string;
+	agentName?: string;
 	apporteur?: { _id: string; firstName?: string; lastName?: string } | string;
 	apporteurId?: string;
+	apporteurName?: string;
 	property?: string;
 	propertyId?: string;
 	postId?: Record<string, any>;
@@ -112,11 +114,11 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 						header: 'Agent & Apporteur',
 						accessor: 'agent',
 						width: '30%',
-						render: (_, row: AdminCollaboration) => {
-							const agentName = typeof row.agent === 'string' ? row.agent : (row.agent ? `${row.agent.firstName ?? ''} ${row.agent.lastName ?? ''}`.trim() : '');
-							const agentId = typeof row.agent === 'object' && row.agent ? row.agent._id : row.agentId;
-							const apporteurName = typeof row.apporteur === 'string' ? row.apporteur : (row.apporteur ? `${row.apporteur.firstName ?? ''} ${row.apporteur.lastName ?? ''}`.trim() : '');
-							const apporteurId = typeof row.apporteur === 'object' && row.apporteur ? row.apporteur._id : row.apporteurId;
+					render: (_, row: AdminCollaboration) => {
+						const agentName = row.agentName || (typeof row.agent === 'string' ? row.agent : (row.agent ? `${row.agent.firstName ?? ''} ${row.agent.lastName ?? ''}`.trim() : ''));
+						const agentId = typeof row.agent === 'object' && row.agent ? row.agent._id : row.agentId;
+						const apporteurName = row.apporteurName || (typeof row.apporteur === 'string' ? row.apporteur : (row.apporteur ? `${row.apporteur.firstName ?? ''} ${row.apporteur.lastName ?? ''}`.trim() : ''));
+						const apporteurId = typeof row.apporteur === 'object' && row.apporteur ? row.apporteur._id : row.apporteurId;
 							return (
 								<div className="space-y-2">
 									<div className="flex items-center gap-2">
@@ -205,7 +207,7 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 						<button className="p-1 hover:bg-blue-100 rounded transition-colors" title="Détails">
 							👁️
 						</button>
-						<Link href={`/admin/collaborations/${row._id}/chat`} className="p-1 hover:bg-purple-100 rounded transition-colors" title="Historique des échanges">
+						<Link href={`/chat?userId=${row.agentId}&propertyId=${row.propertyId}`} className="p-1 hover:bg-purple-100 rounded transition-colors" title="Historique des échanges">
 							💬
 						</Link>
 						<button className="p-1 hover:bg-yellow-100 rounded transition-colors" title="Éditer">

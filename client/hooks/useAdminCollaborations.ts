@@ -5,8 +5,10 @@ interface Collaboration {
   _id: string;
   postId?: any;
   postType?: string;
-  postOwnerId?: { _id: string; firstName?: string; lastName?: string };
-  collaboratorId?: { _id: string; firstName?: string; lastName?: string };
+  agent?: { _id: string; firstName?: string; lastName?: string };
+  agentId?: string;
+  apporteur?: { _id: string; firstName?: string; lastName?: string };
+  apporteurId?: string;
   status: string;
   createdAt: string;
   // Ajoute d'autres champs si besoin

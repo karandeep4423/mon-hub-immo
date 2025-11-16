@@ -31,8 +31,10 @@ export function useAdminUsers(filters: Filters) {
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
+        // API may return either an array or an object { users: [...] }
+        const payload = Array.isArray(data) ? data : (data?.users || data?.usersList || data || []);
         if (isMounted) {
-          setUsers(data);
+          setUsers(payload);
         }
       } catch (err) {
         if (err instanceof Error && err.name !== 'AbortError') {

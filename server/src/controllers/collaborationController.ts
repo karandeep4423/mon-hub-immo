@@ -23,7 +23,16 @@ export const getAllCollaborationsAdmin = async (req: Request, res: Response) => 
       .populate('postOwnerId', 'firstName lastName email profileImage')
       .populate('collaboratorId', 'firstName lastName email profileImage')
       .sort({ createdAt: -1 });
-    res.status(200).json({ success: true, collaborations });
+    
+    const mappedCollaborations = collaborations.map((c: any) => ({
+      ...c.toObject(),
+      agent: c.postOwnerId,
+      agentId: c.postOwnerId?._id?.toString() || c.postOwnerId,
+      apporteur: c.collaboratorId,
+      apporteurId: c.collaboratorId?._id?.toString() || c.collaboratorId,
+    }));
+    
+    res.status(200).json({ success: true, collaborations: mappedCollaborations });
   } catch (error) {
 	res.status(500).json({ success: false, message: 'Erreur serveur' });
   }

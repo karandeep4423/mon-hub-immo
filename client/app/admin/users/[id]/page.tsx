@@ -51,6 +51,9 @@ export default function AdminUserProfile() {
 
   return (
     <div className="max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow-xl mt-8">
+      <div className="mb-4">
+        <Link href="/admin/users" className="text-sm text-gray-600 hover:underline">← Retour à la gestion utilisateurs</Link>
+      </div>
       <h1 className="text-2xl font-bold mb-6 text-[#009CD8]">Profil utilisateur</h1>
       <div className="space-y-4">
         <div><b>Nom :</b> {user.firstName} {user.lastName}</div>

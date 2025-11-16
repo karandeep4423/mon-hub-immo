@@ -53,15 +53,26 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 	// Filter users
 	const filteredUsers = useMemo(() => {
 		if (!users) return [];
-		return users.filter((u) => {
+		// normalize per-run to avoid stale dependency issues
+		const usersToFilter = (users || []).map((u: AdminUser) => {
+			const uu = u as unknown as Record<string, unknown>;
+			const status = (uu['status'] as string) || ((uu['isBlocked'] as boolean) ? 'blocked' : (uu['isValidated'] as boolean) ? 'active' : 'pending');
+			const registeredAt = (uu['registeredAt'] as string) || (uu['createdAt'] as string) || (uu['createdAtISO'] as string) || (uu['created_at'] as string) || undefined;
+			return ({
+				...u,
+				status,
+				registeredAt,
+			});
+		});
+
+		return usersToFilter.filter((u) => {
 			const search = filters.search?.toLowerCase() || '';
-			const matchSearch = !search || 
+			const matchSearch = !search ||
 				(u.firstName || '').toLowerCase().includes(search) ||
 				(u.lastName || '').toLowerCase().includes(search) ||
 				(u.email || '').toLowerCase().includes(search);
 			const matchType = !filters.type || u.type === filters.type;
-			const computedStatus = (u.isBlocked ? 'blocked' : (u.isValidated ? 'active' : 'pending')) as 'active' | 'pending' | 'blocked';
-			const matchStatus = !filters.status || computedStatus === filters.status;
+			const matchStatus = !filters.status || (u.status === filters.status);
 			return matchSearch && matchType && matchStatus;
 		});
 	}, [users, filters]);
@@ -179,11 +190,12 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						header: 'Date d\'inscription',
 						accessor: 'registeredAt',
 						width: '20%',
-						render: (value) => (
-							<span className="text-sm text-gray-600">
-								{new Date(value).toLocaleDateString('fr-FR')}
-							</span>
-						),
+						render: (value) => {
+							if (!value) return <span className="text-sm text-gray-600">-</span>;
+							const d = new Date(value);
+							if (isNaN(d.getTime())) return <span className="text-sm text-gray-600">-</span>;
+							return <span className="text-sm text-gray-600">{d.toLocaleDateString('fr-FR')}</span>;
+						},
 					},
 				]}
 				data={filteredUsers}
@@ -241,9 +253,7 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 								🚫
 							</button>
 						)}
-						<button className="p-1 hover:bg-red-100 rounded transition-colors" title="Supprimer">
-							🗑️
-						</button>
+						{/* Delete removed by request */}
 					</div>
 				)}
 			/>
