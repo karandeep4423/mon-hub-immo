@@ -11,5 +11,6 @@
   "workbench.colorTheme": "Visual Studio Dark",
   "workbench.preferredHighContrastColorTheme": "Visual Studio Dark",
   "workbench.preferredHighContrastLightColorTheme": "Visual Studio Dark",
-  "workbench.preferredLightColorTheme": "Visual Studio Dark"
+  "workbench.preferredLightColorTheme": "Visual Studio Dark",
+  "chat.agent.maxRequests": 1000
 }

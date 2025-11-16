@@ -260,9 +260,12 @@ export const handleAuthError = (error: unknown): void => {
 				authToastError(Features.Auth.AUTH_TOAST_MESSAGES.UNAUTHORIZED);
 				return;
 			case 403:
-				authToastError(
-					Features.Auth.AUTH_TOAST_MESSAGES.ACCOUNT_LOCKED,
-				);
+					// Distinguish a blocked account vs admin validation pending
+					if (message.includes('non valid') || message.includes("non validé") || message.includes('non validé par')) {
+						authToastError('Votre compte est en attente de validation par l\'équipe MonHubImmo.');
+					} else {
+						authToastError(Features.Auth.AUTH_TOAST_MESSAGES.ACCOUNT_LOCKED);
+					}
 				return;
 			case 404:
 				authToastError(

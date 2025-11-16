@@ -27,6 +27,14 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 }) => {
 	const router = useRouter();
 	const { user } = useAuth();
+
+	// Defensive fallback for missing authorId
+	const author = searchAd.authorId ?? {
+		_id: '',
+		firstName: 'Anonyme',
+		lastName: '',
+		userType: 'utilisateur',
+	};
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
@@ -37,8 +45,9 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 	);
 
 	const handleContact = () => {
+		if (!author._id) return; // no-op when author missing
 		router.push(
-			`/chat?userId=${searchAd.authorId._id}&searchAdId=${searchAd._id}&type=search-ad-contact`,
+			`/chat?userId=${author._id}&searchAdId=${searchAd._id}&type=search-ad-contact`,
 		);
 	};
 
@@ -74,7 +83,7 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 	};
 
 	// Check if current user is the owner
-	const isCurrentUserOwner = user?._id === searchAd.authorId._id;
+	const isCurrentUserOwner = user?._id === author._id;
 
 	const getStatusBadge = (status: SearchAd['status']) => {
 		const statusConfig = {
@@ -169,9 +178,8 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 								<span className="w-2 h-2 bg-green-500 rounded-full"></span>
 								<span>Recherche par</span>
 							</div>
-							<span className="font-medium text-gray-900">
-								{searchAd.authorId.firstName}{' '}
-								{searchAd.authorId.lastName}
+								<span className="font-medium text-gray-900">
+								{author.firstName} {author.lastName}
 							</span>
 							<span className="text-xs bg-brand-200 text-brand-800 px-2 py-1 rounded-full">
 								{searchAd.authorType === 'agent'
@@ -344,7 +352,7 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 								Voir les détails
 							</Button>
 							<Button onClick={handleContact} className="w-full">
-								Contacter {searchAd.authorId.firstName}
+								Contacter {author.firstName}
 							</Button>
 						</>
 					) : (
@@ -357,7 +365,7 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 								Voir les détails
 							</Button>
 							<Button onClick={handleContact} className="w-full">
-								Contacter {searchAd.authorId.firstName}
+								Contacter {author.firstName}
 							</Button>
 						</>
 					)}
@@ -365,19 +373,18 @@ export const SearchAdCard: React.FC<SearchAdCardProps> = ({
 					{/* Footer with date and author info - similar to PropertyCard */}
 					<div className="flex items-center justify-between pt-2 border-t border-gray-100">
 						<div className="flex items-center space-x-2">
-							<ProfileAvatar user={searchAd.authorId} size="xs" />
-							<div>
-								<p className="text-gray-700 font-medium text-xs">
-									{searchAd.authorId.firstName}{' '}
-									{searchAd.authorId.lastName}
-								</p>
-								<p className="text-gray-500 text-xs">
-									{searchAd.authorType === 'agent'
-										? 'Agent'
-										: 'Apporteur'}
-								</p>
+								<ProfileAvatar user={author} size="xs" />
+								<div>
+									<p className="text-gray-700 font-medium text-xs">
+										{author.firstName} {author.lastName}
+									</p>
+									<p className="text-gray-500 text-xs">
+										{searchAd.authorType === 'agent'
+											? 'Agent'
+											: 'Apporteur'}
+									</p>
+								</div>
 							</div>
-						</div>
 						<p className="text-xs text-gray-500">
 							{formatDateShort(searchAd.createdAt)}
 						</p>

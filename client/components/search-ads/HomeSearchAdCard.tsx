@@ -19,6 +19,14 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 }) => {
 	const { user } = useAuth();
 
+	// Defensive fallback for missing authorId
+	const author = searchAd.authorId ?? {
+		_id: '',
+		firstName: 'Anonyme',
+		lastName: '',
+		userType: 'utilisateur',
+	};
+
 	// Use SWR to get collaboration status (optional)
 	const { data: collaborationsData } = useCollaborationsBySearchAd(
 		user ? searchAd._id : undefined,
@@ -130,21 +138,18 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 					</div>
 
 					<div className="flex items-center justify-between mt-auto">
-						<div className="flex items-center space-x-2">
+							<div className="flex items-center space-x-2">
 							<ProfileAvatar
-								user={searchAd.authorId}
+								user={author}
 								size="sm"
 								className="w-8 h-8"
 							/>
 							<div>
 								<p className="text-gray-700 font-medium text-sm">
-									{searchAd.authorId.firstName}{' '}
-									{searchAd.authorId.lastName}
+									{author.firstName} {author.lastName}
 								</p>
 								<p className="text-xs text-gray-500">
-									{searchAd.authorType === 'agent'
-										? 'Agent'
-										: 'Apporteur'}
+									{searchAd.authorType === 'agent' ? 'Agent' : 'Apporteur'}
 								</p>
 							</div>
 						</div>

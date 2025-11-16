@@ -9,9 +9,13 @@ export type SecurityEventType =
 	| 'password_reset_success'
 	| 'password_change'
 	| 'account_locked'
+	| 'account_blocked'
+	| 'account_unblocked'
 	| 'account_unlocked'
 	| 'logout'
 	| 'email_verified'
+	| 'invite_sent'
+    | 'account_validated'
 	| 'failed_verification_attempt';
 
 interface SecurityLogOptions {

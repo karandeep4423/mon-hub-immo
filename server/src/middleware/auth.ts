@@ -52,6 +52,20 @@ import { isTokenBlacklisted } from '../utils/redisClient';
       return;
     }
 
+    // Reject if account is administratively blocked
+    if ((user as any).isBlocked) {
+      console.log('[authenticateToken] Attempted access with blocked user account');
+      res.status(403).json({ success: false, message: 'Account blocked by admin' });
+      return;
+    }
+
+    // Reject if account is not yet validated by admin (for non-admin users)
+    if (!(user as any).isValidated && user.userType !== 'admin') {
+      console.log('[authenticateToken] Attempted access with unvalidated user account');
+      res.status(403).json({ success: false, message: 'Compte non validé par l\'administrateur' });
+      return;
+    }
+
     // Attach user data to request
     req.userId = (user._id as mongoose.Types.ObjectId).toString();
     req.user = {

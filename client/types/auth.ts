@@ -7,6 +7,7 @@ export interface AuthResponse {
 	requiresVerification?: boolean;
 	codeSent?: boolean;
 	requiresProfileCompletion?: boolean; // Add this
+	requiresAdminValidation?: boolean; // True when account is created/verified but awaiting admin validation
 	errors?: ValidationError[];
 }
 

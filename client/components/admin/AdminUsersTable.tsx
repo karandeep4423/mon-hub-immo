@@ -1,4 +1,7 @@
+"use client";
+
 import React, { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 
 export interface AdminUser {
   _id: string;
@@ -11,151 +14,97 @@ export interface AdminUser {
   collaborationsActive?: number;
   collaborationsClosed?: number;
   isValidated?: boolean;
-  // Ajoute d'autres champs selon besoin
 }
 
 interface AdminUsersTableProps {
   users: AdminUser[];
   loading: boolean;
+  onEdit?: (user: AdminUser) => void;
+  onDelete?: (user: AdminUser) => void;
 }
 
-const PAGE_SIZE = 10;
 
-export default function AdminUsersTable({ users, loading }: AdminUsersTableProps) {
+const PAGE_SIZE = 10;
+ 
+
+export default function AdminUsersTable({ users, loading, onEdit, onDelete }: AdminUsersTableProps) {
+  const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<keyof AdminUser | ''>('');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  // Filtres
-  const filteredUsers = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
-    return users.filter(
-      (user) =>
-        (user.firstName?.toLowerCase() ?? '').includes(term) ||
-        (user.lastName?.toLowerCase() ?? '').includes(term) ||
-        (user.email?.toLowerCase() ?? '').includes(term)
-    );
-  }, [users, searchTerm]);
-
-  // Tri
-  const sortedUsers = useMemo(() => {
-    if (!sortBy) return filteredUsers;
-    const sorted = [...filteredUsers].sort((a, b) => {
-      const aValue = a[sortBy];
-      const bValue = b[sortBy];
-      if (typeof aValue === 'string' && typeof bValue === 'string')
-        return sortDirection === 'asc'
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      if (typeof aValue === 'number' && typeof bValue === 'number')
-        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
-      return 0;
-    });
-    return sorted;
-  }, [filteredUsers, sortBy, sortDirection]);
-
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(sortedUsers.length / PAGE_SIZE));
-  const pagedUsers = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return sortedUsers.slice(start, start + PAGE_SIZE);
-  }, [sortedUsers, currentPage]);
-
-  function handleSort(col: keyof AdminUser) {
-    if (sortBy === col) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(col);
-      setSortDirection('asc');
+  // Simple filtered list (client-side)
+  const filtered = useMemo(() => {
+    let list = users || [];
+    if (searchTerm.trim()) {
+      const s = searchTerm.toLowerCase();
+      list = list.filter(u =>
+        `${u.firstName ?? ''} ${u.lastName ?? ''} ${u.email ?? ''}`.toLowerCase().includes(s),
+      );
     }
-  }
+    if (sortBy) {
+      list = [...list].sort((a, b) => {
+        const va = (a as any)[sortBy] ?? '';
+        const vb = (b as any)[sortBy] ?? '';
+        if (va < vb) return sortDirection === 'asc' ? -1 : 1;
+        if (va > vb) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return list;
+  }, [users, searchTerm, sortBy, sortDirection]);
 
-  if (loading) return <div>Chargement...</div>;
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageItems = filtered.slice(start, start + PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
 
   return (
-    <div className="p-6 bg-white rounded-xl shadow-xl max-w-full overflow-x-auto">
-      <h2 className="text-xl font-semibold mb-4">Gestion des utilisateurs</h2>
-      <input
-        type="search"
-        placeholder="Recherche par nom ou email..."
-        className="mb-4 p-2 border border-gray-300 rounded-md w-full max-w-md focus:ring-2 focus:ring-blue-400"
-        value={searchTerm}
-        onChange={e => {
-          setSearchTerm(e.target.value);
-          setCurrentPage(1);
-        }}
-      />
-      <table className="min-w-full table-auto border-collapse text-left rounded overflow-hidden shadow transition-all">
-        <thead className="bg-gradient-to-r from-blue-100 via-blue-50 to-white">
-          <tr>
-            <Th label="Nom" col="firstName" sortBy={sortBy} sortDirection={sortDirection} handleSort={handleSort} />
-            <Th label="Email" col="email" sortBy={sortBy} sortDirection={sortDirection} handleSort={handleSort} />
-            <Th label="Réseau" col="network" />
-            <Th label="Statut" col="userType" sortBy={sortBy} sortDirection={sortDirection} handleSort={handleSort} />
-            <Th label="Annonces" col="propertiesCount" sortBy={sortBy} sortDirection={sortDirection} handleSort={handleSort} />
-            <Th label="Collabor. actives" col="collaborationsActive" sortBy={sortBy} sortDirection={sortDirection} handleSort={handleSort} />
-            <Th label="Collabor. clôturées" col="collaborationsClosed" sortBy={sortBy} sortDirection={sortDirection} handleSort={handleSort} />
-            <Th label="Validé" col="isValidated" sortBy={sortBy} sortDirection={sortDirection} handleSort={handleSort} />
-            <th className="p-2 font-semibold">Actions</th>
+    <div className="bg-white p-4 rounded shadow">
+      <div className="flex justify-between items-center mb-4">
+        <input placeholder="Recherche..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="p-2 border rounded w-1/3" />
+        <div className="text-sm text-gray-500">{filtered.length} utilisateurs</div>
+      </div>
+
+      <table className="w-full text-left">
+        <thead>
+          <tr className="text-sm text-gray-600">
+            <th>Nom</th>
+            <th>Email</th>
+            <th>Type</th>
+            <th>Réseau</th>
+            <th>Validé</th>
+            <th className="text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
-          {pagedUsers.map(user => (
-            <tr key={user._id} className="hover:bg-blue-50 group border-b border-gray-200">
-              <td className="p-2">{`${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || '-'}</td>
-              <td className="p-2">{user.email ?? '-'}</td>
-              <td className="p-2">{user.professionalInfo?.network ?? '-'}</td>
-              <td className="p-2">
-                <span className={`px-2 py-1 rounded text-xs font-semibold ${user.userType === "admin" ? "bg-yellow-200 text-yellow-700" : user.userType === "apporteur" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"}`}>
-                  {user.userType ?? '-'}
-                </span>
-              </td>
-              <td className="p-2">{user.propertiesCount ?? 0}</td>
-              <td className="p-2">{user.collaborationsActive ?? 0}</td>
-              <td className="p-2">{user.collaborationsClosed ?? 0}</td>
-              <td className="p-2 text-center">
-                {user.isValidated
-                  ? <span className="text-green-600 font-bold">✔</span>
-                  : <span className="text-red-600 font-bold">✖</span>}
-              </td>
-              <td className="p-2 whitespace-nowrap flex flex-wrap gap-2">
-                <ButtonAction type="primary" onClick={() => alert('Voir Profil non implémenté')}>Voir</ButtonAction>
-                <ValidateButton user={user} />
-                <ButtonAction type="warning" onClick={() => alert('Suspendre non implémenté')}>Suspendre</ButtonAction>
-                <ButtonAction type="danger" onClick={() => alert('Supprimer non implémenté')}>Supprimer</ButtonAction>
-                <ButtonAction type="secondary" onClick={() => alert('Reset non implémenté')}>Reset MDP</ButtonAction>
+          {loading ? (
+            <tr><td colSpan={6}>Chargement...</td></tr>
+          ) : pageItems.length === 0 ? (
+            <tr><td colSpan={6}>Aucun utilisateur</td></tr>
+          ) : pageItems.map(u => (
+            <tr key={u._id} className="border-t">
+              <td>{u.firstName} {u.lastName}</td>
+              <td>{u.email}</td>
+              <td>{u.userType}</td>
+              <td>{u.professionalInfo?.network ?? '-'}</td>
+              <td>{u.isValidated ? 'Oui' : 'Non'}</td>
+              <td className="text-right">
+                <button onClick={() => router.push(`/admin/users/${u._id}`)} className="mr-2 px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Voir profil</button>
+                <button onClick={() => onEdit?.(u)} className="mr-2 px-3 py-1 bg-blue-500 text-white rounded">Éditer</button>
+                <button onClick={() => onDelete?.(u)} className="px-3 py-1 bg-red-500 text-white rounded">Supprimer</button>
               </td>
             </tr>
           ))}
-          {!pagedUsers.length && (
-            <tr>
-              <td colSpan={9} className="text-center p-4 text-gray-500">
-                Aucun utilisateur trouvé.
-              </td>
-            </tr>
-          )}
         </tbody>
       </table>
-      {/* Pagination */}
-      <div className="mt-6 flex justify-center gap-2">
-        <button
-          className="p-2 px-4 border rounded disabled:opacity-50"
-          onClick={() => setCurrentPage(page => Math.max(page - 1, 1))}
-          disabled={currentPage === 1}
-        >
-          Précédent
-        </button>
-        <span className="text-base pt-2">
-          Page {currentPage} sur {totalPages}
-        </span>
-        <button
-          className="p-2 px-4 border rounded disabled:opacity-50"
-          onClick={() => setCurrentPage(page => Math.min(page + 1, totalPages))}
-          disabled={currentPage === totalPages}
-        >
-          Suivant
-        </button>
+
+      <div className="flex justify-between items-center mt-4">
+        <div>
+          <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="px-3 py-1 mr-2 border rounded">Préc</button>
+          <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="px-3 py-1 border rounded">Suiv</button>
+        </div>
+        <div className="text-sm text-gray-500">Page {currentPage} / {totalPages}</div>
       </div>
     </div>
   );

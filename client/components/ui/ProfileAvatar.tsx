@@ -123,7 +123,7 @@ const getUserInitials = (user: ProfileAvatarProps['user']): string => {
 /**
  * Generate consistent background color based on user ID
  */
-const getAvatarBgColor = (userId: string): string => {
+const getAvatarBgColor = (userId?: string): string => {
 	const colors = [
 		'bg-red-500',
 		'bg-brand',
@@ -136,6 +136,11 @@ const getAvatarBgColor = (userId: string): string => {
 		'bg-orange-500',
 		'bg-brand',
 	];
+
+	// Defensive: if no userId, return neutral color
+	if (!userId || typeof userId !== 'string' || userId.length === 0) {
+		return 'bg-gray-400';
+	}
 
 	// Generate a hash from userId to get consistent color
 	let hash = 0;
@@ -175,14 +180,17 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
 	const sizes = getAvatarSizes(size);
 	const isObj = user && typeof user === 'object';
 	const userObj = isObj
-		? (user as {
+		? ({
+				...((user as object) as any),
+				_id: ((user as any)?._id ? String((user as any)._id) : 'unknown'),
+		  } as {
 				_id: string;
 				firstName?: string;
 				lastName?: string;
 				profileImage?: string;
 				name?: string;
 				avatarUrl?: string;
-			})
+		  })
 		: { _id: String(user || 'unknown') };
 	const initials = getUserInitials(user);
 	// Handle both profileImage and avatarUrl (for ChatUser compatibility)

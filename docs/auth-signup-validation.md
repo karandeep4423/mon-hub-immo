@@ -59,3 +59,15 @@ Acceptance
 
 - Submitting without required fields returns 400 with validation errors from express-validator (not Mongoose).
 - Submitting valid payload creates a user and sends a verification code.
+
+## Manual Admin Validation Flow (New)
+
+To improve network quality and prevent spam / automated accounts, we implemented a manual admin validation step:
+
+- After verifying the email, the user account is created with `isValidated: false`.
+- These users can verify their email but cannot access the platform until an admin approves their registration.
+- Admins can validate, unvalidate, block, or unblock users from the Admin interface (`app/admin/users/:id`).
+- System sends a confirmation email when the admin validates the account.
+
+Developers: See `server/src/controllers/authController.ts` and `server/src/controllers/adminController.ts` for the controller changes, and `client/components/admin/AdminUsersTableModern.tsx` for the admin UI changes.
+

@@ -25,6 +25,7 @@ import {
 	handleAuthError,
 	showSignupSuccess,
 	authToastError,
+    authToastInfo,
 } from '@/lib/utils/authToast';
 
 // Validation schema for signup form
@@ -118,6 +119,9 @@ export const useSignUpForm = () => {
 				showSignupSuccess();
 				router.push(
 					`${Features.Auth.AUTH_ROUTES.VERIFY_EMAIL}?email=${encodeURIComponent(email)}`,
+				);
+				authToastInfo(
+					"Votre inscription est reçue et sera vérifiée manuellement par notre équipe. Vous recevrez un email de confirmation une fois validée.",
 				);
 			},
 			onError: (error) => {

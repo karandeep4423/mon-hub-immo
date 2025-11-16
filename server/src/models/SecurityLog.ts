@@ -3,15 +3,19 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface ISecurityLog extends Document {
 	userId: mongoose.Types.ObjectId;
 	eventType:
-		| 'login_success'
+			| 'login_success'
 		| 'login_failure'
 		| 'password_reset_request'
 		| 'password_reset_success'
 		| 'password_change'
 		| 'account_locked'
+			| 'account_blocked'
+			| 'account_unblocked'
 		| 'account_unlocked'
 		| 'logout'
 		| 'email_verified'
+			| 'invite_sent'
+			| 'account_validated'
 		| 'failed_verification_attempt';
 	ipAddress?: string;
 	userAgent?: string;
@@ -43,9 +47,12 @@ const securityLogSchema = new Schema<ISecurityLog>(
 				'password_reset_success',
 				'password_change',
 				'account_locked',
+				'account_blocked',
+				'account_unblocked',
 				'account_unlocked',
 				'logout',
 				'email_verified',
+				'account_validated',
 				'failed_verification_attempt',
 			],
 			index: true,

@@ -72,6 +72,9 @@ export interface IUser extends Document {
     isValidated: boolean;                   // Ajout admin
     validatedAt?: Date;
     validatedBy?: mongoose.Types.ObjectId;
+	isBlocked?: boolean;                    // Admin can block user from logging in
+	blockedAt?: Date;
+	blockedBy?: mongoose.Types.ObjectId;
 	createdAt: Date;
 	updatedAt: Date;
 	comparePassword(candidatePassword: string): Promise<boolean>;
@@ -350,6 +353,20 @@ const userSchema = new Schema<IUser>(
             ref: 'User',
             default: null,
         },
+		isBlocked: {
+			type: Boolean,
+			default: false,
+			index: true,
+		},
+		blockedAt: {
+			type: Date,
+			default: null,
+		},
+		blockedBy: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'User',
+			default: null,
+		},
 	},
 	{
 		timestamps: true,

@@ -25,9 +25,17 @@ import {
 	updateProgressStatus,
 	signCollaboration,
 	completeCollaboration,
+ 	getCollaborationById,
+ 	adminCloseCollaboration,
+ 	adminForceComplete,
 } from '../controllers/collaborationController';
 
+import { getAllCollaborationsAdmin } from '../controllers/collaborationController';
+import { requireAdmin } from '../middleware/auth';
+
 const router = Router();
+
+
 
 // Zod param validators
 const collaborationParamValidation = [
@@ -142,5 +150,15 @@ router.post(
 	requireCollaborationAccess(),
 	completeCollaboration,
 );
+
+// Admin-only: list all collaborations (supports optional status filter: ?status=active|completed|cancelled|pending|accepted)
+router.get('/all', requireAdmin, getAllCollaborationsAdmin);
+
+// Get collaboration details (participants or admin can access)
+router.get('/:id', ...collaborationParamValidation, getCollaborationById);
+
+// Admin endpoints: close or force-complete a collaboration
+router.post('/:id/admin/close', ...collaborationParamValidation, requireAdmin, adminCloseCollaboration);
+router.post('/:id/admin/force-complete', ...collaborationParamValidation, requireAdmin, adminForceComplete);
 
 export default router;

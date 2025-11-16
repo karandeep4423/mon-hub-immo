@@ -22,6 +22,15 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 		'pending' | 'accepted' | 'active' | null
 	>(null);
 
+	// Defensive fallback for owner
+	const owner = property.owner || {
+		firstName: 'Utilisateur',
+		lastName: '',
+		userType: '',
+		avatar: undefined,
+		userId: 'unknown', // Ajout pour éviter bug sur userId.length
+	};
+
 	useEffect(() => {
 		// Only check collaboration status if user is authenticated
 		if (!user) return;
@@ -186,14 +195,14 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 					{/* Owner info */}
 					<div className="flex items-center justify-between">
 						<div className="flex items-center space-x-2">
-							<ProfileAvatar user={property.owner} size="sm" />
+							<ProfileAvatar user={owner} size="sm" />
 							<div>
 								<p className="text-gray-700 font-medium text-sm">
-									{property.owner.firstName}{' '}
-									{property.owner.lastName}
+									{owner.firstName}{' '}
+									{owner.lastName}
 								</p>
 								<p className="text-gray-500 text-xs capitalize">
-									{property.owner.userType}
+									{owner.userType}
 								</p>
 							</div>
 						</div>

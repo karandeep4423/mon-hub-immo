@@ -114,6 +114,10 @@ export const VerifyEmailForm: React.FC = () => {
 
 					if (response.requiresProfileCompletion) {
 						router.push(Features.Auth.AUTH_ROUTES.COMPLETE_PROFILE);
+					} else if (response.success && response.requiresAdminValidation) {
+						// Email was verified but the account requires manual admin validation before login
+						authToastSuccess('Votre email a été vérifié. Votre compte est en attente de validation par notre équipe.');
+						router.push(Features.Auth.AUTH_ROUTES.LOGIN);
 					} else {
 						router.push(Features.Auth.AUTH_ROUTES.WELCOME);
 					}
