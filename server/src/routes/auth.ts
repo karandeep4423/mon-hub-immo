@@ -58,8 +58,6 @@ router.post(
 	resetPassword,
 );
 
-// Endpoint for invite token action - set password from invite link (no auto-login)
-// Invite set-password route (different schema than reset)
 router.post('/set-password', validate(setPasswordSchema), setPasswordFromInvite);
 
 // Email verification routes with rate limiting

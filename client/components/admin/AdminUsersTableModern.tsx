@@ -19,8 +19,13 @@ export interface AdminUser {
 	status?: 'active' | 'pending' | 'blocked';
 	isBlocked?: boolean;
 	isValidated?: boolean;
-	registeredAt: string;
-	lastActive?: string;
+		registeredAt: string;
+		// activity stats (optional, may be provided by backend)
+		propertiesCount?: number;
+		collaborationsActive?: number;
+		collaborationsClosed?: number;
+		connectionsCount?: number; // nombre de connexions
+		lastActive?: string;
 }
 
 interface AdminUsersTableModernProps {
@@ -37,6 +42,20 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 	const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
 	const [showCreate, setShowCreate] = useState(false);
 	const [showImport, setShowImport] = useState(false);
+
+	// export helpers (CSV and simple XLS)
+	const download = (filename: string, content: Blob) => {
+		const url = URL.createObjectURL(content);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = filename;
+		a.style.display = 'none';
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+		URL.revokeObjectURL(url);
+	};
+
 
 	const hookFilters: any = {
 		name: filters.search || undefined,
@@ -58,10 +77,13 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 			const uu = u as unknown as Record<string, unknown>;
 			const status = (uu['status'] as string) || ((uu['isBlocked'] as boolean) ? 'blocked' : (uu['isValidated'] as boolean) ? 'active' : 'pending');
 			const registeredAt = (uu['registeredAt'] as string) || (uu['createdAt'] as string) || (uu['createdAtISO'] as string) || (uu['created_at'] as string) || undefined;
+			// normalize type: backend may return `userType`, `type` or `role`
+			const type = (uu['type'] as string) || (uu['userType'] as string) || (uu['role'] as string) || 'apporteur';
 			return ({
 				...u,
 				status,
 				registeredAt,
+				type,
 			});
 		});
 
@@ -76,6 +98,44 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 			return matchSearch && matchType && matchStatus;
 		});
 	}, [users, filters]);
+
+	const exportToCSV = (usersToExport = filteredUsers) => {
+		const headers = ['_id','firstName','lastName','email','type','status','registeredAt','propertiesCount','collaborationsActive','collaborationsClosed','connectionsCount','lastActive'];
+		const csvRows = [headers.join(',')];
+		for (const u of usersToExport) {
+			const row = headers.map((h) => {
+				const v = (u as any)[h];
+				if (v === undefined || v === null) return '""';
+				const s = String(v).replace(/"/g, '""');
+				return `"${s}"`;
+			}).join(',');
+			csvRows.push(row);
+		}
+		const csvString = '\uFEFF' + csvRows.join('\n'); // BOM for excel
+		const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+		download(`users-${new Date().toISOString().slice(0,10)}.csv`, blob);
+	};
+
+	const exportToXLS = (usersToExport = filteredUsers) => {
+		const headers = ['ID','Prénom','Nom','Email','Type','Statut','Inscription','Annonces','Collab.','Connexions','Dernière activité'];
+		const rows = usersToExport.map((u) => [
+			(u as any)._id || '',
+			(u as any).firstName || '',
+			(u as any).lastName || '',
+			(u as any).email || '',
+			(u as any).type || '',
+			(u as any).status || '',
+			(u as any).registeredAt || '',
+			(u as any).propertiesCount ?? 0,
+			((u as any).collaborationsActive ?? 0) + ((u as any).collaborationsClosed ?? 0),
+			(u as any).connectionsCount ?? 0,
+			(u as any).lastActive || '',
+		]);
+
+		let table = '<table><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>' + rows.map(r => `<tr>${r.map(c => `<td>${String(c)}</td>`).join('')}</tr>`).join('') + '</table>';
+		const blob = new Blob([table], { type: 'application/vnd.ms-excel' });
+		download(`users-${new Date().toISOString().slice(0,10)}.xls`, blob);
+	};
 
 	const statusVariant = (status: string) => {
 		if (status === 'active') return 'success';
@@ -95,6 +155,12 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 								<Button variant="secondary" size="md" onClick={() => setShowImport(true)}>
 									📥 Importer
 								</Button>
+										<Button variant="secondary" size="md" onClick={() => exportToCSV()}>
+											📤 Exporter CSV
+										</Button>
+										<Button variant="secondary" size="md" onClick={() => exportToXLS()}>
+											📤 Exporter XLS
+										</Button>
 								<Button variant="primary" size="md" onClick={() => setShowCreate(true)}>
 									➕ Nouveau
 								</Button>
@@ -159,12 +225,35 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						header: 'Type',
 						accessor: 'type',
 						width: '15%',
-						render: (value) => (
-							<Badge
-								label={value === 'agent' ? 'Agent' : 'Apporteur'}
-								variant={value === 'agent' ? 'info' : 'default'}
-								size="sm"
-							/>
+						render: (value) => {
+							const v = String(value || '').toLowerCase();
+							let label = v ? v.charAt(0).toUpperCase() + v.slice(1) : 'Apporteur';
+							let variant: 'info' | 'default' | 'success' | 'warning' | 'error' = 'default';
+							if (v === 'agent') {
+								label = 'Agent';
+								variant = 'info';
+							} else if (v === 'apporteur') {
+								label = 'Apporteur';
+								variant = 'default';
+							} else if (v === 'admin' || v === 'administrator') {
+								label = 'Admin';
+								variant = 'success';
+							}
+							return (
+								<Badge label={label} variant={variant} size="sm" />
+							);
+						},
+					},
+					{
+						header: 'Historique d\'activité',
+						accessor: 'activity',
+						width: '20%',
+						render: (_v, row: AdminUser) => (
+							<div className="text-sm text-gray-700 space-y-1">
+								<div>🏠 Annonces: <span className="font-medium">{row.propertiesCount ?? 0}</span></div>
+								<div>🤝 Collaborations: <span className="font-medium">{((row.collaborationsActive ?? 0) + (row.collaborationsClosed ?? 0))}</span></div>
+								<div>🔌 Connexions: <span className="font-medium">{row.connectionsCount ?? 0}</span></div>
+							</div>
 						),
 					},
 					{
