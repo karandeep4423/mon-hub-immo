@@ -5,6 +5,7 @@ import { Collaboration } from '../models/Collaboration'; // idem pour collaborat
 import { Request, Response } from 'express';
 import { AuthRequest } from '../types/auth';
 import mongoose from 'mongoose';
+import { SecurityLog } from '../models/SecurityLog';
 import crypto from 'crypto';
 import { logSecurityEvent } from '../utils/securityLogger';
 import { sendEmail, getAccountValidatedTemplate, getInviteTemplate } from '../utils/emailService';
@@ -46,15 +47,44 @@ export const getAdminUsers = async (req: Request, res: Response) => {
       }
     }
   ]);
+  // Connection counts (login successes) from security logs
+  const connectionCounts = await SecurityLog.aggregate([
+    { $match: { userId: { $in: userIds }, eventType: 'login_success' } },
+    { $group: { _id: '$userId', count: { $sum: 1 } } },
+  ]);
   // On map les stats sur chaque user
-  const usersWithStats = users.map(u => ({
-    ...u,
-    propertiesCount: propsCounts.find(pc => pc._id.equals(u._id))?.count || 0,
-    collaborationsActive: collabCounts.find(c => c._id.equals(u._id))?.active || 0,
-    collaborationsClosed: collabCounts.find(c => c._id.equals(u._id))?.closed || 0,
-    // derive status for admin UI
-    status: ((u as any).isBlocked ? 'blocked' : (u as any).isValidated ? 'active' : 'pending'),
-  }));
+  // Build lookup maps keyed by string userId to avoid ObjectId/string mismatches
+  const propsMap: Record<string, number> = {};
+  for (const p of propsCounts) {
+    const k = String(p._id);
+    propsMap[k] = p.count || 0;
+  }
+  const collabMapActive: Record<string, number> = {};
+  const collabMapClosed: Record<string, number> = {};
+  for (const c of collabCounts) {
+    const k = String(c._id);
+    collabMapActive[k] = c.active || 0;
+    collabMapClosed[k] = c.closed || 0;
+  }
+  const connMap: Record<string, number> = {};
+  for (const cc of connectionCounts) {
+    const k = String(cc._id);
+    connMap[k] = cc.count || 0;
+  }
+
+  const usersWithStats = users.map(u => {
+    const uid = String((u as any)._id);
+    return ({
+      ...u,
+      propertiesCount: propsMap[uid] || 0,
+      collaborationsActive: collabMapActive[uid] || 0,
+      collaborationsClosed: collabMapClosed[uid] || 0,
+      connectionsCount: connMap[uid] || 0,
+      lastActive: (u as any).lastSeen ? (new Date((u as any).lastSeen)).toISOString() : undefined,
+      // derive status for admin UI
+      status: ((u as any).isBlocked ? 'blocked' : (u as any).isValidated ? 'active' : 'pending'),
+    });
+  });
 
   res.json(usersWithStats);
 };
