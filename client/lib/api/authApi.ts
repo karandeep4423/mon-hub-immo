@@ -171,6 +171,18 @@ export class AuthApi {
 	}
 
 	/**
+	 * Set password from invite token (email + token + newPassword)
+	 */
+	static async setPasswordFromInvite(data: { email: string; token: string; newPassword: string; }): Promise<AuthResponse> {
+		try {
+			const response = await api.post(AUTH_ENDPOINTS.SET_PASSWORD, data);
+			return response.data;
+		} catch (error) {
+			throw handleApiError(error, 'AuthApi.setPasswordFromInvite', 'Impossible de définir le mot de passe');
+		}
+	}
+
+	/**
 	 * Get current user profile
 	 * @returns User profile data
 	 * @throws {Error} Unauthorized or token expired
@@ -375,6 +387,7 @@ export const authService = {
 	resendVerificationCode: AuthApi.resendVerificationCode.bind(AuthApi),
 	forgotPassword: AuthApi.forgotPassword.bind(AuthApi),
 	resetPassword: AuthApi.resetPassword.bind(AuthApi),
+	setPasswordFromInvite: AuthApi.setPasswordFromInvite.bind(AuthApi),
 	getProfile: AuthApi.getProfile.bind(AuthApi),
 	updateProfile: AuthApi.updateProfile.bind(AuthApi),
 	completeProfile: AuthApi.completeProfile.bind(AuthApi),

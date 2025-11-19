@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { FileUpload } from '@/components/ui/FileUpload';
+import { Select } from '@/components/ui/CustomSelect';
 import { useMutation } from "@/hooks/useMutation";
 import { authToastSuccess } from "@/lib/utils/authToast";
 import { logger } from "@/lib/utils/logger";
@@ -22,6 +24,15 @@ const CreateUserModal: React.FC<Props> = ({ onClose, onCreated }) => {
   const [isValidated, setIsValidated] = useState(false);
   const [password, setPassword] = useState("");
   const [sendInvite, setSendInvite] = useState(true);
+  const [sendRandomPassword, setSendRandomPassword] = useState(false);
+  // Agent professional fields
+  const [agentType, setAgentType] = useState('independent');
+  const [tCard, setTCard] = useState('');
+  const [sirenNumber, setSirenNumber] = useState('');
+  const [rsacNumber, setRsacNumber] = useState('');
+  const [collaboratorCertificate, setCollaboratorCertificate] = useState('');
+  // identity file left out of payload (requires multipart/upload flow)
+  const [identityCardFile, setIdentityCardFile] = useState<File | null>(null);
 
   const { mutate, loading } = useMutation(async (payload: any) => {
     // Use generic POST to admin create user
@@ -41,7 +52,16 @@ const CreateUserModal: React.FC<Props> = ({ onClose, onCreated }) => {
     },
     onError: (err) => {
       logger.error('[CreateUserModal] Error creating user', err);
-      alert('Erreur lors de la création de l\'utilisateur');
+      // Prefer API-specific message when available
+      try {
+        // err is ApiError
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const apiErr: any = err;
+        const msg = apiErr?.message || apiErr?.originalError?.response?.data?.message || apiErr?.originalError?.response?.data?.error || 'Erreur lors de la création de l\'utilisateur';
+        alert(msg);
+      } catch (e) {
+        alert('Erreur lors de la création de l\'utilisateur');
+      }
     }
   });
 
@@ -51,12 +71,12 @@ const CreateUserModal: React.FC<Props> = ({ onClose, onCreated }) => {
       alert('Prénom / Nom / Email requis');
       return;
     }
-    if (!password && !sendInvite) {
-      alert('Fournissez un mot de passe ou cochez Envoyer invitation');
+    if (!password && !sendInvite && !sendRandomPassword) {
+      alert('Fournissez un mot de passe, ou cochez Envoyer invitation, ou cochez Générer mot de passe temporaire');
       return;
     }
 
-    const payload = {
+    const payload: any = {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       email: email.trim(),
@@ -66,7 +86,20 @@ const CreateUserModal: React.FC<Props> = ({ onClose, onCreated }) => {
       isValidated,
       password: password || undefined,
       sendInvite: sendInvite,
+      sendRandomPassword: sendRandomPassword,
     };
+
+    // If creating an agent, attach professionalInfo
+    if (userType === 'agent') {
+      payload.professionalInfo = {
+        agentType,
+        tCard: tCard || undefined,
+        sirenNumber: sirenNumber || undefined,
+        rsacNumber: rsacNumber || undefined,
+        collaboratorCertificate: collaboratorCertificate || undefined,
+        // identityCard: file upload requires separate flow (not handled here)
+      };
+    }
 
     await mutate(payload);
   };
@@ -99,12 +132,59 @@ const CreateUserModal: React.FC<Props> = ({ onClose, onCreated }) => {
             <Input label="Image de profil (URL)" value={profileImage} onChange={(e) => setProfileImage(e.target.value)} />
           </div>
 
+          {userType === 'agent' && (
+            <div className="p-4 bg-gray-50 rounded border">
+              <div className="mb-3">
+                <div className="text-sm font-medium text-gray-700 mb-1">Type d'agent immobilier *</div>
+                <Select
+                  label=""
+                  name="agentType"
+                  value={agentType}
+                  onChange={(v: string) => setAgentType(v)}
+                  options={[
+                    { value: 'independent', label: 'Agent immobilier indépendant' },
+                    { value: 'commercial', label: 'Agent commercial immobilier' },
+                    { value: 'employee', label: "Négociateur VRP employé d'agence" },
+                  ]}
+                />
+              </div>
+
+              {agentType === 'independent' && (
+                <div className="space-y-3">
+                  <Input label="Carte professionnelle (T card) *" value={tCard} onChange={(e) => setTCard(e.target.value)} />
+                  <FileUpload label="Carte d'identité" onChange={(f) => setIdentityCardFile(f)} value={identityCardFile || undefined} />
+                </div>
+              )}
+
+              {agentType === 'commercial' && (
+                <div className="space-y-3">
+                  <Input label="Numéro SIREN *" value={sirenNumber} onChange={(e) => setSirenNumber(e.target.value)} />
+                  <Input label="Numéro RSAC" value={rsacNumber} onChange={(e) => setRsacNumber(e.target.value)} />
+                  <FileUpload label="Carte d'identité" onChange={(f) => setIdentityCardFile(f)} value={identityCardFile || undefined} />
+                </div>
+              )}
+
+              {agentType === 'employee' && (
+                <div className="space-y-3">
+                  <Input label="Certificat d'autorisation *" value={collaboratorCertificate} onChange={(e) => setCollaboratorCertificate(e.target.value)} />
+                  <FileUpload label="Carte d'identité" onChange={(f) => setIdentityCardFile(f)} value={identityCardFile || undefined} />
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <Input label="Mot de passe (optionnel)" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            <label className="flex items-center gap-2">
-              <input type="checkbox" checked={sendInvite} onChange={(e) => setSendInvite(e.target.checked)} />
-              <span className="text-sm text-gray-600">Envoyer un lien d'invitation pour définir le mot de passe</span>
-            </label>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={sendInvite} onChange={(e) => { setSendInvite(e.target.checked); if (e.target.checked) setSendRandomPassword(false); }} />
+                <span className="text-sm text-gray-600">Envoyer un lien d'invitation pour définir le mot de passe</span>
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="checkbox" checked={sendRandomPassword} onChange={(e) => { setSendRandomPassword(e.target.checked); if (e.target.checked) setSendInvite(false); }} />
+                <span className="text-sm text-gray-600">Générer un mot de passe temporaire et l'envoyer par email</span>
+              </label>
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
@@ -113,7 +193,7 @@ const CreateUserModal: React.FC<Props> = ({ onClose, onCreated }) => {
           </div>
 
           <div className="flex gap-3 justify-end pt-2">
-            <Button variant="ghost" type="button" onClick={onClose}>Annuler</Button>
+            <Button variant="secondary" type="button" onClick={onClose}>Annuler</Button>
             <Button type="submit" variant="primary" disabled={loading}>Créer</Button>
           </div>
         </form>

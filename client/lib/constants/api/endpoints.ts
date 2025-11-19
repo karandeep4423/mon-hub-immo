@@ -17,6 +17,7 @@ export const AUTH_ENDPOINTS = {
 	RESEND_VERIFICATION: '/auth/resend-verification',
 	FORGOT_PASSWORD: '/auth/forgot-password',
 	RESET_PASSWORD: '/auth/reset-password',
+	SET_PASSWORD: '/auth/set-password',
 	REFRESH_TOKEN: '/auth/refresh',
 	PROFILE: '/auth/profile',
 	COMPLETE_PROFILE: '/auth/complete-profile',

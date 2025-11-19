@@ -593,6 +593,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 			// Add these flags to help frontend routing
 			requiresProfileCompletion:
 				user.userType === 'agent' && !user.profileCompleted,
+			requiresPasswordChange: !!(user as any).mustChangePassword,
 		});
 	} catch (error) {
 		logger.error('[AuthController] Login error', error);
@@ -962,10 +963,12 @@ export const forgotPassword = async (
 
 		// Send password reset email
 		try {
+			const inviteUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/auth/reset-password?email=${encodeURIComponent(email)}`;
 			const emailTemplate = getPasswordResetTemplate(
-				`${user.firstName} ${user.lastName}`,
-				resetCode,
-			);
+					`${user.firstName} ${user.lastName}`,
+					resetCode,
+					inviteUrl,
+				);
 
 			await sendEmail({
 				to: email,
@@ -1513,6 +1516,9 @@ export const completeProfile = async (
 				profileImage: user.profileImage,
 				professionalInfo: user.professionalInfo,
 				profileCompleted: user.profileCompleted,
+				// Billing fields - client can use these to decide redirect to payment
+				isPaid: Boolean(user.isPaid),
+				subscriptionStatus: user.subscriptionStatus || null,
 			},
 		});
 	} catch (error) {
@@ -1782,6 +1788,8 @@ export const changePassword = async (
 
 		// Update password (will be hashed by pre-save hook)
 		user.password = newPassword;
+        // Clear mustChangePassword flag if present
+        user.mustChangePassword = false;
 		await user.save();
 
 		// Log password change

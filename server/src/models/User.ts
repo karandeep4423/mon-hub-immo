@@ -60,6 +60,8 @@ export interface IUser extends Document {
 	passwordResetCode?: string;
 	passwordResetExpires?: Date;
 
+	mustChangePassword?: boolean;
+
 	// Account security
 	failedLoginAttempts?: number;
 	accountLockedUntil?: Date;
@@ -69,6 +71,11 @@ export interface IUser extends Document {
 		hash: string;
 		changedAt: Date;
 	}>;
+	// Billing / subscription
+	isPaid: boolean;
+	stripeCustomerId?: string;
+	stripeSubscriptionId?: string;
+	subscriptionStatus?: string;
     isValidated: boolean;                   // Ajout admin
     validatedAt?: Date;
     validatedBy?: mongoose.Types.ObjectId;
@@ -307,7 +314,11 @@ const userSchema = new Schema<IUser>(
 		passwordResetCode: {
 			type: String,
 			select: false,
-			match: [/^[0-9]{6}$/, 'Code de réinitialisation invalide'],
+			/*
+			 Allow either a 6-digit numeric code (legacy/verification style) OR
+			 a longer hex/alphanumeric token used for secure invite/reset links.
+			*/
+			match: [/^([0-9]{6}|[0-9A-Za-z]{24,128})$/, 'Code de réinitialisation invalide'],
 		},
 		passwordResetExpires: {
 			type: Date,
@@ -339,6 +350,23 @@ const userSchema = new Schema<IUser>(
 			select: false,
 			default: [],
 		},
+		// Billing / subscription
+		isPaid: {
+			type: Boolean,
+			default: false,
+		},
+		stripeCustomerId: {
+			type: String,
+			default: null,
+		},
+		stripeSubscriptionId: {
+			type: String,
+			default: null,
+		},
+		subscriptionStatus: {
+			type: String,
+			default: null,
+		},
         isValidated: {
             type: Boolean,
             default: false,
@@ -367,6 +395,12 @@ const userSchema = new Schema<IUser>(
 			ref: 'User',
 			default: null,
 		},
+		// Force user to change password at next login (used when admin issues a temp password)
+		mustChangePassword: {
+			type: Boolean,
+			default: false,
+			index: true,
+		},
 	},
 	{
 		timestamps: true,
@@ -384,6 +418,9 @@ userSchema.index({ profileCompleted: 1 });
 userSchema.index({ 'professionalInfo.postalCode': 1 });
 userSchema.index({ 'professionalInfo.city': 1 });
 userSchema.index({ accountLockedUntil: 1 });
+// Indexes for billing lookups
+userSchema.index({ stripeCustomerId: 1 });
+userSchema.index({ isPaid: 1 });
 
 // Compound indexes
 userSchema.index({

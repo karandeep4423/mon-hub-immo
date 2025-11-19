@@ -159,6 +159,20 @@ export const resetPasswordSchema = z.object({
 		),
 });
 
+export const setPasswordSchema = z.object({
+	email: z
+ 		.string()
+ 		.min(1, 'Email requis')
+ 		.email('Veuillez entrer une adresse email valide'),
+	token: z.string().min(6, 'Token invalide'),
+	newPassword: z
+ 		.string()
+ 		.min(8, 'Le mot de passe doit contenir au moins 8 caractères')
+ 		.regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Le mot de passe doit contenir majuscule, minuscule et chiffre'),
+});
+
+export type SetPasswordFormData = z.infer<typeof setPasswordSchema>;
+
 // Type exports for TypeScript
 export type SignUpFormData = z.infer<typeof signUpSchema>;
 export type LoginFormData = z.infer<typeof loginSchema>;

@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import { createServer } from 'http';
 import dotenv from 'dotenv';
 import { connectDB } from './config/database';
+import stripeWebhookHandler from './routes/stripeWebhook';
 import authRoutes from './routes/auth';
 import messageRoutes from './routes/chat';
 import propertyRoutes from './routes/property';
@@ -147,6 +148,9 @@ app.use(
 		credentials: true,
 	}),
 );
+// Stripe webhook must receive raw body for signature verification
+app.post('/api/webhook/stripe', express.raw({ type: 'application/json' }), stripeWebhookHandler as any);
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -203,6 +207,9 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/favorites', csrfProtection, favoritesRoutes);
 app.use('/api/appointments', csrfProtection, appointmentRoutes);
 app.use('/api/admin', adminRouter);
+// Mount payment routes (requires authentication inside route)
+import paymentRoutes from './routes/payment';
+app.use('/api/payment', paymentRoutes);
 
 // CSRF error handler (must be after routes that use CSRF)
 app.use(csrfErrorHandler);

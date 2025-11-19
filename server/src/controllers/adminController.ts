@@ -8,7 +8,7 @@ import mongoose from 'mongoose';
 import { SecurityLog } from '../models/SecurityLog';
 import crypto from 'crypto';
 import { logSecurityEvent } from '../utils/securityLogger';
-import { sendEmail, getAccountValidatedTemplate, getInviteTemplate } from '../utils/emailService';
+import { sendEmail, getAccountValidatedTemplate, getTemporaryPasswordTemplate, generateVerificationCode, getPasswordResetTemplate } from '../utils/emailService';
 
 export const getAdminUsers = async (req: Request, res: Response) => {
   // Lecture des filtres via req.query
@@ -218,7 +218,7 @@ export const createAdminUser = async (req: AuthRequest, res: Response) => {
     if (!payload.email) return res.status(400).json({ error: 'Email required' });
 
     const existing = await User.findOne({ email: payload.email });
-    if (existing) return res.status(409).json({ error: 'User already exists' });
+    if (existing) return res.status(409).json({ message: 'User already exists', error: 'User already exists' });
 
     const newUser = new User({
       firstName: payload.firstName || '',
@@ -234,12 +234,26 @@ export const createAdminUser = async (req: AuthRequest, res: Response) => {
       // If admin provided a password at creation time, use it; otherwise we'll set an invite token below
       ...(payload.password ? { password: payload.password } : {}),
     });
+    // If admin requested a random temporary password, generate one and require change on first login
+    const sendRandomPassword = payload.sendRandomPassword === true || payload.sendRandomPassword === 'true';
+    let generatedTempPassword: string | undefined;
+    if (sendRandomPassword && !payload.password) {
+      // Generate a 12-character temporary password with letters/numbers/symbols
+      const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
+      let pwd = '';
+      for (let i = 0; i < 12; i++) pwd += chars[Math.floor(Math.random() * chars.length)];
+      generatedTempPassword = pwd;
+      (newUser as any).password = generatedTempPassword;
+      (newUser as any).mustChangePassword = true;
+    }
     // Determine invite behavior
     const sendInvite = payload.sendInvite === undefined ? !payload.password : !!payload.sendInvite;
     if (sendInvite && !payload.password) {
-      const token = crypto.randomBytes(24).toString('hex');
-      newUser.passwordResetCode = token;
-      newUser.passwordResetExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+      // Use a 6-digit verification code for the user to enter on the reset page
+      const code = generateVerificationCode();
+      newUser.passwordResetCode = code;
+      // Code valid for 1 hour
+      newUser.passwordResetExpires = new Date(Date.now() + 1 * 60 * 60 * 1000);
     }
 
     await newUser.save();
@@ -247,12 +261,26 @@ export const createAdminUser = async (req: AuthRequest, res: Response) => {
     // If we created an invite token, send invite email
     if (sendInvite && !payload.password) {
       try {
-        const inviteUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/auth/set-password?token=${newUser.passwordResetCode}&email=${encodeURIComponent(newUser.email)}`;
-        const html = getInviteTemplate(`${newUser.firstName} ${newUser.lastName}`, inviteUrl);
-        await sendEmail({ to: newUser.email, subject: 'Invitation MonHubImmo - Définissez votre mot de passe', html });
+        const inviteUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/auth/reset-password?email=${encodeURIComponent(newUser.email)}`;
+        const html = getPasswordResetTemplate(`${newUser.firstName} ${newUser.lastName}`, String(newUser.passwordResetCode), inviteUrl);
+        await sendEmail({ to: newUser.email, subject: 'MonHubImmo - Code pour définir votre mot de passe', html });
         await logSecurityEvent({ userId: (newUser._id as unknown as string).toString(), eventType: 'invite_sent', req, metadata: {} });
       } catch (err) {
         await logSecurityEvent({ userId: (newUser._id as unknown as string).toString(), eventType: 'invite_sent', req, metadata: { error: String(err) } });
+      }
+    }
+
+    // If admin requested a random password, send an email with the temporary password
+    if (generatedTempPassword) {
+      try {
+        const html = getTemporaryPasswordTemplate(
+          `${newUser.firstName} ${newUser.lastName}`,
+          generatedTempPassword,
+        );
+        await sendEmail({ to: newUser.email, subject: 'MonHubImmo - Mot de passe temporaire', html });
+        await logSecurityEvent({ userId: (newUser._id as unknown as string).toString(), eventType: 'temp_password_sent', req, metadata: {} });
+      } catch (err) {
+        await logSecurityEvent({ userId: (newUser._id as unknown as string).toString(), eventType: 'temp_password_sent', req, metadata: { error: String(err) } });
       }
     }
 
@@ -333,7 +361,10 @@ export const importUsersFromCSV = async (req: Request, res: Response) => {
     if (!file || !file.buffer) return res.status(400).json({ error: 'No CSV file uploaded' });
 
     // Admin flags available on form body
-    const sendInviteDefault = req.body.sendInviteDefault === 'true' || req.body.sendInviteDefault === true;
+    // By default, when importing CSV we will send an invite to each created user
+    const sendInviteDefault = typeof req.body.sendInviteDefault === 'undefined'
+      ? true
+      : (req.body.sendInviteDefault === 'true' || req.body.sendInviteDefault === true);
     const validateDefault = req.body.validateDefault === 'true' || req.body.validateDefault === true;
     const defaultUserType = (req.body.defaultUserType as string) || 'apporteur';
     const updateIfExists = req.body.updateIfExists === 'true' || req.body.updateIfExists === true;
@@ -399,15 +430,15 @@ export const importUsersFromCSV = async (req: Request, res: Response) => {
         // If admin wants to invite on update and no password present, set invite
         const sendInvite = typeof row.sendinvite !== 'undefined' ? (String(row.sendinvite).toLowerCase() === 'true') : sendInviteDefault;
         if (sendInvite && !existing.password) {
-          const token = crypto.randomBytes(24).toString('hex');
-          existing.passwordResetCode = token;
-          existing.passwordResetExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+          const code = generateVerificationCode();
+          existing.passwordResetCode = code;
+          existing.passwordResetExpires = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hour
           await existing.save();
-          // Send invite email
+          // Send invite email with code and link to reset-password page
           try {
-            const inviteUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/auth/set-password?token=${existing.passwordResetCode}&email=${encodeURIComponent(existing.email)}`;
-            const html = getInviteTemplate(`${existing.firstName} ${existing.lastName}`, inviteUrl);
-            await sendEmail({ to: existing.email, subject: 'Invitation MonHubImmo - Définissez votre mot de passe', html });
+            const inviteUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/auth/reset-password?email=${encodeURIComponent(existing.email)}`;
+            const html = getPasswordResetTemplate(`${existing.firstName} ${existing.lastName}`, String(existing.passwordResetCode), inviteUrl);
+            await sendEmail({ to: existing.email, subject: 'MonHubImmo - Code pour définir votre mot de passe', html });
             await logSecurityEvent({ userId: (existing._id as unknown as string).toString(), eventType: 'invite_sent', req, metadata: {} });
           } catch (err) {
             errors.push(`Failed to send invite to ${existing.email}: ${(err as Error).message}`);
@@ -422,9 +453,9 @@ export const importUsersFromCSV = async (req: Request, res: Response) => {
       const sendInvite = typeof row.sendinvite !== 'undefined' ? (String(row.sendinvite).toLowerCase() === 'true') : sendInviteDefault;
       // If we should send an invite and the admin did not provide a password
       if (sendInvite && !row.password) {
-        const token = crypto.randomBytes(24).toString('hex');
-        u.passwordResetCode = token;
-        u.passwordResetExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+        const code = generateVerificationCode();
+        u.passwordResetCode = code;
+        u.passwordResetExpires = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hour
       }
 
       // If row explicitly sets isvalidated = true, mark validated (admin explicit validation)
@@ -438,9 +469,9 @@ export const importUsersFromCSV = async (req: Request, res: Response) => {
         // Send invite if configured
         if (sendInvite) {
           try {
-            const inviteUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/auth/set-password?token=${u.passwordResetCode}&email=${encodeURIComponent(u.email)}`;
-            const html = getInviteTemplate(`${u.firstName} ${u.lastName}`, inviteUrl);
-            await sendEmail({ to: u.email, subject: 'Invitation MonHubImmo - Définissez votre mot de passe', html });
+            const inviteUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/auth/reset-password?email=${encodeURIComponent(u.email)}`;
+            const html = getPasswordResetTemplate(`${u.firstName} ${u.lastName}`, String(u.passwordResetCode), inviteUrl);
+            await sendEmail({ to: u.email, subject: 'MonHubImmo - Code pour définir votre mot de passe', html });
             await logSecurityEvent({ userId: (u._id as unknown as string).toString(), eventType: 'invite_sent', req, metadata: {} });
           } catch (err) {
             errors.push(`Failed to send invite to ${u.email}: ${(err as Error).message}`);
