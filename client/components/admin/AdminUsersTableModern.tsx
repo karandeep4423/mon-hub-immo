@@ -28,6 +28,7 @@ export interface AdminUser {
 	lastActive?: string;
 	// payment fields
 	isPaid?: boolean;
+	professionalInfo?: { network?: string };
 	stripeCustomerId?: string;
 	stripeSubscriptionId?: string;
 	subscriptionStatus?: string;
@@ -106,7 +107,7 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 	}, [users, filters]);
 
 	const exportToCSV = (usersToExport = filteredUsers) => {
-		const headers = ['_id','firstName','lastName','email','type','status','registeredAt','propertiesCount','collaborationsActive','collaborationsClosed','connectionsCount','lastActive'];
+		const headers = ['_id','firstName','lastName','email','type','network','status','registeredAt','propertiesCount','collaborationsActive','collaborationsClosed','connectionsCount','lastActive'];
 		const csvRows = [headers.join(',')];
 		for (const u of usersToExport) {
 			const row = headers.map((h) => {
@@ -123,13 +124,14 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 	};
 
 	const exportToXLS = (usersToExport = filteredUsers) => {
-		const headers = ['ID','Prénom','Nom','Email','Type','Statut','Inscription','Annonces','Collab.','Connexions','Dernière activité'];
+		const headers = ['ID','Prénom','Nom','Email','Type','Réseau','Statut','Inscription','Annonces','Collab.','Connexions','Dernière activité'];
 		const rows = usersToExport.map((u) => [
 			(u as any)._id || '',
 			(u as any).firstName || '',
 			(u as any).lastName || '',
 			(u as any).email || '',
 			(u as any).type || '',
+			(u as any).professionalInfo?.network || '-',
 			(u as any).status || '',
 			(u as any).registeredAt || '',
 			(u as any).propertiesCount ?? 0,
@@ -248,6 +250,15 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 							return (
 								<Badge label={label} variant={variant} size="sm" />
 							);
+						},
+					},
+					{
+						header: 'Réseau',
+						accessor: 'network',
+						width: '12%',
+						render: (_value, row: AdminUser) => {
+							const network = row.professionalInfo?.network || '-';
+							return <span className="text-sm text-gray-700">{network}</span>;
 						},
 					},
 					{
