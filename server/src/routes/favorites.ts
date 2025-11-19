@@ -10,11 +10,12 @@ import {
 	getUserMixedFavorites,
 } from '../controllers/favoritesController';
 import { authenticateToken } from '../middleware/auth';
+import { requireActiveSubscription } from '../middleware/subscription';
 
 const router = Router();
 
 // Apply authentication middleware to all routes
-router.use(authenticateToken);
+router.use(authenticateToken, requireActiveSubscription);
 
 // Toggle favorite status for a property
 router.post('/properties/:propertyId/toggle', toggleFavorite);

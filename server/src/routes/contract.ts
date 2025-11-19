@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { param } from 'express-validator';
 import { authenticateToken } from '../middleware/auth';
+import { requireActiveSubscription } from '../middleware/subscription';
 import { requireCollaborationAccess } from '../middleware/authorize';
 import { updateContractValidation } from '../middleware/validation';
 import {
@@ -16,7 +17,7 @@ const contractParamValidation = [
 ];
 
 // All contract routes require authentication
-router.use(authenticateToken);
+router.use(authenticateToken, requireActiveSubscription);
 
 // Get contract details
 // @route   GET api/contract/:id

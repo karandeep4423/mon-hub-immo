@@ -15,6 +15,7 @@ const PaymentForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [scaRequired, setScaRequired] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,10 +63,29 @@ const PaymentForm = () => {
       return;
     }
 
-    const confirm = await stripe.confirmCardPayment(data.clientSecret!);
-    if (confirm.error) {
-      setError(confirm.error.message || 'Erreur confirmation');
+    // Check if SCA (3D Secure) is required
+    if (data.requiresAction && data.clientSecret) {
+      setScaRequired(true);
+      const confirm = await stripe.confirmCardPayment(data.clientSecret);
+      if (confirm.error) {
+        setError(confirm.error.message || 'Erreur lors de la vérification 3D Secure');
+        setScaRequired(false);
+      } else if (confirm.paymentIntent?.status === 'succeeded') {
+        setSuccess(true);
+      } else {
+        setError('Paiement échoué. Veuillez réessayer.');
+        setScaRequired(false);
+      }
+    } else if (data.clientSecret) {
+      // Normal payment confirmation
+      const confirm = await stripe.confirmCardPayment(data.clientSecret);
+      if (confirm.error) {
+        setError(confirm.error.message || 'Erreur confirmation');
+      } else {
+        setSuccess(true);
+      }
     } else {
+      // No client secret means subscription is already active
       setSuccess(true);
     }
 
@@ -182,6 +202,7 @@ const PaymentForm = () => {
                   {loading ? 'Traitement...' : 'Souscrire pour 19,99 €'}
                 </button>
                 {error && <p className="text-red-600 text-sm">{error}</p>}
+                {scaRequired && <p className="text-blue-600 text-sm">🔒 Vérification de sécurité 3D Secure en cours...</p>}
               </form>
               <p className="text-center text-xs text-gray-400 mt-4">Sécurisé par Stripe</p>
             </div>

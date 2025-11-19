@@ -8,6 +8,7 @@ import {
 	deleteMessage,
 } from '../controllers/chatController';
 import { authenticateToken } from '../middleware/auth';
+import { requireActiveSubscription } from '../middleware/subscription';
 
 const router: Router = express.Router();
 
@@ -15,8 +16,8 @@ const router: Router = express.Router();
 // PROTECTED ROUTES (All chat routes require authentication)
 // ============================================================================
 
-// Apply authentication to all routes
-router.use(authenticateToken);
+// Apply authentication and subscription middleware to all routes
+router.use(authenticateToken, requireActiveSubscription);
 
 // @route   GET api/message/users
 // @desc    Get users for sidebar (contacts)

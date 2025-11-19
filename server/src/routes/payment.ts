@@ -15,6 +15,10 @@ router.post('/create-subscription', authenticateToken, async (req: AuthRequest, 
   try {
     const { priceId, paymentMethodId, customerId, email } = req.body;
 
+    if (!paymentMethodId) {
+      return res.status(400).json({ error: 'paymentMethodId is required' });
+    }
+
     let customer: Stripe.Customer;
 
     // Étape 1 : récupérer ou créer un client
@@ -37,7 +41,7 @@ router.post('/create-subscription', authenticateToken, async (req: AuthRequest, 
       });
     }
 
-    // Étape 2 : créer l’abonnement
+    // Étape 2 : créer l'abonnement
     const subscription = await stripe.subscriptions.create({
       customer: customer.id,
       items: [{ price: priceId }],
@@ -45,10 +49,23 @@ router.post('/create-subscription', authenticateToken, async (req: AuthRequest, 
       expand: ['latest_invoice.payment_intent'],
     });
 
+    // Étape 2.5 : attacher le PaymentMethod au customer s'il ne l'est pas déjà
+    try {
+      await stripe.paymentMethods.attach(paymentMethodId, {
+        customer: customer.id,
+      });
+    } catch (attachErr: any) {
+      // If already attached, ignore
+      if (!attachErr.message?.includes('already attached')) {
+        console.error('Failed to attach payment method:', attachErr);
+      }
+    }
+
     // Étape 3 : extraire latest_invoice et payment_intent
     const latestInvoice = subscription.latest_invoice as Stripe.Invoice | null;
 
     let clientSecret: string | null = null;
+    let requiresAction = false;
 
     if (
       latestInvoice &&
@@ -59,6 +76,7 @@ router.post('/create-subscription', authenticateToken, async (req: AuthRequest, 
     ) {
       const pi = latestInvoice.payment_intent as Stripe.PaymentIntent;
       clientSecret = pi.client_secret ?? null;
+      requiresAction = pi.status === 'requires_action';
     }
 
     // Étape 4 : réponse JSON
@@ -84,6 +102,7 @@ router.post('/create-subscription', authenticateToken, async (req: AuthRequest, 
       subscriptionId: subscription.id,
       clientSecret,
       customerId: customer.id,
+      requiresAction,
     });
   } catch (error: any) {
     console.error('Error create-subscription:', error);

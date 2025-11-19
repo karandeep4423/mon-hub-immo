@@ -1,5 +1,6 @@
 import express from 'express';
 import { authenticateToken, optionalAuth } from '../middleware/auth';
+import { requireActiveSubscription } from '../middleware/subscription';
 import {
 	createAppointment,
 	getMyAppointments,
@@ -37,8 +38,8 @@ router.post('/', optionalAuth, createAppointment);
 // PROTECTED ROUTES (Authentication required)
 // ============================================================================
 
-// Apply authentication middleware to all routes below
-router.use(authenticateToken);
+// Apply authentication and subscription middleware to all routes below
+router.use(authenticateToken, requireActiveSubscription);
 
 // @route   GET api/appointments/my
 // @desc    Get current user's appointments

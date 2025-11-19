@@ -84,6 +84,21 @@ api.interceptors.request.use(
 api.interceptors.response.use(
 	(response) => response,
 	async (error) => {
+		// Handle payment required (402) - redirect user to payment page
+		if (error.response?.status === 402) {
+			try {
+				const code = error.response?.data?.code;
+				if (code === 'PAYMENT_REQUIRED') {
+					toast.info('Votre compte nécessite un paiement pour accéder à cette fonctionnalité.');
+					if (typeof window !== 'undefined') {
+						window.location.href = '/payment';
+					}
+				}
+			} catch (err) {
+				// ignore
+			}
+			return Promise.reject(error);
+		}
 		const originalRequest = error.config;
 
 		// Handle 403 CSRF token errors - fetch new token and retry

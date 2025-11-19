@@ -32,8 +32,9 @@ router.get('/:id([0-9a-fA-F]{24})', getSearchAdById);
 // PROTECTED ROUTES (Authentication required)
 // ============================================================================
 
-// Apply authentication middleware to all routes below
-router.use(authenticateToken);
+// Apply authentication and subscription middleware to all routes below
+import { requireActiveSubscription } from '../middleware/subscription';
+router.use(authenticateToken, requireActiveSubscription);
 
 // @route   POST api/search-ads
 // @desc    Create a search ad

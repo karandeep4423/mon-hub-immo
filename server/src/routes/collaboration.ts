@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth';
+import { requireActiveSubscription } from '../middleware/subscription';
 import { requireCollaborationAccess } from '../middleware/authorize';
 import {
 	proposeCollaborationValidation,
@@ -48,8 +49,8 @@ const searchAdParamValidation = [validate(searchAdIdParam, 'params')] as const;
 // PROTECTED ROUTES (All collaboration routes require authentication)
 // ============================================================================
 
-// Apply authentication middleware to all routes
-router.use(authenticateToken);
+// Apply authentication and subscription middleware to all routes below
+router.use(authenticateToken, requireActiveSubscription);
 
 // @route   POST api/collaboration
 // @desc    Propose a new collaboration

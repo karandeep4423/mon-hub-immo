@@ -10,6 +10,7 @@ import {
 	updateProperty,
 } from '../controllers/propertyController';
 import { authenticateToken } from '../middleware/auth';
+import { requireActiveSubscription } from '../middleware/subscription';
 import { requireOwnership, requireRole } from '../middleware/authorize';
 import { Property } from '../models/Property';
 import { updatePropertyStatusValidation } from '../middleware/validation';
@@ -26,13 +27,14 @@ router.get('/:id', getPropertyById);
 router.post(
 	'/create-property',
 	authenticateToken,
+	requireActiveSubscription,
 	requireRole(['agent', 'apporteur']),
 	uploadProperty,
 	createProperty,
 );
 
-// Protected routes (require authentication)
-router.use(authenticateToken);
+// Protected routes (require authentication + active subscription)
+router.use(authenticateToken, requireActiveSubscription);
 
 // Combined property update with image upload
 // Ownership verified by middleware
