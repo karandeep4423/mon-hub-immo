@@ -267,10 +267,10 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						width: '20%',
 						render: (_v, row: AdminUser) => (
 							<div className="text-sm text-gray-700 space-y-1">
-								<div>🏠 Annonces: <span className="font-medium">{row.propertiesCount ?? 0}</span></div>
-								<div>🤝 Collaborations: <span className="font-medium">{((row.collaborationsActive ?? 0) + (row.collaborationsClosed ?? 0))}</span></div>
-								<div>🔌 Connexions: <span className="font-medium">{row.connectionsCount ?? 0}</span></div>
-								<div>⏱️ Dernière activité: <span className="font-medium">{row.lastActive ? (isNaN(new Date(row.lastActive).getTime()) ? '-' : new Date(row.lastActive).toLocaleString('fr-FR')) : '-'}</span></div>
+								<div> Annonces: <span className="font-medium">{row.propertiesCount ?? 0}</span></div>
+								<div> Collaborations: <span className="font-medium">{((row.collaborationsActive ?? 0) + (row.collaborationsClosed ?? 0))}</span></div>
+								<div> Connexions: <span className="font-medium">{row.connectionsCount ?? 0}</span></div>
+								<div> Dernière activité: <span className="font-medium">{row.lastActive ? (isNaN(new Date(row.lastActive).getTime()) ? '' : new Date(row.lastActive).toLocaleString('fr-FR')) : '-'}</span></div>
 							</div>
 						),
 					},

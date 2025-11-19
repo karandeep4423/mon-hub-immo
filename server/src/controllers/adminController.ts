@@ -32,18 +32,29 @@ export const getAdminUsers = async (req: Request, res: Response) => {
 
   // Calcul statistiques par user
   const userIds = users.map(u => u._id);
-  // Annonces
+  // Annonces: Property documents use `owner` as the owner reference (not agentId)
   const propsCounts = await Property.aggregate([
-    { $match: { agentId: { $in: userIds } } },
-    { $group: { _id: "$agentId", count: { $sum: 1 } } }
+    { $match: { owner: { $in: userIds } } },
+    { $group: { _id: "$owner", count: { $sum: 1 } } }
   ]);
   // Collabs actives/clôturées
-  const collabCounts = await Collaboration.aggregate([
-    { $match: { agentId: { $in: userIds } } },
+  // Collaborations: schema uses `postOwnerId` and `collaboratorId` and statuses include 'completed'
+  // We aggregate separately for postOwnerId and collaboratorId and then combine counts per user id.
+  const collabCountsOwner = await Collaboration.aggregate([
+    { $match: { postOwnerId: { $in: userIds } } },
     { $group: {
-        _id: "$agentId",
+        _id: "$postOwnerId",
         active: { $sum: { $cond: [{ $eq: ["$status", "active"] }, 1, 0] }},
-        closed: { $sum: { $cond: [{ $eq: ["$status", "closed"] }, 1, 0] }},
+        closed: { $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] }}
+      }
+    }
+  ]);
+  const collabCountsCollaborator = await Collaboration.aggregate([
+    { $match: { collaboratorId: { $in: userIds } } },
+    { $group: {
+        _id: "$collaboratorId",
+        active: { $sum: { $cond: [{ $eq: ["$status", "active"] }, 1, 0] }},
+        closed: { $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] }}
       }
     }
   ]);
@@ -61,10 +72,17 @@ export const getAdminUsers = async (req: Request, res: Response) => {
   }
   const collabMapActive: Record<string, number> = {};
   const collabMapClosed: Record<string, number> = {};
-  for (const c of collabCounts) {
+  // aggregate owner counts
+  for (const c of collabCountsOwner) {
     const k = String(c._id);
-    collabMapActive[k] = c.active || 0;
-    collabMapClosed[k] = c.closed || 0;
+    collabMapActive[k] = (collabMapActive[k] || 0) + (c.active || 0);
+    collabMapClosed[k] = (collabMapClosed[k] || 0) + (c.closed || 0);
+  }
+  // aggregate collaborator counts
+  for (const c of collabCountsCollaborator) {
+    const k = String(c._id);
+    collabMapActive[k] = (collabMapActive[k] || 0) + (c.active || 0);
+    collabMapClosed[k] = (collabMapClosed[k] || 0) + (c.closed || 0);
   }
   const connMap: Record<string, number> = {};
   for (const cc of connectionCounts) {
