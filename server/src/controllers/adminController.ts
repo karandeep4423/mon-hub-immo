@@ -566,3 +566,88 @@ export const getAdminStats = async (_req: Request, res: Response) => {
   }
 };
 
+export const sendPaymentReminder = async (req: AuthRequest, res: Response) => {
+  const userId = req.params.id;
+  if (!userId) return res.status(400).json({ error: 'Missing user id' });
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' });
+
+    // Only send reminder to agents who haven't paid
+    if (user.userType !== 'agent' || user.isPaid) {
+      return res.status(400).json({ error: 'Ce utilisateur n\'est pas concerné par un rappel de paiement' });
+    }
+
+    // Generate payment URL
+    const paymentUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/payment`;
+
+    // Email template
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html lang="fr">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Rappel: Complétez votre abonnement</title>
+        <style>
+          body { font-family: Arial, sans-serif; color: #333; background-color: #f4f4f4; margin: 0; }
+          .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 8px; overflow: hidden; }
+          .header { background: linear-gradient(135deg, #6AD1E3, #3BA8BB); color: white; padding: 20px; text-align: center; }
+          .content { padding: 20px; line-height: 1.6; }
+          .cta-button { display: inline-block; background: #6AD1E3; color: white; padding: 12px 24px; border-radius: 4px; text-decoration: none; font-weight: bold; margin: 20px 0; }
+          .cta-button:hover { background: #3BA8BB; }
+          .footer { font-size: 12px; color: #666; padding: 20px; background: #f8f9fa; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+          <tr>
+            <td style="padding: 20px 0;">
+              <div class="container">
+                <div class="header">
+                  <h1>Rappel: Complétez votre abonnement</h1>
+                </div>
+                <div class="content">
+                  <p>Bonjour ${user.firstName} ${user.lastName},</p>
+                  <p>Nous avons remarqué que votre compte MonHubImmo Premium n'a pas encore été activé.</p>
+                  <p>Pour commencer à publier vos annonces immobilières sans limite et accéder à tous nos outils avancés, veuillez finaliser votre abonnement.</p>
+                  <p style="text-align: center;">
+                    <a href="${paymentUrl}" class="cta-button">Finaliser mon abonnement</a>
+                  </p>
+                  <p><strong>Votre abonnement inclut:</strong></p>
+                  <ul>
+                    <li>✅ Annonces illimitées</li>
+                    <li>✅ Gestion des prospects avancée</li>
+                    <li>✅ Statistiques détaillées</li>
+                    <li>✅ Support prioritaire</li>
+                    <li>✅ Partage de mandats en un clic</li>
+                  </ul>
+                  <p>Si vous avez des questions, n'hésitez pas à nous contacter.</p>
+                  <p>Cordialement,<br/>L'équipe MonHubImmo</p>
+                </div>
+                <div class="footer">
+                  <p>&copy; 2025 MonHubImmo. Tous droits réservés.</p>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>
+    `;
+
+    // Send email
+    await sendEmail({
+      to: user.email,
+      subject: 'Rappel: Complétez votre abonnement MonHubImmo Premium',
+      html: emailHtml,
+    });
+
+    res.json({ success: true, message: 'Rappel de paiement envoyé avec succès' });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur lors de l\'envoi du rappel', details: (err as Error).message });
+  }
+};
+
+

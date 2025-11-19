@@ -1,6 +1,6 @@
 // routes/admin.ts
 import express from 'express';
-import { getAdminUsers, validateUser, getAdminUserProfile, createAdminUser, updateAdminUser, deleteAdminUser, importUsersFromCSV, getAdminStats, blockUser, unblockUser } from '../controllers/adminController';
+import { getAdminUsers, validateUser, getAdminUserProfile, createAdminUser, updateAdminUser, deleteAdminUser, importUsersFromCSV, getAdminStats, blockUser, unblockUser, sendPaymentReminder } from '../controllers/adminController';
 import { getAdminProperties } from '../controllers/propertyController';
 import { authenticateToken, requireAdmin } from '../middleware/auth';
 import { uploadCSV } from '../middleware/uploadMiddleware';
@@ -32,6 +32,9 @@ router.put('/users/:id', updateAdminUser);
 // Admin - block/unblock users
 router.post('/users/:id/block', blockUser);
 router.post('/users/:id/unblock', unblockUser);
+
+// POST - send payment reminder to user
+router.post('/users/:id/send-payment-reminder', sendPaymentReminder);
 
 // DELETE - delete user (admin)
 router.delete('/users/:id', deleteAdminUser);

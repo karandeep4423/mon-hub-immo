@@ -19,13 +19,19 @@ export interface AdminUser {
 	status?: 'active' | 'pending' | 'blocked';
 	isBlocked?: boolean;
 	isValidated?: boolean;
-		registeredAt: string;
-		// activity stats (optional, may be provided by backend)
-		propertiesCount?: number;
-		collaborationsActive?: number;
-		collaborationsClosed?: number;
-		connectionsCount?: number; // nombre de connexions
-		lastActive?: string;
+	registeredAt: string;
+	// activity stats (optional, may be provided by backend)
+	propertiesCount?: number;
+	collaborationsActive?: number;
+	collaborationsClosed?: number;
+	connectionsCount?: number; // nombre de connexions
+	lastActive?: string;
+	// payment fields
+	isPaid?: boolean;
+	stripeCustomerId?: string;
+	stripeSubscriptionId?: string;
+	subscriptionStatus?: string;
+	profileCompleted?: boolean;
 }
 
 interface AdminUsersTableModernProps {
@@ -287,6 +293,28 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 							return <span className="text-sm text-gray-600">{d.toLocaleDateString('fr-FR')}</span>;
 						},
 					},
+					{
+						header: 'Paiement',
+						accessor: 'isPaid',
+						width: '12%',
+						render: (_value, row: AdminUser) => {
+							// Only show payment status for agents
+							if (row.type !== 'agent') {
+								return <span className="text-sm text-gray-500">N/A</span>;
+							}
+							
+							if (row.isPaid) {
+								return <Badge label="Payé" variant="success" size="sm" />;
+							}
+							
+							if (row.profileCompleted) {
+								return <Badge label="En attente" variant="warning" size="sm" />;
+							}
+
+							// If agent and profile not completed, show explicit state instead of a dash
+							return <span className="text-sm text-gray-500">Profil incomplet</span>;
+						},
+					},
 				]}
 				data={filteredUsers}
 				pagination
@@ -341,6 +369,32 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 								className="p-1 hover:bg-amber-100 rounded transition-colors"
 							>
 								🚫
+							</button>
+						)}
+						{/* Send payment reminder button - only for agents with pending payment */}
+						{row.type === 'agent' && !row.isPaid && row.profileCompleted && (
+							<button
+								title="Envoyer rappel paiement"
+								onClick={async () => {
+									try {
+										const res = await fetch(`http://localhost:4000/api/admin/users/${row._id}/send-payment-reminder`, {
+											method: 'POST',
+											credentials: 'include',
+										});
+										if (res.ok) {
+											alert('Rappel de paiement envoyé avec succès');
+											await refetch();
+										} else {
+											alert('Erreur lors de l\'envoi du rappel');
+										}
+									} catch (err) {
+										console.error(err);
+										alert('Erreur réseau');
+									}
+								}}
+								className="p-1 hover:bg-orange-100 rounded transition-colors"
+							>
+								💳
 							</button>
 						)}
 						{/* Delete removed by request */}

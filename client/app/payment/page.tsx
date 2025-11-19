@@ -16,6 +16,7 @@ const PaymentForm = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [scaRequired, setScaRequired] = useState(false);
+  const [showBanner, setShowBanner] = useState(true);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,6 +65,19 @@ const PaymentForm = () => {
     }
 
     // Check if SCA (3D Secure) is required
+    // helper to refresh profile and redirect to listings after successful payment
+    const syncProfileAndRedirect = async () => {
+      try {
+        await fetch(`${backendUrl}/auth/profile`, { credentials: 'include' });
+      } catch (err) {
+        // ignore
+      }
+      // redirect user to listings page (view-only permitted for paid users)
+      if (typeof window !== 'undefined') {
+        window.location.replace('/search-ads');
+      }
+    };
+
     if (data.requiresAction && data.clientSecret) {
       setScaRequired(true);
       const confirm = await stripe.confirmCardPayment(data.clientSecret);
@@ -72,6 +86,7 @@ const PaymentForm = () => {
         setScaRequired(false);
       } else if (confirm.paymentIntent?.status === 'succeeded') {
         setSuccess(true);
+        await syncProfileAndRedirect();
       } else {
         setError('Paiement échoué. Veuillez réessayer.');
         setScaRequired(false);
@@ -83,10 +98,12 @@ const PaymentForm = () => {
         setError(confirm.error.message || 'Erreur confirmation');
       } else {
         setSuccess(true);
+        await syncProfileAndRedirect();
       }
     } else {
       // No client secret means subscription is already active
       setSuccess(true);
+      await syncProfileAndRedirect();
     }
 
     setLoading(false);
@@ -106,6 +123,18 @@ const PaymentForm = () => {
   return (
     <div className="h-screen w-screen bg-gray-100 flex items-center justify-center">
       <div className="w-full h-full bg-white rounded-none overflow-auto">
+        {/* Info banner to explain access while on payment page */}
+        {showBanner && (
+          <div className="mx-auto max-w-5xl p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 mb-4 flex items-start justify-between">
+            <div className="mr-4 text-sm">
+              <strong>Information :</strong> Vous pouvez consulter les annonces pendant la finalisation du paiement. Cependant, la création d'annonces, la collaboration et d'autres actions payantes resteront bloquées tant que l'abonnement n'est pas activé.
+              <div className="mt-2 text-xs text-gray-700">Si vous venez de payer, attendez quelques secondes : l'accès sera synchronisé automatiquement.</div>
+            </div>
+            <div>
+              <button aria-label="Fermer" onClick={() => setShowBanner(false)} className="text-yellow-800 hover:text-yellow-900 font-bold">✕</button>
+            </div>
+          </div>
+        )}
         <div className="flex flex-col lg:flex-row w-full h-full">
           {/* Left Side */}
           <div className="lg:w-1/2 w-full h-1/3 lg:h-full bg-cyan-600 text-white p-10 flex flex-col justify-between">

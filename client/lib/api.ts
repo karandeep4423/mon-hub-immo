@@ -91,7 +91,12 @@ api.interceptors.response.use(
 				if (code === 'PAYMENT_REQUIRED') {
 					toast.info('Votre compte nécessite un paiement pour accéder à cette fonctionnalité.');
 					if (typeof window !== 'undefined') {
-						window.location.href = '/payment';
+						// Avoid redirect loop: don't redirect if we're already on the payment page
+						const currentPath = window.location.pathname || '';
+						if (!currentPath.startsWith('/payment')) {
+							// Use replace to avoid polluting history
+							window.location.replace('/payment');
+						}
 					}
 				}
 			} catch (err) {
