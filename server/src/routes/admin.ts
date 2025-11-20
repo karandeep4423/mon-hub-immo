@@ -1,7 +1,7 @@
 // routes/admin.ts
 import express from 'express';
 import { getAdminUsers, validateUser, getAdminUserProfile, createAdminUser, updateAdminUser, deleteAdminUser, importUsersFromCSV, getAdminStats, blockUser, unblockUser, sendPaymentReminder } from '../controllers/adminController';
-import { getAdminProperties } from '../controllers/propertyController';
+import { getAdminProperties, deleteAdminProperty } from '../controllers/propertyController';
 import { authenticateToken, requireAdmin } from '../middleware/auth';
 import { uploadCSV } from '../middleware/uploadMiddleware';
 

@@ -44,7 +44,8 @@ export function useAdminProperties(filters: Filters) {
     params.set('page', String(page));
     params.set('limit', String(limit));
 
-    fetch(`http://localhost:4000/api/property?${params.toString()}`, {
+    // Admin should use the admin endpoint which supports filtering by status, types, etc.
+    fetch(`http://localhost:4000/api/admin/properties?${params.toString()}`, {
       credentials: 'include',
     })
       .then(res => {

@@ -15,7 +15,7 @@ export interface AdminUser {
 	firstName: string;
 	lastName: string;
 	email: string;
-	type: 'agent' | 'apporteur';
+	type: 'agent' | 'apporteur' | 'admin';
 	status?: 'active' | 'pending' | 'blocked';
 	isBlocked?: boolean;
 	isValidated?: boolean;
@@ -26,9 +26,12 @@ export interface AdminUser {
 	collaborationsClosed?: number;
 	connectionsCount?: number; // nombre de connexions
 	lastActive?: string;
+	phone?: string;
+	profileImage?: string;
+	userType?: string;
 	// payment fields
 	isPaid?: boolean;
-	professionalInfo?: { network?: string };
+	professionalInfo?: { network?: string; tCard?: string; sirenNumber?: string; rsacNumber?: string; collaboratorCertificate?: string };
 	stripeCustomerId?: string;
 	stripeSubscriptionId?: string;
 	subscriptionStatus?: string;
@@ -465,7 +468,11 @@ const EditUserModal: React.FC<{
 	onClose: () => void;
 	onSave: () => void;
 }> = ({ user, onClose, onSave }) => {
-	const [form, setForm] = useState(user);
+	const [form, setForm] = useState<AdminUser>({
+		...user,
+		// ensure professionalInfo object exists for form binding
+		professionalInfo: user.professionalInfo || { network: '' },
+	});
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -495,11 +502,17 @@ const EditUserModal: React.FC<{
 				);
 			}
 
-			// Generic update for other changes
+			// Generic update for other changes (include professional info and profile flags)
 			const cleaned = {
 				firstName: form.firstName,
 				lastName: form.lastName,
 				email: form.email,
+				phone: (form as any).phone || undefined,
+				profileImage: (form as any).profileImage || undefined,
+				// role / type - backend accepts userType or type depending on API; include both conservatively
+				...(form.type ? { userType: form.type, type: form.type } : {}),
+				professionalInfo: form.professionalInfo || undefined,
+				profileCompleted: form.profileCompleted === true,
 				// Only include isValidated/isBlocked in generic update if not handled above
 				...(form.isValidated === user.isValidated ? { isValidated: form.isValidated } : {}),
 				...(form.isBlocked === user.isBlocked ? { isBlocked: form.isBlocked } : {}),
@@ -526,56 +539,133 @@ const EditUserModal: React.FC<{
 
 	return (
 		<div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-			<div className="bg-white rounded-lg max-w-md w-full shadow-xl">
-				<div className="border-b border-gray-200 p-6">
+			<div className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6">
+				<div className="flex items-center justify-between mb-4 sticky top-0 bg-white">
 					<h2 className="text-xl font-bold text-gray-900">Éditer utilisateur</h2>
+					<button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
 				</div>
-				<form onSubmit={handleSubmit} className="p-6 space-y-4">
-					<div>
-						<label className="block text-sm font-medium text-gray-700 mb-2">Prénom</label>
-						<input
-							type="text"
-							value={form.firstName}
-							onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-						/>
+				<form onSubmit={handleSubmit} className="space-y-4">
+					<div className="grid grid-cols-2 gap-3">
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-2">Prénom</label>
+							<input
+								type="text"
+								value={form.firstName || ''}
+								onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+							/>
+						</div>
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-2">Nom</label>
+							<input
+								type="text"
+								value={form.lastName || ''}
+								onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+							/>
+						</div>
 					</div>
-					<div>
-						<label className="block text-sm font-medium text-gray-700 mb-2">Nom</label>
-						<input
-							type="text"
-							value={form.lastName}
-							onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-						/>
+					<div className="grid grid-cols-2 gap-3">
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+							<input
+								type="email"
+								value={form.email || ''}
+								onChange={(e) => setForm({ ...form, email: e.target.value })}
+								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+							/>
+						</div>
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-2">Téléphone</label>
+							<input
+								type="text"
+								value={(form as any).phone || ''}
+								onChange={(e) => setForm({ ...form, phone: e.target.value } as any)}
+								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+							/>
+						</div>
 					</div>
-					<div>
-						<label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-						<input
-							type="email"
-							value={form.email}
-							onChange={(e) => setForm({ ...form, email: e.target.value })}
-							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-						/>
+					<div className="grid grid-cols-2 gap-3">
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-2">Rôle</label>
+							<select
+								value={(form.type || (form as any).userType || 'apporteur') as string}
+								onChange={(e) => setForm({ ...form, type: e.target.value as 'agent' | 'apporteur' })}
+								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+							>
+								<option value="agent">Agent</option>
+								<option value="apporteur">Apporteur</option>
+								<option value="admin">Admin</option>
+							</select>
+						</div>
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-2">Image de profil (URL)</label>
+							<input
+								type="text"
+								value={(form as any).profileImage || ''}
+								onChange={(e) => setForm({ ...form, profileImage: e.target.value } as any)}
+								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+							/>
+						</div>
 					</div>
-					<div>
-						<label className="block text-sm font-medium text-gray-700 mb-2">Statut</label>
-						<select
-							value={(form.isBlocked ? 'blocked' : form.isValidated ? 'active' : 'pending') as any}
-							onChange={(e) => {
-								const newStatus = e.target.value;
-								setForm({
-									...form,
-									isBlocked: newStatus === 'blocked',
-									isValidated: newStatus === 'active',
-								} as any);
-							}}
-							className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-						>
-							<option value="active">Actif</option>
-							<option value="pending">En attente</option>
-							<option value="blocked">Bloqué</option>
-						</select>
+
+					{/* Agent professional info */}
+					{((form.type === 'agent') || ((form as any).userType === 'agent')) && (
+						<div className="p-4 bg-gray-50 rounded border">
+							<div className="mb-3">
+								<div className="text-sm font-medium text-gray-700 mb-1">Réseau</div>
+								<input type="text" value={form.professionalInfo?.network || ''} onChange={(e) => setForm({ ...form, professionalInfo: { ...(form.professionalInfo || {}), network: e.target.value } })} className="w-full px-3 py-2 border rounded" />
+							</div>
+							<div className="grid grid-cols-2 gap-3">
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-2">Carte professionnelle (T card)</label>
+									<input type="text" value={(form as any).professionalInfo?.tCard || ''} onChange={(e) => setForm({ ...form, professionalInfo: { ...(form.professionalInfo || {}), tCard: e.target.value } })} className="w-full px-3 py-2 border rounded" />
+								</div>
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-2">Numéro SIREN</label>
+									<input type="text" value={(form as any).professionalInfo?.sirenNumber || ''} onChange={(e) => setForm({ ...form, professionalInfo: { ...(form.professionalInfo || {}), sirenNumber: e.target.value } })} className="w-full px-3 py-2 border rounded" />
+								</div>
+							</div>
+							<div className="grid grid-cols-2 gap-3 mt-3">
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-2">Numéro RSAC</label>
+									<input type="text" value={(form as any).professionalInfo?.rsacNumber || ''} onChange={(e) => setForm({ ...form, professionalInfo: { ...(form.professionalInfo || {}), rsacNumber: e.target.value } })} className="w-full px-3 py-2 border rounded" />
+								</div>
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-2">Certificat collaborateur</label>
+									<input type="text" value={(form as any).professionalInfo?.collaboratorCertificate || ''} onChange={(e) => setForm({ ...form, professionalInfo: { ...(form.professionalInfo || {}), collaboratorCertificate: e.target.value } })} className="w-full px-3 py-2 border rounded" />
+								</div>
+							</div>
+						</div>
+					)}
+
+					<div className="grid grid-cols-2 gap-3 mt-2">
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+							<select
+								value={(form.isBlocked ? 'blocked' : form.isValidated ? 'active' : 'pending') as any}
+								onChange={(e) => {
+									const newStatus = e.target.value;
+									setForm({
+										...form,
+										isBlocked: newStatus === 'blocked',
+										isValidated: newStatus === 'active',
+									} as any);
+								}}
+								className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+							>
+								<option value="active">Actif</option>
+								<option value="pending">En attente</option>
+								<option value="blocked">Bloqué</option>
+							</select>
+						</div>
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-2">Profil complété</label>
+							<select value={form.profileCompleted ? 'yes' : 'no'} onChange={(e) => setForm({ ...form, profileCompleted: e.target.value === 'yes' })} className="w-full px-3 py-2 border rounded">
+								<option value="yes">Oui</option>
+								<option value="no">Non</option>
+							</select>
+						</div>
 					</div>
 					<div className="flex gap-3 pt-4">
 						<Button variant="ghost" onClick={onClose} className="flex-1">

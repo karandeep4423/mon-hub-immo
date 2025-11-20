@@ -1080,3 +1080,78 @@ export const getPropertyStats = async (
 		});
 	}
 };
+
+// Delete a property (admin only)
+export const deleteAdminProperty = async (
+	req: Request,
+	res: Response,
+): Promise<void> => {
+	try {
+		const { id } = req.params;
+
+		// Validate ObjectId format
+		if (!isValidObjectId(id)) {
+			res.status(400).json({
+				success: false,
+				message: "Format d'identifiant de propriété invalide",
+			});
+			return;
+		}
+
+		const property = await Property.findById(id);
+		if (!property) {
+			res.status(404).json({
+				success: false,
+				message: 'Propriété non trouvée',
+			});
+			return;
+		}
+
+		// Collect all images to delete from S3
+		const imagesToDelete: string[] = [];
+
+		// Add main image
+		if (property.mainImage?.key) {
+			imagesToDelete.push(property.mainImage.key);
+		}
+
+		// Add gallery images
+		if (property.galleryImages && property.galleryImages.length > 0) {
+			property.galleryImages.forEach((img: any) => {
+				if (img.key) {
+					imagesToDelete.push(img.key);
+				}
+			});
+		}
+
+		// Delete images from S3 if any exist
+		if (imagesToDelete.length > 0) {
+			try {
+				await s3Service.deleteMultipleImages(imagesToDelete);
+				logger.info(
+					`[PropertyController] Deleted ${imagesToDelete.length} images from S3 for property ${id}`,
+				);
+			} catch (s3Error) {
+				logger.warn(
+					`[PropertyController] Error deleting images from S3: ${(s3Error as Error).message}`,
+				);
+				// Continue with property deletion even if S3 deletion fails
+			}
+		}
+
+		// Delete the property from database
+		await Property.findByIdAndDelete(id);
+
+		res.status(200).json({
+			success: true,
+			message: 'Propriété supprimée avec succès',
+		});
+	} catch (error) {
+		logger.error('[PropertyController] Error deleting property', error);
+		res.status(500).json({
+			success: false,
+			message: 'Erreur lors de la suppression de la propriété',
+		});
+	}
+};
+
