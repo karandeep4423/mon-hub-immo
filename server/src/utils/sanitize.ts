@@ -77,7 +77,7 @@ export const sanitizeHtmlContent = (
  */
 export const sanitizeEmail = (email: string | undefined | null): string => {
 	if (!email || typeof email !== 'string') return '';
-	const trimmed = validator.trim(email.toLowerCase());
+	return validator.trim(email.toLowerCase());
 };
 
 /**

@@ -107,8 +107,29 @@ export const Pagination: React.FC<PaginationProps> = ({
 
 	return (
 		<nav className={className} aria-label="Pagination">
+			{/* Info text showing items range */}
+			<div className="mt-6 mb-4 text-center text-sm text-gray-600">
+				{totalItems > 0 ? (
+					<p>
+						Affichage de{' '}
+						<span className="font-semibold">
+							{(currentPage - 1) * pageSize + 1}
+						</span>
+						{' à '}
+						<span className="font-semibold">
+							{Math.min(currentPage * pageSize, totalItems)}
+						</span>
+						{' sur '}
+						<span className="font-semibold">{totalItems}</span>
+						{' article' + (totalItems > 1 ? 's' : '')}
+					</p>
+				) : (
+					<p>Aucun article</p>
+				)}
+			</div>
+
 			{/* Mobile: compact layout */}
-			<ul className="flex items-center justify-between gap-3 mt-6 sm:hidden">
+			<ul className="flex items-center justify-between gap-3 mt-4 sm:hidden">
 				<li className="flex-1">
 					<button
 						onClick={() => goTo(currentPage - 1)}
@@ -141,7 +162,7 @@ export const Pagination: React.FC<PaginationProps> = ({
 			</ul>
 
 			{/* sm+ : numbered pagination with ellipsis (responsive) */}
-			<ul className="hidden sm:flex lg:hidden items-center gap-2 justify-center mt-6">
+			<ul className="hidden sm:flex lg:hidden items-center gap-2 justify-center mt-4">
 				<li>
 					<button
 						onClick={() => goTo(currentPage - 1)}
@@ -192,7 +213,7 @@ export const Pagination: React.FC<PaginationProps> = ({
 			</ul>
 
 			{/* lg+ : numbered pagination with more pages visible */}
-			<ul className="hidden lg:flex items-center gap-2 justify-center mt-6">
+			<ul className="hidden lg:flex items-center gap-2 justify-center mt-4">
 				<li>
 					<button
 						onClick={() => goTo(currentPage - 1)}

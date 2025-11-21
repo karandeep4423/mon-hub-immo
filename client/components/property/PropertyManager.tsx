@@ -29,18 +29,22 @@ export const PropertyManager: React.FC = () => {
 	const [currentPage, setCurrentPage] = useState(1);
 	const itemsPerPage = 6;
 
-	// Use SWR to fetch properties
+	// Use SWR to fetch properties with pagination
 	const {
 		data: propertiesData,
 		isLoading: loading,
 		error: fetchError,
-	} = useMyProperties(user?._id);
+	} = useMyProperties(user?._id, currentPage);
 
 	// Get mutation functions
 	const { invalidatePropertyCaches } = usePropertyMutations(user?._id);
 
 	const properties = useMemo(
 		() => propertiesData?.properties || [],
+		[propertiesData],
+	);
+	const pagination = useMemo(
+		() => propertiesData?.pagination,
 		[propertiesData],
 	);
 	const error = fetchError?.message || null;
@@ -86,11 +90,11 @@ export const PropertyManager: React.FC = () => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	// Paginated properties
-	const paginatedProperties = useMemo(() => {
-		const startIndex = (currentPage - 1) * itemsPerPage;
-		return filteredProperties.slice(startIndex, startIndex + itemsPerPage);
-	}, [filteredProperties, currentPage, itemsPerPage]);
+	// Use paginated properties from backend or filtered client-side if filters exist
+	const displayProperties = hasActiveFilters ? filteredProperties : properties;
+	const totalItems = hasActiveFilters
+		? filteredProperties.length
+		: pagination?.totalItems || properties.length;
 
 	// Reset to page 1 when filters change
 	const handleFiltersChange = (newFilters: typeof filters) => {
@@ -201,7 +205,7 @@ export const PropertyManager: React.FC = () => {
 			) : (
 				<>
 					<div className="space-y-4">
-						{paginatedProperties.map((property) => (
+						{displayProperties.map((property) => (
 							<PropertyListItem
 								key={property._id}
 								property={property}
@@ -216,13 +220,13 @@ export const PropertyManager: React.FC = () => {
 					</div>
 					<Pagination
 						currentPage={currentPage}
-						totalItems={filteredProperties.length}
+						totalItems={totalItems}
 						pageSize={itemsPerPage}
 						onPageChange={setCurrentPage}
 						scrollTargetId="properties-section"
 					/>
 				</>
-			)}
+			)}}
 			{/* Confirm Delete Dialog */}
 			<ConfirmDialog
 				isOpen={showConfirmDialog}
