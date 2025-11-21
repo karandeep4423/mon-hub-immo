@@ -56,7 +56,7 @@ export const sanitizeHtmlContent = (
 		allowedSchemes: ['http', 'https', 'mailto', 'tel'],
 		// Ensure rel is safe when target=_blank
 		transformTags: {
-			a: (tagName, attribs) => {
+			a: (tagName: string, attribs: Record<string, string>) => {
 				const attrs = { ...attribs };
 				if (attrs.target === '_blank') {
 					// Preserve existing rel but ensure noopener noreferrer
@@ -78,7 +78,6 @@ export const sanitizeHtmlContent = (
 export const sanitizeEmail = (email: string | undefined | null): string => {
 	if (!email || typeof email !== 'string') return '';
 	const trimmed = validator.trim(email.toLowerCase());
-	return validator.normalizeEmail(trimmed) || trimmed;
 };
 
 /**

@@ -10,6 +10,7 @@ import { resetPasswordSchema } from '@/lib/validation';
 import { ResetPasswordData } from '@/types/auth';
 import { useForm } from '@/hooks/useForm';
 import { Features } from '@/lib/constants';
+import { AccountValidationModal } from './AccountValidationModal';
 import {
 	handleAuthError,
 	showPasswordResetSuccess,
@@ -28,6 +29,8 @@ export const ResetPasswordForm: React.FC = () => {
 	const { login } = useAuth();
 	const [email, setEmail] = useState('');
 	const [success, setSuccess] = useState(false);
+	const [showValidationModal, setShowValidationModal] = useState(false);
+	const [isNewAccount, setIsNewAccount] = useState(false);
 
 	const {
 		values,
@@ -78,11 +81,18 @@ export const ResetPasswordForm: React.FC = () => {
 					if (response.user) {
 						// Tokens are in httpOnly cookies
 						login(response.user);
-						setTimeout(() => {
-							router.push(
-								Features.Dashboard.DASHBOARD_ROUTES.BASE,
-							);
-						}, 2000);
+
+						// Check if account needs admin validation
+						if (!response.user.isValidated) {
+							setIsNewAccount(true);
+							setShowValidationModal(true);
+						} else {
+							setTimeout(() => {
+								router.push(
+									Features.Dashboard.DASHBOARD_ROUTES.BASE,
+								);
+							}, 2000);
+						}
 					} else {
 						setTimeout(() => {
 							router.push(Features.Auth.AUTH_ROUTES.LOGIN);
@@ -105,6 +115,11 @@ export const ResetPasswordForm: React.FC = () => {
 	}, [searchParams]);
 
 	if (success) {
+		// Show validation modal if account needs admin validation
+		if (showValidationModal && isNewAccount) {
+			return <AccountValidationModal isOpen={showValidationModal} />;
+		}
+
 		return (
 			<div className="min-h-screen bg-white flex flex-col">
 				{/* Header */}

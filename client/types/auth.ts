@@ -21,6 +21,7 @@ export interface User {
 	phone: string;
 	userType: '' | 'agent' | 'apporteur' | 'admin';
 	isEmailVerified: boolean;
+	isValidated?: boolean;
 	profileImage?: string;
 	profileCompleted: boolean; // Make sure this is included
 

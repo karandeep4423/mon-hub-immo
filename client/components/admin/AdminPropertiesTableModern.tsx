@@ -253,7 +253,27 @@ export const AdminPropertiesTableModern: React.FC<AdminPropertiesTableModernProp
 							<button className="p-1 hover:bg-yellow-100 rounded transition-colors" title="Éditer">
 								✏️
 							</button>
-							<button className="p-1 hover:bg-red-100 rounded transition-colors" title="Supprimer">
+							<button
+								className="p-1 hover:bg-red-100 rounded transition-colors"
+								title="Supprimer"
+								onClick={async () => {
+									if (!confirm('Êtes-vous sûr de vouloir supprimer cette annonce ?')) return;
+									try {
+										const res = await fetch(`http://localhost:4000/api/admin/properties/${row._id}`, {
+											method: 'DELETE',
+											credentials: 'include',
+										});
+										if (res.ok) {
+											alert('Annonce supprimée avec succès');
+											refetch?.();
+										} else {
+											alert('Erreur lors de la suppression');
+										}
+									} catch (err) {
+										alert('Erreur lors de la suppression');
+									}
+								}}
+							>
 								🗑️
 							</button>
 						</div>

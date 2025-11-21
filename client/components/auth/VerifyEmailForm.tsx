@@ -17,6 +17,7 @@ import {
 	authToastSuccess,
 	authToastError,
 } from '@/lib/utils/authToast';
+import { AccountValidationModal } from './AccountValidationModal';
 
 interface VerifyEmailFormData extends Record<string, unknown> {
 	code: string;
@@ -28,6 +29,7 @@ export const VerifyEmailForm: React.FC = () => {
 	const { login } = useAuth();
 	const [email, setEmail] = useState('');
 	const [timer, setTimer] = useState(0);
+	const [showValidationModal, setShowValidationModal] = useState(false);
 
 	// Mutation for resending verification code
 	const { mutate: resendCode, loading: resendLoading } = useMutation(
@@ -89,16 +91,21 @@ export const VerifyEmailForm: React.FC = () => {
 
 				logger.debug('[VerifyEmailForm] API Response received', {
 					success: response.success,
-					requiresProfileCompletion:
-						response.requiresProfileCompletion,
-					profileCompleted: response.user?.profileCompleted,
-					userType: response.user?.userType,
+					requiresAdminValidation: response.requiresAdminValidation,
+					hasUser: !!response.user,
 				});
+
+				if (response.success && response.requiresAdminValidation) {
+					logger.success('[VerifyEmailForm] Email verified, awaiting admin validation');
+					setShowValidationModal(true);
+					return;
+				}
 
 				if (response.success && response.user) {
 					logger.success('[VerifyEmailForm] Login successful');
 					// Tokens are in httpOnly cookies
 					login(response.user);
+
 					showVerificationSuccess();
 
 					logger.debug(
@@ -114,10 +121,6 @@ export const VerifyEmailForm: React.FC = () => {
 
 					if (response.requiresProfileCompletion) {
 						router.push(Features.Auth.AUTH_ROUTES.COMPLETE_PROFILE);
-					} else if (response.success && response.requiresAdminValidation) {
-						// Email was verified but the account requires manual admin validation before login
-						authToastSuccess('Votre email a été vérifié. Votre compte est en attente de validation par notre équipe.');
-						router.push(Features.Auth.AUTH_ROUTES.LOGIN);
 					} else {
 						router.push(Features.Auth.AUTH_ROUTES.WELCOME);
 					}
@@ -293,6 +296,9 @@ export const VerifyEmailForm: React.FC = () => {
 					Le code expire dans 24 heures
 				</p>
 			</div>
+
+			{/* Validation Modal */}
+			{showValidationModal && <AccountValidationModal isOpen={showValidationModal} />}
 		</div>
 	);
 };

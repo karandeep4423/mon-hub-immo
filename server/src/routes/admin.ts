@@ -22,6 +22,9 @@ router.get('/users/:id', getAdminUserProfile);
 // GET - liste de toutes les propriétés pour l'admin
 router.get('/properties', getAdminProperties);
 
+// DELETE - supprimer une propriété
+router.delete('/properties/:id', deleteAdminProperty);
+
 // PUT - valider/refuser un utilisateur
 router.put('/users/:id/validate', validateUser);
 

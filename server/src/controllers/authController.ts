@@ -754,12 +754,13 @@ export const verifyEmail = async (
 			logger.error('[AuthController] Failed to send pending validation email', ackError);
 		}
 
-		// Return success but indicate that admin validation is required before login
+		// Return success but indicate that admin validation is required - DO NOT LOG IN USER YET
 		res.json({
 			success: true,
 			message:
 				'Email vérifié. Votre compte est en attente de validation par un administrateur.',
 			requiresAdminValidation: true,
+			user: null,
 		});
 	} catch (error) {
 		logger.error('[AuthController] Email verification error', error);
