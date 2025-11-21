@@ -336,6 +336,44 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({
 								</div>
 							)}
 
+							{/* Property Address - Only show if provided */}
+							{appointment.propertyDetails?.address && (
+								<div className="flex items-start gap-3 p-3 bg-gradient-to-r from-red-50 to-transparent rounded-lg border border-red-100">
+									<div className="flex-shrink-0 w-9 h-9 bg-red-500 rounded-lg flex items-center justify-center">
+										<svg
+											className="w-5 h-5 text-white"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth={2}
+												d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+											/>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth={2}
+												d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+											/>
+										</svg>
+									</div>
+									<div className="flex-1 min-w-0">
+										<p className="text-xs text-gray-500 font-medium mb-1">
+											Adresse du bien
+										</p>
+										<p className="text-sm text-gray-700 break-words">
+											{
+												appointment.propertyDetails
+													.address
+											}
+										</p>
+									</div>
+								</div>
+							)}
+
 							{/* Contact Info Grid */}
 							<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 								{displayEmail && (

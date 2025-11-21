@@ -18,3 +18,4 @@
 - french-address-api-autocomplete.md – City autocomplete components for property and search ad forms using French Address API.
 - city-autocomplete-integration-complete.md – Complete integration of French Address API autocomplete across all forms (Property, SearchAd, Profile, AgentFilters).
 - search-ads-client-info-icon-cards.md – Icon-card pattern applied to Search Ad Client Info checkboxes for consistency and smooth UX.
+- rich-text-length-normalization.md – Client-side length counting uses visible text only for rich-text fields (bio/ads/property), matching backend and editor.

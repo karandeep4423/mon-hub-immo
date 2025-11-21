@@ -409,7 +409,7 @@ export const SearchAdClientInfoForm: React.FC<SearchAdClientInfoFormProps> = ({
 								)
 							}
 							name="idealMoveInDate"
-							placeholder="MM/YYYY"
+							placeholder="MM/AAAA"
 							disabled={disabled}
 						/>
 					</div>

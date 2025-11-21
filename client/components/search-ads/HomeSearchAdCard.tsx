@@ -124,6 +124,9 @@ export const HomeSearchAdCard: React.FC<HomeSearchAdCardProps> = ({
 							<span className="bg-gray-100 text-gray-800 text-xs font-semibold px-2 py-1 rounded">
 								{searchAd.location.cities
 									.slice(0, 1)
+									.map((city) =>
+										city.replace(/\(\s*\)/g, '').trim(),
+									)
 									.join(', ')}
 								{searchAd.location.cities.length > 1
 									? '...'

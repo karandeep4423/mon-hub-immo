@@ -120,7 +120,7 @@ export interface Property {
 	levels?: number; // Nombre de niveaux
 	parkingSpaces?: number; // Places de parking
 	exterior?: ('garden' | 'balcony' | 'terrace' | 'courtyard' | 'none')[];
-	availableFrom?: string; // Date string MM/YYYY format
+	availableFromDate?: string; // Date string MM/AAAA format
 
 	yearBuilt?: number;
 	heatingType?:
@@ -234,7 +234,7 @@ export interface PropertyFormData {
 	levels?: Property['levels'];
 	parkingSpaces?: Property['parkingSpaces'];
 	exterior?: Property['exterior'];
-	availableFrom?: string; // Date string MM/YYYY format
+	availableFromDate?: string; // Date string MM/AAAA format
 	yearBuilt?: number;
 	heatingType?: Property['heatingType'];
 	orientation?: Property['orientation'];

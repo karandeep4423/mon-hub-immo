@@ -9,24 +9,28 @@ export interface ApiErrorResponse {
 	message: string;
 	error?: string;
 	errors?: Array<{ field?: string; path?: string; message: string }>;
+	fieldErrors?: Record<string, string>; // Field-specific error mapping
 	statusCode?: number;
 }
 
 export class ApiError extends Error {
 	statusCode: number;
 	errors?: Array<{ field?: string; path?: string; message: string }>;
+	fieldErrors?: Record<string, string>; // Field-specific error mapping
 	originalError?: unknown;
 
 	constructor(
 		message: string,
 		statusCode: number = 500,
 		errors?: Array<{ field?: string; path?: string; message: string }>,
+		fieldErrors?: Record<string, string>,
 		originalError?: unknown,
 	) {
 		super(message);
 		this.name = 'ApiError';
 		this.statusCode = statusCode;
 		this.errors = errors;
+		this.fieldErrors = fieldErrors;
 		this.originalError = originalError;
 	}
 }
@@ -85,6 +89,7 @@ export function handleApiError(
 				responseData.message || defaultMessage,
 				statusCode,
 				responseData.errors,
+				responseData.fieldErrors, // Add fieldErrors
 				error,
 			);
 		}
@@ -96,12 +101,14 @@ export function handleApiError(
 					'Les données envoyées sont invalides. Veuillez vérifier votre saisie.',
 					statusCode,
 					undefined,
+					undefined,
 					error,
 				);
 			case 401:
 				return new ApiError(
 					'Vous devez vous connecter pour accéder à cette ressource',
 					statusCode,
+					undefined,
 					undefined,
 					error,
 				);
@@ -110,12 +117,14 @@ export function handleApiError(
 					"Vous n'avez pas les permissions nécessaires pour effectuer cette action",
 					statusCode,
 					undefined,
+					undefined,
 					error,
 				);
 			case 404:
 				return new ApiError(
 					"La ressource demandée n'existe pas ou a été supprimée",
 					statusCode,
+					undefined,
 					undefined,
 					error,
 				);
@@ -124,12 +133,14 @@ export function handleApiError(
 					'Cette opération est en conflit avec une ressource existante',
 					statusCode,
 					undefined,
+					undefined,
 					error,
 				);
 			case 422:
 				return new ApiError(
 					'Les informations fournies ne sont pas valides. Veuillez corriger les erreurs.',
 					statusCode,
+					undefined,
 					undefined,
 					error,
 				);
@@ -138,12 +149,14 @@ export function handleApiError(
 					'Une erreur est survenue sur le serveur. Veuillez réessayer dans quelques instants.',
 					statusCode,
 					undefined,
+					undefined,
 					error,
 				);
 			default:
 				return new ApiError(
 					defaultMessage,
 					statusCode,
+					undefined,
 					undefined,
 					error,
 				);
@@ -158,12 +171,12 @@ export function handleApiError(
 	// Handle standard Error instances
 	if (error instanceof Error) {
 		logger.error(`[${context}] Error`, error.message);
-		return new ApiError(error.message, 500, undefined, error);
+		return new ApiError(error.message, 500, undefined, undefined, error);
 	}
 
 	// Handle unknown error types
 	logger.error(`[${context}] Unknown error`, error);
-	return new ApiError(defaultMessage, 500, undefined, error);
+	return new ApiError(defaultMessage, 500, undefined, undefined, error);
 }
 
 /**
@@ -174,6 +187,52 @@ export function getErrorMessage(error: ApiError): string {
 		return error.errors.map((e) => e.message).join(', ');
 	}
 	return error.message;
+}
+
+/**
+ * Gets all field-specific error messages as an array
+ */
+export function getFieldErrorMessages(error: ApiError): string[] {
+	const messages: string[] = [];
+
+	// Add fieldErrors if present
+	if (error.fieldErrors) {
+		messages.push(...Object.values(error.fieldErrors));
+	}
+
+	// Add errors array if present
+	if (error.errors && error.errors.length > 0) {
+		messages.push(...error.errors.map((e) => e.message));
+	}
+
+	return messages;
+}
+
+/**
+ * Gets formatted field errors for display
+ * Returns object with field names and their error messages
+ */
+export function getFormattedFieldErrors(
+	error: ApiError,
+): Record<string, string> {
+	const fieldErrors: Record<string, string> = {};
+
+	// Add from fieldErrors object
+	if (error.fieldErrors) {
+		Object.assign(fieldErrors, error.fieldErrors);
+	}
+
+	// Add from errors array
+	if (error.errors && error.errors.length > 0) {
+		error.errors.forEach((err) => {
+			const fieldName = err.field || err.path;
+			if (fieldName) {
+				fieldErrors[fieldName] = err.message;
+			}
+		});
+	}
+
+	return fieldErrors;
 }
 
 /**

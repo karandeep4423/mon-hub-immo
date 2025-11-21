@@ -110,7 +110,10 @@ export const handleAuthError = (error: unknown): void => {
 		const message = error.message?.toLowerCase() || '';
 
 		// Login-specific errors
-		if (message.includes('invalid credentials')) {
+		if (
+			message.includes('invalid credentials') ||
+			message.includes('identifiants invalides')
+		) {
 			authToastError(
 				Features.Auth.AUTH_TOAST_MESSAGES.INVALID_CREDENTIALS,
 			);
@@ -119,7 +122,10 @@ export const handleAuthError = (error: unknown): void => {
 
 		if (
 			message.includes('account locked') ||
-			message.includes('locked for')
+			message.includes('locked for') ||
+			message.includes('account temporarily locked') ||
+			message.includes('compte verrouillé') ||
+			message.includes('verrouillé pour')
 		) {
 			// Extract minutes if available
 			const minutesMatch = message.match(/(\d+)\s*minute/i);
@@ -138,24 +144,39 @@ export const handleAuthError = (error: unknown): void => {
 			return;
 		}
 
-		// Rate limiting errors - backend sends user-friendly French messages with exact timing
-		// Example: "Trop de tentatives de connexion. Veuillez réessayer dans 28 minutes."
+		// Rate limiting and too many attempts errors
 		if (
 			message.includes('trop de tentatives') ||
 			message.includes('trop de demandes') ||
 			message.includes('trop de requêtes') ||
 			message.includes('veuillez réessayer dans') ||
+			message.includes('tentatives échouées') ||
 			message.includes('multiple failed') ||
 			message.includes('too many')
 		) {
-			// Show the backend message directly (it has correct timing)
-			authToastError(error.message);
+			// For French messages from backend, show them directly (they're user-friendly)
+			// For English messages, translate to user-friendly French
+			if (
+				message.includes('trop de tentatives') ||
+				message.includes('tentatives échouées')
+			) {
+				// Backend already sends user-friendly French message with timing
+				authToastError(error.message);
+			} else {
+				// English message - show our user-friendly version
+				authToastError(
+					Features.Auth.AUTH_TOAST_MESSAGES.TOO_MANY_ATTEMPTS,
+				);
+			}
 			return;
 		}
 
 		if (
 			message.includes('verify your email') ||
-			message.includes('email address before logging')
+			message.includes('email address before logging') ||
+			message.includes('please verify your email') ||
+			message.includes('veuillez vérifier') ||
+			message.includes('vérifier votre email')
 		) {
 			authToastWarning(
 				Features.Auth.AUTH_TOAST_MESSAGES.EMAIL_NOT_VERIFIED,
@@ -166,7 +187,8 @@ export const handleAuthError = (error: unknown): void => {
 		// Signup-specific errors
 		if (
 			message.includes('email already') ||
-			message.includes('existe déjà')
+			message.includes('existe déjà') ||
+			message.includes('un compte existe déjà')
 		) {
 			authToastError(
 				Features.Auth.AUTH_TOAST_MESSAGES.EMAIL_ALREADY_EXISTS,
@@ -178,6 +200,9 @@ export const handleAuthError = (error: unknown): void => {
 		if (
 			message.includes('invalid code') ||
 			message.includes('code invalide') ||
+			message.includes('code de vérification invalide') ||
+			message.includes('invalide ou expiré') ||
+			message.includes('expiré') ||
 			message.includes('expired')
 		) {
 			authToastError(
@@ -195,7 +220,9 @@ export const handleAuthError = (error: unknown): void => {
 		if (
 			message.includes('cannot reuse') ||
 			message.includes('last 5 passwords') ||
-			message.includes('password history')
+			message.includes('password history') ||
+			message.includes('mot de passe a déjà été utilisé') ||
+			message.includes('utilisé récemment')
 		) {
 			authToastError(
 				Features.Auth.AUTH_TOAST_MESSAGES.PASSWORD_IN_HISTORY,
@@ -203,7 +230,11 @@ export const handleAuthError = (error: unknown): void => {
 			return;
 		}
 
-		if (message.includes('reset code') && message.includes('invalid')) {
+		if (
+			(message.includes('reset code') && message.includes('invalid')) ||
+			message.includes('invalid or expired reset code') ||
+			message.includes('code de réinitialisation invalide')
+		) {
 			authToastError(
 				Features.Auth.AUTH_TOAST_MESSAGES.INVALID_RESET_CODE,
 			);
@@ -212,7 +243,11 @@ export const handleAuthError = (error: unknown): void => {
 
 		// Validation errors with field-specific messages
 		if (
-			message.includes('validation') &&
+			(message.includes('validation') ||
+				message.includes('validation failed') ||
+				message.includes('validation échouée') ||
+				message.includes('échec de validation') ||
+				message.includes('échec validation')) &&
 			error.errors &&
 			Array.isArray(error.errors) &&
 			error.errors.length > 0
@@ -268,9 +303,19 @@ export const handleAuthError = (error: unknown): void => {
 					}
 				return;
 			case 404:
-				authToastError(
-					Features.Auth.AUTH_TOAST_MESSAGES.ACCOUNT_NOT_FOUND,
-				);
+				// Check if it's a user not found error
+				if (
+					message.includes('user not found') ||
+					message.includes('utilisateur introuvable') ||
+					message.includes('compte introuvable')
+				) {
+					authToastError(
+						Features.Auth.AUTH_TOAST_MESSAGES.ACCOUNT_NOT_FOUND,
+					);
+				} else {
+					// Generic 404
+					authToastError(error.message || 'Ressource introuvable');
+				}
 				return;
 			case 422:
 				authToastError(
@@ -291,7 +336,21 @@ export const handleAuthError = (error: unknown): void => {
 			case 500:
 			case 502:
 			case 503:
-				authToastError(Features.Auth.AUTH_TOAST_MESSAGES.SERVER_ERROR);
+				// Check for specific internal server errors
+				if (
+					message.includes('internal server error') ||
+					message.includes('erreur serveur') ||
+					message.includes('erreur serveur interne')
+				) {
+					authToastError(
+						Features.Auth.AUTH_TOAST_MESSAGES.SERVER_ERROR,
+					);
+				} else {
+					authToastError(
+						error.message ||
+							Features.Auth.AUTH_TOAST_MESSAGES.SERVER_ERROR,
+					);
+				}
 				return;
 		}
 
@@ -307,13 +366,21 @@ export const handleAuthError = (error: unknown): void => {
 		const message = error.message?.toLowerCase() || '';
 
 		// Network errors
-		if (message.includes('network') || message.includes('fetch')) {
+		if (
+			message.includes('network') ||
+			message.includes('fetch') ||
+			message.includes('réseau')
+		) {
 			authToastError(Features.Auth.AUTH_TOAST_MESSAGES.NETWORK_ERROR);
 			return;
 		}
 
 		// Validation errors
-		if (message.includes('validation')) {
+		if (
+			message.includes('validation') ||
+			message.includes('validation failed') ||
+			message.includes('validation échouée')
+		) {
 			authToastError(Features.Auth.AUTH_TOAST_MESSAGES.VALIDATION_ERROR);
 			return;
 		}

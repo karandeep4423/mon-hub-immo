@@ -1,4 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose';
+import { htmlTextLength } from '../utils/sanitize';
 import bcrypt from 'bcryptjs';
 
 export interface IUser extends Document {
@@ -212,10 +213,14 @@ const userSchema = new Schema<IUser>(
 			},
 			personalPitch: {
 				type: String,
-				maxlength: [
-					1000,
-					'Bio personnelle trop longue (max 1000 caractères)',
-				],
+				validate: {
+					validator: function (v: string) {
+						if (!v) return true;
+						return htmlTextLength(v) <= 1000;
+					},
+					message:
+						'Bio personnelle trop longue (max 1000 caractères de texte)',
+				},
 			},
 			collaborateWithAgents: {
 				type: Boolean,

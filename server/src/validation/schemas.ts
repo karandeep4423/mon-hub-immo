@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { htmlTextLength } from '../utils/sanitize';
 import {
 	validatePasswordStrength,
 	meetsBasicRequirements,
@@ -117,7 +118,9 @@ export const updateProfileSchema = z.object({
 			yearsExperience: z.number().int().min(0).max(50).optional(),
 			personalPitch: z
 				.string()
-				.max(1000, 'La bio ne peut pas dépasser 1000 caractères')
+				.refine((val) => htmlTextLength(val) <= 1000, {
+					message: 'La bio ne peut pas dépasser 1000 caractères',
+				})
 				.optional(),
 			mandateTypes: z
 				.array(z.enum(['simple', 'exclusif', 'co-mandat']))
@@ -172,7 +175,9 @@ export const completeProfileSchema = z.object({
 			.optional(),
 		personalPitch: z
 			.string()
-			.max(1000, 'La bio ne peut pas dépasser 1000 caractères')
+			.refine((val) => htmlTextLength(val) <= 1000, {
+				message: 'La bio ne peut pas dépasser 1000 caractères',
+			})
 			.optional(),
 		mandateTypes: z
 			.array(z.enum(['simple', 'exclusif', 'co-mandat']))
@@ -218,7 +223,14 @@ export const signupSchema = z
 // Property
 export const propertyBaseSchema = z.object({
 	title: z.string().min(10).max(200),
-	description: z.string().min(50).max(2000),
+	description: z
+		.string()
+		.refine((val) => htmlTextLength(val) >= 50, {
+			message: 'La description doit contenir au moins 50 caractères',
+		})
+		.refine((val) => htmlTextLength(val) <= 2000, {
+			message: 'La description ne peut pas dépasser 2000 caractères',
+		}),
 	price: z.number().min(1000).max(50_000_000),
 	surface: z.number().min(1).max(10_000),
 	propertyType: z.enum([
@@ -401,7 +413,14 @@ export type ProposeCollaborationInput = z.infer<
 // Search Ads
 export const searchAdBaseSchema = z.object({
 	title: z.string().min(5).max(200),
-	description: z.string().min(10).max(2000),
+	description: z
+		.string()
+		.refine((val) => htmlTextLength(val) >= 10, {
+			message: 'La description doit contenir au moins 10 caractères',
+		})
+		.refine((val) => htmlTextLength(val) <= 2000, {
+			message: 'La description ne peut pas dépasser 2000 caractères',
+		}),
 	propertyTypes: z
 		.array(z.enum(['house', 'apartment', 'land', 'building', 'commercial']))
 		.min(1),

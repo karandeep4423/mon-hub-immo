@@ -1,4 +1,5 @@
 import { Schema, model, Document, Types } from 'mongoose';
+import { htmlTextLength } from '../utils/sanitize';
 
 export interface ISearchAd extends Document {
 	authorId: Types.ObjectId;
@@ -138,7 +139,20 @@ const SearchAdSchema = new Schema<ISearchAd>(
 		},
 
 		title: { type: String, required: true, trim: true },
-		description: { type: String, required: true, trim: true },
+		description: {
+			type: String,
+			required: true,
+			trim: true,
+			validate: {
+				validator: function (v: string) {
+					if (!v) return true;
+					const len = htmlTextLength(v);
+					return len >= 10 && len <= 2000;
+				},
+				message:
+					'La description doit contenir entre 10 et 2000 caractères de texte',
+			},
+		},
 		badges: [{ type: String }],
 
 		clientInfo: {

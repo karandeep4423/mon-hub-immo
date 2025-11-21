@@ -369,12 +369,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
 					{isMyMessage && (
 						<ConfirmDialog
 							isOpen={confirmOpen}
-							title="Ready to remove this?"
-							description="Are you sure you want to delete this message? This action cannot be undone."
+							title="Prêt à supprimer ceci ?"
+							description="Êtes-vous sûr de vouloir supprimer ce message ? Cette action ne peut pas être annulée."
 							onConfirm={handleConfirmDelete}
 							onCancel={() => setConfirmOpen(false)}
-							confirmText="Delete"
-							cancelText="Cancel"
+							confirmText="Supprimer"
+							cancelText="Annuler"
 							variant="danger"
 							loading={deleting}
 						/>

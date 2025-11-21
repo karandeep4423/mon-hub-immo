@@ -28,7 +28,17 @@ export const LocationSection: React.FC<LocationSectionProps> = ({
 				<BaseLocationAutocomplete
 					mode="multi"
 					label="Ville(s), quartier(s) ciblé(s) *"
-					value={cities ? cities.split(',').map((c) => c.trim()) : []}
+					value={
+						cities
+							? cities.split(',').map((c) => {
+									// Clean up city string - remove empty brackets like () ()
+									return c
+										.trim()
+										.replace(/\(\s*\)/g, '')
+										.trim();
+								})
+							: []
+					}
 					onMultiSelect={(locations: LocationItem[]) =>
 						onCitiesChange(
 							locations

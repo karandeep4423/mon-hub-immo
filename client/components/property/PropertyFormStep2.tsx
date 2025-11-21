@@ -33,7 +33,6 @@ export const PropertyFormStep2: React.FC<PropertyFormStep2Props> = ({
 				<MapPin className="w-5 h-5 text-red-600" />
 				Localisation
 			</h3>
-
 			<AddressAutocomplete
 				label="Adresse"
 				value={formData.address || ''}
@@ -48,11 +47,13 @@ export const PropertyFormStep2: React.FC<PropertyFormStep2Props> = ({
 						);
 					}
 				}}
+				onManualInput={(address) => {
+					handleInputChange('address', address);
+				}}
 				placeholder="Rechercher une adresse..."
 				error={errors.address}
 				required
-			/>
-
+			/>{' '}
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 				<div>
 					<label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">

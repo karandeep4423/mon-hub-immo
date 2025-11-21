@@ -169,7 +169,7 @@ export const PropertyFormStep3: React.FC<PropertyFormStep3Props> = ({
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 				<Input
 					type="text"
-					value={formData.availableFrom || ''}
+					value={formData.availableFromDate || ''}
 					onChange={(e) => {
 						let value = e.target.value.replace(/\D/g, '');
 						if (value.length >= 2) {
@@ -178,11 +178,11 @@ export const PropertyFormStep3: React.FC<PropertyFormStep3Props> = ({
 								'/' +
 								value.substring(2, 6);
 						}
-						handleInputChange('availableFrom', value);
+						handleInputChange('availableFromDate', value);
 					}}
 					placeholder="MM / AAAA"
 					label="Disponible à partir de"
-					name="availableFrom"
+					name="availableFromDate"
 					maxLength={7}
 					icon={<Calendar className="w-4 h-4 text-pink-600" />}
 				/>

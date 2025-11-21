@@ -81,7 +81,6 @@ export const useFormValidation = (schema: StepValidationSchema) => {
 						: `${fieldName} est requis`;
 				}
 			}
-
 			// String validations
 			if (typeof value === 'string') {
 				if (rules.minLength && value.length < rules.minLength.value) {

@@ -49,8 +49,61 @@ export const Pagination: React.FC<PaginationProps> = ({
 		scrollToTarget();
 	};
 
-	// Simple windowed pages (1 ... n)
-	const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+	// Generate smart pagination with ellipsis
+	const generatePageNumbers = (maxVisible: number) => {
+		// If total pages fit within maxVisible, show all
+		if (totalPages <= maxVisible) {
+			return Array.from({ length: totalPages }, (_, i) => i + 1);
+		}
+
+		const pages: (number | string)[] = [];
+		const halfVisible = Math.floor((maxVisible - 3) / 2); // Reserve 3 spots for 1, ..., last
+
+		// Always show first page
+		pages.push(1);
+
+		// Calculate start and end of the middle range
+		let startPage = Math.max(2, currentPage - halfVisible);
+		let endPage = Math.min(totalPages - 1, currentPage + halfVisible);
+
+		// Adjust if we're near the start
+		if (currentPage <= halfVisible + 2) {
+			endPage = Math.min(totalPages - 1, maxVisible - 2);
+			startPage = 2;
+		}
+
+		// Adjust if we're near the end
+		if (currentPage >= totalPages - halfVisible - 1) {
+			startPage = Math.max(2, totalPages - maxVisible + 2);
+			endPage = totalPages - 1;
+		}
+
+		// Add left ellipsis if needed
+		if (startPage > 2) {
+			pages.push('...');
+		}
+
+		// Add middle pages
+		for (let i = startPage; i <= endPage; i++) {
+			pages.push(i);
+		}
+
+		// Add right ellipsis if needed
+		if (endPage < totalPages - 1) {
+			pages.push('...');
+		}
+
+		// Always show last page (if more than 1 page)
+		if (totalPages > 1) {
+			pages.push(totalPages);
+		}
+
+		return pages;
+	};
+
+	// Responsive page counts: sm-lg: 5, lg+: 7
+	const pagesSm = generatePageNumbers(5); // Tablet
+	const pagesLg = generatePageNumbers(7); // Desktop
 
 	return (
 		<nav className={className} aria-label="Pagination">
@@ -87,8 +140,8 @@ export const Pagination: React.FC<PaginationProps> = ({
 				</li>
 			</ul>
 
-			{/* sm+ : full numbered pagination */}
-			<ul className="hidden sm:flex items-center gap-2 justify-center mt-6">
+			{/* sm+ : numbered pagination with ellipsis (responsive) */}
+			<ul className="hidden sm:flex lg:hidden items-center gap-2 justify-center mt-6">
 				<li>
 					<button
 						onClick={() => goTo(currentPage - 1)}
@@ -102,21 +155,76 @@ export const Pagination: React.FC<PaginationProps> = ({
 						Précédent
 					</button>
 				</li>
-				{pages.map((p) => (
-					<li key={p}>
-						<button
-							onClick={() => goTo(p)}
-							className={`px-3 py-2 rounded-md text-sm font-medium ${
-								p === currentPage
-									? 'bg-brand text-white'
-									: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-							}`}
-							aria-current={
-								p === currentPage ? 'page' : undefined
-							}
-						>
-							{p}
-						</button>
+				{pagesSm.map((p, idx) => (
+					<li key={`${p}-${idx}`}>
+						{p === '...' ? (
+							<span className="px-3 py-2 text-gray-500">...</span>
+						) : (
+							<button
+								onClick={() => goTo(p as number)}
+								className={`px-3 py-2 rounded-md text-sm font-medium ${
+									p === currentPage
+										? 'bg-brand text-white'
+										: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+								}`}
+								aria-current={
+									p === currentPage ? 'page' : undefined
+								}
+							>
+								{p}
+							</button>
+						)}
+					</li>
+				))}
+				<li>
+					<button
+						onClick={() => goTo(currentPage + 1)}
+						disabled={currentPage === totalPages}
+						className={`px-3 py-2 rounded-md text-sm font-medium ${
+							currentPage === totalPages
+								? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+								: 'bg-brand text-white hover:bg-brand-dark'
+						}`}
+					>
+						Suivant
+					</button>
+				</li>
+			</ul>
+
+			{/* lg+ : numbered pagination with more pages visible */}
+			<ul className="hidden lg:flex items-center gap-2 justify-center mt-6">
+				<li>
+					<button
+						onClick={() => goTo(currentPage - 1)}
+						disabled={currentPage === 1}
+						className={`px-3 py-2 rounded-md text-sm font-medium ${
+							currentPage === 1
+								? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+								: 'bg-brand text-white hover:bg-brand-dark'
+						}`}
+					>
+						Précédent
+					</button>
+				</li>
+				{pagesLg.map((p, idx) => (
+					<li key={`${p}-${idx}`}>
+						{p === '...' ? (
+							<span className="px-3 py-2 text-gray-500">...</span>
+						) : (
+							<button
+								onClick={() => goTo(p as number)}
+								className={`px-3 py-2 rounded-md text-sm font-medium ${
+									p === currentPage
+										? 'bg-brand text-white'
+										: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+								}`}
+								aria-current={
+									p === currentPage ? 'page' : undefined
+								}
+							>
+								{p}
+							</button>
+						)}
 					</li>
 				))}
 				<li>

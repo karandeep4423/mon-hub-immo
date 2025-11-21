@@ -140,27 +140,63 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 		}
 	}, [value]);
 
-	const handleInput = () => {
+	const handleInput = (e?: React.FormEvent<HTMLDivElement>) => {
 		if (editorRef.current) {
 			const text = editorRef.current.innerText || '';
+			const currentLength = text.length;
 
 			// Enforce maxLength if specified
-			if (maxLength && text.length > maxLength) {
-				// Prevent further input
-				editorRef.current.innerText = text.substring(0, maxLength);
+			if (maxLength && currentLength > maxLength) {
+				// Prevent the input and restore previous content
+				if (e) {
+					e.preventDefault();
+				}
+
+				// Restore the previous HTML content
+				if (value) {
+					const decodeHTML = (html: string): string => {
+						const txt = document.createElement('textarea');
+						txt.innerHTML = html;
+						return txt.value;
+					};
+					editorRef.current.innerHTML = decodeHTML(value);
+				}
+
 				// Move cursor to end
 				const range = document.createRange();
 				const sel = window.getSelection();
-				range.selectNodeContents(editorRef.current);
-				range.collapse(false);
-				sel?.removeAllRanges();
-				sel?.addRange(range);
+				if (editorRef.current.lastChild) {
+					range.selectNodeContents(editorRef.current);
+					range.collapse(false);
+					sel?.removeAllRanges();
+					sel?.addRange(range);
+				}
 				return;
 			}
 
 			const html = editorRef.current.innerHTML;
 			onChange(html);
-			setCharCount(text.length);
+			setCharCount(currentLength);
+		}
+	};
+
+	const handleBeforeInput = (e: React.FormEvent<HTMLDivElement>) => {
+		if (maxLength && editorRef.current) {
+			const text = editorRef.current.innerText || '';
+			const currentLength = text.length;
+
+			// Check if adding more content would exceed limit
+			// Allow if user is deleting (currentLength will decrease)
+			const nativeEvent = e.nativeEvent as InputEvent;
+			if (
+				nativeEvent.inputType &&
+				!nativeEvent.inputType.includes('delete')
+			) {
+				if (currentLength >= maxLength) {
+					e.preventDefault();
+					return;
+				}
+			}
 		}
 	};
 
@@ -544,6 +580,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
 				<div
 					ref={editorRef}
 					contentEditable
+					onBeforeInput={handleBeforeInput}
 					onInput={handleInput}
 					onFocus={() => setIsFocused(true)}
 					onBlur={() => setIsFocused(false)}

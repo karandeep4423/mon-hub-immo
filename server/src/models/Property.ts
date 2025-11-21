@@ -1,4 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose';
+import { htmlTextLength } from '../utils/sanitize';
 import { IUser } from './User';
 
 export interface IProperty extends Document {
@@ -160,10 +161,14 @@ const propertySchema = new Schema<IProperty>(
 				50,
 				'La description doit contenir au moins 50 caractères',
 			],
-			maxlength: [
-				2000,
-				'La description doit contenir moins de 2000 caractères',
-			],
+			validate: {
+				validator: function (v: string) {
+					if (!v) return true;
+					return htmlTextLength(v) <= 2000;
+				},
+				message:
+					'La description ne peut pas dépasser 2000 caractères de texte',
+			},
 		},
 		price: {
 			type: Number,
@@ -393,7 +398,7 @@ const propertySchema = new Schema<IProperty>(
 			trim: true,
 			match: [
 				/^\d{2}\/\d{4}$/,
-				'Format de date invalide (MM/YYYY attendu)',
+				'Format de date invalide (MM/AAAA attendu)',
 			],
 		},
 

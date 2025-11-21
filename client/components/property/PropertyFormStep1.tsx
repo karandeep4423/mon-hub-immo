@@ -67,6 +67,7 @@ export const PropertyFormStep1: React.FC<PropertyFormStep1Props> = ({
 				error={errors.description}
 				minHeight="150px"
 				showCharCount
+				maxLength={2000}
 			/>
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 				<NumberInput

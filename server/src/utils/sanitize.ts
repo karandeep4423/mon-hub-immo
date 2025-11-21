@@ -1,4 +1,5 @@
 import validator from 'validator';
+import sanitizeHtml from 'sanitize-html';
 
 /**
  * Unified Sanitization Utilities
@@ -14,6 +15,60 @@ import validator from 'validator';
 export const sanitizeString = (input: string | undefined | null): string => {
 	if (!input || typeof input !== 'string') return '';
 	return validator.escape(validator.trim(input));
+};
+
+/**
+ * Sanitize HTML content (for rich text fields)
+ * Allows safe HTML tags while removing dangerous elements
+ */
+export const sanitizeHtmlContent = (
+	input: string | undefined | null,
+): string => {
+	if (!input || typeof input !== 'string') return '';
+
+	return sanitizeHtml(input.trim(), {
+		allowedTags: [
+			'b',
+			'i',
+			'u',
+			'strong',
+			'em',
+			'br',
+			'p',
+			'ul',
+			'ol',
+			'li',
+			'font',
+			// Allow links
+			'a',
+		],
+		allowedAttributes: {
+			font: ['size', 'color'],
+			a: ['href', 'target', 'rel', 'title'],
+		},
+		allowedStyles: {
+			'*': {
+				color: [/^#[0-9a-fA-F]{6}$/],
+				'font-size': [/^\d+(?:px|em|%)$/],
+			},
+		},
+		// Restrict link protocols to safe schemes
+		allowedSchemes: ['http', 'https', 'mailto', 'tel'],
+		// Ensure rel is safe when target=_blank
+		transformTags: {
+			a: (tagName, attribs) => {
+				const attrs = { ...attribs };
+				if (attrs.target === '_blank') {
+					// Preserve existing rel but ensure noopener noreferrer
+					const rel = (attrs.rel || '').split(/\s+/).filter(Boolean);
+					if (!rel.includes('noopener')) rel.push('noopener');
+					if (!rel.includes('noreferrer')) rel.push('noreferrer');
+					attrs.rel = rel.join(' ').trim();
+				}
+				return { tagName, attribs: attrs };
+			},
+		},
+	});
 };
 
 /**
@@ -158,4 +213,55 @@ export const createSafeRegex = (searchTerm: string): RegExp => {
  */
 export const isValidObjectId = (id: string): boolean => {
 	return /^[a-f\d]{24}$/i.test(id);
+};
+
+// ==================== HTML -> Plain Text Helpers ====================
+
+/**
+ * Decode common HTML entities and numeric entities to unicode
+ */
+const decodeHtmlEntities = (input: string): string => {
+	return input
+		.replace(/&#(\d+);/g, (_, dec) => {
+			const code = parseInt(dec, 10);
+			return Number.isFinite(code) ? String.fromCodePoint(code) : _;
+		})
+		.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => {
+			const code = parseInt(hex, 16);
+			return Number.isFinite(code) ? String.fromCodePoint(code) : _;
+		})
+		.replace(/&nbsp;/g, ' ')
+		.replace(/&amp;/g, '&')
+		.replace(/&lt;/g, '<')
+		.replace(/&gt;/g, '>')
+		.replace(/&quot;/g, '"')
+		.replace(/&apos;/g, "'");
+};
+
+/**
+ * Convert HTML string to normalized plain text suitable for length checks
+ * - Strips tags
+ * - Decodes entities
+ * - Removes zero-width characters
+ * - Collapses whitespace
+ */
+export const htmlToPlainText = (html: string | undefined | null): string => {
+	if (!html || typeof html !== 'string') return '';
+	// Strip all tags using sanitize-html with no allowed tags
+	const stripped = sanitizeHtml(html, {
+		allowedTags: [],
+		allowedAttributes: {},
+	});
+	const decoded = decodeHtmlEntities(stripped);
+	return decoded
+		.replace(/[\u200B-\u200D\uFEFF]/g, '')
+		.replace(/\s+/g, ' ')
+		.trim();
+};
+
+/**
+ * Get the length of visible text from an HTML string
+ */
+export const htmlTextLength = (html: string | undefined | null): number => {
+	return htmlToPlainText(html).length;
 };

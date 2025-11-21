@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { htmlTextLength } from '@/lib/utils/html';
 
 /**
  * Shared Search Ad validation schema
@@ -13,7 +14,9 @@ export const searchAdValidationSchema = z.object({
 	description: z
 		.string()
 		.min(10, 'La description doit contenir au moins 10 caractères.')
-		.max(2000, 'La description ne peut pas dépasser 2000 caractères.'),
+		.refine((val) => htmlTextLength(val) <= 2000, {
+			message: 'La description ne peut pas dépasser 2000 caractères.',
+		}),
 	propertyTypes: z
 		.array(z.string())
 		.min(1, 'Veuillez sélectionner au moins un type de bien.'),

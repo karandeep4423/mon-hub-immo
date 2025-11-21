@@ -5,6 +5,7 @@ import {
 	commonValidationRules,
 	type StepValidationSchema,
 } from './useFormValidation';
+import { htmlTextLength } from '@/lib/utils/html';
 
 // Property form validation schema
 const propertyValidationSchema: StepValidationSchema = {
@@ -22,6 +23,17 @@ const propertyValidationSchema: StepValidationSchema = {
 				value: 50,
 				message: 'La description doit contenir au moins 50 caractères',
 			},
+			custom: [
+				{
+					validate: (value) => {
+						if (typeof value !== 'string') return false;
+						// Count visible text only (HTML entities decoded)
+						return htmlTextLength(value) <= 2000;
+					},
+					message:
+						'La description ne peut pas dépasser 2000 caractères',
+				},
+			],
 		},
 		price: {
 			required: 'Le prix est requis',
@@ -107,6 +119,24 @@ export const usePropertyForm = ({
 	initialData = {},
 	isEditing = false,
 }: UsePropertyFormProps = {}) => {
+	// Transform initialData to ensure proper format
+	const transformedInitialData: Record<string, unknown> = { ...initialData };
+
+	// Convert availableFrom Date to MM/AAAA format for display
+	// The backend sends 'availableFrom' (Date), but we display it as 'availableFromDate' (string MM/AAAA)
+	if (
+		transformedInitialData.availableFrom &&
+		typeof transformedInitialData.availableFrom !== 'string'
+	) {
+		const date = new Date(
+			transformedInitialData.availableFrom as Date | string,
+		);
+		const month = String(date.getMonth() + 1).padStart(2, '0');
+		const year = date.getFullYear();
+		transformedInitialData.availableFromDate = `${month}/${year}`;
+		delete transformedInitialData.availableFrom; // Remove the Date field
+	}
+
 	const [formData, setFormData] = useState<PropertyFormData>({
 		title: '',
 		description: '',
@@ -150,7 +180,7 @@ export const usePropertyForm = ({
 		badges: [],
 		status: 'draft',
 		clientInfo: undefined,
-		...initialData,
+		...transformedInitialData,
 	});
 
 	// Use FormValidation hook

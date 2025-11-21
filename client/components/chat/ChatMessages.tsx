@@ -231,6 +231,15 @@ const ChatMessages: React.FC = () => {
 		}
 	}, [messages, scrollToBottom, shouldAutoScroll]);
 
+	/**
+	 * Auto-scroll when typing indicator appears
+	 */
+	useEffect(() => {
+		if (shouldAutoScroll && typingUsers.length > 0 && selectedUser?._id) {
+			scrollToBottom();
+		}
+	}, [typingUsers, shouldAutoScroll, selectedUser?._id, scrollToBottom]);
+
 	// Build image list for current conversation whenever messages change
 	useEffect(() => {
 		const imgs: Array<{ url: string; alt?: string }> = [];

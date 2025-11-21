@@ -26,6 +26,7 @@ import {
 	sanitizeString,
 	sanitizeEmail,
 	sanitizePhone,
+	sanitizeHtmlContent,
 } from '../utils/sanitize';
 import { compareVerificationCode } from '../utils/timingSafe';
 import {
@@ -1274,7 +1275,7 @@ export const updateProfile = async (
 				);
 			}
 			if (professionalInfo.personalPitch !== undefined) {
-				user.professionalInfo.personalPitch = sanitizeString(
+				user.professionalInfo.personalPitch = sanitizeHtmlContent(
 					professionalInfo.personalPitch,
 				);
 			}
@@ -1407,7 +1408,7 @@ export const completeProfile = async (
 				);
 			}
 			if (professionalInfo.personalPitch) {
-				sanitizedProfessionalInfo.personalPitch = sanitizeString(
+				sanitizedProfessionalInfo.personalPitch = sanitizeHtmlContent(
 					professionalInfo.personalPitch,
 				);
 			}
