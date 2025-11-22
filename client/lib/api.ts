@@ -104,6 +104,25 @@ api.interceptors.response.use(
 			}
 			return Promise.reject(error);
 		}
+
+		// Handle profile incomplete (403) - redirect user to complete profile page
+		if (error.response?.status === 403) {
+			try {
+				const code = error.response?.data?.code;
+				if (code === 'PROFILE_INCOMPLETE') {
+					toast.info('Veuillez compléter votre profil pour continuer.');
+					if (typeof window !== 'undefined') {
+						const currentPath = window.location.pathname || '';
+						if (!currentPath.startsWith('/auth/complete-profile')) {
+							window.location.replace('/auth/complete-profile');
+						}
+					}
+				}
+			} catch (err) {
+				// ignore
+			}
+			return Promise.reject(error);
+		}
 		const originalRequest = error.config;
 
 		// Handle 403 CSRF token errors - fetch new token and retry

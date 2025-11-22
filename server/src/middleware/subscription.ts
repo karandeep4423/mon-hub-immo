@@ -31,6 +31,18 @@ export const requireActiveSubscription = async (
       return next();
     }
 
+    // Enforce profile completion: agents must complete their profile before navigating the platform
+    if (user.userType === 'agent' && !user.profileCompleted) {
+      logger.info(`[Subscription] Blocking access for agent with incomplete profile ${user.email}`);
+      res.status(403).json({
+        success: false,
+        code: 'PROFILE_INCOMPLETE',
+        message: 'Veuillez compléter votre profil avant d\'accéder à cette fonctionnalité.',
+        profileUrl: '/auth/complete-profile',
+      });
+      return;
+    }
+
     // Enforce subscription/payment requirement for agents who completed their profile
     // Once an agent has completed their profile they must pay to access protected areas
     if (user.userType === 'agent' && user.profileCompleted) {
