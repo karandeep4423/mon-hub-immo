@@ -1,38 +1,39 @@
-'use client';
+ 'use client';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { designTokens } from '@/lib/constants/designTokens';
+import { BarChart2, Users, Home, Handshake, Settings } from 'lucide-react';
 
 const navItems = [
 	{
 		label: 'Tableau de bord',
 		href: '/admin',
-		icon: '📊',
+		icon: <BarChart2 className="w-5 h-5" />, 
 		badge: null,
 	},
 	{
 		label: 'Utilisateurs',
 		href: '/admin/users',
-		icon: '👥',
+		icon: <Users className="w-5 h-5" />,
 		badge: null,
 	},
 	{
 		label: 'Annonces',
 		href: '/admin/properties',
-		icon: '🏠',
+		icon: <Home className="w-5 h-5" />,
 		badge: null,
 	},
 	{
 		label: 'Collaborations',
 		href: '/admin/collaborations',
-		icon: '🤝',
+		icon: <Handshake className="w-5 h-5" />,
 		badge: null,
 	},
 	{
 		label: 'Paramètres',
 		href: '/admin/settings',
-		icon: '⚙️',
+		icon: <Settings className="w-5 h-5" />,
 		badge: null,
 	},
 ];
