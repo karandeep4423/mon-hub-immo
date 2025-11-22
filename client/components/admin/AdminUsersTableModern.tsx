@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useState, useMemo } from 'react';
 import CreateUserModal from './CreateUserModal';
@@ -11,6 +11,7 @@ import { Button } from './ui/Button';
 import { DataTable } from './ui/DataTable';
 import AdminUserFilters from './AdminUserFilters';
 import { toast } from 'react-toastify';
+import { Download, Upload, Plus, Users, CheckCircle, Clock, Eye, Edit, Unlock, UserX, Key, CreditCard, X } from 'lucide-react';
 
 export interface AdminUser {
 	_id: string;
@@ -158,10 +159,10 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 					<p className="text-gray-600 mt-1">Total: {filteredUsers.length} utilisateur(s)</p>
 				</div>
 				<div className="flex gap-2">
-					<Button variant="secondary" size="md" onClick={() => setShowImport(true)}>📥 Importer</Button>
-					<Button variant="secondary" size="md" onClick={() => exportToCSV()}>📤 Exporter CSV</Button>
-					<Button variant="secondary" size="md" onClick={() => exportToXLS()}>📤 Exporter XLS</Button>
-					<Button variant="primary" size="md" onClick={() => setShowCreate(true)}>➕ Nouveau</Button>
+					<Button variant="secondary" size="md" onClick={() => setShowImport(true)}><Download className="w-4 h-4 inline-block mr-2" />Importer</Button>
+					<Button variant="secondary" size="md" onClick={() => exportToCSV()}><Upload className="w-4 h-4 inline-block mr-2" />Exporter CSV</Button>
+					<Button variant="secondary" size="md" onClick={() => exportToXLS()}><Upload className="w-4 h-4 inline-block mr-2" />Exporter XLS</Button>
+					<Button variant="primary" size="md" onClick={() => setShowCreate(true)}><Plus className="w-4 h-4 inline-block mr-2" />Nouveau</Button>
 				</div>
 			</div>
 
@@ -177,9 +178,9 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 			/>
 
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-				<FilterStatCard icon="👥" label="Total" value={filteredUsers.length} color="blue" />
-				<FilterStatCard icon="✅" label="Actifs" value={filteredUsers.filter(u => u.status === 'active').length} color="green" />
-				<FilterStatCard icon="⏳" label="En attente" value={filteredUsers.filter(u => u.status === 'pending').length} color="yellow" />
+				<FilterStatCard icon={<Users className="w-8 h-8" />} label="Total" value={filteredUsers.length} color="blue" />
+				<FilterStatCard icon={<CheckCircle className="w-8 h-8 text-green-500" />} label="Actifs" value={filteredUsers.filter(u => u.status === 'active').length} color="green" />
+				<FilterStatCard icon={<Clock className="w-8 h-8 text-yellow-500" />} label="En attente" value={filteredUsers.filter(u => u.status === 'pending').length} color="yellow" />
 			</div>
 
 			<DataTable
@@ -273,23 +274,23 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 				loading={loading}
 				actions={(row: AdminUser) => (
 					<div className="flex items-center gap-2">
-						<Link href={`/admin/users/${row._id}`} className="p-1 hover:bg-gray-100 rounded transition-colors" title="Voir">👁️</Link>
-						<button onClick={() => setEditingUser(row)} className="p-1 hover:bg-blue-100 rounded transition-colors" title="Éditer">✏️</button>
+						<Link href={`/admin/users/${row._id}`} className="p-1 hover:bg-gray-100 rounded transition-colors" title="Voir"><Eye className="w-4 h-4" /></Link>
+						<button onClick={() => setEditingUser(row)} className="p-1 hover:bg-blue-100 rounded transition-colors" title="Éditer"><Edit className="w-4 h-4" /></button>
 						{row.isBlocked ? (
-							<button title="Débloquer" onClick={async () => { try { await adminService.unblockUser(row._id); await refetch(); toast.success('Utilisateur débloqué.'); } catch (err) { console.error(err); toast.error('Erreur.'); } }} className="p-1 hover:bg-green-100 rounded transition-colors">🔓</button>
+							<button title="Débloquer" onClick={async () => { try { await adminService.unblockUser(row._id); await refetch(); toast.success('Utilisateur débloqué.'); } catch (err) { console.error(err); toast.error('Erreur.'); } }} className="p-1 hover:bg-green-100 rounded transition-colors"><Unlock className="w-4 h-4" /></button>
 						) : (
-							<button title="Bloquer" onClick={async () => { if (!confirm('Bloquer cet utilisateur ?')) return; try { await adminService.blockUser(row._id); await refetch(); toast.warn('Utilisateur bloqué.'); } catch (err) { console.error(err); toast.error('Erreur.'); } }} className="p-1 hover:bg-amber-100 rounded transition-colors">🚫</button>
+							<button title="Bloquer" onClick={async () => { if (!confirm('Bloquer cet utilisateur ?')) return; try { await adminService.blockUser(row._id); await refetch(); toast.warn('Utilisateur bloqué.'); } catch (err) { console.error(err); toast.error('Erreur.'); } }} className="p-1 hover:bg-amber-100 rounded transition-colors"><UserX className="w-4 h-4" /></button>
 						)}
 						{/* --- Manual Access Buttons --- */}
 						{row.type === 'agent' && !row.isPaid && (
-							row.accessGrantedByAdmin ? (
-								<button title="Révoquer l'accès manuel" onClick={async () => { if (!confirm('Révoquer l\'accès manuel pour cet utilisateur ?')) return; try { await adminService.revokeAdminAccess(row._id); await refetch(); toast.info('Accès manuel révoqué.'); } catch (err) { console.error(err); toast.error('Erreur.'); } }} className="p-1 hover:bg-red-100 rounded transition-colors">💸</button>
+								row.accessGrantedByAdmin ? (
+								<button title="Révoquer l'accès manuel" onClick={async () => { if (!confirm('Révoquer l\'accès manuel pour cet utilisateur ?')) return; try { await adminService.revokeAdminAccess(row._id); await refetch(); toast.info('Accès manuel révoqué.'); } catch (err) { console.error(err); toast.error('Erreur.'); } }} className="p-1 hover:bg-red-100 rounded transition-colors"><X className="w-4 h-4" /></button>
 							) : (
-									<button title="Donner l'accès manuel" onClick={async () => { if (!confirm('Donner l\'accès manuel à cet utilisateur (outrepasse le paiement) ?')) return; try { await adminService.grantAdminAccess(row._id); await refetch(); toast.success('Accès manuel accordé.'); } catch (err: any) { console.error(err); const msg = err?.response?.data?.error || err?.message || 'Erreur.'; toast.error(msg); } }} className="p-1 hover:bg-purple-100 rounded transition-colors">✨</button>
+									<button title="Donner l'accès manuel" onClick={async () => { if (!confirm('Donner l\'accès manuel à cet utilisateur (outrepasse le paiement) ?')) return; try { await adminService.grantAdminAccess(row._id); await refetch(); toast.success('Accès manuel accordé.'); } catch (err: any) { console.error(err); const msg = err?.response?.data?.error || err?.message || 'Erreur.'; toast.error(msg); } }} className="p-1 hover:bg-purple-100 rounded transition-colors"><Key className="w-4 h-4" /></button>
 								)
 						)}
 						{row.type === 'agent' && !row.isPaid && row.profileCompleted && (
-							<button title="Envoyer rappel paiement" onClick={async () => { try { await adminService.sendPaymentReminder(row._id); toast.success('Rappel de paiement envoyé.'); } catch (err) { console.error(err); toast.error('Erreur lors de l\'envoi du rappel.'); } }} className="p-1 hover:bg-orange-100 rounded transition-colors">💳</button>
+							<button title="Envoyer rappel paiement" onClick={async () => { try { await adminService.sendPaymentReminder(row._id); toast.success('Rappel de paiement envoyé.'); } catch (err) { console.error(err); toast.error('Erreur lors de l\'envoi du rappel.'); } }} className="p-1 hover:bg-orange-100 rounded transition-colors"><CreditCard className="w-4 h-4" /></button>
 						)}
 					</div>
 				)}
@@ -302,17 +303,17 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 	);
 };
 
-const FilterStatCard: React.FC<{ icon: string; label: string; value: number; color: string }> = ({ icon, label, value, color }) => {
+const FilterStatCard: React.FC<{ icon: React.ReactNode; label: string; value: number; color: string }> = ({ icon, label, value, color }) => {
 	const colors = { blue: 'from-blue-50 to-cyan-50 border-blue-100', green: 'from-emerald-50 to-green-50 border-emerald-100', yellow: 'from-amber-50 to-yellow-50 border-amber-100' };
 	return (
 		<div className={`bg-gradient-to-br ${colors[color as keyof typeof colors]} border rounded-lg p-4`}>
-			<div className="flex items-center justify-between">
-				<div>
-					<p className="text-sm text-gray-600">{label}</p>
-					<p className="text-2xl font-bold text-gray-900">{value}</p>
+				<div className="flex items-center justify-between">
+					<div>
+						<p className="text-sm text-gray-600">{label}</p>
+						<p className="text-2xl font-bold text-gray-900">{value}</p>
+					</div>
+					<span className="text-3xl">{icon}</span>
 				</div>
-				<span className="text-3xl">{icon}</span>
-			</div>
 		</div>
 	);
 };

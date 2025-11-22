@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useRouter } from 'next/navigation';
+import { Users, Home, Handshake } from 'lucide-react';
 
 // Types des props à adapter selon ton backend :
 interface DashboardStats {
@@ -175,9 +176,9 @@ export function DashboardAdmin({ stats: initialStats }: DashboardAdminProps) {
       </div>
       {/* ACTIONS / NAVIGATION */}
       <div className="flex flex-wrap gap-4 justify-center">
-        <NavButton href="/admin/users" icon="👥" label="Gestion utilisateurs" />
-        <NavButton href="/admin/properties" icon="🏠" label="Gestion annonces" />
-        <NavButton href="/admin/collaborations" icon="🤝" label="Collaborations" />
+        <NavButton href="/admin/users" icon={<Users className="w-6 h-6" />} label="Gestion utilisateurs" />
+        <NavButton href="/admin/properties" icon={<Home className="w-6 h-6" />} label="Gestion annonces" />
+        <NavButton href="/admin/collaborations" icon={<Handshake className="w-6 h-6" />} label="Collaborations" />
       </div>
     </div>
   );
@@ -220,7 +221,7 @@ function StatList({ title, items, color } : { title: string, items: Array<{ name
 }
 
 // Bouton navigation stylé
-function NavButton({ href, label, icon }: { href: string, label: string, icon?: string }) {
+function NavButton({ href, label, icon }: { href: string, label: string, icon?: React.ReactNode }) {
   const router = useRouter();
   return (
     <button

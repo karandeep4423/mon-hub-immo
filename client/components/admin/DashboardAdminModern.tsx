@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { StatCard } from './ui/StatCard';
 import { designTokens } from '@/lib/constants/designTokens';
 import { AdminStats } from '@/hooks/useAdminStats';
+import { Users, FileText, Home, Handshake, DollarSign, Globe, MapPin } from 'lucide-react';
 
 interface DashboardAdminModernProps {
 	stats: AdminStats;
@@ -12,7 +13,7 @@ interface DashboardAdminModernProps {
 export const DashboardAdminModern: React.FC<DashboardAdminModernProps> = ({ stats }) => {
 	const statCards = [
 		{
-			icon: '👥',
+			icon: <Users className="w-7 h-7 text-[#00BCE4]" />,
 			title: 'Agents Inscrits',
 			value: stats.agentsTotal,
 			gradient: 'blue' as const,
@@ -23,17 +24,17 @@ export const DashboardAdminModern: React.FC<DashboardAdminModernProps> = ({ stat
 			],
 		},
 		{
-			icon: '🧾',
+			icon: <FileText className="w-7 h-7 text-[#10B981]" />,
 			title: 'Apporteurs',
 			value: stats.apporteursTotal,
-			gradient: 'green' as const,
+			gradient: 'emerald' as const,
 			details: [
 				{ label: 'Actifs', value: stats.apporteursActive, color: '#10B981' },
 				{ label: 'En attente', value: stats.apporteursPending, color: '#F59E0B' },
 			],
 		},
 		{
-			icon: '🏠',
+			icon: <Home className="w-7 h-7 text-[#7C3AED]" />,
 			title: 'Annonces Actives',
 			value: stats.propertiesActive,
 			gradient: 'purple' as const,
@@ -43,7 +44,7 @@ export const DashboardAdminModern: React.FC<DashboardAdminModernProps> = ({ stat
 			],
 		},
 		{
-			icon: '🤝',
+			icon: <Handshake className="w-7 h-7 text-[#10B981]" />,
 			title: 'Collaborations',
 			value: stats.collabOpen,
 			gradient: 'emerald' as const,
@@ -52,7 +53,7 @@ export const DashboardAdminModern: React.FC<DashboardAdminModernProps> = ({ stat
 			],
 		},
 		{
-			icon: '💰',
+			icon: <DollarSign className="w-7 h-7 text-[#E11D48]" />,
 			title: 'Frais d\'Agence',
 			value: typeof stats.feesTotal === 'number'
 				? `€${stats.feesTotal.toLocaleString('fr-FR')}`
@@ -93,7 +94,7 @@ export const DashboardAdminModern: React.FC<DashboardAdminModernProps> = ({ stat
 				{/* Top Networks */}
 				<div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
 					<h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-						<span className="text-2xl">🌐</span> Top Réseaux
+						<span className="text-2xl"><Globe className="w-6 h-6" /></span> Top Réseaux
 					</h2>
 					<div className="space-y-3">
 						{(stats.topNetworks || []).map((network, idx) => (
@@ -115,7 +116,7 @@ export const DashboardAdminModern: React.FC<DashboardAdminModernProps> = ({ stat
 				{/* Top Regions */}
 				<div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
 					<h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-						<span className="text-2xl">📍</span> Top Régions
+						<span className="text-2xl"><MapPin className="w-6 h-6" /></span> Top Régions
 					</h2>
 					<div className="space-y-3">
 						{(stats.topRegions || []).map((region, idx) => (
