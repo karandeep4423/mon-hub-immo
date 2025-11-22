@@ -495,7 +495,8 @@ export const getAdminProperties = async (
 		}
 
 		if (propertyType) {
-			const sanitizedType = sanitizeInput(propertyType as string);
+			// sanitizeInput returns unknown — coerce to string after sanitization
+			const sanitizedType = String(sanitizeInput(propertyType as string));
 
 			// --- Translation mapping for propertyType ---
 			const typeMap: { [key: string]: string } = {

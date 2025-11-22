@@ -1,4 +1,3 @@
-// controllers/adminController.ts
 import { User } from '../models/User';
 import { Property } from '../models/Property'; // ou ton modèle d'annonces
 import { Collaboration } from '../models/Collaboration'; // idem pour collaborations
@@ -9,6 +8,8 @@ import { SecurityLog } from '../models/SecurityLog';
 import crypto from 'crypto';
 import { logSecurityEvent } from '../utils/securityLogger';
 import { sendEmail, getAccountValidatedTemplate, getTemporaryPasswordTemplate, generateVerificationCode, getPasswordResetTemplate } from '../utils/emailService';
+
+// Controller exports are declared inline with each function below
 
 export const getAdminUsers = async (req: Request, res: Response) => {
   // Lecture des filtres via req.query
@@ -211,6 +212,66 @@ export const unblockUser = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     res.status(500).json({ error: 'Failed to unblock user', details: (error as Error).message });
   }
+};
+
+// Grant access to a user (admin override)
+export const grantAdminAccess = async (req: AuthRequest, res: Response) => {
+	const userId = req.params.id;
+	if (!userId) return res.status(400).json({ error: 'Missing user id' });
+	const adminId = req.userId;
+
+	try {
+		const user = await User.findById(userId);
+		if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' });
+
+		user.accessGrantedByAdmin = true;
+		await user.save();
+
+		// log security event
+		await logSecurityEvent({
+			userId: userId,
+			eventType: 'account_access_granted',
+			req,
+			metadata: { grantedBy: adminId },
+		});
+
+		res.json({ success: true, user });
+	} catch (error) {
+		res.status(500).json({
+			error: 'Failed to grant access',
+			details: (error as Error).message,
+		});
+	}
+};
+
+// Revoke access from a user (admin override)
+export const revokeAdminAccess = async (req: AuthRequest, res: Response) => {
+	const userId = req.params.id;
+	if (!userId) return res.status(400).json({ error: 'Missing user id' });
+	const adminId = req.userId;
+
+	try {
+		const user = await User.findById(userId);
+		if (!user) return res.status(404).json({ error: 'Utilisateur non trouvé' });
+
+		user.accessGrantedByAdmin = false;
+		await user.save();
+
+		// log security event
+		await logSecurityEvent({
+			userId: userId,
+			eventType: 'account_access_revoked',
+			req,
+			metadata: { revokedBy: adminId },
+		});
+
+		res.json({ success: true, user });
+	} catch (error) {
+		res.status(500).json({
+			error: 'Failed to revoke access',
+			details: (error as Error).message,
+		});
+	}
 };
 
 // Get detailed user profile for admin (with simple related counts)
@@ -667,5 +728,4 @@ export const sendPaymentReminder = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Erreur lors de l\'envoi du rappel', details: (err as Error).message });
   }
 };
-
 

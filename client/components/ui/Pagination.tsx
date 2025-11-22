@@ -21,25 +21,21 @@ export const Pagination: React.FC<PaginationProps> = ({
 	if (totalPages <= 1) return null;
 
 	const scrollToTarget = () => {
-		if (scrollTargetId) {
-			// Use requestAnimationFrame for better timing with React's render cycle
-			requestAnimationFrame(() => {
-				setTimeout(() => {
-					const element = document.getElementById(scrollTargetId);
-					if (element) {
-						// Get element position relative to viewport
-						const elementPosition =
-							element.getBoundingClientRect().top;
-						const offsetPosition =
-							elementPosition + window.pageYOffset - 20;
+		if (!scrollTargetId) return;
 
-						window.scrollTo({
-							top: offsetPosition,
-							behavior: 'smooth',
-						});
-					}
+		// Use requestAnimationFrame for better timing with React's render cycle
+		requestAnimationFrame(() => {
+			setTimeout(() => {
+				const element = document.getElementById(scrollTargetId);
+				if (!element) return;
 
-		}
+				// Get element position relative to viewport
+				const elementPosition = element.getBoundingClientRect().top;
+				const offsetPosition = elementPosition + window.pageYOffset - 20;
+
+				window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+			}, 50);
+		});
 	};
 
 	const goTo = (p: number) => {
@@ -264,3 +260,6 @@ export const Pagination: React.FC<PaginationProps> = ({
 		</nav>
 	);
 };
+
+export default Pagination;
+

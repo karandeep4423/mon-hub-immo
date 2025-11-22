@@ -7,6 +7,7 @@ import { logger } from '../utils/logger';
  * Middleware to require an active subscription for agents.
  * Allows admins and non-agent users to pass. Also allows agents who are not yet validated
  * or who have incomplete profiles to continue (those flows should be handled separately).
+ * Allows agents who have been manually granted access by an admin.
  */
 export const requireActiveSubscription = async (
   req: AuthRequest,
@@ -20,7 +21,7 @@ export const requireActiveSubscription = async (
       return;
     }
 
-    const user = await User.findById(req.userId).select('+isPaid +isValidated +profileCompleted');
+    const user = await User.findById(req.userId).select('+isPaid +isValidated +profileCompleted +accessGrantedByAdmin');
     if (!user) {
       res.status(401).json({ success: false, message: 'Utilisateur non trouvé' });
       return;
@@ -46,8 +47,9 @@ export const requireActiveSubscription = async (
     // Enforce subscription/payment requirement for agents who completed their profile
     // Once an agent has completed their profile they must pay to access protected areas
     if (user.userType === 'agent' && user.profileCompleted) {
-      if (!user.isPaid) {
-        logger.info(`[Subscription] Blocking access for unpaid user ${user.email}`);
+      // Block if user has not paid AND has not been granted manual access by an admin
+      if (!user.isPaid && !user.accessGrantedByAdmin) {
+        logger.info(`[Subscription] Blocking access for unpaid user ${user.email} with no admin access grant.`);
         res.status(402).json({
           success: false,
           code: 'PAYMENT_REQUIRED',

@@ -1,6 +1,6 @@
 // routes/admin.ts
 import express from 'express';
-import { getAdminUsers, validateUser, getAdminUserProfile, createAdminUser, updateAdminUser, deleteAdminUser, importUsersFromCSV, getAdminStats, blockUser, unblockUser, sendPaymentReminder } from '../controllers/adminController';
+import { getAdminUsers, validateUser, getAdminUserProfile, createAdminUser, updateAdminUser, deleteAdminUser, importUsersFromCSV, getAdminStats, blockUser, unblockUser, sendPaymentReminder, grantAdminAccess, revokeAdminAccess } from '../controllers/adminController';
 import { getAdminProperties, deleteAdminProperty } from '../controllers/propertyController';
 import { authenticateToken, requireAdmin } from '../middleware/auth';
 import { uploadCSV } from '../middleware/uploadMiddleware';
@@ -35,6 +35,10 @@ router.put('/users/:id', updateAdminUser);
 // Admin - block/unblock users
 router.post('/users/:id/block', blockUser);
 router.post('/users/:id/unblock', unblockUser);
+
+// Admin - grant/revoke manual access (override for payment)
+router.post('/users/:id/grant-access', grantAdminAccess);
+router.post('/users/:id/revoke-access', revokeAdminAccess);
 
 // POST - send payment reminder to user
 router.post('/users/:id/send-payment-reminder', sendPaymentReminder);

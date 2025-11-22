@@ -83,6 +83,7 @@ export interface IUser extends Document {
 	isBlocked?: boolean;                    // Admin can block user from logging in
 	blockedAt?: Date;
 	blockedBy?: mongoose.Types.ObjectId;
+	accessGrantedByAdmin?: boolean; // Admin can override payment status
 	createdAt: Date;
 	updatedAt: Date;
 	comparePassword(candidatePassword: string): Promise<boolean>;
@@ -399,6 +400,11 @@ const userSchema = new Schema<IUser>(
 			type: mongoose.Schema.Types.ObjectId,
 			ref: 'User',
 			default: null,
+		},
+		accessGrantedByAdmin: {
+			type: Boolean,
+			default: false,
+			index: true,
 		},
 		// Force user to change password at next login (used when admin issues a temp password)
 		mustChangePassword: {
