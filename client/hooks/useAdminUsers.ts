@@ -35,9 +35,16 @@ export function useAdminUsers(filters: Filters) {
       const payload = Array.isArray(data) ? data : (data?.users || data?.usersList || data || []);
       setUsers(payload);
     } catch (err) {
-      if (err instanceof Error && err.name !== 'AbortError') {
+      const anyErr = err as any;
+      const isAbort = anyErr?.name === 'AbortError' || anyErr?.name === 'CanceledError' || anyErr?.code === 'ERR_CANCELED' || anyErr?.message === 'canceled';
+      if (isAbort) {
+        logger.debug('[useAdminUsers] request cancelled');
+      } else if (err instanceof Error) {
         logger.error('[useAdminUsers] fetch error', err);
         setError(err.message);
+      } else {
+        logger.error('[useAdminUsers] unknown fetch error', err);
+        setError(String(err));
       }
     } finally {
       setLoading(false);
