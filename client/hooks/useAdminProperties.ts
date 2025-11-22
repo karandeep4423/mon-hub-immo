@@ -73,10 +73,19 @@ export function useAdminProperties(filters: Filters) {
               setTotalPages(pagination.totalPages || 1);
             }
         } catch (err) {
-            if (err instanceof Error && err.name !== 'AbortError') {
-              logger.error('[useAdminProperties] fetch error', err);
-              setError(err.message);
-            }
+          // Detect Abort / Axios cancellation and ignore as expected
+          const anyErr = err as any;
+          const isAbort = anyErr?.name === 'AbortError' || anyErr?.name === 'CanceledError' || anyErr?.code === 'ERR_CANCELED' || anyErr?.message === 'canceled';
+          if (isAbort) {
+            // Request was cancelled due to component unmount or rapid successive calls - ignore
+            logger.debug('[useAdminProperties] request cancelled');
+          } else if (err instanceof Error) {
+            logger.error('[useAdminProperties] fetch error', err);
+            setError(err.message);
+          } else {
+            logger.error('[useAdminProperties] fetch unknown error', err);
+            setError(String(err));
+          }
         } finally {
             setLoading(false);
         }
