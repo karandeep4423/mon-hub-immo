@@ -103,8 +103,7 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 				<div className="flex gap-2">
 					<Button variant="secondary" size="md" onClick={() => exportAsCSV('csv')}><BarChart2 className="w-4 h-4 inline-block mr-2" />Export CSV</Button>
 					<Button variant="secondary" size="md" onClick={() => exportAsCSV('xls')}><BarChart2 className="w-4 h-4 inline-block mr-2" />Export XLS</Button>
-					<Button variant="primary" size="md"><Home className="w-4 h-4 inline-block mr-2" />Nouvelle Annonce</Button>
-				</div>
+ 				</div>
 			</div>
 
 			<div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
@@ -153,8 +152,7 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 					actions={(row: any) => (
 						<div className="flex items-center gap-2">
 							<Link href={`/property/${row._id}`} className="p-1 hover:bg-blue-100 rounded transition-colors" title="Voir"><Eye className="w-4 h-4" /></Link>
-							<button className="p-1 hover:bg-yellow-100 rounded transition-colors" title="Éditer"><Edit className="w-4 h-4" /></button>
-							<button className="p-1 hover:bg-red-100 rounded transition-colors" title="Supprimer" onClick={() => handleDelete(row._id)}><Trash2 className="w-4 h-4 text-red-600" /></button>
+ 							<button className="p-1 hover:bg-red-100 rounded transition-colors" title="Supprimer" onClick={() => handleDelete(row._id)}><Trash2 className="w-4 h-4 text-red-600" /></button>
 						</div>
 					)}
 				/>

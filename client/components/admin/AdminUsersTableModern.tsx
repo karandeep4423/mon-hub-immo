@@ -320,9 +320,11 @@ const FilterStatCard: React.FC<{ icon: React.ReactNode; label: string; value: nu
 
 const EditUserModal: React.FC<{ user: AdminUser; onClose: () => void; onSave: () => void; }> = ({ user, onClose, onSave }) => {
 	const [form, setForm] = useState<AdminUser>({ ...user, professionalInfo: user.professionalInfo || { network: '' } });
+	const [busy, setBusy] = useState(false);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		setBusy(true);
 		try {
 			const calls: Promise<any>[] = [];
 			if (form.isValidated !== user.isValidated) {
@@ -347,24 +349,155 @@ const EditUserModal: React.FC<{ user: AdminUser; onClose: () => void; onSave: ()
 
 			const results = await Promise.all(calls);
 			if (results.every((r) => r.ok)) {
+				toast.success('Modifications enregistrées');
 				onSave();
 			} else {
 				console.error('admin update failed', results);
+				toast.error('Échec de la mise à jour');
 			}
 		} catch (err) {
 			console.error(err);
+			toast.error('Erreur lors de la mise à jour');
+		} finally {
+			setBusy(false);
 		}
+	};
+
+	const handleBlockToggle = async () => {
+		if (!confirm(`${user.isBlocked ? 'Débloquer' : 'Bloquer'} cet utilisateur ?`)) return;
+		setBusy(true);
+		try {
+			if (user.isBlocked) await adminService.unblockUser(user._id);
+			else await adminService.blockUser(user._id);
+			toast.success(user.isBlocked ? 'Utilisateur débloqué' : 'Utilisateur bloqué');
+			onSave();
+		} catch (err) {
+			console.error(err);
+			toast.error('Erreur');
+		} finally { setBusy(false); }
+	};
+
+	const handleValidateToggle = async () => {
+		setBusy(true);
+		try {
+			await fetch(`http://localhost:4000/api/admin/users/${user._id}/validate`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ value: !user.isValidated }) });
+			toast.success(user.isValidated ? 'Validation retirée' : 'Utilisateur validé');
+			onSave();
+		} catch (err) {
+			console.error(err);
+			toast.error('Erreur');
+		} finally { setBusy(false); }
+	};
+
+	const handleGrantRevokeAccess = async () => {
+		if (!confirm(user.accessGrantedByAdmin ? 'Révoquer l\'accès manuel ?' : 'Donner l\'accès manuel ?')) return;
+		setBusy(true);
+		try {
+			if (user.accessGrantedByAdmin) await adminService.revokeAdminAccess(user._id);
+			else await adminService.grantAdminAccess(user._id);
+			toast.success(user.accessGrantedByAdmin ? 'Accès révoqué' : 'Accès accordé');
+			onSave();
+		} catch (err: any) {
+			console.error(err);
+			const msg = err?.response?.data?.error || err?.message || 'Erreur.';
+			toast.error(msg);
+		} finally { setBusy(false); }
+	};
+
+	const handleSendReminder = async () => {
+		setBusy(true);
+		try {
+			await adminService.sendPaymentReminder(user._id);
+			toast.success('Rappel envoyé');
+		} catch (err) {
+			console.error(err);
+			toast.error('Erreur');
+		} finally { setBusy(false); }
 	};
 
 	return (
 		<div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-			<div className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6">
-				<div className="flex items-center justify-between mb-4 sticky top-0 bg-white">
-					<h2 className="text-xl font-bold text-gray-900">Éditer utilisateur</h2>
-					<button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
+			<div className="bg-white rounded-lg shadow-lg w-full max-w-6xl max-h-[90vh] overflow-y-auto p-6">
+				<div className="flex items-center justify-between mb-4 sticky top-0 bg-white z-10">
+					<h2 className="text-xl font-bold text-gray-900">Profil utilisateur</h2>
+					<button onClick={onClose} className="text-gray-500 hover:text-gray-700"><X className="w-5 h-5" /></button>
 				</div>
-				<form onSubmit={handleSubmit} className="space-y-4">
-					{/* Form fields... */}
+
+				<form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+					{/* Left: main info */}
+					<div className="lg:col-span-2 bg-white p-4 rounded-lg border">
+						<div className="flex items-start gap-6">
+							<div className="w-28 h-28 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+								{form.profileImage ? <img src={form.profileImage} alt="avatar" className="w-full h-full object-cover" /> : <Users className="w-12 h-12 text-gray-400" />}
+							</div>
+							<div className="flex-1">
+								<h3 className="text-2xl font-bold text-gray-900">{form.firstName} {form.lastName}</h3>
+								<p className="text-sm text-gray-600">{form.email}</p>
+								<p className="text-sm text-gray-600">{form.phone || '-'}</p>
+								<div className="mt-3 flex flex-wrap gap-2">
+									<Badge label={`Rôle: ${(form.type || (form as any).userType) || 'apporteur'}`} variant="info" />
+									<Badge label={`Réseau: ${form.professionalInfo?.network || '-'}`} variant="default" />
+									<Badge label={`Validé: ${form.isValidated ? 'Oui' : 'Non'}`} variant={form.isValidated ? 'success' : 'warning'} />
+								</div>
+							</div>
+						</div>
+
+						<div className="mt-6 space-y-4">
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<label className="block">
+									<span className="text-sm text-gray-600">Prénom</span>
+									<input className="mt-1 block w-full border rounded px-3 py-2" value={form.firstName || ''} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
+								</label>
+								<label className="block">
+									<span className="text-sm text-gray-600">Nom</span>
+									<input className="mt-1 block w-full border rounded px-3 py-2" value={form.lastName || ''} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
+								</label>
+							</div>
+
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								<label className="block">
+									<span className="text-sm text-gray-600">Email</span>
+									<input className="mt-1 block w-full border rounded px-3 py-2" value={form.email || ''} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+								</label>
+								<label className="block">
+									<span className="text-sm text-gray-600">Téléphone</span>
+									<input className="mt-1 block w-full border rounded px-3 py-2" value={(form as any).phone || ''} onChange={(e) => setForm({ ...form, phone: e.target.value } as any)} />
+								</label>
+							</div>
+
+							<label className="block">
+								<span className="text-sm text-gray-600">Réseau</span>
+								<input className="mt-1 block w-full border rounded px-3 py-2" value={form.professionalInfo?.network || ''} onChange={(e) => setForm({ ...form, professionalInfo: { ...(form.professionalInfo || {}), network: e.target.value } })} />
+							</label>
+						</div>
+
+						<div className="mt-6 flex gap-3">
+							<button type="submit" disabled={busy} className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700">Enregistrer</button>
+							<button type="button" onClick={onClose} className="px-4 py-2 border rounded">Fermer</button>
+						</div>
+					</div>
+
+					{/* Right: actions & stats */}
+					<div className="bg-white p-4 rounded-lg border flex flex-col gap-4">
+						<div className="space-y-2">
+							<div className="text-sm text-gray-600">Statistiques</div>
+							<div className="grid grid-cols-3 gap-2">
+								<div className="bg-blue-50 p-3 rounded text-center"><div className="text-sm text-blue-700">Annonces</div><div className="font-bold text-lg">{user.propertiesCount ?? 0}</div></div>
+								<div className="bg-green-50 p-3 rounded text-center"><div className="text-sm text-green-700">Collab. actives</div><div className="font-bold text-lg">{user.collaborationsActive ?? 0}</div></div>
+								<div className="bg-purple-50 p-3 rounded text-center"><div className="text-sm text-purple-700">Collab. clôturées</div><div className="font-bold text-lg">{user.collaborationsClosed ?? 0}</div></div>
+							</div>
+						</div>
+
+						<div className="space-y-2">
+							<div className="text-sm text-gray-600">Actions rapides</div>
+							<div className="flex flex-col gap-2">
+								<button disabled={busy} onClick={handleValidateToggle} className="w-full px-3 py-2 bg-emerald-500 text-white rounded flex items-center gap-2 justify-center">{user.isValidated ? 'Retirer validation' : 'Valider utilisateur'}</button>
+								<button disabled={busy} onClick={handleBlockToggle} className="w-full px-3 py-2 bg-amber-500 text-white rounded flex items-center gap-2 justify-center">{user.isBlocked ? 'Débloquer' : 'Bloquer'}</button>
+								<button disabled={busy} onClick={handleGrantRevokeAccess} className="w-full px-3 py-2 bg-purple-500 text-white rounded flex items-center gap-2 justify-center">{user.accessGrantedByAdmin ? 'Révoquer accès manuel' : 'Donner accès manuel'}</button>
+								<button disabled={busy} onClick={handleSendReminder} className="w-full px-3 py-2 bg-orange-400 text-white rounded flex items-center gap-2 justify-center">Envoyer rappel paiement</button>
+							</div>
+						</div>
+					</div>
 				</form>
 			</div>
 		</div>
