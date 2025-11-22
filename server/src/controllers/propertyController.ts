@@ -495,8 +495,18 @@ export const getAdminProperties = async (
 		}
 
 		if (propertyType) {
-			// Sanitize to prevent injection
-			filter.propertyType = sanitizeInput(propertyType);
+			const sanitizedType = sanitizeInput(propertyType as string);
+
+			// --- Translation mapping for propertyType ---
+			const typeMap: { [key: string]: string } = {
+				Maison: 'house',
+				Appartement: 'apartment',
+				Terrain: 'land',
+				Commercial: 'commercial',
+			};
+
+			// Use the mapped value if it exists, otherwise use the original value
+			filter.propertyType = typeMap[sanitizedType] || sanitizedType;
 		}
 
 		if (city) {

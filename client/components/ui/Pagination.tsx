@@ -38,8 +38,7 @@ export const Pagination: React.FC<PaginationProps> = ({
 							behavior: 'smooth',
 						});
 					}
-				}, 100);
-			});
+
 		}
 	};
 

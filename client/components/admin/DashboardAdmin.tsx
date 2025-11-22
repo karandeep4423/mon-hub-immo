@@ -2,7 +2,7 @@
 import React from "react";
 
 // Passe "stats" depuis tes props/page loader comme avant !
-export default function DashboardAdmin({ stats }) {
+export default function DashboardAdmin({ stats }: { stats: any }) {
   return (
     <div className="max-w-6xl mx-auto px-4">
       <h1 className="text-3xl font-black mb-10 text-[#009CD8]">Tableau de bord général</h1>
@@ -48,6 +48,7 @@ export default function DashboardAdmin({ stats }) {
       </div>
       {/* Quick nav */}
       <div className="flex flex-wrap gap-6 justify-center">
+        <NavButton href="/" icon="↩️" label="Retour à la plateforme" />
         <NavButton href="/admin/users" icon="👥" label="Gestion des utilisateurs" />
         <NavButton href="/admin/properties" icon="🏠" label="Gestion des annonces" />
         <NavButton href="/admin/collaborations" icon="🤝" label="Gestion des collaborations" />
@@ -56,7 +57,7 @@ export default function DashboardAdmin({ stats }) {
   );
 }
 
-function StatCard({ title, value, details, icon }) {
+function StatCard({ title, value, details, icon }: any) {
   return (
     <div className="bg-white p-8 rounded-2xl shadow-xl transition-transform hover:scale-105 hover:shadow-2xl flex flex-col gap-2 border-b-4 border-[#00BCE4]">
       <div className="text-5xl mb-0">{icon}</div>
@@ -64,7 +65,7 @@ function StatCard({ title, value, details, icon }) {
       <div className="uppercase font-semibold text-gray-400 tracking-widest text-sm mb-2">{title}</div>
       {details && (
         <div className="flex flex-wrap gap-2">
-          {details.map((d) => (
+          {details.map((d: any) => (
             <span key={d.label} className={`px-3 py-1 rounded-full font-medium text-xs ${d.color}`}>{d.label} : {d.value}</span>
           ))}
         </div>
@@ -73,12 +74,12 @@ function StatCard({ title, value, details, icon }) {
   );
 }
 
-function StatList({ title, items, color }) {
+function StatList({ title, items, color }: any) {
   return (
     <div className={`bg-white rounded-2xl shadow-md border-l-4 border-${color}-300 p-6`}>
       <h3 className={`mb-4 font-extrabold text-lg text-${color}-700`}>{title}</h3>
       <ul className="list-disc list-inside space-y-2">
-        {items.map(item => (
+        {items.map((item: any) => (
           <li key={item.name} className="flex justify-between pr-4">
             <span>{item.name}</span>
             <span className="font-bold">{item.count}</span>
@@ -90,7 +91,7 @@ function StatList({ title, items, color }) {
 }
 
 import Link from "next/link";
-function NavButton({ href, label, icon }) {
+function NavButton({ href, label, icon }: any) {
   return (
     <Link
       href={href}

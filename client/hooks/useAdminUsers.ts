@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { api } from '@/lib/api'; // Import the shared api instance
+import { logger } from '@/lib/utils/logger';
 
 interface Filters {
   name?: string;
@@ -13,52 +15,7 @@ export function useAdminUsers(filters: Filters) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    let isMounted = true;
-
-    const fetchUsers = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const params = new URLSearchParams();
-        Object.entries(filters || {}).forEach(([key, value]) => {
-          if (value) params.append(key, value as string);
-        });
-        const res = await fetch(`http://localhost:4000/api/admin/users?${params.toString()}`, {
-          credentials: 'include',
-          signal: controller.signal,
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        // API may return either an array or an object { users: [...] }
-        const payload = Array.isArray(data) ? data : (data?.users || data?.usersList || data || []);
-        if (isMounted) {
-          setUsers(payload);
-        }
-      } catch (err) {
-        if (err instanceof Error && err.name !== 'AbortError') {
-          console.error('[useAdminUsers] fetch error', err);
-          if (isMounted) {
-            setError(err.message);
-          }
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchUsers();
-    return () => {
-      isMounted = false;
-      controller.abort();
-    };
-  }, [JSON.stringify(filters)]);
-
-  const refetch = useCallback(async () => {
-    const controller = new AbortController();
+  const fetchUsers = useCallback(async (signal: AbortSignal) => {
     setLoading(true);
     setError(null);
     try {
@@ -66,22 +23,41 @@ export function useAdminUsers(filters: Filters) {
       Object.entries(filters || {}).forEach(([key, value]) => {
         if (value) params.append(key, value as string);
       });
-      const res = await fetch(`http://localhost:4000/api/admin/users?${params.toString()}`, {
-        credentials: 'include',
-        signal: controller.signal,
+      // Replace fetch with the api instance
+      const res = await api.get(`/admin/users?${params.toString()}`, {
+        signal,
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      setUsers(data);
+
+      // The interceptor handles non-ok responses, so we can expect data
+      const data = res.data;
+      
+      // API may return either an array or an object { users: [...] }
+      const payload = Array.isArray(data) ? data : (data?.users || data?.usersList || data || []);
+      setUsers(payload);
     } catch (err) {
       if (err instanceof Error && err.name !== 'AbortError') {
-        console.error('[useAdminUsers] refetch error', err);
+        logger.error('[useAdminUsers] fetch error', err);
         setError(err.message);
       }
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [JSON.stringify(filters)]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchUsers(controller.signal);
+
+    return () => {
+      controller.abort();
+    };
+  }, [fetchUsers]);
+
+
+  const refetch = useCallback(async () => {
+    const controller = new AbortController();
+    await fetchUsers(controller.signal);
+  }, [fetchUsers]);
 
   return { users, loading, error, refetch };
 }

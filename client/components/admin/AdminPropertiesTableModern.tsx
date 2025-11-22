@@ -70,34 +70,39 @@ export const AdminPropertiesTableModern: React.FC<AdminPropertiesTableModernProp
 	const [filters, setFilters] = useState({ type: '', status: '', search: '' });
 	const [viewType, setViewType] = useState<'table' | 'grid'>('table');
 
-	const { properties: fetchedProperties, loading, totalItems, currentPage, totalPages } = useAdminProperties({
+	const { properties: fetchedProperties, loading, totalItems, currentPage, totalPages, refetch } = useAdminProperties({
 		search: filters.search,
 		status: filters.status,
+		propertyType: filters.type,
 		page,
 		limit,
 	});
 
-	// determine filteredProperties source (server-side results preferred)
-	const filteredProperties = useMemo(() => {
-		const src = (fetchedProperties && fetchedProperties.length > 0) ? fetchedProperties : (initialProperties || []);
-		if (!src) return [];
-		if (filters.search || filters.type || filters.status) {
-			return src.filter((p: any) => {
-				const title = (p.title || '').toLowerCase();
-				const city = ((p.city || p.location) || '').toLowerCase();
-				const matchSearch = !filters.search || title.includes(filters.search.toLowerCase()) || city.includes(filters.search.toLowerCase());
-				const matchType = !filters.type || (p.propertyType || p.type) === filters.type;
-				const matchStatus = !filters.status || p.status === filters.status;
-				return matchSearch && matchType && matchStatus;
-			});
-		}
-		return src;
-	}, [fetchedProperties, initialProperties, filters]);
+	// Use fetchedProperties directly, as filtering is done server-side
+	const properties = fetchedProperties || initialProperties || [];
 
 	const statusVariant = (status: string) => {
 		if (status === 'active') return 'success';
 		if (status === 'pending') return 'warning';
 		return 'default';
+	};
+
+	const handleDelete = async (propertyId: string) => {
+		if (!confirm('Êtes-vous sûr de vouloir supprimer cette annonce ?')) return;
+		try {
+			const res = await fetch(`http://localhost:4000/api/admin/properties/${propertyId}`, {
+				method: 'DELETE',
+				credentials: 'include',
+			});
+			if (res.ok) {
+				alert('Annonce supprimée avec succès');
+				refetch?.();
+			} else {
+				alert('Erreur lors de la suppression');
+			}
+		} catch (err) {
+			alert('Erreur lors de la suppression');
+		}
 	};
 
 	return (
@@ -106,7 +111,7 @@ export const AdminPropertiesTableModern: React.FC<AdminPropertiesTableModernProp
 			<div className="flex justify-between items-center">
 				<div>
 					<h1 className="text-3xl font-bold text-gray-900">Gestion Annonces</h1>
-					<p className="text-gray-600 mt-1">Total: {totalItems ?? filteredProperties.length} annonce(s)</p>
+					<p className="text-gray-600 mt-1">Total: {totalItems ?? properties.length} annonce(s)</p>
 				</div>
 				<div className="flex gap-2">
 					<Button variant="secondary" size="md" onClick={() => exportAsCSV('csv')}>
@@ -137,10 +142,10 @@ export const AdminPropertiesTableModern: React.FC<AdminPropertiesTableModernProp
 						className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
 					>
 						<option value="">Tous les types</option>
-						<option value="apartment">Appartement</option>
-						<option value="house">Maison</option>
-						<option value="land">Terrain</option>
-						<option value="commercial">Commercial</option>
+						<option value="Appartement">Appartement</option>
+						<option value="Maison">Maison</option>
+						<option value="Terrain">Terrain</option>
+						<option value="Commercial">Commercial</option>
 					</select>
 					<select
 						value={filters.status}
@@ -173,10 +178,10 @@ export const AdminPropertiesTableModern: React.FC<AdminPropertiesTableModernProp
 
 			{/* Stats */}
 			<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-				<StatCard icon="🏠" label="Total" value={totalItems ?? filteredProperties.length} color="blue" />
-				<StatCard icon="✅" label="Actives" value={filteredProperties.filter((p:any) => p.status === 'active').length} color="green" />
-				<StatCard icon="📊" label="Vues" value={filteredProperties.reduce((sum:number, p:any) => sum + (p.views || 0), 0)} color="purple" />
-				<StatCard icon="💰" label="Valeur Total" value={`€${(filteredProperties.reduce((sum:number, p:any) => sum + (p.price || 0), 0) / 1000000).toFixed(1)}M`} color="rose" />
+				<StatCard icon="🏠" label="Total" value={totalItems ?? properties.length} color="blue" />
+				<StatCard icon="✅" label="Actives" value={properties.filter((p:any) => p.status === 'active').length} color="green" />
+				<StatCard icon="📊" label="Vues" value={properties.reduce((sum:number, p:any) => sum + (p.views || 0), 0)} color="purple" />
+				<StatCard icon="💰" label="Valeur Total" value={`€${(properties.reduce((sum:number, p:any) => sum + (p.price || 0), 0) / 1000000).toFixed(1)}M`} color="rose" />
 			</div>
 
 			{/* Table view */}
@@ -243,7 +248,7 @@ export const AdminPropertiesTableModern: React.FC<AdminPropertiesTableModernProp
 							),
 						},
 					]}
-					data={filteredProperties as any}
+					data={properties as any}
 					loading={loading}
 					actions={(row: AdminProperty) => (
 						<div className="flex items-center gap-2">
@@ -256,23 +261,7 @@ export const AdminPropertiesTableModern: React.FC<AdminPropertiesTableModernProp
 							<button
 								className="p-1 hover:bg-red-100 rounded transition-colors"
 								title="Supprimer"
-								onClick={async () => {
-									if (!confirm('Êtes-vous sûr de vouloir supprimer cette annonce ?')) return;
-									try {
-										const res = await fetch(`http://localhost:4000/api/admin/properties/${row._id}`, {
-											method: 'DELETE',
-											credentials: 'include',
-										});
-										if (res.ok) {
-											alert('Annonce supprimée avec succès');
-											refetch?.();
-										} else {
-											alert('Erreur lors de la suppression');
-										}
-									} catch (err) {
-										alert('Erreur lors de la suppression');
-									}
-								}}
+								onClick={() => handleDelete(row._id)}
 							>
 								🗑️
 							</button>
@@ -284,7 +273,7 @@ export const AdminPropertiesTableModern: React.FC<AdminPropertiesTableModernProp
 			{/* Grid view */}
 			{viewType === 'grid' && (
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-					{filteredProperties.map((prop) => (
+					{properties.map((prop) => (
 						<div
 							key={prop._id}
 							className="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow group"
@@ -313,7 +302,10 @@ export const AdminPropertiesTableModern: React.FC<AdminPropertiesTableModernProp
 									<Link href={`/property/${prop._id}`} className="flex-1 px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded transition-colors text-sm font-medium">
 										Voir
 									</Link>
-									<button className="flex-1 px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded transition-colors text-sm font-medium">
+									<button
+										onClick={() => handleDelete(prop._id)}
+										className="flex-1 px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded transition-colors text-sm font-medium"
+									>
 										Supprimer
 									</button>
 								</div>
@@ -322,6 +314,27 @@ export const AdminPropertiesTableModern: React.FC<AdminPropertiesTableModernProp
 					))}
 				</div>
 			)}
+			
+			{/* Pagination Controls */}
+			<div className="flex justify-center items-center gap-4 mt-6">
+				<Button
+					onClick={() => setPage(p => Math.max(1, p - 1))}
+					disabled={page <= 1 || loading}
+					variant="secondary"
+				>
+					Précédent
+				</Button>
+				<span className="text-gray-700 font-medium">
+					Page {currentPage ?? page} sur {totalPages ?? 1}
+				</span>
+				<Button
+					onClick={() => setPage(p => (totalPages ? Math.min(totalPages, p + 1) : p + 1))}
+					disabled={page >= (totalPages ?? 1) || loading}
+					variant="secondary"
+				>
+					Suivant
+				</Button>
+			</div>
 		</div>
 	);
 };
