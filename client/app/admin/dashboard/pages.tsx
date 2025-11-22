@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useRouter } from 'next/navigation';
-import { Users, Home, Handshake } from 'lucide-react';
+import { Users, Home, Handshake, DollarSign } from 'lucide-react';
 
 // Types des props à adapter selon ton backend :
 interface DashboardStats {
@@ -113,9 +113,7 @@ export function DashboardAdmin({ stats: initialStats }: DashboardAdminProps) {
         {/* AGENTS */}
         <div className="bg-white rounded-xl shadow-md flex flex-col justify-between p-6 border-l-4 border-blue-500">
           <div className="flex items-center gap-2 text-blue-700 font-bold text-lg mb-1">
-            <svg className="w-6 h-6 opacity-50 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857..." />
-            </svg>
+            <Users className="w-6 h-6 opacity-70 mr-1 text-blue-600" />
             Agents inscrits
           </div>
           <div className="text-4xl font-extrabold mb-2">
@@ -130,9 +128,7 @@ export function DashboardAdmin({ stats: initialStats }: DashboardAdminProps) {
         {/* PROPRIÉTÉS */}
         <div className="bg-white rounded-xl shadow-md flex flex-col justify-between p-6 border-l-4 border-indigo-500">
           <div className="flex items-center gap-2 text-indigo-700 font-bold text-lg mb-1">
-            <svg className="w-6 h-6 opacity-60 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5...."/>
-            </svg>
+            <Home className="w-6 h-6 opacity-80 mr-1 text-indigo-600" />
             Annonces
           </div>
           <div className="text-4xl font-extrabold mb-2">
@@ -146,9 +142,7 @@ export function DashboardAdmin({ stats: initialStats }: DashboardAdminProps) {
         {/* COLLABORATIONS */}
         <div className="bg-white rounded-xl shadow-md flex flex-col justify-between p-6 border-l-4 border-purple-500">
           <div className="flex items-center gap-2 text-purple-800 font-bold text-lg mb-1">
-            <svg className="w-6 h-6 opacity-70 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3..."/>
-            </svg>
+            <Handshake className="w-6 h-6 opacity-80 mr-1 text-purple-600" />
             Collaborations
           </div>
           <div className="text-4xl font-extrabold mb-2">{stats.collabOpen}</div>
@@ -159,9 +153,7 @@ export function DashboardAdmin({ stats: initialStats }: DashboardAdminProps) {
         {/* FRAIS D'AGENCE */}
         <div className="bg-white rounded-xl shadow-md flex flex-col justify-between p-6 border-l-4 border-pink-500">
           <div className="flex items-center gap-2 text-pink-700 font-bold text-lg mb-1">
-            <svg className="w-6 h-6 opacity-60 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6M17 5a7..."/>
-            </svg>
+            <DollarSign className="w-6 h-6 opacity-80 mr-1 text-pink-600" />
             Volume total des frais (€)
           </div>
           <div className="text-3xl font-extrabold mb-2">

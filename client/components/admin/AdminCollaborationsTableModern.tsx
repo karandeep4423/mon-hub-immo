@@ -1,9 +1,10 @@
-'use client';
+"use client";
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Badge } from './ui/Badge';
 import { DataTable } from './ui/DataTable';
+import { BarChart2, CheckCircle, Check, DollarSign, Handshake, Home, Eye, MessageSquare, Edit, Calendar, RefreshCw } from 'lucide-react';
 
 export interface AdminCollaboration {
 	_id: string;
@@ -58,13 +59,13 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 	};
 
 	const timelineStatus = (status: string) => {
-		const statuses = {
-			pending: '⏳ En attente',
-			active: '🟢 Active',
-			completed: '✅ Complétée',
-			cancelled: '❌ Annulée',
+		const statuses: Record<string, string> = {
+			pending: 'En attente',
+			active: 'Active',
+			completed: 'Complétée',
+			cancelled: 'Annulée',
 		};
-		return statuses[status as keyof typeof statuses] || status;
+		return statuses[status] || status;
 	};
 
 	return (
@@ -101,10 +102,10 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 
 			{/* Stats */}
 			<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-				<StatCard icon="📊" label="Total" value={filteredCollaborations.length} color="blue" />
-				<StatCard icon="🟢" label="Actives" value={filteredCollaborations.filter(c => c.status === 'active').length} color="green" />
-				<StatCard icon="✅" label="Complétées" value={filteredCollaborations.filter(c => c.status === 'completed').length} color="purple" />
-				<StatCard icon="💰" label="Commissions" value={`€${(filteredCollaborations.reduce((sum, c) => sum + ((c.commission || c.proposedCommission) || 0), 0) / 1000).toFixed(1)}k`} color="rose" />
+				<StatCard icon={<BarChart2 className="w-8 h-8 text-indigo-500" />} label="Total" value={filteredCollaborations.length} color="blue" />
+				<StatCard icon={<CheckCircle className="w-8 h-8 text-green-500" />} label="Actives" value={filteredCollaborations.filter(c => c.status === 'active').length} color="green" />
+				<StatCard icon={<Check className="w-8 h-8 text-purple-500" />} label="Complétées" value={filteredCollaborations.filter(c => c.status === 'completed').length} color="purple" />
+				<StatCard icon={<DollarSign className="w-8 h-8 text-rose-500" />} label="Commissions" value={`€${(filteredCollaborations.reduce((sum, c) => sum + ((c.commission || c.proposedCommission) || 0), 0) / 1000).toFixed(1)}k`} color="rose" />
 			</div>
 
 			{/* Table */}
@@ -132,7 +133,7 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 										)}
 									</div>
 									<div className="flex items-center gap-2 ml-1">
-										<div className="w-6 h-6 flex items-center justify-center">🤝</div>
+										<div className="w-6 h-6 flex items-center justify-center"><Handshake className="w-5 h-5 text-gray-500" /></div>
 										{apporteurId ? (
 											<Link href={`/admin/users/${apporteurId}`} className="text-xs text-gray-500 hover:underline">{apporteurName || 'Unknown'}</Link>
 										) : (
@@ -151,8 +152,8 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 							const propertyTitle = value || row.postId?.address || row.postId?.title || 'Unknown';
 							const isProperty = row.postType === 'Property';
 							return (
-								<div className="flex items-center gap-2">
-									<span className="text-lg">🏠</span>
+									<div className="flex items-center gap-2">
+									<Home className="w-5 h-5 text-gray-600" />
 									{isProperty && row.postId?._id ? (
 										<Link href={`/property/${row.postId._id}`} className="font-medium text-gray-900 hover:underline">{propertyTitle}</Link>
 									) : (
@@ -191,8 +192,8 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 						width: '15%',
 						render: (value, row: AdminCollaboration) => (
 							<div className="text-xs text-gray-600 space-y-1">
-								<p>📅 {new Date(value).toLocaleDateString('fr-FR')}</p>
-								<p className="text-gray-500">↻ {new Date(row.updatedAt).toLocaleDateString('fr-FR')}</p>
+								<p className="flex items-center gap-2"><Calendar className="w-4 h-4 text-gray-400" />{new Date(value).toLocaleDateString('fr-FR')}</p>
+								<p className="text-gray-500 flex items-center gap-2"><RefreshCw className="w-4 h-4 text-gray-400" />{new Date(row.updatedAt).toLocaleDateString('fr-FR')}</p>
 							</div>
 						),
 					},
@@ -205,17 +206,17 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 				actions={(row: AdminCollaboration) => (
 					<div className="flex items-center gap-2">
 						<button className="p-1 hover:bg-blue-100 rounded transition-colors" title="Détails">
-							👁️
+							<Eye className="w-4 h-4" />
 						</button>
 						<Link href={`/chat?userId=${row.agentId}&propertyId=${row.propertyId}`} className="p-1 hover:bg-purple-100 rounded transition-colors" title="Historique des échanges">
-							💬
+							<MessageSquare className="w-4 h-4" />
 						</Link>
 						<button className="p-1 hover:bg-yellow-100 rounded transition-colors" title="Éditer">
-							✏️
+							<Edit className="w-4 h-4" />
 						</button>
 						{row.status !== 'completed' && (
 							<button className="p-1 hover:bg-green-100 rounded transition-colors" title="Valider">
-								✅
+								<Check className="w-4 h-4 text-green-600" />
 							</button>
 						)}
 					</div>
@@ -225,7 +226,7 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 	);
 };
 
-const StatCard: React.FC<{ icon: string; label: string; value: string | number; color: string }> = ({
+const StatCard: React.FC<{ icon: React.ReactNode; label: string; value: string | number; color: string }> = ({
 	icon,
 	label,
 	value,
