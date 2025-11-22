@@ -1199,6 +1199,16 @@ export const getProfile = async (
 				updatedAt: user.updatedAt,
 				professionalInfo: user.professionalInfo,
 				profileCompleted: user.profileCompleted || false, // Add this field
+				// Billing / activation info
+				isPaid: Boolean(user.isPaid),
+				subscriptionStatus: user.subscriptionStatus || null,
+				// Derived account status for frontend display
+				accountStatus:
+					user.userType === 'agent' && user.profileCompleted && !user.isPaid
+						? 'profil en attente d\'activation'
+						: user.isPaid
+						? 'active'
+						: 'incomplete',
 			},
 		});
 	} catch (error) {
@@ -1500,6 +1510,11 @@ export const completeProfile = async (
 		} else if (user.userType !== 'agent') {
 			// Non-agents complete profile by just submitting
 			user.profileCompleted = true;
+		}
+
+		// When profile is completed but user hasn't paid yet, mark subscriptionStatus
+		if (user.profileCompleted) {
+			user.subscriptionStatus = user.isPaid ? 'active' : 'pending_activation';
 		}
 
 		await user.save();

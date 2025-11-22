@@ -31,8 +31,9 @@ export const requireActiveSubscription = async (
       return next();
     }
 
-    // Only enforce for agents who are validated and have completed profile
-    if (user.userType === 'agent' && user.isValidated && user.profileCompleted) {
+    // Enforce subscription/payment requirement for agents who completed their profile
+    // Once an agent has completed their profile they must pay to access protected areas
+    if (user.userType === 'agent' && user.profileCompleted) {
       if (!user.isPaid) {
         logger.info(`[Subscription] Blocking access for unpaid user ${user.email}`);
         res.status(402).json({
