@@ -6,8 +6,9 @@ import { Button } from './ui/Button';
 import Link from 'next/link';
 import { DataTable } from './ui/DataTable';
 import { useAdminProperties } from '@/hooks/useAdminProperties';
-import { Home, CheckCircle, BarChart2, DollarSign, Eye, Edit, Trash2, LayoutGrid, List } from 'lucide-react';
+import { Home, CheckCircle, BarChart2, DollarSign, Eye, Trash2, LayoutGrid, List } from 'lucide-react';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export function AdminPropertiesTableModern({ initialProperties }: { initialProperties?: any[] }) {
 	// helpers
 	const getPropertyTypeLabel = (type: string) => {
@@ -62,7 +63,7 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 			} else {
 				alert('Erreur lors de la suppression');
 			}
-		} catch (err) {
+		} catch {
 			alert('Erreur lors de la suppression');
 		}
 	};

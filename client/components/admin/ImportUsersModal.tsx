@@ -144,7 +144,7 @@ function ImportUsersModal({
 						</div>
 
 						<div className="flex items-center gap-2">
-							<label className="text-sm">Type d'utilisateur par défaut:</label>
+							<label className="text-sm">Type d&apos;utilisateur par défaut:</label>
 							<select value={defaultUserType} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setDefaultUserType(e.target.value as 'agent' | 'apporteur')} className="border rounded px-2 py-1">
 								<option value="apporteur">Apporteur</option>
 								<option value="agent">Agent</option>

@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import Image from 'next/image';
 import { useDropzone, FileRejection } from 'react-dropzone';
 import { Components } from '@/lib/constants';
 
@@ -147,11 +148,13 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 				<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
 					{images.map((image) => (
 						<div key={image.id} className="relative group">
-							<div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-								<img
+							<div className="aspect-square rounded-lg overflow-hidden bg-gray-100 relative">
+								<Image
 									src={image.preview}
 									alt={Components.UI.IMAGE_ALT_TEXT.preview}
-									className="w-full h-full object-cover"
+									fill
+									className="object-cover"
+									unoptimized
 								/>
 							</div>
 							<button

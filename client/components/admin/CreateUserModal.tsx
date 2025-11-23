@@ -34,7 +34,7 @@ const CreateUserModal: React.FC<Props> = ({ onClose, onCreated }) => {
   // identity file left out of payload (requires multipart/upload flow)
   const [identityCardFile, setIdentityCardFile] = useState<File | null>(null);
 
-  const { mutate, loading } = useMutation(async (payload: any) => {
+  const { mutate, loading } = useMutation(async (payload: Record<string, unknown>) => {
     // Use generic POST to admin create user
     const res = await fetch("http://localhost:4000/api/admin/users/create", {
       method: "POST",
@@ -50,18 +50,30 @@ const CreateUserModal: React.FC<Props> = ({ onClose, onCreated }) => {
       onCreated();
       onClose();
     },
-    onError: (err) => {
+    onError: (err: unknown) => {
       logger.error('[CreateUserModal] Error creating user', err);
-      // Prefer API-specific message when available
-      try {
-        // err is ApiError
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const apiErr: any = err;
-        const msg = apiErr?.message || apiErr?.originalError?.response?.data?.message || apiErr?.originalError?.response?.data?.error || 'Erreur lors de la création de l\'utilisateur';
-        alert(msg);
-      } catch (e) {
-        alert('Erreur lors de la création de l\'utilisateur');
-      }
+      // Prefer API-specific message when available — safely traverse unknown shape
+      const getNestedString = (obj: unknown, path: string[]) => {
+        let cur: unknown = obj;
+        for (const k of path) {
+          if (cur && typeof cur === 'object' && k in (cur as Record<string, unknown>)) {
+            cur = (cur as Record<string, unknown>)[k];
+          } else {
+            return undefined;
+          }
+        }
+        return typeof cur === 'string' ? cur : undefined;
+      };
+
+      const msg =
+        (typeof err === 'string' && err) ||
+        (err instanceof Error && err.message) ||
+        getNestedString(err, ['message']) ||
+        getNestedString(err, ['originalError', 'response', 'data', 'message']) ||
+        getNestedString(err, ['originalError', 'response', 'data', 'error']) ||
+        'Erreur lors de la création de l\'utilisateur';
+
+      alert(msg);
     }
   });
 
@@ -76,7 +88,7 @@ const CreateUserModal: React.FC<Props> = ({ onClose, onCreated }) => {
       return;
     }
 
-    const payload: any = {
+    const payload: Record<string, unknown> = {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       email: email.trim(),
@@ -135,7 +147,7 @@ const CreateUserModal: React.FC<Props> = ({ onClose, onCreated }) => {
           {userType === 'agent' && (
             <div className="p-4 bg-gray-50 rounded border">
               <div className="mb-3">
-                <div className="text-sm font-medium text-gray-700 mb-1">Type d'agent immobilier *</div>
+                <div className="text-sm font-medium text-gray-700 mb-1">Type d&apos;agent immobilier *</div>
                 <Select
                   label=""
                   name="agentType"
@@ -144,7 +156,7 @@ const CreateUserModal: React.FC<Props> = ({ onClose, onCreated }) => {
                   options={[
                     { value: 'independent', label: 'Agent immobilier indépendant' },
                     { value: 'commercial', label: 'Agent commercial immobilier' },
-                    { value: 'employee', label: "Négociateur VRP employé d'agence" },
+                    { value: 'employee', label: "Négociateur VRP employé d&apos;agence" },
                   ]}
                 />
               </div>
@@ -178,18 +190,18 @@ const CreateUserModal: React.FC<Props> = ({ onClose, onCreated }) => {
             <div className="space-y-2">
               <label className="flex items-center gap-2">
                 <input type="checkbox" checked={sendInvite} onChange={(e) => { setSendInvite(e.target.checked); if (e.target.checked) setSendRandomPassword(false); }} />
-                <span className="text-sm text-gray-600">Envoyer un lien d'invitation pour définir le mot de passe</span>
+                <span className="text-sm text-gray-600">Envoyer un lien d&apos;invitation pour définir le mot de passe</span>
               </label>
               <label className="flex items-center gap-2">
                 <input type="checkbox" checked={sendRandomPassword} onChange={(e) => { setSendRandomPassword(e.target.checked); if (e.target.checked) setSendInvite(false); }} />
-                <span className="text-sm text-gray-600">Générer un mot de passe temporaire et l'envoyer par email</span>
+                <span className="text-sm text-gray-600">Générer un mot de passe temporaire et l&apos;envoyer par email</span>
               </label>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <input id="validated" type="checkbox" checked={isValidated} onChange={(e) => setIsValidated(e.target.checked)} />
-            <label htmlFor="validated" className="text-sm text-gray-600">Valider ce compte (son email sera envoyé si validé)</label>
+            <label htmlFor="validated" className="text-sm text-gray-600">Valider ce compte (son e-mail sera envoyé si validé)</label>
           </div>
 
           <div className="flex gap-3 justify-end pt-2">

@@ -21,7 +21,8 @@ import {
  */
 export const hasRequiredRole = (
 	user: User | null | undefined,
-	allowedRoles: Array<'agent' | 'apporteur'>,
+	// allow any User.userType values so callers can pass 'admin' if needed
+	allowedRoles: Array<User['userType']>,
 ): boolean => {
 	if (!user || !user.userType) return false;
 	return allowedRoles.includes(user.userType);

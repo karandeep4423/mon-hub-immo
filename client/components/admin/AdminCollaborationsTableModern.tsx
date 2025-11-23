@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Badge } from './ui/Badge';
 import { DataTable } from './ui/DataTable';
-import { BarChart2, CheckCircle, Check, DollarSign, Handshake, Home, Eye, MessageSquare, Edit, Calendar, RefreshCw } from 'lucide-react';
+import { BarChart2, CheckCircle, Check, DollarSign, Handshake, Home, Eye, MessageSquare, Calendar, RefreshCw } from 'lucide-react';
 
 export interface AdminCollaboration {
 	_id: string;

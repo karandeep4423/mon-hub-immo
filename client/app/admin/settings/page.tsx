@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -138,7 +139,7 @@ export default function AdminSettingsPage() {
 							<div className="space-y-3 text-sm">
 								<div>
 									<p className="text-gray-600">Dernière sauvegarde</p>
-									<p className="font-semibold text-gray-900">Aujourd'hui 02:30</p>
+										<p className="font-semibold text-gray-900">Aujourd&apos;hui 02:30</p>
 								</div>
 								<Button variant="secondary" size="sm" className="w-full">
 									🔄 Lancer une sauvegarde
@@ -148,7 +149,7 @@ export default function AdminSettingsPage() {
 
 						{/* Help */}
 						<div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-6 border border-blue-100">
-							<h3 className="font-bold text-blue-900 mb-2">❓ Besoin d'aide?</h3>
+							<h3 className="font-bold text-blue-900 mb-2">❓ Besoin d&apos;aide?</h3>
 							<p className="text-sm text-blue-700 mb-3">Consultez la documentation complète</p>
 							<button className="text-sm text-blue-600 hover:text-blue-700 font-medium underline">
 								Voir la documentation →

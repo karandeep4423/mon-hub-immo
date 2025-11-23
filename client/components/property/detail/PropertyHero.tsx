@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Features } from '@/lib/constants';
 import { getImageUrl } from '@/lib/utils/imageUtils';
 
@@ -22,20 +23,28 @@ export const PropertyHero = ({
 		return typeof image === 'string' ? image : image.url;
 	};
 
+	// current image src state for main image (allows fallback on error)
+	const [mainImageSrc, setMainImageSrc] = useState<string>(() =>
+		getImageSrc(allImages[currentImageIndex]),
+	);
+
+	useEffect(() => {
+		setMainImageSrc(getImageSrc(allImages[currentImageIndex]));
+	}, [allImages, currentImageIndex]);
+
 	return (
 		<div className="bg-white rounded-lg shadow-lg overflow-hidden">
 			{/* Main Image */}
 			<div className="relative h-96 bg-gray-200">
-				<img
-					src={getImageSrc(allImages[currentImageIndex])}
+				<Image
+					src={mainImageSrc}
 					alt={title}
-					className="w-full h-full object-cover cursor-pointer"
+					fill
+					className="object-cover cursor-pointer"
+					unoptimized
 					onClick={() => onImageClick(currentImageIndex)}
-					onError={(e) => {
-						(e.target as HTMLImageElement).src = getImageUrl(
-							undefined,
-							'medium',
-						);
+					onError={() => {
+						setMainImageSrc(getImageUrl(undefined, 'medium'));
 					}}
 				/>
 
@@ -131,11 +140,15 @@ export const PropertyHero = ({
 										: 'border-gray-200'
 								} hover:border-brand-400 transition-colors`}
 							>
-								<img
-									src={getImageSrc(image)}
-									alt={`Image ${index + 1}`}
-									className="w-full h-full object-cover"
-								/>
+								<div className="relative w-full h-full">
+									<Image
+										src={getImageSrc(image)}
+										alt={`Image ${index + 1}`}
+										fill
+										className="object-cover"
+										unoptimized
+									/>
+								</div>
 							</button>
 						))}
 					</div>

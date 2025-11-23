@@ -31,7 +31,8 @@ interface PropertyFormStep1Props {
 			| Property['clientInfo']
 			| undefined,
 	) => void;
-	userType?: 'agent' | 'apporteur' | '';
+	// include 'admin' as a possible userType because user object may contain it
+	userType?: 'agent' | 'apporteur' | 'admin' | '';
 }
 
 export const PropertyFormStep1: React.FC<PropertyFormStep1Props> = ({

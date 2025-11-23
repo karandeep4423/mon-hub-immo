@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
 
 // Adapte cette interface à la structure Collaboration de ton backend (exemple simplifié)
-interface Collaboration {
+export interface Collaboration {
   _id: string;
-  postId?: any;
+  postId?: Record<string, any>;
   postType?: string;
   agent?: { _id: string; firstName?: string; lastName?: string };
   agentId?: string;
   apporteur?: { _id: string; firstName?: string; lastName?: string };
   apporteurId?: string;
-  status: string;
+  status: 'pending' | 'active' | 'completed' | 'cancelled';
   createdAt: string;
+  updatedAt?: string;
   // Ajoute d'autres champs si besoin
 }
 

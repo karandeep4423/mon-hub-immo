@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useMemo } from "react";
@@ -31,8 +32,11 @@ export default function AdminUsersTable({ users, loading, onEdit, onDelete }: Ad
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<keyof AdminUser | ''>('');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  // set functions are intentionally unused for now (client-side simple table)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [sortBy, _setSortBy] = useState<keyof AdminUser | ''>('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [sortDirection, _setSortDirection] = useState<'asc' | 'desc'>('asc');
 
   // Simple filtered list (client-side)
   const filtered = useMemo(() => {
@@ -108,75 +112,4 @@ export default function AdminUsersTable({ users, loading, onEdit, onDelete }: Ad
       </div>
     </div>
   );
-}
-
-function Th({ label, col, sortBy, sortDirection, handleSort }: {
-  label: string;
-  col: keyof AdminUser | 'network';
-  sortBy?: string;
-  sortDirection?: string;
-  handleSort?: (col: keyof AdminUser) => void;
-}) {
-  if (handleSort && col !== 'network') {
-    return (
-      <th
-        onClick={() => handleSort(col as keyof AdminUser)}
-        className="cursor-pointer select-none p-2 font-semibold whitespace-nowrap hover:underline"
-      >
-        {label}
-        {sortBy === col && (sortDirection === 'asc' ? ' ↑' : ' ↓')}
-      </th>
-    );
-  }
-  return <th className="p-2 font-semibold whitespace-nowrap">{label}</th>;
-}
-
-// Boutons stylisés type Tailwind/Bootstrap
-function ButtonAction({ children, onClick, type }: { children: React.ReactNode, onClick?: () => void, type?: 'primary' | 'danger' | 'warning' | 'secondary' }) {
-  let cls = 'px-3 py-1 text-xs font-bold rounded shadow focus:outline-none focus:ring transition active:scale-95';
-  switch (type) {
-    case 'danger':
-      cls += ' bg-red-100 text-red-700 hover:bg-red-600 hover:text-white';
-      break;
-    case 'primary':
-      cls += ' bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white';
-      break;
-    case 'warning':
-      cls += ' bg-yellow-100 text-yellow-700 hover:bg-yellow-500 hover:text-white';
-      break;
-    case 'secondary':
-      cls += ' bg-gray-200 text-gray-700 hover:bg-gray-400 hover:text-white';
-      break;
-    default:
-      cls += ' bg-white text-blue-700';
-      break;
-  }
-  return (
-    <button onClick={onClick} className={cls}>
-      {children}
-    </button>
-  );
-}
-
-// Bouton validation
-function ValidateButton({ user }: { user: AdminUser }) {
-  const updateValidation = async (value: boolean) => {
-    try {
-      await fetch(`/api/admin/users/${user._id}/validate`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ value }),
-      });
-      window.location.reload();
-    } catch (err) {
-      alert('Erreur de validation');
-    }
-  };
-  return user.isValidated
-    ? (
-      <ButtonAction type="danger" onClick={() => updateValidation(false)}>Dévalider</ButtonAction>
-    ) : (
-      <ButtonAction type="primary" onClick={() => updateValidation(true)}>Valider</ButtonAction>
-    );
 }

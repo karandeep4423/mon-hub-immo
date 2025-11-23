@@ -9,7 +9,8 @@ export default function AdminPropertiesPage() {
 
 	return (
 		<AdminLayout>
-			<AdminPropertiesTableModern properties={properties} loading={loading} />
+			{/* AdminPropertiesTableModern expects `initialProperties` as a prop; pass the fetched properties as initialProperties. The component manages its own loading via the hook. */}
+			<AdminPropertiesTableModern initialProperties={properties} />
 		</AdminLayout>
 	);
 }

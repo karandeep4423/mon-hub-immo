@@ -1,11 +1,12 @@
 
 "use client";
 import React from 'react';
+import Image from 'next/image';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
-import { AtSign, Briefcase, CheckCircle2, FileText, Image as ImageIcon, Phone, ShieldX, User, XCircle } from 'lucide-react';
+import { Briefcase, CheckCircle2, FileText, Image as ImageIcon, Phone, ShieldX, User, XCircle } from 'lucide-react';
 
 interface UserProfile {
   _id: string;
@@ -32,8 +33,10 @@ interface UserProfileModernProps {
   onBlock: (id: string, value: boolean) => Promise<void>;
 }
 
-const StatCard = ({ icon, label, value, colorClass }) => (
-  <div className={`flex items-center p-4 rounded-lg ${colorClass}`}>
+type KnownUserType = '' | 'agent' | 'apporteur' | 'admin';
+
+const StatCard: React.FC<{ icon: React.ReactNode; label: string; value?: number; colorClass?: string }> = ({ icon, label, value, colorClass }) => (
+  <div className={`flex items-center p-4 rounded-lg ${colorClass || ''}`}>
     <div className="mr-4">{icon}</div>
     <div>
       <p className="text-sm font-medium text-gray-600">{label}</p>
@@ -42,7 +45,7 @@ const StatCard = ({ icon, label, value, colorClass }) => (
   </div>
 );
 
-const InfoRow = ({ icon, label, value }) => (
+const InfoRow: React.FC<{ icon?: React.ReactNode; label: string; value?: React.ReactNode }> = ({ icon, label, value }) => (
   <div className="flex items-center text-sm">
     <div className="w-6 mr-2 text-gray-500">{icon}</div>
     <span className="font-medium text-gray-700 mr-2">{label}:</span>
@@ -61,7 +64,22 @@ export function UserProfileModern({ user, onValidate, onBlock }: UserProfileMode
           <Card className="overflow-hidden shadow-lg">
             <div className="bg-gray-50 p-6">
               <div className="flex items-center">
-                <ProfileAvatar user={user} size="2xl" />
+                <ProfileAvatar
+                  user={{
+                    // ProfileAvatar expects a User-like shape; map minimal compatible fields
+                    _id: user._id,
+                    firstName: user.firstName || '',
+                    lastName: user.lastName || '',
+                    profileImage: user.profileImage ?? undefined,
+                    email: user.email || '',
+                    phone: user.phone ?? '',
+                    userType: (user.userType ?? '') as KnownUserType,
+                    // map admin flags to a couple expected boolean fields
+                    isEmailVerified: !!user.isValidated,
+                    profileCompleted: false,
+                  }}
+                  size="2xl"
+                />
                 <div className="ml-5">
                   <h3 className="text-2xl font-bold text-gray-900">{fullName}</h3>
                   <p className="text-sm text-gray-500">{user.email}</p>
@@ -154,7 +172,9 @@ export function UserProfileModern({ user, onValidate, onBlock }: UserProfileMode
                 </h4>
                 {user.profileImage ? (
                   <a href={user.profileImage} target="_blank" rel="noopener noreferrer">
-                    <img src={user.profileImage} alt="Profile" className="w-32 h-32 object-cover rounded-lg border shadow-sm" />
+                    <div className="w-32 h-32 relative rounded-lg overflow-hidden border shadow-sm">
+                      <Image src={user.profileImage} alt="Profile" fill className="object-cover" unoptimized />
+                    </div>
                   </a>
                 ) : (
                   <p className="text-sm text-gray-500">Non fournie.</p>
@@ -163,7 +183,7 @@ export function UserProfileModern({ user, onValidate, onBlock }: UserProfileMode
               <hr className="border-gray-200" />
               <div>
                 <h4 className="font-semibold text-gray-800 mb-2 flex items-center">
-                  <User size={18} className="mr-2" /> Carte d'identité
+                  <User size={18} className="mr-2" /> Carte d&apos;identité
                 </h4>
                 {user.professionalInfo?.identityCard?.url ? (
                   <a href={user.professionalInfo.identityCard.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
