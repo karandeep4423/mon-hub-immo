@@ -69,7 +69,7 @@ const PaymentForm = () => {
     const syncProfileAndRedirect = async () => {
       try {
         await fetch(`${backendUrl}/auth/profile`, { credentials: 'include' });
-      } catch (err) {
+      } catch {
         // ignore
       }
       // redirect user to listings page (view-only permitted for paid users)
@@ -126,9 +126,9 @@ const PaymentForm = () => {
         {/* Info banner to explain access while on payment page */}
         {showBanner && (
           <div className="mx-auto max-w-5xl p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 mb-4 flex items-start justify-between">
-            <div className="mr-4 text-sm">
-              <strong>Information :</strong> Vous pouvez consulter les annonces pendant la finalisation du paiement. Cependant, la création d'annonces, la collaboration et d'autres actions payantes resteront bloquées tant que l'abonnement n'est pas activé.
-              <div className="mt-2 text-xs text-gray-700">Si vous venez de payer, attendez quelques secondes : l'accès sera synchronisé automatiquement.</div>
+              <div className="mr-4 text-sm">
+              <strong>Information :</strong> Vous pouvez consulter les annonces pendant la finalisation du paiement. Cependant, la création d&apos;annonces, la collaboration et d&apos;autres actions payantes resteront bloquées tant que l&apos;abonnement n&apos;est pas activé.
+              <div className="mt-2 text-xs text-gray-700">Si vous venez de payer, attendez quelques secondes : l&apos;accès sera synchronisé automatiquement.</div>
             </div>
             <div>
               <button aria-label="Fermer" onClick={() => setShowBanner(false)} className="text-yellow-800 hover:text-yellow-900 font-bold">✕</button>
@@ -147,10 +147,10 @@ const PaymentForm = () => {
                 Votre prochain client pourrait vous trouver dès demain. Avec <strong>MonHubImmo Premium</strong>, publiez vos annonces sans limite, automatisez vos relances et accédez à des outils puissants pour booster vos ventes et votre visibilité.
               </p>
               <p className="mb-4 max-w-lg">
-                Profitez d’une plateforme qui vous fait gagner du temps, attire les bons clients et transforme chaque mandat en opportunité.
+                Profitez d&apos;une plateforme qui vous fait gagner du temps, attire les bons clients et transforme chaque mandat en opportunité.
               </p>
               <ul className="space-y-2 text-sm list-disc list-inside mb-6">
-                <li>✅ Publiez un nombre illimité d’annonces</li>
+                <li>✅ Publiez un nombre illimité d&apos;annonces</li>
                 <li>✅ Partagez vos mandats en un clic</li>
                 <li>✅ Recevez des leads qualifiés</li>
                 <li>✅ Gérez vos prospects efficacement</li>
@@ -216,7 +216,7 @@ const PaymentForm = () => {
                     className="h-4 w-4 text-cyan-600 border-gray-300 rounded focus:ring-cyan-500"
                   />
                   <label htmlFor="terms" className="text-sm text-gray-700">
-                    J’accepte les{' '}
+                      J&apos;accepte les{' '}
                     <a href="/conditions-generales" className="text-cyan-600 hover:underline">
                       conditions générales
                     </a>.

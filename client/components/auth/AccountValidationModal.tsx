@@ -76,7 +76,7 @@ export const AccountValidationModal: React.FC<AccountValidationModalProps> = ({
 						onClick={() => router.push('/')}
 						className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
 					>
-						Retour à l'accueil
+						Retour à l&apos;accueil
 					</button>
 				</div>
 

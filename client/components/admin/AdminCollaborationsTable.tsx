@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useEffect, useState, useMemo } from "react";
 import Link from 'next/link';
@@ -24,8 +25,6 @@ interface AdminCollaborationsTableProps {
   collaborations: Collaboration[];
   loading: boolean;
 }
-
-const PAGE_SIZE = 10;
 
 // Color selon le statut
 function statusColor(status: string) {

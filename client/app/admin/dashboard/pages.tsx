@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React from "react";
@@ -25,7 +26,6 @@ interface DashboardAdminProps {
 }
 
 export function DashboardAdmin({ stats: initialStats }: DashboardAdminProps) {
-  const router = useRouter();
   const [stats, setStats] = React.useState<DashboardStats | null>(initialStats || null);
   const [loading, setLoading] = React.useState<boolean>(!initialStats);
   const [rawData, setRawData] = React.useState<any>(null);

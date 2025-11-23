@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useMemo } from 'react';
+import Image from 'next/image';
 import CreateUserModal from './CreateUserModal';
 import ImportUsersModal from './ImportUsersModal';
 import Link from 'next/link';
@@ -50,7 +52,6 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 	loading: initialLoading,
 }) => {
 	const [filters, setFilters] = useState({ type: '', status: '', search: '', network: '' });
-	const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 	const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
 	const [showCreate, setShowCreate] = useState(false);
 	const [showImport, setShowImport] = useState(false);
@@ -140,7 +141,7 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 			(u as any).lastActive || '',
 		]);
 
-		let table = '<table><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>' + rows.map(r => `<tr>${r.map(c => `<td>${String(c)}</td>`).join('')}</tr>`).join('') + '</table>';
+		const table = '<table><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>' + rows.map(r => `<tr>${r.map(c => `<td>${String(c)}</td>`).join('')}</tr>`).join('') + '</table>';
 		const blob = new Blob([table], { type: 'application/vnd.ms-excel' });
 		download(`users-${new Date().toISOString().slice(0,10)}.xls`, blob);
 	};
@@ -428,7 +429,7 @@ const EditUserModal: React.FC<{ user: AdminUser; onClose: () => void; onSave: ()
 					<div className="lg:col-span-2 bg-white p-4 rounded-lg border">
 						<div className="flex items-start gap-6">
 							<div className="w-28 h-28 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
-								{form.profileImage ? <img src={form.profileImage} alt="avatar" className="w-full h-full object-cover" /> : <Users className="w-12 h-12 text-gray-400" />}
+								{form.profileImage ? <Image src={form.profileImage} alt="avatar" width={112} height={112} className="w-full h-full object-cover" /> : <Users className="w-12 h-12 text-gray-400" />}
 							</div>
 							<div className="flex-1">
 								<h3 className="text-2xl font-bold text-gray-900">{form.firstName} {form.lastName}</h3>

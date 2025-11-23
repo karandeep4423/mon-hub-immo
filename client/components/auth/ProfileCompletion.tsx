@@ -253,7 +253,10 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 						router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
 					} else {
 						// If user needs to pay, redirect to payment page
-						if (response.user && (response.user.isPaid === false || response.user.isPaid === undefined)) {
+						// response.user may not have a strict TS type for 'isPaid', so narrow safely
+						const respUser = response.user as unknown as Record<string, unknown>;
+						const isPaidVal = respUser['isPaid'] as boolean | undefined;
+						if (isPaidVal === false || isPaidVal === undefined) {
 							showProfileCompletionSuccess();
 							router.push('/payment');
 							return;

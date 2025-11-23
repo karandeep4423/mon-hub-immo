@@ -1,5 +1,4 @@
 'use client';
-
 import React from 'react';
 import Image from 'next/image';
 import type { User } from '@/types/auth';
@@ -179,19 +178,23 @@ export const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
 }) => {
 	const sizes = getAvatarSizes(size);
 	const isObj = user && typeof user === 'object';
+
+	const typedUser = user as Partial<User> & {
+		name?: string;
+		avatarUrl?: string;
+	};
+
 	const userObj = isObj
-		? ({
-				...((user as object) as any),
-				_id: ((user as any)?._id ? String((user as any)._id) : 'unknown'),
-		  } as {
-				_id: string;
-				firstName?: string;
-				lastName?: string;
-				profileImage?: string;
-				name?: string;
-				avatarUrl?: string;
-		  })
-		: { _id: String(user || 'unknown') };
+		? {
+				_id: String(typedUser._id || 'unknown'),
+				firstName: typedUser.firstName,
+				lastName: typedUser.lastName,
+				profileImage: typedUser.profileImage,
+				name: typedUser.name,
+				avatarUrl: typedUser.avatarUrl,
+		  }
+		: { _id: String((user as string) || 'unknown') };
+
 	const initials = getUserInitials(user);
 	// Handle both profileImage and avatarUrl (for ChatUser compatibility)
 	const imageUrl = isObj

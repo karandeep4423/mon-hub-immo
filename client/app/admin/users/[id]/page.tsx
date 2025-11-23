@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { UserProfileModern } from '@/components/admin/UserProfileModern';
@@ -31,7 +31,7 @@ export default function AdminUserProfile() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUser = () => {
+  const fetchUser = useCallback(() => {
     setLoading(true);
     setError(null);
     fetch(`http://localhost:4000/api/admin/users/${id}`, { credentials: 'include' })
@@ -54,11 +54,11 @@ export default function AdminUserProfile() {
       .finally(() => {
         setLoading(false);
       });
-  };
+  }, [id]);
 
   useEffect(() => {
     fetchUser();
-  }, [id]);
+  }, [fetchUser]);
 
   const handleValidate = async (userId: string, shouldValidate: boolean) => {
     if (!confirm(`Êtes-vous sûr de vouloir ${shouldValidate ? 'valider' : 'invalider'} cet utilisateur ?`)) return;

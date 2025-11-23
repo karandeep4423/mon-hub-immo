@@ -73,13 +73,13 @@ export default function AdminUserProfileModal({
             <p>{user.siren || "-"}</p>
           </div>
           <div>
-            <h3 className="font-semibold">Date d'inscription</h3>
+            <h3 className="font-semibold">Date d&apos;inscription</h3>
             <p>{user.inscriptionDate ? new Date(user.inscriptionDate).toLocaleDateString() : "-"}</p>
           </div>
         </section>
 
         <section className="mb-6">
-          <h3 className="font-semibold mb-2">Historique d'activité</h3>
+          <h3 className="font-semibold mb-2">Historique d&apos;activité</h3>
           <ul className="list-disc list-inside">
             <li>Annonces postées : {user.totalAnnouncements ?? 0}</li>
             <li>Collaborations : {user.totalCollaborations ?? 0}</li>

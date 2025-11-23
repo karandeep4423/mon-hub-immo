@@ -44,7 +44,7 @@ export default function AdminCollaborationDetail() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div>
           <h3 className="font-semibold">Bien / Objet</h3>
-          <div>{collaboration.postId?.title ?? collaboration.postType ?? '-'}</div>
+          <div>{String(collaboration.postId?.title ?? collaboration.postType ?? '-')}</div>
         </div>
         <div>
           <h3 className="font-semibold">Statut</h3>

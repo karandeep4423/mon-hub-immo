@@ -99,7 +99,7 @@ api.interceptors.response.use(
 						}
 					}
 				}
-			} catch (err) {
+			} catch {
 				// ignore
 			}
 			return Promise.reject(error);
@@ -118,7 +118,7 @@ api.interceptors.response.use(
 						}
 					}
 				}
-			} catch (err) {
+			} catch {
 				// ignore
 			}
 			return Promise.reject(error);
