@@ -205,15 +205,13 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 				pageSizeOptions={[5, 10, 20, 50]}
 				actions={(row: AdminCollaboration) => (
 					<div className="flex items-center gap-2">
-						<button className="p-1 hover:bg-blue-100 rounded transition-colors" title="Détails">
+						<Link href={`/collaboration/${row._id}`} className="p-1 hover:bg-blue-100 rounded transition-colors" title="Détails">
 							<Eye className="w-4 h-4" />
-						</button>
+						</Link>
 						<Link href={`/chat?userId=${row.agentId}&propertyId=${row.propertyId}`} className="p-1 hover:bg-purple-100 rounded transition-colors" title="Historique des échanges">
 							<MessageSquare className="w-4 h-4" />
 						</Link>
-						<button className="p-1 hover:bg-yellow-100 rounded transition-colors" title="Éditer">
-							<Edit className="w-4 h-4" />
-						</button>
+						 
 						{row.status !== 'completed' && (
 							<button className="p-1 hover:bg-green-100 rounded transition-colors" title="Valider">
 								<Check className="w-4 h-4 text-green-600" />
