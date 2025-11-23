@@ -30,12 +30,7 @@ const navItems = [
 		icon: <Handshake className="w-5 h-5" />,
 		badge: null,
 	},
-	{
-		label: 'Paramètres',
-		href: '/admin/settings',
-		icon: <Settings className="w-5 h-5" />,
-		badge: null,
-	},
+ 
 ];
 
 interface SidebarAdminModernProps {
@@ -63,7 +58,7 @@ export const SidebarAdminModern: React.FC<SidebarAdminModernProps> = ({ isOpen =
 					</div>
 					<div>
 						<p className="font-black text-lg">MonHubImmo</p>
-						<p className="text-xs text-gray-400">Admin Panel</p>
+				 
 					</div>
 				</Link>
 			</div>
@@ -71,7 +66,10 @@ export const SidebarAdminModern: React.FC<SidebarAdminModernProps> = ({ isOpen =
 			{/* Navigation */}
 			<nav className="p-4 space-y-2 flex-1 overflow-y-auto">
 				{navItems.map((item) => {
-					const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+					const isActive =
+						item.href === '/admin'
+							? pathname === item.href
+							: pathname.startsWith(item.href);
 					return (
 						<Link
 							key={item.href}

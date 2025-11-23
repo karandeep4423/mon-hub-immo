@@ -212,11 +212,7 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 							<MessageSquare className="w-4 h-4" />
 						</Link>
 						 
-						{row.status !== 'completed' && (
-							<button className="p-1 hover:bg-green-100 rounded transition-colors" title="Valider">
-								<Check className="w-4 h-4 text-green-600" />
-							</button>
-						)}
+					 
 					</div>
 				)}
 			/>

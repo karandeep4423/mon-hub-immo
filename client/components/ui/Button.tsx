@@ -4,8 +4,8 @@ import { ButtonLoader } from './LoadingSpinner';
 import { UI } from '@/lib/constants/components';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-	variant?: 'primary' | 'secondary' | 'outline';
-	size?: 'sm' | 'md' | 'lg';
+	variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success' | 'accent';
+	size?: 'sm' | 'md' | 'lg' | 'xl';
 	loading?: boolean;
 	children: React.ReactNode;
 }

@@ -8,8 +8,7 @@ const links = [
   { href: "/admin/users", label: "Gestion utilisateurs", icon: <UsersIcon className="h-5 w-5" /> },
   { href: "/admin/properties", label: "Gestion annonces", icon: <BuildingStorefrontIcon className="h-5 w-5" /> },
   { href: "/admin/collaborations", label: "Collaborations", icon: <UserGroupIcon className="h-5 w-5" /> },
-  { href: "/admin/settings", label: "Paramètres", icon: <Cog6ToothIcon className="h-5 w-5" /> },
-];
+ ];
 
 export default function SidebarAdmin() {
   const pathname = usePathname();
