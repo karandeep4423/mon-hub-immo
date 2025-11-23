@@ -36,19 +36,21 @@ const navItems = [
 interface SidebarAdminModernProps {
 	isOpen?: boolean;
 	onClose?: () => void;
+	headerHeight?: number;
 }
 
-export const SidebarAdminModern: React.FC<SidebarAdminModernProps> = ({ isOpen = true, onClose }) => {
+export const SidebarAdminModern: React.FC<SidebarAdminModernProps> = ({ isOpen = true, onClose, headerHeight = 64 }) => {
 	const pathname = usePathname();
 
 	return (
 		<aside
 			className={`
-				fixed inset-y-0 left-0 z-40 w-72 bg-white
+				fixed left-0 z-40 w-72 bg-white
 				text-gray-900 shadow transition-transform duration-300 border-r border-gray-200
 				${isOpen ? 'translate-x-0' : '-translate-x-full'}
-				lg:translate-x-0 lg:sticky lg:top-0
+				lg:translate-x-0 lg:sticky flex flex-col
 			`}
+			style={{ top: headerHeight, height: `calc(100vh - ${headerHeight}px)` }}
 		>
 			{/* Header */}
 			<div className="p-6 border-b border-gray-200">
