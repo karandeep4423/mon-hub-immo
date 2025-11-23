@@ -76,6 +76,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 			const response = await authService.getProfile();
 			if (response.success && response.user) {
 				set({ user: response.user, loading: false });
+
+				// If the user is an agent and has not completed their profile,
+				// force them to the complete-profile flow before allowing navigation.
+				if (
+					response.user.userType === 'agent' &&
+					!response.user.profileCompleted
+				) {
+					try {
+						toast.info('Veuillez compléter votre profil pour accéder à la plateforme');
+						if (typeof window !== 'undefined') {
+							const currentPath = window.location.pathname || '';
+							if (!currentPath.startsWith('/auth/complete-profile')) {
+								window.location.replace('/auth/complete-profile');
+							}
+						}
+					} catch (e) {
+						// ignore redirect errors during SSR
+					}
+				}
 			} else {
 				set({ user: null, loading: false });
 			}

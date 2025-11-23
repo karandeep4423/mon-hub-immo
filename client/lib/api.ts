@@ -84,6 +84,45 @@ api.interceptors.request.use(
 api.interceptors.response.use(
 	(response) => response,
 	async (error) => {
+		// Handle payment required (402) - redirect user to payment page
+		if (error.response?.status === 402) {
+			try {
+				const code = error.response?.data?.code;
+				if (code === 'PAYMENT_REQUIRED') {
+					toast.info('Votre compte nécessite un paiement pour accéder à cette fonctionnalité.');
+					if (typeof window !== 'undefined') {
+						// Avoid redirect loop: don't redirect if we're already on the payment page
+						const currentPath = window.location.pathname || '';
+						if (!currentPath.startsWith('/payment')) {
+							// Use replace to avoid polluting history
+							window.location.replace('/payment');
+						}
+					}
+				}
+			} catch (err) {
+				// ignore
+			}
+			return Promise.reject(error);
+		}
+
+		// Handle profile incomplete (403) - redirect user to complete profile page
+		if (error.response?.status === 403) {
+			try {
+				const code = error.response?.data?.code;
+				if (code === 'PROFILE_INCOMPLETE') {
+					toast.info('Veuillez compléter votre profil pour continuer.');
+					if (typeof window !== 'undefined') {
+						const currentPath = window.location.pathname || '';
+						if (!currentPath.startsWith('/auth/complete-profile')) {
+							window.location.replace('/auth/complete-profile');
+						}
+					}
+				}
+			} catch (err) {
+				// ignore
+			}
+			return Promise.reject(error);
+		}
 		const originalRequest = error.config;
 
 		// Handle 403 CSRF token errors - fetch new token and retry

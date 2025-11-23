@@ -8,6 +8,7 @@ import {
 	updateProfile,
 	forgotPassword,
 	resetPassword,
+    setPasswordFromInvite,
 	completeProfile,
 	getAllAgents,
 	updateSearchPreferences,
@@ -23,10 +24,12 @@ import {
 	resendVerificationSchema,
 	forgotPasswordSchema,
 	resetPasswordSchema,
+	setPasswordSchema,
 	updateProfileSchema,
 	completeProfileSchema,
 } from '../validation/schemas';
 import { uploadIdentityDoc } from '../middleware/uploadMiddleware';
+	
 import {
 	passwordResetLimiter,
 	emailVerificationLimiter,
@@ -55,6 +58,8 @@ router.post(
 	resetPassword,
 );
 
+router.post('/set-password', validate(setPasswordSchema), setPasswordFromInvite);
+
 // Email verification routes with rate limiting
 router.post(
 	'/verify-email',
@@ -72,7 +77,7 @@ router.post(
 // Public route to get all agents
 router.get('/agents', getAllAgents);
 
-// Token refresh (public - uses refresh token from cookie)
+// Note: previously duplicate route removed
 router.post('/refresh', refreshAccessToken);
 
 // Logout (public - clears cookies)

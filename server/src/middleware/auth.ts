@@ -6,61 +6,84 @@ import { User } from '../models/User';
 import { getAccessTokenFromCookies } from '../utils/cookieHelper';
 import { isTokenBlacklisted } from '../utils/redisClient';
 
-export const authenticateToken = async (
-	req: AuthRequest,
-	res: Response,
-	next: NextFunction,
+ export const authenticateToken = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
 ): Promise<void> => {
-	// Get token from httpOnly cookies only
-	const token = getAccessTokenFromCookies(req.cookies);
+  try {
+    console.log('[authenticateToken] Cookies reçus:', req.cookies);
 
-	if (!token) {
-		res.status(401).json({
-			success: false,
-			message: 'Authentification requise',
-		});
-		return;
-	}
+    // Get token from httpOnly cookies only
+    const token = getAccessTokenFromCookies(req.cookies);
+    console.log('[authenticateToken] Token extrait:', token);
 
-	// Check if token is blacklisted (revoked during logout)
-	const isBlacklisted = await isTokenBlacklisted(token);
-	if (isBlacklisted) {
-		res.status(401).json({
-			success: false,
-			message: 'Token révoqué - veuillez vous reconnecter',
-		});
-		return;
-	}
+    if (!token) {
+      console.log('[authenticateToken] Pas de token d’accès dans les cookies');
+      res.status(401).json({
+        success: false,
+        message: 'Authentification requise',
+      });
+      return;
+    }
 
-	try {
-		const decoded = verifyToken(token);
+    // Check if token is blacklisted (revoked during logout)
+    const isBlacklisted = await isTokenBlacklisted(token);
+    if (isBlacklisted) {
+      console.log('[authenticateToken] Token révoqué détecté');
+      res.status(401).json({
+        success: false,
+        message: 'Token révoqué - veuillez vous reconnecter',
+      });
+      return;
+    }
 
-		// Fetch user data from database
-		const user = await User.findById(decoded.userId);
-		if (!user) {
-			res.status(401).json({
-				success: false,
-				message: 'Utilisateur non trouvé',
-			});
-			return;
-		}
+    const decoded = verifyToken(token);
+    console.log('[authenticateToken] Token décodé:', decoded);
 
-		// Attach user data to request
-		req.userId = (user._id as mongoose.Types.ObjectId).toString();
-		req.user = {
-			id: (user._id as mongoose.Types.ObjectId).toString(),
-			userType: user.userType as 'agent' | 'apporteur',
-		};
+    // Fetch user data from database
+    const user = await User.findById(decoded.userId);
+    if (!user) {
+      console.log('[authenticateToken] Utilisateur non trouvé en base');
+      res.status(401).json({
+        success: false,
+        message: 'Utilisateur non trouvé',
+      });
+      return;
+    }
 
-		next();
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	} catch (error) {
-		res.status(403).json({
-			success: false,
-			message: 'Token invalide ou expiré',
-		});
-	}
+    // Reject if account is administratively blocked
+    if ((user as any).isBlocked) {
+      console.log('[authenticateToken] Attempted access with blocked user account');
+      res.status(403).json({ success: false, message: 'Account blocked by admin' });
+      return;
+    }
+
+    // Reject if account is not yet validated by admin (for non-admin users)
+    if (!(user as any).isValidated && user.userType !== 'admin') {
+      console.log('[authenticateToken] Attempted access with unvalidated user account');
+      res.status(403).json({ success: false, message: 'Compte non validé par l\'administrateur' });
+      return;
+    }
+
+    // Attach user data to request
+    req.userId = (user._id as mongoose.Types.ObjectId).toString();
+    req.user = {
+      id: (user._id as mongoose.Types.ObjectId).toString(),
+      userType: user.userType as 'agent' | 'apporteur' | 'admin',
+    };
+    console.log('[authenticateToken] User attaché à la requête:', req.user);
+
+    next();
+  } catch (error) {
+    console.log('[authenticateToken] Erreur attrapée:', error);
+    res.status(403).json({
+      success: false,
+      message: 'Token invalide ou expiré',
+    });
+  }
 };
+
 
 // Optional authentication - doesn't fail if no token provided
 export const optionalAuth = async (
@@ -97,4 +120,15 @@ export const optionalAuth = async (
 		// Invalid token? Continue without auth (don't block)
 		next();
 	}
+};
+
+
+export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
+  console.log('[Middleware] Vérification rôle admin:', req.user?.userType);
+
+  if (req.user?.userType !== 'admin') {
+    console.log('[Middleware] Accès non autorisé - rôle insuffisant');
+    return res.status(403).json({ error: 'Accès réservé à l’administration.' });
+  }
+  next();
 };

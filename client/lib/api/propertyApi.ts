@@ -310,6 +310,12 @@ export interface MyPropertiesResponse {
 	success: boolean;
 	data: {
 		properties: Property[];
+		pagination?: {
+			currentPage: number;
+			totalPages: number;
+			totalItems: number;
+			itemsPerPage: number;
+		};
 	};
 	message?: string;
 }
@@ -422,23 +428,35 @@ export class PropertyService {
 	}
 
 	/**
-	 * Get current user's properties
+	 * Get current user's properties with optional pagination
 	 *
 	 * @static
 	 * @async
-	 * @returns {Promise<MyPropertiesResponse['data']>} User's properties data
+	 * @param {number} [page=1] - Page number for pagination
+	 * @param {number} [limit=10] - Items per page
+	 * @param {string} [status] - Filter by status (active, sold, rented, draft, archived)
+	 * @returns {Promise<MyPropertiesResponse['data']>} User's properties data with pagination info
 	 * @throws {Error} If the API request fails
 	 *
 	 * @example
 	 * ```typescript
-	 * const { properties } = await PropertyService.getMyProperties();
-	 * console.log(`You have ${properties.length} properties`);
+	 * const { properties, pagination } = await PropertyService.getMyProperties(2, 10);
+	 * console.log(`Showing page ${pagination?.currentPage} of ${pagination?.totalPages}`);
 	 * ```
 	 */
-	static async getMyProperties(): Promise<MyPropertiesResponse['data']> {
+	static async getMyProperties(
+		page: number = 1,
+		limit: number = 10,
+		status?: string,
+	): Promise<MyPropertiesResponse['data']> {
 		try {
+			const params = new URLSearchParams();
+			params.append('page', String(page));
+			params.append('limit', String(limit));
+			if (status) params.append('status', status);
+
 			const response = await api.get<MyPropertiesResponse>(
-				'/property/my/properties',
+				`/property/my/properties?${params.toString()}`,
 			);
 			return response.data.data;
 		} catch (error) {

@@ -48,13 +48,23 @@ export function useProperty(id?: string) {
 }
 
 /**
- * Fetch current user's properties
+ * Fetch current user's properties with pagination support
  * Used in: PropertyManager, Dashboard
  */
-export function useMyProperties(userId?: string) {
+export function useMyProperties(
+	userId?: string,
+	page: number = 1,
+	limit: number = 10,
+	status?: string,
+) {
+	const key =
+		userId && page && limit
+			? swrKeys.properties.myProperties(userId, { page, limit, status })
+			: null;
+
 	return useSWR(
-		userId ? swrKeys.properties.myProperties(userId) : null,
-		() => PropertyService.getMyProperties(),
+		key,
+		() => PropertyService.getMyProperties(page, limit, status),
 		{
 			revalidateOnFocus: true,
 			dedupingInterval: 3000,

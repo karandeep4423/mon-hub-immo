@@ -461,7 +461,146 @@ export const getProperties = async (
 			message: 'Erreur lors de la récupération des biens',
 		});
 	}
-}; // Get a single property by ID
+};
+
+// Get all properties for admin with filtering and pagination
+export const getAdminProperties = async (
+	req: Request,
+	res: Response,
+): Promise<void> => {
+	try {
+		const {
+			page = 1,
+			limit,
+			propertyType,
+			city,
+			postalCode,
+			minPrice,
+			maxPrice,
+			minSurface,
+			maxSurface,
+			rooms,
+			search,
+			sortBy = 'createdAt',
+			sortOrder = 'desc',
+			status, // Allow filtering by status for admin
+		} = req.query;
+
+		// Build filter object
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const filter: any = {};
+
+		if (status) {
+			filter.status = sanitizeInput(status);
+		}
+
+		if (propertyType) {
+			// sanitizeInput returns unknown — coerce to string after sanitization
+			const sanitizedType = String(sanitizeInput(propertyType as string));
+
+			// --- Translation mapping for propertyType ---
+			const typeMap: { [key: string]: string } = {
+				Maison: 'house',
+				Appartement: 'apartment',
+				Terrain: 'land',
+				Commercial: 'commercial',
+			};
+
+			// Use the mapped value if it exists, otherwise use the original value
+			filter.propertyType = typeMap[sanitizedType] || sanitizedType;
+		}
+
+		if (city) {
+			// Use safe regex to prevent ReDoS attacks
+			filter.city = createSafeRegex(city as string);
+		}
+
+		if (postalCode) {
+			// Support both single postal code and comma-separated list
+			const postalCodes = (postalCode as string)
+				.split(',')
+				.map((pc) => sanitizeInput(pc.trim()));
+			if (postalCodes.length === 1) {
+				filter.postalCode = postalCodes[0];
+			} else {
+				filter.postalCode = { $in: postalCodes };
+			}
+		}
+
+		if (minPrice || maxPrice) {
+			filter.price = {};
+			if (minPrice) filter.price.$gte = Number(minPrice);
+			if (maxPrice) filter.price.$lte = Number(maxPrice);
+		}
+
+		if (minSurface || maxSurface) {
+			filter.surface = {};
+			if (minSurface) filter.surface.$gte = Number(minSurface);
+			if (maxSurface) filter.surface.$lte = Number(maxSurface);
+		}
+
+		if (rooms) {
+			filter.rooms = Number(rooms);
+		}
+
+		if (search) {
+			// Sanitize search input
+			filter.$text = { $search: sanitizeInput(search) as string };
+		}
+
+		// Build sort object
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const sort: any = {};
+		sort[sortBy as string] = sortOrder === 'desc' ? -1 : 1;
+
+		// Calculate pagination only if limit is provided
+		const skip = limit ? (Number(page) - 1) * Number(limit) : 0;
+
+		// Execute query
+		let query = Property.find(filter)
+			.populate('owner', 'firstName lastName email profileImage userType')
+			.sort(sort)
+			.skip(skip);
+
+		// Only apply limit if provided
+		if (limit) {
+			query = query.limit(Number(limit));
+		}
+
+		const [properties, total] = await Promise.all([
+			query.lean().exec(),
+			Property.countDocuments(filter),
+		]);
+
+		// Calculate pagination info
+		const totalPages = limit ? Math.ceil(total / Number(limit)) : 1;
+		const hasNextPage = limit ? Number(page) < totalPages : false;
+		const hasPrevPage = Number(page) > 1;
+
+		res.status(200).json({
+			success: true,
+			data: {
+				properties,
+				pagination: {
+					currentPage: Number(page),
+					totalPages,
+					totalItems: total,
+					itemsPerPage: Number(limit),
+					hasNextPage,
+					hasPrevPage,
+				},
+			},
+		});
+	} catch (error) {
+		logger.error('[PropertyController] Error fetching admin properties', error);
+		res.status(500).json({
+			success: false,
+			message: 'Erreur lors de la récupération des biens pour l\'admin',
+		});
+	}
+};
+
+// Get a single property by ID
 export const getPropertyById = async (
 	req: Request,
 	res: Response,
@@ -1213,3 +1352,78 @@ export const getPropertyStats = async (
 		});
 	}
 };
+
+// Delete a property (admin only)
+export const deleteAdminProperty = async (
+	req: Request,
+	res: Response,
+): Promise<void> => {
+	try {
+		const { id } = req.params;
+
+		// Validate ObjectId format
+		if (!isValidObjectId(id)) {
+			res.status(400).json({
+				success: false,
+				message: "Format d'identifiant de propriété invalide",
+			});
+			return;
+		}
+
+		const property = await Property.findById(id);
+		if (!property) {
+			res.status(404).json({
+				success: false,
+				message: 'Propriété non trouvée',
+			});
+			return;
+		}
+
+		// Collect all images to delete from S3
+		const imagesToDelete: string[] = [];
+
+		// Add main image
+		if (property.mainImage?.key) {
+			imagesToDelete.push(property.mainImage.key);
+		}
+
+		// Add gallery images
+		if (property.galleryImages && property.galleryImages.length > 0) {
+			property.galleryImages.forEach((img: any) => {
+				if (img.key) {
+					imagesToDelete.push(img.key);
+				}
+			});
+		}
+
+		// Delete images from S3 if any exist
+		if (imagesToDelete.length > 0) {
+			try {
+				await s3Service.deleteMultipleImages(imagesToDelete);
+				logger.info(
+					`[PropertyController] Deleted ${imagesToDelete.length} images from S3 for property ${id}`,
+				);
+			} catch (s3Error) {
+				logger.warn(
+					`[PropertyController] Error deleting images from S3: ${(s3Error as Error).message}`,
+				);
+				// Continue with property deletion even if S3 deletion fails
+			}
+		}
+
+		// Delete the property from database
+		await Property.findByIdAndDelete(id);
+
+		res.status(200).json({
+			success: true,
+			message: 'Propriété supprimée avec succès',
+		});
+	} catch (error) {
+		logger.error('[PropertyController] Error deleting property', error);
+		res.status(500).json({
+			success: false,
+			message: 'Erreur lors de la suppression de la propriété',
+		});
+	}
+};
+

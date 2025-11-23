@@ -16,7 +16,7 @@ export default function DashboardPage() {
 
 	return (
 		<ProtectedRoute>
-			{user?.userType === 'agent' ? (
+			{user?.userType === 'agent' || user?.userType === 'admin' ? (
 				<DashboardContent />
 			) : user?.userType === 'apporteur' ? (
 				<Home />

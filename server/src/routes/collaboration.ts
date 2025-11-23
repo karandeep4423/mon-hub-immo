@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth';
+import { requireActiveSubscription } from '../middleware/subscription';
 import { requireCollaborationAccess } from '../middleware/authorize';
 import {
 	proposeCollaborationValidation,
@@ -25,9 +26,17 @@ import {
 	updateProgressStatus,
 	signCollaboration,
 	completeCollaboration,
+ 	getCollaborationById,
+ 	adminCloseCollaboration,
+ 	adminForceComplete,
 } from '../controllers/collaborationController';
 
+import { getAllCollaborationsAdmin } from '../controllers/collaborationController';
+import { requireAdmin } from '../middleware/auth';
+
 const router = Router();
+
+
 
 // Zod param validators
 const collaborationParamValidation = [
@@ -40,8 +49,8 @@ const searchAdParamValidation = [validate(searchAdIdParam, 'params')] as const;
 // PROTECTED ROUTES (All collaboration routes require authentication)
 // ============================================================================
 
-// Apply authentication middleware to all routes
-router.use(authenticateToken);
+// Apply authentication and subscription middleware to all routes below
+router.use(authenticateToken, requireActiveSubscription);
 
 // @route   POST api/collaboration
 // @desc    Propose a new collaboration
@@ -142,5 +151,15 @@ router.post(
 	requireCollaborationAccess(),
 	completeCollaboration,
 );
+
+// Admin-only: list all collaborations (supports optional status filter: ?status=active|completed|cancelled|pending|accepted)
+router.get('/all', requireAdmin, getAllCollaborationsAdmin);
+
+// Get collaboration details (participants or admin can access)
+router.get('/:id', ...collaborationParamValidation, getCollaborationById);
+
+// Admin endpoints: close or force-complete a collaboration
+router.post('/:id/admin/close', ...collaborationParamValidation, requireAdmin, adminCloseCollaboration);
+router.post('/:id/admin/force-complete', ...collaborationParamValidation, requireAdmin, adminForceComplete);
 
 export default router;

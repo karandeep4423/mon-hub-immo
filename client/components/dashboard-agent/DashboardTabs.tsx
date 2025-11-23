@@ -1,6 +1,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '../ui/Button';
+import { useAuth } from '@/hooks/useAuth';
 
 export type DashboardTab =
 	| 'overview'
@@ -19,6 +20,7 @@ export const DashboardTabs: React.FC<DashboardTabsProps> = ({
 	onTabChange,
 }) => {
 	const router = useRouter();
+	const { user } = useAuth();
 
 	const getTabClass = (tab: DashboardTab) => {
 		return `py-2 px-1 border-b-2 font-medium text-sm flex items-center transition-smooth ${
@@ -158,7 +160,16 @@ export const DashboardTabs: React.FC<DashboardTabsProps> = ({
 						</svg>
 						Créer une annonce
 					</Button>
-				</div>
+					{user?.userType === 'admin' && (
+						<Button
+							onClick={() => router.push('/admin')}
+							className="w-full sm:w-auto bg-gray-800 hover:bg-gray-900 text-white shadow"
+							size="sm"
+						>
+							Administration
+						</Button>
+					)}
+					</div>
 			</div>
 		</div>
 	);

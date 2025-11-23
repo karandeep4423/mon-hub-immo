@@ -25,6 +25,7 @@ export function canViewFullAddress(
 	// Check if user has an accepted, active, or completed collaboration
 	const userCollaboration = collaborations.find(
 		(collab) =>
+			collab.collaboratorId &&
 			collab.collaboratorId._id === userId &&
 			(collab.status === 'accepted' ||
 				collab.status === 'active' ||

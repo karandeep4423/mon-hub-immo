@@ -7,6 +7,7 @@ export interface AuthResponse {
 	requiresVerification?: boolean;
 	codeSent?: boolean;
 	requiresProfileCompletion?: boolean; // Add this
+	requiresAdminValidation?: boolean; // True when account is created/verified but awaiting admin validation
 	errors?: ValidationError[];
 }
 
@@ -18,8 +19,9 @@ export interface User {
 	lastName: string;
 	email: string;
 	phone: string;
-	userType: '' | 'agent' | 'apporteur';
+	userType: '' | 'agent' | 'apporteur' | 'admin';
 	isEmailVerified: boolean;
+	isValidated?: boolean;
 	profileImage?: string;
 	profileCompleted: boolean; // Make sure this is included
 
@@ -71,7 +73,7 @@ export interface SignUpData {
 	lastName: string;
 	email: string;
 	phone: string;
-	userType: '' | 'agent' | 'apporteur';
+	userType: '' | 'agent' | 'apporteur' | 'admin';
 	password: string;
 	confirmPassword: string;
 	// Agent-specific fields

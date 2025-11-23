@@ -84,8 +84,8 @@ export const hasCollaborationAccess = (
  * @returns true if user has one of the allowed roles
  */
 export const hasRole = (
-	userRole: 'agent' | 'apporteur' | undefined,
-	allowedRoles: Array<'agent' | 'apporteur'>,
+  	userRole: 'agent' | 'apporteur' | 'admin' | 'guest' | undefined,
+    allowedRoles: Array<'agent' | 'apporteur' | 'admin' | 'guest'>
 ): boolean => {
 	if (!userRole) return false;
 	return allowedRoles.includes(userRole);

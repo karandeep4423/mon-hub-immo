@@ -126,3 +126,42 @@ const identityDocUpload = multer({
 });
 
 export const uploadIdentityDoc = identityDocUpload.single('identityCard');
+
+// ========================
+// CSV Import (for bulk user import, etc.)
+// ========================
+
+const csvFileFilter = (
+	req: MulterRequest,
+	file: Express.Multer.File,
+	cb: multer.FileFilterCallback,
+) => {
+	const allowedMimes = ['text/csv', 'application/vnd.ms-excel'];
+	const allowedExtensions = ['.csv'];
+
+	const hasValidMime = allowedMimes.includes(file.mimetype);
+	const hasValidExt = allowedExtensions.some(ext =>
+		file.originalname.toLowerCase().endsWith(ext)
+	);
+
+	if (hasValidMime || hasValidExt) {
+		cb(null, true);
+	} else {
+		cb(
+			new Error(
+				'Type de fichier non supporté. Veuillez utiliser un fichier CSV.',
+			),
+		);
+	}
+};
+
+const csvUpload = multer({
+	storage,
+	fileFilter: csvFileFilter,
+	limits: {
+		fileSize: 10 * 1024 * 1024, // 10MB for CSV
+		files: 1,
+	},
+});
+
+export const uploadCSV = csvUpload.single('file');

@@ -13,6 +13,7 @@ import {
 	sendEmail,
 	generateVerificationCode,
 	getVerificationCodeTemplate,
+	getSignupAcknowledgementTemplate,
 	getPasswordResetTemplate,
 	getPasswordResetConfirmationTemplate,
 	getAccountLockedTemplate,
@@ -243,6 +244,20 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 			// Continue with registration even if email fails
 		}
 
+		// Send acknowledgement that registration has been received and will be checked by admin
+		try {
+			const ackTemplate = getSignupAcknowledgementTemplate(
+				`${sanitizedFirstName} ${sanitizedLastName}`,
+			);
+			await sendEmail({
+				to: sanitizedEmail,
+				subject: `Votre inscription est en cours de vérification - MonHubImmo`,
+				html: ackTemplate,
+			});
+		} catch (ackError) {
+			logger.error('[AuthController] Failed to send signup acknowledgement', ackError);
+		}
+
 		res.status(201).json({
 			success: true,
 			message:
@@ -316,6 +331,18 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 				message: `Account temporarily locked due to multiple failed login attempts. Please try again in ${minutesLeft} minute${minutesLeft > 1 ? 's' : ''}.`,
 				lockedUntil: user.accountLockedUntil,
 			});
+			return;
+		}
+
+		// Check if user is administratively blocked
+		if ((user as any).isBlocked) {
+			await logSecurityEvent({
+				userId: (user._id as unknown as string).toString(),
+				eventType: 'account_blocked',
+				req,
+				metadata: { reason: 'Attempt to login while account is blocked by admin' },
+			});
+			res.status(403).json({ success: false, message: 'Account blocked by admin' });
 			return;
 		}
 
@@ -497,6 +524,19 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 			}
 		}
 
+		// Check if user is administratively validated (admin has approved the user)
+		// Admins are allowed to login regardless
+		if (!user.isValidated && user.userType !== 'admin') {
+			await logSecurityEvent({
+				userId: (user._id as unknown as string).toString(),
+				eventType: 'login_failure',
+				req,
+				metadata: { email, reason: 'Attempt to login before admin validation' },
+			});
+			res.status(403).json({ success: false, message: 'Compte non validé par l\'administrateur. Veuillez attendre la validation.', requiresAdminValidation: true });
+			return;
+		}
+
 		// Successful login - reset failed attempts and lock
 		await User.updateOne(
 			{ _id: user._id },
@@ -554,6 +594,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 			// Add these flags to help frontend routing
 			requiresProfileCompletion:
 				user.userType === 'agent' && !user.profileCompleted,
+			requiresPasswordChange: !!(user as any).mustChangePassword,
 		});
 	} catch (error) {
 		logger.error('[AuthController] Login error', error);
@@ -626,7 +667,7 @@ export const verifyEmail = async (
 			return;
 		}
 
-		// Create real User from PendingVerification
+		// Create real User from PendingVerification - but DO NOT validate the account until admin approves
 		const newUser = new User({
 			firstName: pendingVerification.firstName,
 			lastName: pendingVerification.lastName,
@@ -635,6 +676,7 @@ export const verifyEmail = async (
 			phone: pendingVerification.phone,
 			userType: pendingVerification.userType,
 			isEmailVerified: true,
+			isValidated: false,
 			profileCompleted: false,
 		});
 
@@ -698,37 +740,27 @@ export const verifyEmail = async (
 			metadata: { email: newUser.email },
 		});
 
-		// Generate login token
-		const loginToken = generateToken(
-			(newUser._id as unknown as string).toString(),
-		);
-		const loginRefreshToken = generateRefreshToken(
-			(newUser._id as unknown as string).toString(),
-		);
+		// Notify user that they are pending admin validation by sending a small acknowledgement
+		try {
+			const ackTemplate = getSignupAcknowledgementTemplate(
+				`${newUser.firstName} ${newUser.lastName}`,
+			);
+			await sendEmail({
+				to: newUser.email,
+				subject: `Inscription reçue - en attente de validation - MonHubImmo`,
+				html: ackTemplate,
+			});
+		} catch (ackError) {
+			logger.error('[AuthController] Failed to send pending validation email', ackError);
+		}
 
-		// Set tokens in httpOnly cookies
-		setAuthCookies(res, loginToken, loginRefreshToken);
-
+		// Return success but indicate that admin validation is required - DO NOT LOG IN USER YET
 		res.json({
 			success: true,
 			message:
-				'Email vérifié avec succès. Vous êtes maintenant connecté.',
-			user: {
-				_id: newUser._id,
-				firstName: newUser.firstName,
-				lastName: newUser.lastName,
-				email: newUser.email,
-				phone: newUser.phone,
-				userType: newUser.userType,
-				isEmailVerified: newUser.isEmailVerified,
-				profileImage: newUser.profileImage,
-				profileCompleted: newUser.profileCompleted,
-				professionalInfo: newUser.professionalInfo,
-			},
-			token: loginToken,
-			refreshToken: loginRefreshToken,
-			requiresProfileCompletion:
-				newUser.userType === 'agent' && !newUser.profileCompleted,
+				'Email vérifié. Votre compte est en attente de validation par un administrateur.',
+			requiresAdminValidation: true,
+			user: null,
 		});
 	} catch (error) {
 		logger.error('[AuthController] Email verification error', error);
@@ -736,6 +768,62 @@ export const verifyEmail = async (
 			success: false,
 			message: 'Erreur serveur interne',
 		});
+	}
+};
+
+// Set password from an invite or password-reset token (without automatic login)
+export const setPasswordFromInvite = async (
+	req: Request,
+	res: Response,
+): Promise<void> => {
+	try {
+		const { email, token, newPassword } = req.body as {
+			email: string;
+			token: string;
+			newPassword: string;
+		};
+
+		if (!email || !token || !newPassword) {
+			res.status(400).json({ success: false, message: 'email, token et newPassword sont requis' });
+			return;
+		}
+
+		const user = await User.findOne({ email, passwordResetCode: token, passwordResetExpires: { $gt: new Date() } }).select(
+			'+passwordResetCode +passwordResetExpires +password',
+		);
+		if (!user) {
+			res.status(400).json({ success: false, message: 'Token invalide ou expiré' });
+			return;
+		}
+
+		// Check password history
+		const inHistory = await isPasswordInHistory(newPassword, user.passwordHistory || []);
+		if (inHistory) {
+			res.status(400).json({ success: false, message: 'Ce mot de passe a déjà été utilisé récemment.' });
+			return;
+		}
+
+		// Update password and clear reset fields
+		if (user.password) {
+			user.passwordHistory = updatePasswordHistory(user.password, user.passwordHistory || []);
+		}
+		user.password = newPassword;
+		user.passwordResetCode = undefined;
+		user.passwordResetExpires = undefined;
+
+		// Remove account lock if any
+		user.failedLoginAttempts = 0;
+		user.accountLockedUntil = undefined;
+
+		await user.save();
+
+		// Log event
+		await logSecurityEvent({ userId: (user._id as unknown as string).toString(), eventType: 'password_reset_success', req, metadata: { email } });
+
+		res.json({ success: true, message: 'Mot de passe mis à jour' });
+	} catch (error) {
+		logger.error('[AuthController] setPasswordFromInvite error', error);
+		res.status(500).json({ success: false, message: 'Erreur serveur interne' });
 	}
 };
 
@@ -877,10 +965,12 @@ export const forgotPassword = async (
 
 		// Send password reset email
 		try {
+			const inviteUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/auth/reset-password?email=${encodeURIComponent(email)}`;
 			const emailTemplate = getPasswordResetTemplate(
-				`${user.firstName} ${user.lastName}`,
-				resetCode,
-			);
+					`${user.firstName} ${user.lastName}`,
+					resetCode,
+					inviteUrl,
+				);
 
 			await sendEmail({
 				to: email,
@@ -1109,6 +1199,16 @@ export const getProfile = async (
 				updatedAt: user.updatedAt,
 				professionalInfo: user.professionalInfo,
 				profileCompleted: user.profileCompleted || false, // Add this field
+				// Billing / activation info
+				isPaid: Boolean(user.isPaid),
+				subscriptionStatus: user.subscriptionStatus || null,
+				// Derived account status for frontend display
+				accountStatus:
+					user.userType === 'agent' && user.profileCompleted && !user.isPaid
+						? 'profil en attente d\'activation'
+						: user.isPaid
+						? 'active'
+						: 'incomplete',
 			},
 		});
 	} catch (error) {
@@ -1412,6 +1512,11 @@ export const completeProfile = async (
 			user.profileCompleted = true;
 		}
 
+		// When profile is completed but user hasn't paid yet, mark subscriptionStatus
+		if (user.profileCompleted) {
+			user.subscriptionStatus = user.isPaid ? 'active' : 'pending_activation';
+		}
+
 		await user.save();
 
 		res.json({
@@ -1428,6 +1533,9 @@ export const completeProfile = async (
 				profileImage: user.profileImage,
 				professionalInfo: user.professionalInfo,
 				profileCompleted: user.profileCompleted,
+				// Billing fields - client can use these to decide redirect to payment
+				isPaid: Boolean(user.isPaid),
+				subscriptionStatus: user.subscriptionStatus || null,
 			},
 		});
 	} catch (error) {
@@ -1697,6 +1805,8 @@ export const changePassword = async (
 
 		// Update password (will be hashed by pre-save hook)
 		user.password = newPassword;
+        // Clear mustChangePassword flag if present
+        user.mustChangePassword = false;
 		await user.save();
 
 		// Log password change

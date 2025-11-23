@@ -23,6 +23,12 @@ export const ContactCard: React.FC<ContactCardProps> = ({
 	onCollaborate,
 }) => {
 	const { user } = useAuth();
+	const author = searchAd.authorId ?? {
+		_id: '',
+		firstName: 'Anonyme',
+		lastName: '',
+		userType: 'utilisateur',
+	};
 	const isAgent = user?.userType === 'agent';
 
 	return (
@@ -36,14 +42,13 @@ export const ContactCard: React.FC<ContactCardProps> = ({
 
 			<div className="flex items-center gap-3 mb-4 bg-white p-3 rounded-xl shadow-sm">
 				<ProfileAvatar
-					user={searchAd.authorId}
+					user={author}
 					size="lg"
 					className="w-12 h-12 ring-2 ring-brand-200"
 				/>
 				<div>
 					<h4 className="font-bold text-gray-900 text-base">
-						{searchAd.authorId.firstName}{' '}
-						{searchAd.authorId.lastName}
+						{author.firstName} {author.lastName}
 					</h4>
 					<p className="text-xs text-gray-600 font-medium">
 						{searchAd.authorType === 'agent'

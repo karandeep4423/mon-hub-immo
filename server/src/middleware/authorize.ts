@@ -21,7 +21,9 @@ import {
  * @example
  * router.post('/property', authenticateToken, requireRole(['agent']), createProperty);
  */
-export const requireRole = (allowedRoles: Array<'agent' | 'apporteur'>) => {
+export const requireRole = (
+	allowedRoles: Array<'agent' | 'apporteur' | 'admin'>,
+) => {
 	return (req: AuthRequest, res: Response, next: NextFunction): void => {
 		if (!req.user) {
 			logger.warn('[Authorization] Authentication required', {

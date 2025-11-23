@@ -26,8 +26,8 @@ export const swrKeys = {
 		all: ['properties', 'all'],
 		list: (userId?: string) =>
 			userId ? ['properties', 'list', userId] : null,
-		myProperties: (userId?: string) =>
-			userId ? ['properties', 'my-properties', userId] : null,
+		myProperties: (userId?: string, options?: Record<string, unknown>) =>
+			userId ? ['properties', 'my-properties', userId, options] : null,
 		stats: (userId?: string) =>
 			userId ? ['properties', 'stats', userId] : null,
 		detail: (id: string) => ['properties', 'detail', id],

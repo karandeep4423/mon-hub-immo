@@ -30,7 +30,14 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 	currentUser,
 }) => {
 	const router = useRouter();
-	const isOwner = currentUser?._id === searchAd.authorId._id;
+	// Defensive author fallback
+	const author = searchAd.authorId ?? {
+		_id: '',
+		firstName: 'Anonyme',
+		lastName: '',
+		userType: 'utilisateur',
+	};
+	const isOwner = currentUser?._id === author._id;
 	const [showCollaborationModal, setShowCollaborationModal] = useState(false);
 
 	// Fetch collaborations using SWR - skip if user is owner or not authenticated
@@ -68,8 +75,9 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 			router.push(Features.Auth.AUTH_ROUTES.LOGIN);
 			return;
 		}
+		if (!author._id) return;
 		router.push(
-			`/chat?userId=${searchAd.authorId._id}&searchAdId=${searchAd._id}&type=search-ad-contact`,
+			`/chat?userId=${author._id}&searchAdId=${searchAd._id}&type=search-ad-contact`,
 		);
 	};
 

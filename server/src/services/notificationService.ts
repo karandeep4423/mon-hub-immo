@@ -193,9 +193,10 @@ export const notificationService = {
 						actorAvatar,
 					},
 					actorId: String(
-						typeof n.actorId === 'object' && '_id' in n.actorId
-							? n.actorId._id
-							: n.actorId,
+						// Guard against `null` (typeof null === 'object') before using `in`
+						(n.actorId && typeof n.actorId === 'object' && '_id' in n.actorId
+							? (n.actorId as any)._id
+							: n.actorId),
 					),
 					read: !!n.read,
 					createdAt: n.createdAt,

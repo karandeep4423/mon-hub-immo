@@ -1,5 +1,6 @@
 import { Router, RequestHandler } from 'express';
 import { authenticateToken } from '../middleware/auth';
+import { requireActiveSubscription } from '../middleware/subscription';
 import { validate } from '../validation/middleware';
 import {
 	listNotificationsSchema,
@@ -11,7 +12,7 @@ import { AuthRequest } from '../types/auth';
 const router = Router();
 
 // All routes require auth
-router.use(authenticateToken);
+router.use(authenticateToken, requireActiveSubscription);
 
 // GET list (cursor-based)
 const listHandler: RequestHandler = async (req, res) => {

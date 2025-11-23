@@ -252,6 +252,12 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 						authToastSuccess('✅ Profil mis à jour avec succès');
 						router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
 					} else {
+						// If user needs to pay, redirect to payment page
+						if (response.user && (response.user.isPaid === false || response.user.isPaid === undefined)) {
+							showProfileCompletionSuccess();
+							router.push('/payment');
+							return;
+						}
 						showProfileCompletionSuccess();
 						router.push(Features.Auth.AUTH_ROUTES.WELCOME);
 					}
