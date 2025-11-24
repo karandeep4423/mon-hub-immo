@@ -37,7 +37,15 @@ export const getSecureCookieOptions = (maxAge: number): CookieOptions => {
 	const cookieDomain =
 		process.env.COOKIE_DOMAIN ||
 		(isProduction ? '.monhubimmo.fr' : undefined);
-	const crossSite = process.env.CROSS_SITE_COOKIES === 'true'; // set to true for preview domains (e.g., Vercel)
+
+	// If running in production, we assume frontend and API may be on different
+	// subdomains (www.monhubimmo.fr -> api.monhubimmo.fr). In that case cookies
+	// must be cross-site (SameSite=None and Secure=true). Allow overriding via
+	// CROSS_SITE_COOKIES env var for special deployments, but default to true
+	// in production when a cookie domain was determined.
+	const crossSite =
+		process.env.CROSS_SITE_COOKIES === 'true' ||
+		(isProduction && Boolean(cookieDomain)); // set to true for production by default when cookieDomain is determined
 	const forceSecure = process.env.FORCE_SECURE_COOKIES === 'true';
 
 	// If SameSite is 'none', cookies MUST be secure
