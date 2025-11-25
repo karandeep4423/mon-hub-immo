@@ -7,6 +7,7 @@ interface Filters {
   userType: string;
   network: string;
   isValidated: string;
+  email?: string;
 }
 
 interface AdminUserFiltersProps {
@@ -19,6 +20,7 @@ export default function AdminUserFilters({ onChange }: AdminUserFiltersProps) {
     userType: '',
     network: '',
     isValidated: ''
+    ,email: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -30,6 +32,7 @@ export default function AdminUserFilters({ onChange }: AdminUserFiltersProps) {
   return (
     <div className="flex gap-4 mb-4">
       <input name="name" placeholder="Recherche nom..." value={local.name} onChange={handleChange} className="p-2 border rounded" />
+      <input name="email" placeholder="Recherche email..." value={local.email} onChange={handleChange} className="p-2 border rounded" />
       <select name="userType" value={local.userType} onChange={handleChange} className="p-2 border rounded">
         <option value="">Tous statuts</option>
         <option value="agent">Agent</option>

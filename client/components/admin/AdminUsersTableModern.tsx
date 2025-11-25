@@ -58,7 +58,7 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 	users: initialUsers,
 	loading: initialLoading,
 }) => {
-	const [filters, setFilters] = useState({ type: '', status: '', search: '', network: '' });
+	const [filters, setFilters] = useState({ type: '', status: '', search: '', network: '', email: '' });
 	const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
 	const [showCreate, setShowCreate] = useState(false);
 	const [showImport, setShowImport] = useState(false);
@@ -106,13 +106,15 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 
 		return usersToFilter.filter((u) => {
 			const search = filters.search?.toLowerCase() || '';
+			const emailFilter = (filters.email || '').toLowerCase();
 			const matchSearch = !search ||
 				(u.firstName || '').toLowerCase().includes(search) ||
 				(u.lastName || '').toLowerCase().includes(search) ||
 				(u.email || '').toLowerCase().includes(search);
+			const matchEmail = !emailFilter || (u.email || '').toLowerCase().includes(emailFilter);
 			const matchType = !filters.type || u.type === filters.type;
 			const matchStatus = !filters.status || (u.status === filters.status);
-			return matchSearch && matchType && matchStatus;
+			return matchSearch && matchEmail && matchType && matchStatus;
 		});
 	}, [users, filters]);
 
@@ -183,6 +185,7 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						status: f.isValidated === 'true' ? 'active' : f.isValidated === 'false' ? 'pending' : '',
 						search: f.name || '',
 						network: f.network || '',
+						email: f.email || ''
 					});
 				}}
 			/>
