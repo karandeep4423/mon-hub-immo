@@ -19,14 +19,17 @@ export const useCollaborationData = (
 	const [progressSteps, setProgressSteps] = useState<ProgressStepData[]>([]);
 
 	// Fetch collaborations using SWR
+	const isAdmin = user?.userType === 'admin';
+
 	const {
 		data: collaborationsData,
 		isLoading,
 		error: fetchError,
 		mutate: refetch,
-	} = useSWR(
-		collaborationId && user ? swrKeys.collaborations.list(user._id) : null,
-		() => collaborationApi.getUserCollaborations(),
+	} = useSWR<any>(
+		isAdmin && collaborationId && user ? ['collaboration', collaborationId] : (collaborationId && user ? swrKeys.collaborations.list(user._id) : null),
+		// If admin, fetch single collaboration by id (allows viewing any collaboration). Otherwise fetch current user's collaborations.
+		isAdmin && collaborationId && user ? () => collaborationApi.getById(collaborationId) : () => collaborationApi.getUserCollaborations(),
 		{
 			revalidateOnFocus: false,
 			onError: () => {
@@ -37,13 +40,16 @@ export const useCollaborationData = (
 
 	// Find the specific collaboration
 	const collaboration = useMemo(() => {
-		if (!collaborationsData?.collaborations) return null;
+		if (!collaborationsData) return null;
+		// If admin fetched a single collaboration, response shape is { collaboration }
+		if (isAdmin && collaborationsData.collaboration) return collaborationsData.collaboration as any;
+		if (!collaborationsData.collaborations) return null;
 		return (
-			collaborationsData.collaborations.find(
-				(c) => c._id === collaborationId,
+			(collaborationsData.collaborations as any[]).find(
+				(c: any) => c._id === collaborationId,
 			) || null
 		);
-	}, [collaborationsData, collaborationId]);
+	}, [collaborationsData, collaborationId, isAdmin]);
 
 	// Transform progress steps when collaboration changes
 	useMemo(() => {
@@ -57,7 +63,7 @@ export const useCollaborationData = (
 			collaboration.progressSteps &&
 			collaboration.progressSteps.length > 0
 		) {
-			const transformedSteps = collaboration.progressSteps.map((step) => {
+			const transformedSteps = collaboration.progressSteps.map((step: any) => {
 				const config = PROGRESS_STEPS_CONFIG[step.id as ProgressStep];
 				return {
 					id: step.id,
@@ -75,7 +81,7 @@ export const useCollaborationData = (
 		} else {
 			// Create default progress steps
 			const defaultSteps = Object.entries(PROGRESS_STEPS_CONFIG).map(
-				([stepId, config], index) => ({
+				([stepId, config]: [string, any], index: number) => ({
 					id: stepId as ProgressStep,
 					title: config.title,
 					description: config.description,

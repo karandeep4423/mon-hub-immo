@@ -89,6 +89,22 @@ export class CollaborationApi {
 	}
 
 	/**
+	 * Get a single collaboration by id (admin or participants)
+	 */
+	static async getById(collaborationId: string): Promise<{ collaboration: Collaboration }> {
+		try {
+			const response = await api.get(`/collaboration/${collaborationId}`);
+			return response.data;
+		} catch (error) {
+			throw handleApiError(
+				error,
+				'CollaborationApi.getById',
+				"Erreur lors de la récupération de la collaboration",
+			);
+		}
+	}
+
+	/**
 	 * Respond to a collaboration proposal
 	 */
 	static async respond(
@@ -237,4 +253,5 @@ export const collaborationApi = {
 		CollaborationApi.updateProgressStatus.bind(CollaborationApi),
 	sign: CollaborationApi.sign.bind(CollaborationApi),
 	complete: CollaborationApi.complete.bind(CollaborationApi),
+	getById: CollaborationApi.getById.bind(CollaborationApi),
 };
