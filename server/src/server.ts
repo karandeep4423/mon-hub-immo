@@ -135,6 +135,21 @@ app.use((req, res, next) => {
 
 	next();
 });
+// Handle Private Network Access preflight required by newer browsers (Access-Control-Request-Private-Network)
+// Must run before CORS middleware so the header is present on preflight responses.
+app.use((req, res, next) => {
+	// If the browser asks to access a private network resource, we must explicitly allow it.
+	// The preflight will include the header 'Access-Control-Request-Private-Network: true'.
+	if (
+		req.method === 'OPTIONS' &&
+		req.headers['access-control-request-private-network']
+	) {
+		// Respond with the required header to allow the request from secure contexts to private addresses
+		res.setHeader('Access-Control-Allow-Private-Network', 'true');
+	}
+	next();
+});
+
 app.use(
 	cors({
 		origin: [
@@ -146,6 +161,9 @@ app.use(
 			...FRONTEND_ORIGINS,
 		],
 		credentials: true,
+		// Let the client request include the Private-Network preflight header
+		allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token', 'Access-Control-Request-Private-Network'],
+		methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
 	}),
 );
 // Stripe webhook must receive raw body for signature verification
