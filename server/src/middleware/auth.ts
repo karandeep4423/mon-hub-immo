@@ -1,9 +1,10 @@
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import { verifyToken } from '../utils/jwt';
 import { AuthRequest } from '../types/auth';
 import { User } from '../models/User';
 import { getAccessTokenFromCookies } from '../utils/cookieHelper';
+import { logger } from '../utils/logger';
 import { isTokenBlacklisted } from '../utils/redisClient';
 
  export const authenticateToken = async (
@@ -12,14 +13,33 @@ import { isTokenBlacklisted } from '../utils/redisClient';
   next: NextFunction,
 ): Promise<void> => {
   try {
-    console.log('[authenticateToken] Cookies reçus:', req.cookies);
+    const authDebug = process.env.AUTH_DEBUG === 'true';
 
-    // Get token from httpOnly cookies only
-    const token = getAccessTokenFromCookies(req.cookies);
-    console.log('[authenticateToken] Token extrait:', token);
+    if (authDebug) {
+      logger.info('[authenticateToken] incoming', {
+        method: (req as Request).method,
+        url: (req as Request).originalUrl,
+        origin: req.headers.origin,
+        cookieKeys: Object.keys(req.cookies || {}),
+        authHeader: req.headers.authorization ? '(present)' : '(absent)',
+      });
+    }
+
+    // Get token from httpOnly cookies first
+    let token = getAccessTokenFromCookies(req.cookies);
+    if (authDebug) logger.debug('[authenticateToken] Token from cookie', { tokenPresent: !!token });
+
+    // Fallback to Authorization: Bearer <token> for diagnostics when cookie not present
+    if (!token) {
+      const rawAuth = (req.headers.authorization || '') as string;
+      if (rawAuth.startsWith('Bearer ')) {
+        token = rawAuth.slice(7);
+        if (authDebug) logger.info('[authenticateToken] token found in Authorization header (fallback)');
+      }
+    }
 
     if (!token) {
-      console.log('[authenticateToken] Pas de token d’accès dans les cookies');
+      if (authDebug) logger.warn('[authenticateToken] Pas de token d\u2019acc\u00e8s dans les cookies ou header', { url: (req as Request).originalUrl });
       res.status(401).json({
         success: false,
         message: 'Authentification requise',
@@ -30,39 +50,39 @@ import { isTokenBlacklisted } from '../utils/redisClient';
     // Check if token is blacklisted (revoked during logout)
     const isBlacklisted = await isTokenBlacklisted(token);
     if (isBlacklisted) {
-      console.log('[authenticateToken] Token révoqué détecté');
+      if (authDebug) logger.warn('[authenticateToken] Token r\u00e9voqu\u00e9 d\u00e9tect\u00e9');
       res.status(401).json({
         success: false,
-        message: 'Token révoqué - veuillez vous reconnecter',
+        message: 'Token r\u00e9voqu\u00e9 - veuillez vous reconnecter',
       });
       return;
     }
 
     const decoded = verifyToken(token);
-    console.log('[authenticateToken] Token décodé:', decoded);
+    if (authDebug) logger.debug('[authenticateToken] Token d\u00e9cod\u00e9', { decoded });
 
     // Fetch user data from database
     const user = await User.findById(decoded.userId);
     if (!user) {
-      console.log('[authenticateToken] Utilisateur non trouvé en base');
+      if (authDebug) logger.warn('[authenticateToken] Utilisateur non trouv\u00e9 en base', { userId: decoded.userId });
       res.status(401).json({
         success: false,
-        message: 'Utilisateur non trouvé',
+        message: 'Utilisateur non trouv\u00e9',
       });
       return;
     }
 
     // Reject if account is administratively blocked
     if ((user as any).isBlocked) {
-      console.log('[authenticateToken] Attempted access with blocked user account');
+      if (authDebug) logger.warn('[authenticateToken] Attempted access with blocked user account', { userId: user._id });
       res.status(403).json({ success: false, message: 'Account blocked by admin' });
       return;
     }
 
     // Reject if account is not yet validated by admin (for non-admin users)
     if (!(user as any).isValidated && user.userType !== 'admin') {
-      console.log('[authenticateToken] Attempted access with unvalidated user account');
-      res.status(403).json({ success: false, message: 'Compte non validé par l\'administrateur' });
+      if (authDebug) logger.warn('[authenticateToken] Attempted access with unvalidated user account', { userId: user._id });
+      res.status(403).json({ success: false, message: 'Compte non valid\u00e9 par l\'administrateur' });
       return;
     }
 
@@ -72,14 +92,14 @@ import { isTokenBlacklisted } from '../utils/redisClient';
       id: (user._id as mongoose.Types.ObjectId).toString(),
       userType: user.userType as 'agent' | 'apporteur' | 'admin',
     };
-    console.log('[authenticateToken] User attaché à la requête:', req.user);
+    if (authDebug) logger.info('[authenticateToken] User attach\u00e9 \u00e0 la requ\u00eate', { user: req.user });
 
     next();
   } catch (error) {
-    console.log('[authenticateToken] Erreur attrapée:', error);
+    logger.error('[authenticateToken] Erreur attrap\u00e9e:', error);
     res.status(403).json({
       success: false,
-      message: 'Token invalide ou expiré',
+      message: 'Token invalide ou expir\u00e9',
     });
   }
 };

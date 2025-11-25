@@ -7,6 +7,7 @@ import mongoose from 'mongoose';
 import { SecurityLog } from '../models/SecurityLog';
 import crypto from 'crypto';
 import { logSecurityEvent } from '../utils/securityLogger';
+import { logger } from '../utils/logger';
 import { sendEmail, getAccountValidatedTemplate, getTemporaryPasswordTemplate, generateVerificationCode, getPasswordResetTemplate } from '../utils/emailService';
 
 // Controller exports are declared inline with each function below
@@ -568,7 +569,21 @@ export const importUsersFromCSV = async (req: Request, res: Response) => {
 };
 
 // Simple aggregated stats for admin dashboard
-export const getAdminStats = async (_req: Request, res: Response) => {
+export const getAdminStats = async (req: Request, res: Response) => {
+  const debug = process.env.AUTH_DEBUG === 'true';
+  if (debug) {
+    logger.info('[getAdminStats] called', {
+      method: req.method,
+      url: req.originalUrl,
+      user: (req as any).user || null,
+      cookieKeys: Object.keys(req.cookies || {}),
+      headers: {
+        authorization: req.headers.authorization ? '(present)' : '(absent)',
+        origin: req.headers.origin || null,
+      },
+    });
+  }
+
   try {
     // Users (agents) stats
     const agentsTotal = await User.countDocuments({ userType: 'agent' });
