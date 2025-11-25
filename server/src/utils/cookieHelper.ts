@@ -34,7 +34,10 @@ export const getSecureCookieOptions = (maxAge: number): CookieOptions => {
 	const isProduction = process.env.NODE_ENV === 'production';
 
 	// Allow configuring cookie behavior per environment/deployment
-	const cookieDomain = process.env.COOKIE_DOMAIN;
+		const cookieDomain =
+		process.env.COOKIE_DOMAIN ||
+		(isProduction ? '.monhubimmo.fr' : undefined);
+	//const cookieDomain = process.env.COOKIE_DOMAIN;
 
 	// If running in production, we assume frontend and API may be on different
 	// subdomains (www.monhubimmo.fr -> api.monhubimmo.fr). In that case cookies
@@ -42,7 +45,8 @@ export const getSecureCookieOptions = (maxAge: number): CookieOptions => {
 	// CROSS_SITE_COOKIES env var for special deployments, but default to true
 	// in production.
 	const crossSite =
-		process.env.CROSS_SITE_COOKIES === 'true' || isProduction;
+		process.env.CROSS_SITE_COOKIES === 'true' ||
+		(isProduction && Boolean(cookieDomain)); // set to true for production by default when cookieDomain is determined
 
 	const forceSecure = process.env.FORCE_SECURE_COOKIES === 'true';
 

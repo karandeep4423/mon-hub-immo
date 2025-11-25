@@ -10,7 +10,6 @@
  */
 export const PROTECTED_ROUTES = [
 	'/dashboard',
-	'/admin',
 	'/search-ads/create',
 	'/search-ads/edit',
 	'/collaboration',
@@ -53,7 +52,6 @@ export const DYNAMIC_PROTECTED_PATTERNS = [
 	'/search-ads/edit/',
 	'/collaboration/',
 	'/dashboard/',
-	'/admin/',
 ] as const;
 
 /**
