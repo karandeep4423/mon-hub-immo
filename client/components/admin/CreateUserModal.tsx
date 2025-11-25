@@ -15,7 +15,10 @@ interface Props {
 }
 
 const CreateUserModal: React.FC<Props> = ({ onClose, onCreated }) => {
-  const API_ROOT = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace(/\/$/, '');
+  const API_ROOT = (() => {
+    const raw = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    return raw.replace(/\/+$/, '').replace(/\/api$/i, '');
+  })();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");

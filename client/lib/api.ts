@@ -5,8 +5,9 @@ import { Features } from './constants';
 import { toast } from 'react-toastify';
 import { AUTH_ENDPOINTS } from './constants/api/endpoints';
 
-const API_BASE_URL =
-	process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+// Normalize NEXT_PUBLIC_API_URL so it always ends with a single '/api' segment
+const _rawApi = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+const API_BASE_URL = _rawApi.replace(/\/+$/, '').replace(/\/api$/i, '') + '/api';
 
 export const api = axios.create({
 	baseURL: API_BASE_URL,

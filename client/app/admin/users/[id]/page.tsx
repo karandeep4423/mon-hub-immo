@@ -26,7 +26,10 @@ interface UserProfile {
 }
 
 export default function AdminUserProfile() {
-  const API_ROOT = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace(/\/$/, '');
+  const API_ROOT = (() => {
+    const raw = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    return raw.replace(/\/+$/, '').replace(/\/api$/i, '');
+  })();
   const { id } = useParams();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [error, setError] = useState<string | null>(null);

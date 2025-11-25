@@ -29,7 +29,10 @@ export function useAdminStats() {
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    const API_ROOT = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace(/\/$/, '');
+    const API_ROOT = (() => {
+      const raw = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      return raw.replace(/\/+$/, '').replace(/\/api$/i, '');
+    })();
     fetch(`${API_ROOT}/api/admin/stats`, { credentials: 'include' })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);

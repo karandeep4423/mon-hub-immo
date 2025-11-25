@@ -16,7 +16,10 @@ import { toast } from 'react-toastify';
 import { Download, Upload, Plus, Users, CheckCircle, Clock, Eye, Edit, Unlock, UserX, Key, CreditCard, X } from 'lucide-react';
 
 // Use env-configured API root so production builds call the correct backend
-const API_ROOT = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace(/\/$/, '');
+const API_ROOT = (() => {
+	const raw = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+	return raw.replace(/\/+$/, '').replace(/\/api$/i, '');
+})();
 
 export interface AdminUser {
 	_id: string;

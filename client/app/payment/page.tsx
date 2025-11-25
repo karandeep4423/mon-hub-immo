@@ -45,7 +45,10 @@ const PaymentForm = () => {
       return;
     }
 
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+    const backendUrl = (() => {
+      const raw = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      return raw.replace(/\/+$/, '').replace(/\/api$/i, '') + '/api';
+    })();
     const response = await fetch(`${backendUrl}/payment/create-subscription`, {
       method: 'POST',
       credentials: 'include',

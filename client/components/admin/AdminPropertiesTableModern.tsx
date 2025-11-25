@@ -52,8 +52,10 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 
 	const handleDelete = async (propertyId: string) => {
 		if (!confirm('Êtes-vous sûr de vouloir supprimer cette annonce ?')) return;
-		try {
-			const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/admin/properties/${propertyId}`, {
+		    try {
+			    const raw = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+			    const API_ROOT = raw.replace(/\/+$/, '').replace(/\/api$/i, '');
+			    const res = await fetch(`${API_ROOT}/api/admin/properties/${propertyId}`, {
 				method: 'DELETE',
 				credentials: 'include',
 			});

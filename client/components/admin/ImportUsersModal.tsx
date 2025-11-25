@@ -64,8 +64,11 @@ function ImportUsersModal({
 			formData.append('updateIfExists', String(updateIfExists));
 
 		try {
-			const API_ROOT = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace(/\/$/, '');
-			const res = await fetch(`${API_ROOT}/api/admin/users/import`, {
+						const API_ROOT = (() => {
+							const raw = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+							return raw.replace(/\/+$/, '').replace(/\/api$/i, '');
+						})();
+						const res = await fetch(`${API_ROOT}/api/admin/users/import`, {
 				method: 'POST',
 				credentials: 'include',
 				body: formData,
