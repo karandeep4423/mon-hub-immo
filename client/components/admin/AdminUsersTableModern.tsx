@@ -15,6 +15,9 @@ import AdminUserFilters from './AdminUserFilters';
 import { toast } from 'react-toastify';
 import { Download, Upload, Plus, Users, CheckCircle, Clock, Eye, Edit, Unlock, UserX, Key, CreditCard, X } from 'lucide-react';
 
+// Use env-configured API root so production builds call the correct backend
+const API_ROOT = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace(/\/$/, '');
+
 export interface AdminUser {
 	_id: string;
 	firstName: string;
@@ -51,7 +54,6 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 	users: initialUsers,
 	loading: initialLoading,
 }) => {
-	const API_ROOT = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace(/\/$/, '');
 	const [filters, setFilters] = useState({ type: '', status: '', search: '', network: '' });
 	const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
 	const [showCreate, setShowCreate] = useState(false);
