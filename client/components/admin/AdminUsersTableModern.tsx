@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
+import ConfirmDialog from '../ui/ConfirmDialog';
 import Image from 'next/image';
 import CreateUserModal from './CreateUserModal';
 import ImportUsersModal from './ImportUsersModal';
@@ -61,6 +62,8 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 	const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
 	const [showCreate, setShowCreate] = useState(false);
 	const [showImport, setShowImport] = useState(false);
+	const [tableConfirmAction, setTableConfirmAction] = useState<null | { label: string; onConfirm: () => Promise<void>; type?: string }>(null);
+	const [actionBusy, setActionBusy] = useState(false);
 
 	const download = (filename: string, content: Blob) => {
 		const url = URL.createObjectURL(content);
@@ -183,6 +186,19 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 					});
 				}}
 			/>
+			{tableConfirmAction && (
+				<ConfirmDialog
+					isOpen={!!tableConfirmAction}
+					title="Confirmation"
+					description={tableConfirmAction.label}
+					onConfirm={tableConfirmAction.onConfirm}
+					onCancel={() => setTableConfirmAction(null)}
+					confirmText="Confirmer"
+					cancelText="Annuler"
+					variant={tableConfirmAction.type === 'block' ? 'danger' : tableConfirmAction.type === 'unblock' ? 'primary' : tableConfirmAction.type?.includes('manual') ? 'warning' : 'primary'}
+					loading={actionBusy}
+				/>
+			)}
 
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 				<FilterStatCard icon={<Users className="w-8 h-8" />} label="Total" value={filteredUsers.length} color="blue" />
@@ -284,17 +300,17 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						<Link href={`/admin/users/${row._id}`} className="p-1 hover:bg-gray-100 rounded transition-colors" title="Voir"><Eye className="w-4 h-4" /></Link>
 						<button onClick={() => setEditingUser(row)} className="p-1 hover:bg-blue-100 rounded transition-colors" title="Éditer"><Edit className="w-4 h-4" /></button>
 						{row.isBlocked ? (
-							<button title="Débloquer" onClick={async () => { try { await adminService.unblockUser(row._id); await refetch(); toast.success('Utilisateur débloqué.'); } catch (err) { console.error(err); toast.error('Erreur.'); } }} className="p-1 hover:bg-green-100 rounded transition-colors"><Unlock className="w-4 h-4" /></button>
+							<button title="Débloquer" onClick={() => setTableConfirmAction({ label: 'Débloquer cet utilisateur ?', type: 'unblock', onConfirm: async () => { setActionBusy(true); try { await adminService.unblockUser(row._id); await refetch(); toast.success('Utilisateur débloqué.'); } catch (err) { console.error(err); toast.error('Erreur.'); } finally { setActionBusy(false); setTableConfirmAction(null); } } })} className="p-1 hover:bg-green-100 rounded transition-colors"><Unlock className="w-4 h-4" /></button>
 						) : (
-							<button title="Bloquer" onClick={async () => { if (!confirm('Bloquer cet utilisateur ?')) return; try { await adminService.blockUser(row._id); await refetch(); toast.warn('Utilisateur bloqué.'); } catch (err) { console.error(err); toast.error('Erreur.'); } }} className="p-1 hover:bg-amber-100 rounded transition-colors"><UserX className="w-4 h-4" /></button>
+							<button title="Bloquer" onClick={() => setTableConfirmAction({ label: 'Bloquer cet utilisateur ?', type: 'block', onConfirm: async () => { setActionBusy(true); try { await adminService.blockUser(row._id); await refetch(); toast.warn('Utilisateur bloqué.'); } catch (err) { console.error(err); toast.error('Erreur.'); } finally { setActionBusy(false); setTableConfirmAction(null); } } })} className="p-1 hover:bg-amber-100 rounded transition-colors"><UserX className="w-4 h-4" /></button>
 						)}
 						{/* --- Manual Access Buttons --- */}
 						{row.type === 'agent' && !row.isPaid && (
-								row.accessGrantedByAdmin ? (
-								<button title="Révoquer l'accès manuel" onClick={async () => { if (!confirm('Révoquer l\'accès manuel pour cet utilisateur ?')) return; try { await adminService.revokeAdminAccess(row._id); await refetch(); toast.info('Accès manuel révoqué.'); } catch (err) { console.error(err); toast.error('Erreur.'); } }} className="p-1 hover:bg-red-100 rounded transition-colors"><X className="w-4 h-4" /></button>
+							row.accessGrantedByAdmin ? (
+								<button title="Révoquer l'accès manuel" onClick={() => setTableConfirmAction({ label: 'Révoquer l\'accès manuel pour cet utilisateur ?', type: 'revoke_manual', onConfirm: async () => { setActionBusy(true); try { await adminService.revokeAdminAccess(row._id); await refetch(); toast.info('Accès manuel révoqué.'); } catch (err) { console.error(err); toast.error('Erreur.'); } finally { setActionBusy(false); setTableConfirmAction(null); } } })} className="p-1 hover:bg-red-100 rounded transition-colors"><X className="w-4 h-4" /></button>
 							) : (
-									<button title="Donner l'accès manuel" onClick={async () => { if (!confirm('Donner l\'accès manuel à cet utilisateur (outrepasse le paiement) ?')) return; try { await adminService.grantAdminAccess(row._id); await refetch(); toast.success('Accès manuel accordé.'); } catch (err: any) { console.error(err); const msg = err?.response?.data?.error || err?.message || 'Erreur.'; toast.error(msg); } }} className="p-1 hover:bg-purple-100 rounded transition-colors"><Key className="w-4 h-4" /></button>
-								)
+								<button title="Donner l'accès manuel" onClick={() => setTableConfirmAction({ label: 'Donner l\'accès manuel à cet utilisateur (outrepasse le paiement) ?', type: 'grant_manual', onConfirm: async () => { setActionBusy(true); try { await adminService.grantAdminAccess(row._id); await refetch(); toast.success('Accès manuel accordé.'); } catch (err: any) { console.error(err); const msg = err?.response?.data?.error || err?.message || 'Erreur.'; toast.error(msg); } finally { setActionBusy(false); setTableConfirmAction(null); } } })} className="p-1 hover:bg-purple-100 rounded transition-colors"><Key className="w-4 h-4" /></button>
+							)
 						)}
 						{row.type === 'agent' && !row.isPaid && row.profileCompleted && (
 							<button title="Envoyer rappel paiement" onClick={async () => { try { await adminService.sendPaymentReminder(row._id); toast.success('Rappel de paiement envoyé.'); } catch (err) { console.error(err); toast.error('Erreur lors de l\'envoi du rappel.'); } }} className="p-1 hover:bg-orange-100 rounded transition-colors"><CreditCard className="w-4 h-4" /></button>
@@ -333,6 +349,7 @@ const EditUserModal: React.FC<{ user: AdminUser; onClose: () => void; onSave: ()
 		 { value: 'admin', label: 'Admin' }
 	 ];
 	const [busy, setBusy] = useState(false);
+	const [confirmAction, setConfirmAction] = useState<null | { type: 'block' | 'validate' | 'manualAccess', label: string, onConfirm: () => void }>(null);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -375,46 +392,62 @@ const EditUserModal: React.FC<{ user: AdminUser; onClose: () => void; onSave: ()
 		}
 	};
 
-	const handleBlockToggle = async () => {
-		if (!confirm(`${user.isBlocked ? 'Débloquer' : 'Bloquer'} cet utilisateur ?`)) return;
-		setBusy(true);
-		try {
-			if (user.isBlocked) await adminService.unblockUser(user._id);
-			else await adminService.blockUser(user._id);
-			toast.success(user.isBlocked ? 'Utilisateur débloqué' : 'Utilisateur bloqué');
-			onSave();
-		} catch (err) {
-			console.error(err);
-			toast.error('Erreur');
-		} finally { setBusy(false); }
-	};
+	 const handleBlockToggle = () => {
+		 setConfirmAction({
+			 type: 'block',
+			 label: user.isBlocked ? 'Débloquer cet utilisateur ?' : 'Bloquer cet utilisateur ?',
+			 onConfirm: async () => {
+				 setBusy(true);
+				 try {
+					 if (user.isBlocked) await adminService.unblockUser(user._id);
+					 else await adminService.blockUser(user._id);
+					 toast.success(user.isBlocked ? 'Utilisateur débloqué' : 'Utilisateur bloqué');
+					 onSave();
+				 } catch (err) {
+					 console.error(err);
+					 toast.error('Erreur');
+				 } finally { setBusy(false); setConfirmAction(null); }
+			 }
+		 });
+	 };
 
-	const handleValidateToggle = async () => {
-		setBusy(true);
-		try {
-			await fetch(`${API_ROOT}/api/admin/users/${user._id}/validate`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ value: !user.isValidated }) });
-			toast.success(user.isValidated ? 'Validation retirée' : 'Utilisateur validé');
-			onSave();
-		} catch (err) {
-			console.error(err);
-			toast.error('Erreur');
-		} finally { setBusy(false); }
-	};
+	 const handleValidateToggle = () => {
+		 setConfirmAction({
+			 type: 'validate',
+			 label: user.isValidated ? 'Retirer la validation de cet utilisateur ?' : 'Valider cet utilisateur ?',
+			 onConfirm: async () => {
+				 setBusy(true);
+				 try {
+					 await fetch(`${API_ROOT}/api/admin/users/${user._id}/validate`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ value: !user.isValidated }) });
+					 toast.success(user.isValidated ? 'Validation retirée' : 'Utilisateur validé');
+					 onSave();
+				 } catch (err) {
+					 console.error(err);
+					 toast.error('Erreur');
+				 } finally { setBusy(false); setConfirmAction(null); }
+			 }
+		 });
+	 };
 
-	const handleGrantRevokeAccess = async () => {
-		if (!confirm(user.accessGrantedByAdmin ? 'Révoquer l\'accès manuel ?' : 'Donner l\'accès manuel ?')) return;
-		setBusy(true);
-		try {
-			if (user.accessGrantedByAdmin) await adminService.revokeAdminAccess(user._id);
-			else await adminService.grantAdminAccess(user._id);
-			toast.success(user.accessGrantedByAdmin ? 'Accès révoqué' : 'Accès accordé');
-			onSave();
-		} catch (err: any) {
-			console.error(err);
-			const msg = err?.response?.data?.error || err?.message || 'Erreur.';
-			toast.error(msg);
-		} finally { setBusy(false); }
-	};
+	 const handleGrantRevokeAccess = () => {
+		 setConfirmAction({
+			 type: 'manualAccess',
+			 label: user.accessGrantedByAdmin ? 'Révoquer l\'accès manuel pour cet utilisateur ?' : 'Donner l\'accès manuel à cet utilisateur (outrepasse le paiement) ?',
+			 onConfirm: async () => {
+				 setBusy(true);
+				 try {
+					 if (user.accessGrantedByAdmin) await adminService.revokeAdminAccess(user._id);
+					 else await adminService.grantAdminAccess(user._id);
+					 toast.success(user.accessGrantedByAdmin ? 'Accès révoqué' : 'Accès accordé');
+					 onSave();
+				 } catch (err: any) {
+					 console.error(err);
+					 const msg = err?.response?.data?.error || err?.message || 'Erreur.';
+					 toast.error(msg);
+				 } finally { setBusy(false); setConfirmAction(null); }
+			 }
+		 });
+	 };
 
 	const handleSendReminder = async () => {
 		setBusy(true);
@@ -435,7 +468,7 @@ const EditUserModal: React.FC<{ user: AdminUser; onClose: () => void; onSave: ()
 					<button onClick={onClose} className="text-gray-500 hover:text-gray-700"><X className="w-5 h-5" /></button>
 				</div>
 
-				<form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+				 <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 					{/* Left: main info */}
 					<div className="lg:col-span-2 bg-white p-4 rounded-lg border">
 						<div className="flex items-start gap-6">
@@ -511,11 +544,23 @@ const EditUserModal: React.FC<{ user: AdminUser; onClose: () => void; onSave: ()
 						<div className="space-y-2">
 							<div className="text-sm text-gray-600">Actions rapides</div>
 							<div className="flex flex-col gap-2">
-								<button disabled={busy} onClick={handleValidateToggle} className="w-full px-3 py-2 bg-emerald-500 text-white rounded flex items-center gap-2 justify-center">{user.isValidated ? 'Retirer validation' : 'Valider utilisateur'}</button>
-								<button disabled={busy} onClick={handleBlockToggle} className="w-full px-3 py-2 bg-amber-500 text-white rounded flex items-center gap-2 justify-center">{user.isBlocked ? 'Débloquer' : 'Bloquer'}</button>
-								<button disabled={busy} onClick={handleGrantRevokeAccess} className="w-full px-3 py-2 bg-purple-500 text-white rounded flex items-center gap-2 justify-center">{user.accessGrantedByAdmin ? 'Révoquer accès manuel' : 'Donner accès manuel'}</button>
-								<button disabled={busy} onClick={handleSendReminder} className="w-full px-3 py-2 bg-orange-400 text-white rounded flex items-center gap-2 justify-center">Envoyer rappel paiement</button>
-							</div>
+								   <button disabled={busy} type="button" onClick={handleValidateToggle} className="w-full px-3 py-2 bg-emerald-500 text-white rounded flex items-center gap-2 justify-center">{user.isValidated ? 'Retirer validation' : 'Valider utilisateur'}</button>
+								   <button disabled={busy} type="button" onClick={handleBlockToggle} className="w-full px-3 py-2 bg-amber-500 text-white rounded flex items-center gap-2 justify-center">{user.isBlocked ? 'Débloquer' : 'Bloquer'}</button>
+								   <button disabled={busy} type="button" onClick={handleGrantRevokeAccess} className="w-full px-3 py-2 bg-purple-500 text-white rounded flex items-center gap-2 justify-center">{user.accessGrantedByAdmin ? 'Révoquer accès manuel' : 'Donner accès manuel'}</button>
+											{confirmAction && (
+												<ConfirmDialog
+													isOpen={!!confirmAction}
+													title="Confirmation"
+													description={confirmAction.label}
+													onConfirm={confirmAction.onConfirm}
+													onCancel={() => setConfirmAction(null)}
+													confirmText="Confirmer"
+													cancelText="Annuler"
+													variant={confirmAction.type === 'block' ? 'danger' : confirmAction.type === 'manualAccess' ? 'warning' : 'primary'}
+													loading={busy}
+												/>
+											)}
+ 							</div>
 						</div>
 					</div>
 				</form>
