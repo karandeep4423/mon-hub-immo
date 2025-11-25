@@ -9,15 +9,17 @@ import { BarChart2, CheckCircle, Check, DollarSign, Handshake, Home, Eye, Messag
 
 export interface AdminCollaboration {
 	_id: string;
-	agent?: { _id: string; firstName?: string; lastName?: string } | string;
+	agent?: { _id: string; firstName?: string; lastName?: string; userType?: string } | string;
 	agentId?: string;
 	agentName?: string;
-	apporteur?: { _id: string; firstName?: string; lastName?: string } | string;
+	apporteur?: { _id: string; firstName?: string; lastName?: string; userType?: string } | string;
 	apporteurId?: string;
 	apporteurName?: string;
 	property?: string;
 	propertyId?: string;
 	postId?: Record<string, any>;
+	postOwnerId?: { _id: string; firstName?: string; lastName?: string; userType?: string };
+	collaboratorId?: { _id: string; firstName?: string; lastName?: string; userType?: string };
 	postType?: string;
 	status: 'pending' | 'active' | 'completed' | 'cancelled';
 	commission?: number;
@@ -31,11 +33,25 @@ interface AdminCollaborationsTableModernProps {
 	loading?: boolean;
 }
 
+const getCollaborationType = (collab: AdminCollaboration): 'agent-agent' | 'agent-apporteur' => {
+	const agentType = typeof collab.agent === 'object' && collab.agent ? collab.agent.userType : undefined;
+	const apporteurType = typeof collab.apporteur === 'object' && collab.apporteur ? collab.apporteur.userType : undefined;
+	
+	// Fallback to postOwnerId and collaboratorId if available
+	const ownerType = collab.postOwnerId?.userType || agentType;
+	const collabType = collab.collaboratorId?.userType || apporteurType;
+	
+	if (ownerType === 'agent' && collabType === 'agent') return 'agent-agent';
+	if (ownerType === 'agent' && collabType === 'apporteur') return 'agent-apporteur';
+	if (ownerType === 'apporteur' && collabType === 'agent') return 'agent-apporteur';
+	return 'agent-apporteur'; // Default fallback
+};
+
 export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableModernProps> = ({
 	collaborations,
 	loading,
 }) => {
-	const [filters, setFilters] = useState({ status: '', search: '' });
+	const [filters, setFilters] = useState({ status: '', search: '', collabType: '' });
 
 	const filteredCollaborations = useMemo(() => {
 		if (!collaborations) return [];
@@ -48,7 +64,9 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 				apporteurName.toLowerCase().includes(filters.search.toLowerCase()) ||
 				propertyName.toLowerCase().includes(filters.search.toLowerCase());
 			const matchStatus = !filters.status || c.status === filters.status;
-			return matchSearch && matchStatus;
+			const collabType = getCollaborationType(c);
+			const matchCollabType = !filters.collabType || collabType === filters.collabType;
+			return matchSearch && matchStatus && matchCollabType;
 		});
 	}, [collaborations, filters]);
 
@@ -80,25 +98,59 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 			</div>
 
 			{/* Filters */}
-			<div className="flex gap-3 flex-wrap">
-				<input
-					type="search"
-					placeholder="Chercher agent, apporteur, annonce..."
-					value={filters.search}
-					onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-					className="flex-1 min-w-64 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-				/>
-				<select
-					value={filters.status}
-					onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-					className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-				>
-					<option value="">Tous les statuts</option>
-					<option value="pending">En attente</option>
-					<option value="active">Active</option>
-					<option value="completed">Complétée</option>
-					<option value="cancelled">Annulée</option>
-				</select>
+			<div className="space-y-4">
+				<div className="flex gap-3 flex-wrap">
+					<input
+						type="search"
+						placeholder="Chercher agent, apporteur, annonce..."
+						value={filters.search}
+						onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+						className="flex-1 min-w-64 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+					/>
+					<select
+						value={filters.status}
+						onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+						className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+					>
+						<option value="">Tous les statuts</option>
+						<option value="pending">En attente</option>
+						<option value="active">Active</option>
+						<option value="completed">Complétée</option>
+						<option value="cancelled">Annulée</option>
+					</select>
+				</div>
+				<div className="flex gap-2">
+					<button
+						onClick={() => setFilters({ ...filters, collabType: '' })}
+						className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+							!filters.collabType
+								? 'bg-cyan-600 text-white'
+								: 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+						}`}
+					>
+						Tous les types
+					</button>
+					<button
+						onClick={() => setFilters({ ...filters, collabType: 'agent-agent' })}
+						className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+							filters.collabType === 'agent-agent'
+								? 'bg-cyan-600 text-white'
+								: 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+						}`}
+					>
+						Agent-Agent
+					</button>
+					<button
+						onClick={() => setFilters({ ...filters, collabType: 'agent-apporteur' })}
+						className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+							filters.collabType === 'agent-apporteur'
+								? 'bg-cyan-600 text-white'
+								: 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+						}`}
+					>
+						Agent-Apporteur
+					</button>
+				</div>
 			</div>
 
 			{/* Stats */}
