@@ -26,6 +26,7 @@ interface UserProfile {
 }
 
 export default function AdminUserProfile() {
+  const API_ROOT = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace(/\/$/, '');
   const { id } = useParams();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +35,7 @@ export default function AdminUserProfile() {
   const fetchUser = useCallback(() => {
     setLoading(true);
     setError(null);
-    fetch(`http://localhost:4000/api/admin/users/${id}`, { credentials: 'include' })
+    fetch(`${API_ROOT}/api/admin/users/${id}`, { credentials: 'include' })
       .then(res => {
         if (!res.ok) {
           throw new Error('Failed to fetch');
@@ -64,7 +65,7 @@ export default function AdminUserProfile() {
     if (!confirm(`Êtes-vous sûr de vouloir ${shouldValidate ? 'valider' : 'invalider'} cet utilisateur ?`)) return;
 
     try {
-      const response = await fetch(`http://localhost:4000/api/admin/users/${userId}/validate`, {
+      const response = await fetch(`${API_ROOT}/api/admin/users/${userId}/validate`, {
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -83,7 +84,7 @@ export default function AdminUserProfile() {
     
     const endpoint = shouldBlock ? 'block' : 'unblock';
     try {
-      const response = await fetch(`http://localhost:4000/api/admin/users/${userId}/${endpoint}`, {
+      const response = await fetch(`${API_ROOT}/api/admin/users/${userId}/${endpoint}`, {
         method: 'POST',
         credentials: 'include',
       });

@@ -51,6 +51,7 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 	users: initialUsers,
 	loading: initialLoading,
 }) => {
+	const API_ROOT = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace(/\/$/, '');
 	const [filters, setFilters] = useState({ type: '', status: '', search: '', network: '' });
 	const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
 	const [showCreate, setShowCreate] = useState(false);
@@ -329,10 +330,10 @@ const EditUserModal: React.FC<{ user: AdminUser; onClose: () => void; onSave: ()
 		try {
 			const calls: Promise<any>[] = [];
 			if (form.isValidated !== user.isValidated) {
-				calls.push(fetch(`http://localhost:4000/api/admin/users/${user._id}/validate`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ value: !!form.isValidated }) }));
+				calls.push(fetch(`${API_ROOT}/api/admin/users/${user._id}/validate`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ value: !!form.isValidated }) }));
 			}
 			if (form.isBlocked !== user.isBlocked) {
-				calls.push(fetch(`http://localhost:4000/api/admin/users/${user._id}/${form.isBlocked ? 'block' : 'unblock'}`, { method: 'POST', credentials: 'include' }));
+				calls.push(fetch(`${API_ROOT}/api/admin/users/${user._id}/${form.isBlocked ? 'block' : 'unblock'}`, { method: 'POST', credentials: 'include' }));
 			}
 			const cleaned = {
 				firstName: form.firstName,
@@ -346,7 +347,7 @@ const EditUserModal: React.FC<{ user: AdminUser; onClose: () => void; onSave: ()
 				...(form.isValidated === user.isValidated ? { isValidated: form.isValidated } : {}),
 				...(form.isBlocked === user.isBlocked ? { isBlocked: form.isBlocked } : {}),
 			} as any;
-			calls.push(fetch(`http://localhost:4000/api/admin/users/${user._id}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cleaned) }));
+			calls.push(fetch(`${API_ROOT}/api/admin/users/${user._id}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cleaned) }));
 
 			const results = await Promise.all(calls);
 			if (results.every((r) => r.ok)) {
@@ -381,7 +382,7 @@ const EditUserModal: React.FC<{ user: AdminUser; onClose: () => void; onSave: ()
 	const handleValidateToggle = async () => {
 		setBusy(true);
 		try {
-			await fetch(`http://localhost:4000/api/admin/users/${user._id}/validate`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ value: !user.isValidated }) });
+			await fetch(`${API_ROOT}/api/admin/users/${user._id}/validate`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ value: !user.isValidated }) });
 			toast.success(user.isValidated ? 'Validation retirée' : 'Utilisateur validé');
 			onSave();
 		} catch (err) {

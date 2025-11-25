@@ -29,7 +29,8 @@ export function useAdminStats() {
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    fetch('http://localhost:4000/api/admin/stats', { credentials: 'include' })
+    const API_ROOT = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace(/\/$/, '');
+    fetch(`${API_ROOT}/api/admin/stats`, { credentials: 'include' })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();

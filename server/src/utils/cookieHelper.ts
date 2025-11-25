@@ -75,12 +75,18 @@ export const getSecureCookieOptions = (maxAge: number): CookieOptions => {
  */
 export const setAccessTokenCookie = (res: Response, token: string): void => {
 	try {
-		res.cookie(
-			COOKIE_NAMES.ACCESS_TOKEN,
-			token,
-			getSecureCookieOptions(COOKIE_MAX_AGE.ACCESS_TOKEN),
-		);
-		logger.debug('[CookieHelper] Access token cookie set');
+		const opts = getSecureCookieOptions(COOKIE_MAX_AGE.ACCESS_TOKEN);
+		res.cookie(COOKIE_NAMES.ACCESS_TOKEN, token, opts);
+		// Log cookie options (do not log token value)
+		logger.debug('[CookieHelper] Access token cookie set', {
+			name: COOKIE_NAMES.ACCESS_TOKEN,
+			domain: opts.domain || null,
+			sameSite: opts.sameSite,
+			secure: opts.secure,
+			httpOnly: opts.httpOnly,
+			path: opts.path,
+			maxAge: opts.maxAge,
+		});
 	} catch (error) {
 		logger.error('[CookieHelper] Failed to set access token cookie', error);
 		throw error;
@@ -92,12 +98,17 @@ export const setAccessTokenCookie = (res: Response, token: string): void => {
  */
 export const setRefreshTokenCookie = (res: Response, token: string): void => {
 	try {
-		res.cookie(
-			COOKIE_NAMES.REFRESH_TOKEN,
-			token,
-			getSecureCookieOptions(COOKIE_MAX_AGE.REFRESH_TOKEN),
-		);
-		logger.debug('[CookieHelper] Refresh token cookie set');
+		const opts = getSecureCookieOptions(COOKIE_MAX_AGE.REFRESH_TOKEN);
+		res.cookie(COOKIE_NAMES.REFRESH_TOKEN, token, opts);
+		logger.debug('[CookieHelper] Refresh token cookie set', {
+			name: COOKIE_NAMES.REFRESH_TOKEN,
+			domain: opts.domain || null,
+			sameSite: opts.sameSite,
+			secure: opts.secure,
+			httpOnly: opts.httpOnly,
+			path: opts.path,
+			maxAge: opts.maxAge,
+		});
 	} catch (error) {
 		logger.error(
 			'[CookieHelper] Failed to set refresh token cookie',

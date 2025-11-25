@@ -15,6 +15,7 @@ interface Props {
 }
 
 const CreateUserModal: React.FC<Props> = ({ onClose, onCreated }) => {
+  const API_ROOT = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace(/\/$/, '');
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -36,7 +37,7 @@ const CreateUserModal: React.FC<Props> = ({ onClose, onCreated }) => {
 
   const { mutate, loading } = useMutation(async (payload: Record<string, unknown>) => {
     // Use generic POST to admin create user
-    const res = await fetch("http://localhost:4000/api/admin/users/create", {
+    const res = await fetch(`${API_ROOT}/api/admin/users/create`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
