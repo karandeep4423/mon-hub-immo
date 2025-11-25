@@ -326,7 +326,12 @@ const FilterStatCard: React.FC<{ icon: React.ReactNode; label: string; value: nu
 };
 
 const EditUserModal: React.FC<{ user: AdminUser; onClose: () => void; onSave: () => void; }> = ({ user, onClose, onSave }) => {
-	const [form, setForm] = useState<AdminUser>({ ...user, professionalInfo: user.professionalInfo || { network: '' } });
+	 const [form, setForm] = useState<AdminUser>({ ...user, professionalInfo: user.professionalInfo || { network: '' } });
+	 const roleOptions = [
+		 { value: 'agent', label: 'Agent' },
+		 { value: 'apporteur', label: 'Apporteur' },
+		 { value: 'admin', label: 'Admin' }
+	 ];
 	const [busy, setBusy] = useState(false);
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -449,34 +454,42 @@ const EditUserModal: React.FC<{ user: AdminUser; onClose: () => void; onSave: ()
 							</div>
 						</div>
 
-						<div className="mt-6 space-y-4">
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-								<label className="block">
-									<span className="text-sm text-gray-600">Prénom</span>
-									<input className="mt-1 block w-full border rounded px-3 py-2" value={form.firstName || ''} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
-								</label>
-								<label className="block">
-									<span className="text-sm text-gray-600">Nom</span>
-									<input className="mt-1 block w-full border rounded px-3 py-2" value={form.lastName || ''} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
-								</label>
-							</div>
+						 <div className="mt-6 space-y-4">
+							 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								 <label className="block">
+									 <span className="text-sm text-gray-600">Prénom</span>
+									 <input className="mt-1 block w-full border rounded px-3 py-2" value={form.firstName || ''} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
+								 </label>
+								 <label className="block">
+									 <span className="text-sm text-gray-600">Nom</span>
+									 <input className="mt-1 block w-full border rounded px-3 py-2" value={form.lastName || ''} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
+								 </label>
+							 </div>
 
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-								<label className="block">
-									<span className="text-sm text-gray-600">Email</span>
-									<input className="mt-1 block w-full border rounded px-3 py-2" value={form.email || ''} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-								</label>
-								<label className="block">
-									<span className="text-sm text-gray-600">Téléphone</span>
-									<input className="mt-1 block w-full border rounded px-3 py-2" value={(form as any).phone || ''} onChange={(e) => setForm({ ...form, phone: e.target.value } as any)} />
-								</label>
-							</div>
+							 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								 <label className="block">
+									 <span className="text-sm text-gray-600">Email</span>
+									 <input className="mt-1 block w-full border rounded px-3 py-2" value={form.email || ''} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+								 </label>
+								 <label className="block">
+									 <span className="text-sm text-gray-600">Téléphone</span>
+									 <input className="mt-1 block w-full border rounded px-3 py-2" value={(form as any).phone || ''} onChange={(e) => setForm({ ...form, phone: e.target.value } as any)} />
+								 </label>
+							 </div>
 
-							<label className="block">
-								<span className="text-sm text-gray-600">Réseau</span>
-								<input className="mt-1 block w-full border rounded px-3 py-2" value={form.professionalInfo?.network || ''} onChange={(e) => setForm({ ...form, professionalInfo: { ...(form.professionalInfo || {}), network: e.target.value } })} />
-							</label>
-						</div>
+							 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+								 <label className="block">
+									 <span className="text-sm text-gray-600">Rôle</span>
+									<select className="mt-1 block w-full border rounded px-3 py-2" value={form.type || ''} onChange={(e) => setForm({ ...form, type: e.target.value as 'agent' | 'apporteur' | 'admin' })}>
+										 {roleOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+									 </select>
+								 </label>
+								 <label className="block">
+									 <span className="text-sm text-gray-600">Réseau</span>
+									 <input className="mt-1 block w-full border rounded px-3 py-2" value={form.professionalInfo?.network || ''} onChange={(e) => setForm({ ...form, professionalInfo: { ...(form.professionalInfo || {}), network: e.target.value } })} />
+								 </label>
+							 </div>
+						 </div>
 
 						<div className="mt-6 flex gap-3">
 							<button type="submit" disabled={busy} className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700">Enregistrer</button>
