@@ -21,8 +21,12 @@ export function useAdminCollaborations() {
 
   useEffect(() => {
     setLoading(true);
+    const API_ROOT = (() => {
+      const raw = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      return raw.replace(/\/+$/, '').replace(/\/api$/i, '');
+    })();
 
-    fetch('http://localhost:4000/api/collaboration/all', {
+    fetch(`${API_ROOT}/api/collaboration/all`, {
       credentials: 'include',
     })
       .then(res => res.json())
