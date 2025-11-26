@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
+import { ConfirmDialog } from '@/components/ui';
+import { Features } from '@/lib/constants';
 import Link from 'next/link';
 import { DataTable } from './ui/DataTable';
 import { useAdminProperties } from '@/hooks/useAdminProperties';
@@ -34,6 +36,11 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 	const [filters, setFilters] = useState({ type: '', status: '', search: '' });
 	const [viewType, setViewType] = useState<'table' | 'grid'>('table');
 
+	// Delete modal state
+	const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+	const [deleteLoading, setDeleteLoading] = useState(false);
+	const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
+
 	const { properties: fetchedProperties, loading, totalItems, currentPage, totalPages, refetch } = useAdminProperties({
 		search: filters.search,
 		status: filters.status,
@@ -50,23 +57,40 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 		return 'default';
 	};
 
-	const handleDelete = async (propertyId: string) => {
-		if (!confirm('Êtes-vous sûr de vouloir supprimer cette annonce ?')) return;
-		    try {
-			    const raw = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-			    const API_ROOT = raw.replace(/\/+$/, '').replace(/\/api$/i, '');
-			    const res = await fetch(`${API_ROOT}/api/admin/properties/${propertyId}`, {
+	const openDeleteModal = (propertyId: string) => {
+		setSelectedPropertyId(propertyId);
+		setShowConfirmDialog(true);
+	};
+
+	const closeDeleteModal = () => {
+		setShowConfirmDialog(false);
+		setSelectedPropertyId(null);
+		setDeleteLoading(false);
+	};
+
+	const confirmDelete = async () => {
+		if (!selectedPropertyId) return;
+		setDeleteLoading(true);
+		try {
+			const raw = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+			const API_ROOT = raw.replace(/\/+$/, '').replace(/\/api$/i, '');
+			const res = await fetch(`${API_ROOT}/api/admin/properties/${selectedPropertyId}`, {
 				method: 'DELETE',
 				credentials: 'include',
 			});
 			if (res.ok) {
-				alert('Annonce supprimée avec succès');
+				// optional: show toast instead of alert
+				// alert('Annonce supprimée avec succès');
 				refetch?.();
+				closeDeleteModal();
 			} else {
-				alert('Erreur lors de la suppression');
+				// handle error response
+				// alert('Erreur lors de la suppression');
+				setDeleteLoading(false);
 			}
-		} catch {
-			alert('Erreur lors de la suppression');
+		} catch (err) {
+			// alert('Erreur lors de la suppression');
+			setDeleteLoading(false);
 		}
 	};
 
@@ -155,7 +179,7 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 					actions={(row: any) => (
 						<div className="flex items-center gap-2">
 							<Link href={`/property/${row._id}`} className="p-1 hover:bg-blue-100 rounded transition-colors" title="Voir"><Eye className="w-4 h-4" /></Link>
- 							<button className="p-1 hover:bg-red-100 rounded transition-colors" title="Supprimer" onClick={() => handleDelete(row._id)}><Trash2 className="w-4 h-4 text-red-600" /></button>
+							<button className="p-1 hover:bg-red-100 rounded transition-colors" title="Supprimer" onClick={() => openDeleteModal(row._id)}><Trash2 className="w-4 h-4 text-red-600" /></button>
 						</div>
 					)}
 				/>
@@ -179,7 +203,7 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 								</div>
 								<div className="flex gap-2">
 									<Link href={`/property/${prop._id}`} className="flex-1 px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded transition-colors text-sm font-medium">Voir</Link>
-									<button onClick={() => handleDelete(prop._id)} className="flex-1 px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded transition-colors text-sm font-medium">Supprimer</button>
+									<button onClick={() => openDeleteModal(prop._id)} className="flex-1 px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded transition-colors text-sm font-medium">Supprimer</button>
 								</div>
 							</div>
 						</div>
@@ -192,6 +216,19 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 				<span className="text-gray-700 font-medium">Page {currentPage ?? page} sur {totalPages ?? 1}</span>
 				<Button onClick={() => setPage(p => (totalPages ? Math.min(totalPages, p + 1) : p + 1))} disabled={page >= (totalPages ?? 1) || loading} variant="secondary">Suivant</Button>
 			</div>
+
+			{/* Confirm Delete Dialog */}
+			<ConfirmDialog
+				isOpen={showConfirmDialog}
+				title={Features.Properties.PROPERTY_CONFIRMATION_DIALOGS.DELETE_TITLE}
+				description={Features.Properties.PROPERTY_CONFIRMATION_DIALOGS.DELETE_DESCRIPTION}
+				onConfirm={confirmDelete}
+				onCancel={closeDeleteModal}
+				confirmText={Features.Properties.PROPERTY_CONFIRMATION_DIALOGS.DELETE_CONFIRM}
+				cancelText={Features.Properties.PROPERTY_CONFIRMATION_DIALOGS.DELETE_CANCEL}
+				variant="danger"
+				loading={deleteLoading}
+			/>
 		</div>
 	);
 }
