@@ -496,18 +496,26 @@ export const getAdminProperties = async (
 
 		if (propertyType) {
 			// sanitizeInput returns unknown — coerce to string after sanitization
-			const sanitizedType = String(sanitizeInput(propertyType as string));
+			const sanitizedType = String(sanitizeInput(propertyType as string)).trim();
 
-			// --- Translation mapping for propertyType ---
-			const typeMap: { [key: string]: string } = {
-				Maison: 'house',
-				Appartement: 'apartment',
-				Terrain: 'land',
-				Commercial: 'commercial',
+			// The Property model stores propertyType using French labels
+			// Accept both French and English query values for convenience.
+			const englishToFrenchMap: { [key: string]: string } = {
+				house: 'Maison',
+				maison: 'Maison',
+				apartment: 'Appartement',
+				appartement: 'Appartement',
+				land: 'Terrain',
+				terrain: 'Terrain',
+				commercial: 'Local commercial',
+				'local commercial': 'Local commercial',
+				bureaux: 'Bureaux',
+				offices: 'Bureaux',
 			};
 
-			// Use the mapped value if it exists, otherwise use the original value
-			filter.propertyType = typeMap[sanitizedType] || sanitizedType;
+			const key = sanitizedType.toLowerCase();
+			// Prefer mapped French label when possible, otherwise use the sanitized value
+			filter.propertyType = englishToFrenchMap[key] || sanitizedType;
 		}
 
 		if (city) {
