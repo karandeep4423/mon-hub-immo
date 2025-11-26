@@ -50,7 +50,7 @@ export const SidebarAdminModern: React.FC<SidebarAdminModernProps> = ({ isOpen =
 				${isOpen ? 'translate-x-0' : '-translate-x-full'}
 				lg:translate-x-0 lg:sticky flex flex-col
 			`}
-			style={{ top: headerHeight, height: `calc(100vh - ${headerHeight}px)` }}
+			style={{ top: `${headerHeight}px`, height: `calc(100vh - ${headerHeight}px)` }}
 		>
 			{/* Header */}
 			<div className="p-6 border-b border-gray-200">
