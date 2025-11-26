@@ -24,9 +24,8 @@ const CreateUserModal: React.FC<Props> = ({ onClose, onCreated }) => {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [userType, setUserType] = useState("apporteur");
-  const [profileImage, setProfileImage] = useState("");
+  const [networkName, setNetworkName] = useState("");
   const [isValidated, setIsValidated] = useState(false);
-  const [password, setPassword] = useState("");
   const [sendInvite, setSendInvite] = useState(true);
   const [sendRandomPassword, setSendRandomPassword] = useState(false);
   // Agent professional fields
@@ -87,10 +86,7 @@ const CreateUserModal: React.FC<Props> = ({ onClose, onCreated }) => {
       alert('Prénom / Nom / Email requis');
       return;
     }
-    if (!password && !sendInvite && !sendRandomPassword) {
-      alert('Fournissez un mot de passe, ou cochez Envoyer invitation, ou cochez Générer mot de passe temporaire');
-      return;
-    }
+    // Password field removed: allow creation without password; sendInvite/sendRandomPassword remain optional
 
     const payload: Record<string, unknown> = {
       firstName: firstName.trim(),
@@ -98,9 +94,8 @@ const CreateUserModal: React.FC<Props> = ({ onClose, onCreated }) => {
       email: email.trim(),
       phone: phone.trim() || undefined,
       userType,
-      profileImage: profileImage.trim() || undefined,
       isValidated,
-      password: password || undefined,
+      networkName: networkName.trim() || undefined,
       sendInvite: sendInvite,
       sendRandomPassword: sendRandomPassword,
     };
@@ -145,7 +140,7 @@ const CreateUserModal: React.FC<Props> = ({ onClose, onCreated }) => {
                 <option value="admin">Admin</option>
               </select>
             </label>
-            <Input label="Image de profil (URL)" value={profileImage} onChange={(e) => setProfileImage(e.target.value)} />
+            <Input label="Nom du réseau (optionnel)" value={networkName} onChange={(e) => setNetworkName(e.target.value)} />
           </div>
 
           {userType === 'agent' && (
@@ -190,7 +185,6 @@ const CreateUserModal: React.FC<Props> = ({ onClose, onCreated }) => {
           )}
 
           <div className="grid grid-cols-2 gap-3">
-            <Input label="Mot de passe (optionnel)" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
             <div className="space-y-2">
               <label className="flex items-center gap-2">
                 <input type="checkbox" checked={sendInvite} onChange={(e) => { setSendInvite(e.target.checked); if (e.target.checked) setSendRandomPassword(false); }} />

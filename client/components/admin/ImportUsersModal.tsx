@@ -1,6 +1,7 @@
-'use client';
+ 'use client';
 
 import { useState } from 'react';
+import { Modal } from '@/components/ui/Modal';
 import { authToastSuccess, authToastError } from '@/lib/utils/authToast';
 
 interface ImportResult {
@@ -104,12 +105,9 @@ function ImportUsersModal({
 	};
 
 	return (
-		<div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-4">
-			<div className="bg-white p-6 rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto">
-				<h3 className="text-lg font-bold mb-4">Importer des utilisateurs</h3>
-
-				{!result ? (
-					<form onSubmit={handleSubmit} className="space-y-4">
+		<Modal isOpen={open} onClose={onClose} title="Importer des utilisateurs" size="md" zIndex={99999}>
+			{!result ? (
+				<form onSubmit={handleSubmit} className="space-y-4">
 						<div>
 							<label className="block text-sm font-medium mb-2">
 								Fichier CSV (colonnes: email, firstName, lastName, userType, phone, network)
@@ -190,55 +188,54 @@ function ImportUsersModal({
 							</button>
 						</div>
 					</form>
-				) : (
-					<div className="space-y-4">
-						<div className="p-4 bg-green-50 border border-green-200 rounded">
-									<p className="font-bold text-green-700">✓ Import terminé</p>
-									<p className="text-sm">
-										{result.createdCount || 0} utilisateur(s) créé(s) • {result.errors ? result.errors.length : 0} erreur(s)
-										{result.updatedCount ? ` • ${result.updatedCount} mis à jour` : ''}
-									</p>
-						</div>
-
-						{result.created && result.created.length > 0 && (
-							<div>
-								<h4 className="font-medium mb-2">Utilisateurs créés:</h4>
-								<div className="space-y-1 text-sm max-h-40 overflow-y-auto">
-									{result.created.map(u => (
-										<p key={u.id} className="text-gray-700">✓ {u.email}</p>
-									))}
-								</div>
-							</div>
-						)}
-
-						{result.errors && result.errors.length > 0 && (
-							<div>
-								<h4 className="font-medium text-red-700 mb-2">Erreurs:</h4>
-								<div className="space-y-1 text-sm max-h-40 overflow-y-auto">
-									{result.errors.map((err, idx) => (
-										<p key={idx} className="text-red-600">✗ {err}</p>
-									))}
-								</div>
-							</div>
-						)}
-
-						<div className="flex justify-end gap-2">
-							<button
-								type="button"
-								onClick={() => {
-									onClose();
-									setFile(null);
-									setResult(null);
-								}}
-								className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-							>
-								Fermer
-							</button>
-						</div>
+			) : (
+				<div className="space-y-4">
+					<div className="p-4 bg-green-50 border border-green-200 rounded">
+						<p className="font-bold text-green-700">✓ Import terminé</p>
+						<p className="text-sm">
+							{result.createdCount || 0} utilisateur(s) créé(s) • {result.errors ? result.errors.length : 0} erreur(s)
+							{result.updatedCount ? ` • ${result.updatedCount} mis à jour` : ''}
+						</p>
 					</div>
-				)}
-			</div>
-		</div>
+
+					{result.created && result.created.length > 0 && (
+						<div>
+							<h4 className="font-medium mb-2">Utilisateurs créés:</h4>
+							<div className="space-y-1 text-sm max-h-40 overflow-y-auto">
+								{result.created.map(u => (
+									<p key={u.id} className="text-gray-700">✓ {u.email}</p>
+								))}
+							</div>
+						</div>
+					)}
+
+					{result.errors && result.errors.length > 0 && (
+						<div>
+							<h4 className="font-medium text-red-700 mb-2">Erreurs:</h4>
+							<div className="space-y-1 text-sm max-h-40 overflow-y-auto">
+								{result.errors.map((err, idx) => (
+									<p key={idx} className="text-red-600">✗ {err}</p>
+								))}
+							</div>
+						</div>
+					)}
+
+					<div className="flex justify-end gap-2">
+						<button
+							type="button"
+							onClick={() => {
+								onClose();
+								setFile(null);
+								setResult(null);
+							}}
+							className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+						>
+							Fermer
+						</button>
+					</div>
+				</div>
+			)}
+		</Modal>
 	);
 }
 
