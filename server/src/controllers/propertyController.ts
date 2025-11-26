@@ -15,7 +15,7 @@ import { logger } from '../utils/logger';
 interface AuthenticatedRequest extends Request {
 	user?: {
 		id: string;
-		userType: 'agent' | 'apporteur';
+		userType: 'agent' | 'apporteur' | 'admin';
 	};
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	resource?: any; // Attached by authorization middleware
@@ -1200,11 +1200,22 @@ export const getMyProperties = async (
 			status,
 			sortBy = 'createdAt',
 			sortOrder = 'desc',
+			ownerId, // Admins can optionally filter by owner
 		} = req.query;
 
 		// Build filter
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const filter: any = { owner: req.user!.id };
+		const filter: any = {};
+
+		// For non-admins, always filter by current user
+		// For admins, filter by current user unless ownerId is specified
+		if (req.user!.userType !== 'admin') {
+			filter.owner = req.user!.id;
+		} else if (ownerId) {
+			// Admin can filter by specific owner
+			filter.owner = ownerId;
+		}
+		// If admin and no ownerId specified, show all properties (no owner filter)
 
 		if (status) {
 			filter.status = status;

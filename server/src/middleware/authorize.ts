@@ -126,22 +126,24 @@ export const requireOwnership = (
 				return;
 			}
 
-			const resource = await resourceModel.findById(resourceId);
-			if (!resource) {
-				logger.warn('[Authorization] Resource not found', {
-					event: 'resource_not_found',
-					userId: req.userId,
-					resourceId,
-					path: req.path,
-				});
+		const resource = await resourceModel.findById(resourceId);
+		if (!resource) {
+			logger.warn('[Authorization] Resource not found', {
+				event: 'resource_not_found',
+				userId: req.userId,
+				resourceId,
+				path: req.path,
+			});
 
-				res.status(404).json({
-					success: false,
-					message: AUTH_ERRORS.RESOURCE_NOT_FOUND,
-				});
-				return;
-			}
+			res.status(404).json({
+				success: false,
+				message: AUTH_ERRORS.RESOURCE_NOT_FOUND,
+			});
+			return;
+		}
 
+		// Admins have full access to all resources (bypass ownership check)
+		if (req.user?.userType !== 'admin') {
 			// Check ownership - handle both 'authorId' (SearchAd) and 'owner' (Property) fields
 			const ownerField = resource.authorId || resource.owner;
 			if (!isOwner(req.userId, ownerField)) {
@@ -161,8 +163,7 @@ export const requireOwnership = (
 				});
 				return;
 			}
-
-			req.resource = resource;
+		}			req.resource = resource;
 
 			logger.info('[Authorization] Ownership check passed', {
 				event: 'ownership_check_passed',

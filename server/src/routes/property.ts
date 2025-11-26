@@ -23,12 +23,12 @@ router.get('/', getProperties);
 router.get('/:id', getPropertyById);
 
 // Combined property creation with image upload
-// Both agents and apporteurs can create properties
+// Agents, apporteurs, and admins can create/manage properties
 router.post(
 	'/create-property',
 	authenticateToken,
 	requireActiveSubscription,
-	requireRole(['agent', 'apporteur']),
+	requireRole(['agent', 'apporteur', 'admin']),
 	uploadProperty,
 	createProperty,
 );

@@ -108,12 +108,12 @@ export const PropertyManager: React.FC = () => {
 	// Scroll restoration (window scroll)
 	useScrollRestoration({ key: pageKey, ready: !loading });
 
-	// Check if user has permission to manage properties (both agents and apporteurs)
-	if (!user || !['agent', 'apporteur'].includes(user.userType)) {
+	// Check if user has permission to manage properties (agents, apporteurs, and admins)
+	if (!user || !['agent', 'apporteur', 'admin'].includes(user.userType)) {
 		return (
 			<div className="text-center py-12">
 				<p className="text-gray-600">
-					Vous devez être connecté en tant&apos;agent ou apporteur
+					Vous devez être connecté en tant&apos;agent, apporteur ou admin
 					pour gérer des annonces.
 				</p>
 			</div>
