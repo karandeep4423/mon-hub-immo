@@ -30,6 +30,15 @@ import {
 import { OverallStatusManager } from '@/components/collaboration/overall-status';
 import { ProgressTracker } from '@/components/collaboration/progress-tracking';
 import { ActivityManager } from '@/components/collaboration/shared';
+
+// Raw activity shape as returned by collaboration API
+type RawCollabActivity = {
+	createdBy?: string;
+	type?: string;
+	message?: string;
+	createdAt?: string;
+	metadata?: Record<string, unknown> | null;
+};
 import { ContractModal } from '@/components/collaboration/ContractModal';
 import { ContractViewModal } from '@/components/contract';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -553,17 +562,14 @@ export default function CollaborationPage() {
 										{/* Activities Section */}
 										<ActivityManager
 											collaborationId={collaboration._id}
-											activities={collaboration.activities
-												.sort(
-													(a, b) =>
-														new Date(
-															b.createdAt,
-														).getTime() -
-														new Date(
-															a.createdAt,
-														).getTime(),
+											activities={(Array.isArray(collaboration.activities)
+												? (collaboration.activities as RawCollabActivity[]).slice()
+												: [])
+												.sort((a: RawCollabActivity, b: RawCollabActivity) =>
+													new Date(b.createdAt || '').getTime() -
+													new Date(a.createdAt || '').getTime(),
 												)
-												.map((activity, index) => {
+												.map((activity: RawCollabActivity, index: number) => {
 													// Resolve user data from collaboration participants
 													const isOwnerAction =
 														activity.createdBy ===
@@ -581,14 +587,12 @@ export default function CollaborationPage() {
 																? 'note'
 																: 'status_update',
 														title:
-															activity.type ===
-															'note'
+															activity.type === 'note'
 																? 'Note ajoutée'
-																: activity.message,
+																: (activity.message || 'Mise à jour du statut'),
 														content:
-															activity.type ===
-															'note'
-																? activity.message
+															activity.type === 'note'
+																? (activity.message || '')
 																: '', // Don't duplicate message for status updates
 														author: {
 															id:
@@ -604,8 +608,7 @@ export default function CollaborationPage() {
 															profileImage:
 																userInfo?.profileImage,
 														},
-														createdAt:
-															activity.createdAt,
+														createdAt: activity.createdAt || new Date().toISOString(),
 													};
 												})}
 											canAddActivity={
