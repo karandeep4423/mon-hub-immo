@@ -119,51 +119,73 @@ export default function AdminPropertiesTable({ properties, agents = [], networks
         <StatCard label="Archivées" value={properties.filter(p => p.status === "archived").length} color="darkgray" />
       </div>
 
-      {/* Tableau annonces */}
-      <table className="min-w-full table-auto border-collapse text-left">
-        <thead className="bg-[#F5F9FF]">
-          <tr>
-            <th className="p-2 font-semibold">Titre</th>
-            <th className="p-2 font-semibold">Prix (€)</th>
-            <th className="p-2 font-semibold">Surface (m²)</th>
-            <th className="p-2 font-semibold">Type</th>
-            <th className="p-2 font-semibold">Transaction</th>
-            <th className="p-2 font-semibold">Ville</th>
-            <th className="p-2 font-semibold">Propriétaire</th>
-            <th className="p-2 font-semibold">Statut</th>
-            <th className="p-2 font-semibold">Créée le</th>
-            <th className="p-2 font-semibold">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {paged.map(prop => (
-            <tr key={prop._id} className="border-b hover:bg-[#E0F4FF] transition">
-              <td className="p-2 font-medium">{prop.title}</td>
-              <td className="p-2">{prop.price.toLocaleString()} €</td>
-              <td className="p-2">{prop.surface} m²</td>
-              <td className="p-2">{prop.propertyType}</td>
-              <td className="p-2">{prop.transactionType ?? '-'}</td>
-              <td className="p-2">{prop.city}</td>
-              <td className="p-2">{prop.owner ? `${prop.owner.firstName ?? ''} ${prop.owner.lastName ?? ''}` : '-'}</td>
-              <td className={`p-2 text-xs font-bold rounded-full ${statusColor(prop.status)} w-1 whitespace-nowrap text-center`}>
-                {prop.status.charAt(0).toUpperCase() + prop.status.slice(1)}
-              </td>
-              <td className="p-2">{prop.createdAt ? (new Date(prop.createdAt)).toLocaleDateString() : '-'}</td>
-              {/* Actions rapides */}
-              <td className="p-2 flex gap-2">
-                <button className="bg-[#00BCE4] text-white rounded px-3 py-1 text-xs hover:scale-105" onClick={() => alert("Voir/éditer non implémenté")}>Voir</button>
-                <button className="bg-gray-200 text-[#009CD8] rounded px-3 py-1 text-xs hover:scale-105" onClick={() => alert("Changer statut")}>Statut</button>
-                <button className="bg-red-100 text-red-700 rounded px-3 py-1 text-xs hover:scale-105" onClick={() => alert("Supprimer")}>Supprimer</button>
-              </td>
-            </tr>
-          ))}
-          {!paged.length && (
+      {/* Desktop / tablet table */}
+      <div className="hidden md:block overflow-x-auto">
+        <table className="min-w-full table-auto border-collapse text-left">
+          <thead className="bg-[#F5F9FF]">
             <tr>
-              <td colSpan={10} className="text-center p-4 text-gray-500">Aucune annonce trouvée.</td>
+              <th className="p-2 font-semibold">Titre</th>
+              <th className="p-2 font-semibold">Prix (€)</th>
+              <th className="p-2 font-semibold">Surface (m²)</th>
+              <th className="p-2 font-semibold">Type</th>
+              <th className="p-2 font-semibold">Transaction</th>
+              <th className="p-2 font-semibold">Ville</th>
+              <th className="p-2 font-semibold">Propriétaire</th>
+              <th className="p-2 font-semibold">Statut</th>
+              <th className="p-2 font-semibold">Créée le</th>
+              <th className="p-2 font-semibold">Actions</th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {paged.map(prop => (
+              <tr key={prop._id} className="border-b hover:bg-[#E0F4FF] transition">
+                <td className="p-2 font-medium">{prop.title}</td>
+                <td className="p-2">{prop.price.toLocaleString()} €</td>
+                <td className="p-2">{prop.surface} m²</td>
+                <td className="p-2">{prop.propertyType}</td>
+                <td className="p-2">{prop.transactionType ?? '-'}</td>
+                <td className="p-2">{prop.city}</td>
+                <td className="p-2">{prop.owner ? `${prop.owner.firstName ?? ''} ${prop.owner.lastName ?? ''}` : '-'}</td>
+                <td className={`p-2 text-xs font-bold rounded-full ${statusColor(prop.status)} w-1 whitespace-nowrap text-center`}>
+                  {prop.status.charAt(0).toUpperCase() + prop.status.slice(1)}
+                </td>
+                <td className="p-2">{prop.createdAt ? (new Date(prop.createdAt)).toLocaleDateString() : '-'}</td>
+                {/* Actions rapides */}
+                <td className="p-2 flex gap-2">
+                  <button className="bg-[#00BCE4] text-white rounded px-3 py-1 text-xs hover:scale-105" onClick={() => alert("Voir/éditer non implémenté")}>Voir</button>
+                  <button className="bg-gray-200 text-[#009CD8] rounded px-3 py-1 text-xs hover:scale-105" onClick={() => alert("Changer statut")}>Statut</button>
+                  <button className="bg-red-100 text-red-700 rounded px-3 py-1 text-xs hover:scale-105" onClick={() => alert("Supprimer")}>Supprimer</button>
+                </td>
+              </tr>
+            ))}
+            {!paged.length && (
+              <tr>
+                <td colSpan={10} className="text-center p-4 text-gray-500">Aucune annonce trouvée.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile list view */}
+      <div className="md:hidden space-y-4">
+        {paged.map(prop => (
+          <div key={prop._id} className="p-4 bg-white border rounded-lg shadow-sm">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="font-semibold text-base">{prop.title}</div>
+                <div className="text-sm text-gray-500">{prop.city} • {prop.propertyType}</div>
+                <div className="text-sm text-gray-700 mt-2">{prop.price.toLocaleString()} € • {prop.surface} m²</div>
+                <div className="text-xs text-gray-400 mt-1">Propriétaire: {prop.owner ? `${prop.owner.firstName ?? ''} ${prop.owner.lastName ?? ''}` : '-'}</div>
+              </div>
+              <div className="flex flex-col gap-2 ml-4">
+                <button className="px-3 py-1 bg-[#00BCE4] text-white rounded text-xs">Voir</button>
+                <button className="px-3 py-1 bg-gray-200 text-[#009CD8] rounded text-xs">Statut</button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
       {/* Pagination */}
       <div className="mt-6 flex justify-center gap-2">
         <button className="p-2 px-4 border rounded disabled:opacity-50" onClick={() => setCurrentPage(c => Math.max(c - 1, 1))} disabled={currentPage === 1}>Précédent</button>

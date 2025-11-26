@@ -69,39 +69,64 @@ export default function AdminUsersTable({ users, loading, onEdit, onDelete }: Ad
         <input placeholder="Recherche..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="p-2 border rounded w-1/3" />
         <div className="text-sm text-gray-500">{filtered.length} utilisateurs</div>
       </div>
-
-      <table className="w-full text-left">
-        <thead>
-          <tr className="text-sm text-gray-600">
-            <th>Nom</th>
-            <th>Email</th>
-            <th>Type</th>
-            <th>Réseau</th>
-            <th>Validé</th>
-            <th className="text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {loading ? (
-            <tr><td colSpan={6}>Chargement...</td></tr>
-          ) : pageItems.length === 0 ? (
-            <tr><td colSpan={6}>Aucun utilisateur</td></tr>
-          ) : pageItems.map(u => (
-            <tr key={u._id} className="border-t">
-              <td>{u.firstName} {u.lastName}</td>
-              <td>{u.email}</td>
-              <td>{u.userType}</td>
-              <td>{u.professionalInfo?.network ?? '-'}</td>
-              <td>{u.isValidated ? 'Oui' : 'Non'}</td>
-              <td className="text-right">
-                <button onClick={() => router.push(`/admin/users/${u._id}`)} className="mr-2 px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Voir profil</button>
-                <button onClick={() => onEdit?.(u)} className="mr-2 px-3 py-1 bg-blue-500 text-white rounded">Éditer</button>
-                <button onClick={() => onDelete?.(u)} className="px-3 py-1 bg-red-500 text-white rounded">Supprimer</button>
-              </td>
+      {/* Desktop / tablet table */}
+      <div className="hidden md:block">
+        <table className="w-full text-left">
+          <thead>
+            <tr className="text-sm text-gray-600">
+              <th>Nom</th>
+              <th>Email</th>
+              <th>Type</th>
+              <th>Réseau</th>
+              <th>Validé</th>
+              <th className="text-right">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={6}>Chargement...</td></tr>
+            ) : pageItems.length === 0 ? (
+              <tr><td colSpan={6}>Aucun utilisateur</td></tr>
+            ) : pageItems.map(u => (
+              <tr key={u._id} className="border-t">
+                <td>{u.firstName} {u.lastName}</td>
+                <td>{u.email}</td>
+                <td>{u.userType}</td>
+                <td>{u.professionalInfo?.network ?? '-'}</td>
+                <td>{u.isValidated ? 'Oui' : 'Non'}</td>
+                <td className="text-right">
+                  <button onClick={() => router.push(`/admin/users/${u._id}`)} className="mr-2 px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Voir profil</button>
+                  <button onClick={() => onEdit?.(u)} className="mr-2 px-3 py-1 bg-blue-500 text-white rounded">Éditer</button>
+                  <button onClick={() => onDelete?.(u)} className="px-3 py-1 bg-red-500 text-white rounded">Supprimer</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile list */}
+      <div className="md:hidden space-y-3">
+        {loading ? (
+          <div>Chargement...</div>
+        ) : pageItems.length === 0 ? (
+          <div>Aucun utilisateur</div>
+        ) : pageItems.map(u => (
+          <div key={u._id} className="p-3 bg-white border rounded-lg shadow-sm">
+            <div className="flex justify-between items-start">
+              <div>
+                <div className="font-semibold">{u.firstName} {u.lastName}</div>
+                <div className="text-sm text-gray-500">{u.email}</div>
+                <div className="text-xs text-gray-400">{u.userType} • {u.professionalInfo?.network ?? '-'}</div>
+              </div>
+              <div className="text-right space-y-2">
+                <button onClick={() => router.push(`/admin/users/${u._id}`)} className="block px-3 py-1 bg-gray-200 text-gray-800 rounded text-xs">Voir</button>
+                <button onClick={() => onEdit?.(u)} className="block px-3 py-1 bg-blue-500 text-white rounded text-xs">Éditer</button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
 
       <div className="flex justify-between items-center mt-4">
         <div>

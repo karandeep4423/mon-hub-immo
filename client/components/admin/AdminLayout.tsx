@@ -2,6 +2,7 @@
 import React, { ReactNode, useState } from 'react';
 import SidebarAdminModern from './SidebarAdminModern';
 import { useEffect } from 'react';
+import AdminMobileNav from './AdminMobileNav';
 
 interface AdminLayoutProps {
 	children: ReactNode;
@@ -89,6 +90,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 					{children}
 				</main>
 			</div>
+
+			{/* Mobile bottom navigation for quick access to admin sections */}
+			<AdminMobileNav />
 
 			{/* Debug overlay removed - keeping layout clean for production */}
 		</div>

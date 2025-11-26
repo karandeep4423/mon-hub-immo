@@ -105,80 +105,104 @@ export default function AdminCollaborationsTable({ collaborations, loading }: Ad
           <input type="number" min={1} max={totalPages} value={currentPage} onChange={(e) => setCurrentPage(Math.min(Math.max(1, Number(e.target.value || 1)), totalPages))} className="w-20 p-1 border rounded" />
         </div>
       </div>
-      <table className="min-w-full table-auto border-collapse text-left">
-        <thead className="bg-[#F5F9FF]">
-          <tr>
-            <th className="p-2 font-semibold">Titre du bien</th>
-            <th className="p-2 font-semibold">Type</th>
-            <th className="p-2 font-semibold">Propriétaire</th>
-            <th className="p-2 font-semibold">Collaborateur</th>
-            <th className="p-2 font-semibold">Statut</th>
-            <th className="p-2 font-semibold">Commission (%)</th>
-            <th className="p-2 font-semibold">Étape en cours</th>
-            <th className="p-2 font-semibold">Créée le</th>
-            <th className="p-2 font-semibold">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {paged.map(collab => (
-            <tr key={collab._id} className="border-b hover:bg-[#E0F4FF]">
-              <td className="p-2">
-                {collab.postType === 'Property' ? (
-                  <Link href={`/property/${(collab.postId as any)?._id || ''}`} className="text-blue-600 hover:underline">{(collab.postId as any)?.address || (collab.postId as any)?.location || collab.postId?.title || '-'}</Link>
-                ) : (
-                  collab.postId?.title ?? '-'
-                )}
-              </td>
-              <td className="p-2">{collab.postType ?? "-"}</td>
-              <td className="p-2">{collab.postOwnerId ? (<Link href={`/admin/users/${collab.postOwnerId._id}`} className="text-blue-600 hover:underline">{`${collab.postOwnerId.firstName ?? ""} ${collab.postOwnerId.lastName ?? ""}`}</Link>) : "-"}</td>
-              <td className="p-2">{collab.collaboratorId ? (<Link href={`/admin/users/${collab.collaboratorId._id}`} className="text-blue-600 hover:underline">{`${collab.collaboratorId.firstName ?? ""} ${collab.collaboratorId.lastName ?? ""}`}</Link>) : "-"}</td>
-              <td className={`p-2 font-bold text-xs rounded-full ${statusColor(collab.status)} w-1 whitespace-nowrap text-center`}>
-                {collab.status.charAt(0).toUpperCase() + collab.status.slice(1)}
-              </td>
-              <td className="p-2">{collab.proposedCommission ?? "-"}</td>
-              <td className="p-2">{collab.currentProgressStep ?? "-"}</td>
-              <td className="p-2">{collab.createdAt ? (new Date(collab.createdAt)).toLocaleDateString() : "-"}</td>
-              <td className="p-2 flex gap-2">
-                <Link href={`/admin/collaborations/${collab._id}`} className="inline-block">
-                  <button className="bg-[#009CD8] text-white rounded px-3 py-1 text-xs hover:scale-105">Voir</button>
-                </Link>
-                <Link href={`/admin/collaborations/${collab._id}#history`} className="inline-block">
-                  <button className="bg-gray-100 text-gray-700 rounded px-3 py-1 text-xs hover:scale-105">Historique</button>
-                </Link>
-                <button className="bg-green-100 text-green-800 rounded px-3 py-1 text-xs hover:scale-105" onClick={async () => {
-                  if (!confirm('Marquer cette collaboration comme validée ?')) return;
-                  try {
-                    const res = await collaborationApi.updateProgressStatus(collab._id, { targetStep: 'validated', validatedBy: 'owner' as const });
-                    // update local data
-                    setData(prev => prev.map(d => d._id === res.collaboration._id ? (res.collaboration as unknown) as Collaboration : d));
-                    alert('Collaboration validée');
-                  } catch (err) {
-                    console.error(err);
-                    alert('Échec lors de la validation');
-                  }
-                }}>Valider</button>
-                <button className="bg-red-100 text-red-700 rounded px-3 py-1 text-xs hover:scale-105" onClick={async () => {
-                  if (!confirm('Clôturer définitivement cette collaboration ? Cette action est irréversible.')) return;
-                  try {
-                    const res = await collaborationApi.complete(collab._id);
-                    setData(prev => prev.map(d => d._id === res.collaboration._id ? (res.collaboration as unknown) as Collaboration : d));
-                    alert('Collaboration clôturée');
-                  } catch (err) {
-                    console.error(err);
-                    alert('Échec lors de la clôture');
-                  }
-                }}>Clôturer</button>
-                <button className="bg-gray-200 text-[#009CD8] rounded px-3 py-1 text-xs hover:scale-105" onClick={() => alert("Exporter à venir...")}>Exporter</button>
-              </td>
-            </tr>
-          ))}
-          {!paged.length && (
+      {/* Desktop / tablet table */}
+      <div className="hidden md:block overflow-x-auto">
+        <table className="min-w-full table-auto border-collapse text-left">
+          <thead className="bg-[#F5F9FF]">
             <tr>
-              <td colSpan={9} className="text-center p-4 text-gray-500">Aucune collaboration trouvée.</td>
+              <th className="p-2 font-semibold">Titre du bien</th>
+              <th className="p-2 font-semibold">Type</th>
+              <th className="p-2 font-semibold">Propriétaire</th>
+              <th className="p-2 font-semibold">Collaborateur</th>
+              <th className="p-2 font-semibold">Statut</th>
+              <th className="p-2 font-semibold">Commission (%)</th>
+              <th className="p-2 font-semibold">Étape en cours</th>
+              <th className="p-2 font-semibold">Créée le</th>
+              <th className="p-2 font-semibold">Actions</th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {paged.map(collab => (
+              <tr key={collab._id} className="border-b hover:bg-[#E0F4FF]">
+                <td className="p-2">
+                  {collab.postType === 'Property' ? (
+                    <Link href={`/property/${(collab.postId as any)?._id || ''}`} className="text-blue-600 hover:underline">{(collab.postId as any)?.address || (collab.postId as any)?.location || collab.postId?.title || '-'}</Link>
+                  ) : (
+                    collab.postId?.title ?? '-'
+                  )}
+                </td>
+                <td className="p-2">{collab.postType ?? "-"}</td>
+                <td className="p-2">{collab.postOwnerId ? (<Link href={`/admin/users/${collab.postOwnerId._id}`} className="text-blue-600 hover:underline">{`${collab.postOwnerId.firstName ?? ""} ${collab.postOwnerId.lastName ?? ""}`}</Link>) : "-"}</td>
+                <td className="p-2">{collab.collaboratorId ? (<Link href={`/admin/users/${collab.collaboratorId._id}`} className="text-blue-600 hover:underline">{`${collab.collaboratorId.firstName ?? ""} ${collab.collaboratorId.lastName ?? ""}`}</Link>) : "-"}</td>
+                <td className={`p-2 font-bold text-xs rounded-full ${statusColor(collab.status)} w-1 whitespace-nowrap text-center`}>
+                  {collab.status.charAt(0).toUpperCase() + collab.status.slice(1)}
+                </td>
+                <td className="p-2">{collab.proposedCommission ?? "-"}</td>
+                <td className="p-2">{collab.currentProgressStep ?? "-"}</td>
+                <td className="p-2">{collab.createdAt ? (new Date(collab.createdAt)).toLocaleDateString() : "-"}</td>
+                <td className="p-2 flex gap-2">
+                  <Link href={`/admin/collaborations/${collab._id}`} className="inline-block">
+                    <button className="bg-[#009CD8] text-white rounded px-3 py-1 text-xs hover:scale-105">Voir</button>
+                  </Link>
+                  <Link href={`/admin/collaborations/${collab._id}#history`} className="inline-block">
+                    <button className="bg-gray-100 text-gray-700 rounded px-3 py-1 text-xs hover:scale-105">Historique</button>
+                  </Link>
+                  <button className="bg-green-100 text-green-800 rounded px-3 py-1 text-xs hover:scale-105" onClick={async () => {
+                    if (!confirm('Marquer cette collaboration comme validée ?')) return;
+                    try {
+                      const res = await collaborationApi.updateProgressStatus(collab._id, { targetStep: 'validated', validatedBy: 'owner' as const });
+                      // update local data
+                      setData(prev => prev.map(d => d._id === res.collaboration._id ? (res.collaboration as unknown) as Collaboration : d));
+                      alert('Collaboration validée');
+                    } catch (err) {
+                      console.error(err);
+                      alert('Échec lors de la validation');
+                    }
+                  }}>Valider</button>
+                  <button className="bg-red-100 text-red-700 rounded px-3 py-1 text-xs hover:scale-105" onClick={async () => {
+                    if (!confirm('Clôturer définitivement cette collaboration ? Cette action est irréversible.')) return;
+                    try {
+                      const res = await collaborationApi.complete(collab._id);
+                      setData(prev => prev.map(d => d._id === res.collaboration._id ? (res.collaboration as unknown) as Collaboration : d));
+                      alert('Collaboration clôturée');
+                    } catch (err) {
+                      console.error(err);
+                      alert('Échec lors de la clôture');
+                    }
+                  }}>Clôturer</button>
+                  <button className="bg-gray-200 text-[#009CD8] rounded px-3 py-1 text-xs hover:scale-105" onClick={() => alert("Exporter à venir...")}>Exporter</button>
+                </td>
+              </tr>
+            ))}
+            {!paged.length && (
+              <tr>
+                <td colSpan={9} className="text-center p-4 text-gray-500">Aucune collaboration trouvée.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile list view */}
+      <div className="md:hidden space-y-4">
+        {paged.map(collab => (
+          <div key={collab._id} className="p-4 bg-white border rounded-lg shadow-sm">
+            <div className="flex justify-between items-start">
+              <div>
+                <div className="font-semibold">{collab.postId?.title ?? (collab.postType)}</div>
+                <div className="text-sm text-gray-500">Propriétaire: {collab.postOwnerId ? `${collab.postOwnerId.firstName ?? ''} ${collab.postOwnerId.lastName ?? ''}` : '-'}</div>
+                <div className="text-xs text-gray-400 mt-1">Statut: {collab.status}</div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Link href={`/admin/collaborations/${collab._id}`} className="inline-block">
+                  <button className="bg-[#009CD8] text-white rounded px-3 py-1 text-xs">Voir</button>
+                </Link>
+                <button className="bg-gray-100 text-gray-700 rounded px-3 py-1 text-xs">Historique</button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
       {/* Pagination */}
       <div className="mt-6 flex justify-center gap-2">
         <button className="p-2 px-4 border rounded disabled:opacity-50" onClick={() => setCurrentPage(c => Math.max(c - 1, 1))} disabled={currentPage === 1}>Précédent</button>
