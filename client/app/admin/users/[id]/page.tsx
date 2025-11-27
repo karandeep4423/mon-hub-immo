@@ -65,8 +65,6 @@ export default function AdminUserProfile() {
   }, [fetchUser]);
 
   const handleValidate = async (userId: string, shouldValidate: boolean) => {
-    if (!confirm(`Êtes-vous sûr de vouloir ${shouldValidate ? 'valider' : 'invalider'} cet utilisateur ?`)) return;
-
     try {
       const response = await fetch(`${API_ROOT}/api/admin/users/${userId}/validate`, {
         method: 'PUT',
@@ -83,8 +81,6 @@ export default function AdminUserProfile() {
   };
 
   const handleBlock = async (userId: string, shouldBlock: boolean) => {
-    if (!confirm(`Êtes-vous sûr de vouloir ${shouldBlock ? 'bloquer' : 'débloquer'} cet utilisateur ?`)) return;
-    
     const endpoint = shouldBlock ? 'block' : 'unblock';
     try {
       const response = await fetch(`${API_ROOT}/api/admin/users/${userId}/${endpoint}`, {

@@ -1,10 +1,11 @@
 
 "use client";
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
 import { Briefcase, CheckCircle2, FileText, Image as ImageIcon, Phone, ShieldX, User, XCircle } from 'lucide-react';
 
@@ -33,6 +34,8 @@ interface UserProfileModernProps {
   onBlock: (id: string, value: boolean) => Promise<void>;
 }
 
+type ConfirmAction = 'validate' | 'invalidate' | 'block' | 'unblock' | null;
+
 type KnownUserType = '' | 'agent' | 'apporteur' | 'admin';
 
 const StatCard: React.FC<{ icon: React.ReactNode; label: string; value?: number; colorClass?: string }> = ({ icon, label, value, colorClass }) => (
@@ -55,6 +58,70 @@ const InfoRow: React.FC<{ icon?: React.ReactNode; label: string; value?: React.R
 
 export function UserProfileModern({ user, onValidate, onBlock }: UserProfileModernProps) {
   const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+  const [pendingAction, setPendingAction] = useState<ConfirmAction>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const getActionDetails = (action: ConfirmAction) => {
+    switch (action) {
+      case 'validate':
+        return {
+          title: 'Valider l\'utilisateur',
+          description: `Êtes-vous sûr de vouloir valider ${fullName} ? Cet utilisateur aura accès à toutes les fonctionnalités de la plateforme.`,
+          confirmText: 'Valider',
+          cancelText: 'Annuler',
+          variant: 'primary' as const,
+        };
+      case 'invalidate':
+        return {
+          title: 'Invalider l\'utilisateur',
+          description: `Êtes-vous sûr de vouloir invalider ${fullName} ? Cet utilisateur perdra accès aux fonctionnalités de la plateforme.`,
+          confirmText: 'Invalider',
+          cancelText: 'Annuler',
+          variant: 'danger' as const,
+        };
+      case 'block':
+        return {
+          title: 'Bloquer l\'utilisateur',
+          description: `Êtes-vous sûr de vouloir bloquer ${fullName} ? Cet utilisateur ne pourra plus accéder à la plateforme.`,
+          confirmText: 'Bloquer',
+          cancelText: 'Annuler',
+          variant: 'danger' as const,
+        };
+      case 'unblock':
+        return {
+          title: 'Débloquer l\'utilisateur',
+          description: `Êtes-vous sûr de vouloir débloquer ${fullName} ? Cet utilisateur retrouvera l\'accès à la plateforme.`,
+          confirmText: 'Débloquer',
+          cancelText: 'Annuler',
+          variant: 'primary' as const,
+        };
+      default:
+        return { title: '', description: '', confirmText: '', cancelText: '', variant: 'primary' as const };
+    }
+  };
+
+  const handleConfirmAction = async () => {
+    setIsLoading(true);
+    try {
+      switch (pendingAction) {
+        case 'validate':
+          await onValidate(user._id, true);
+          break;
+        case 'invalidate':
+          await onValidate(user._id, false);
+          break;
+        case 'block':
+          await onBlock(user._id, true);
+          break;
+        case 'unblock':
+          await onBlock(user._id, false);
+          break;
+      }
+    } finally {
+      setIsLoading(false);
+      setPendingAction(null);
+    }
+  };
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
@@ -110,20 +177,20 @@ export function UserProfileModern({ user, onValidate, onBlock }: UserProfileMode
                 <h3 className="font-semibold text-gray-800">Actions Administrateur</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {user.isValidated ? (
-                    <Button variant="outline" size="sm" onClick={() => onValidate(user._id, false)}>
+                    <Button variant="outline" size="sm" onClick={() => setPendingAction('invalidate')} disabled={isLoading}>
                       Invalider
                     </Button>
                   ) : (
-                    <Button variant="primary" size="sm" onClick={() => onValidate(user._id, true)}>
+                    <Button variant="primary" size="sm" onClick={() => setPendingAction('validate')} disabled={isLoading}>
                       Valider
                     </Button>
                   )}
                   {user.isBlocked ? (
-                    <Button variant="success" size="sm" onClick={() => onBlock(user._id, false)}>
+                    <Button variant="success" size="sm" onClick={() => setPendingAction('unblock')} disabled={isLoading}>
                       Débloquer
                     </Button>
                   ) : (
-                    <Button variant="danger" size="sm" onClick={() => onBlock(user._id, true)}>
+                    <Button variant="danger" size="sm" onClick={() => setPendingAction('block')} disabled={isLoading}>
                       Bloquer
                     </Button>
                   )}
@@ -197,6 +264,19 @@ export function UserProfileModern({ user, onValidate, onBlock }: UserProfileMode
           </Card>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmDialog
+        isOpen={pendingAction !== null}
+        title={getActionDetails(pendingAction).title}
+        description={getActionDetails(pendingAction).description}
+        confirmText={getActionDetails(pendingAction).confirmText}
+        cancelText={getActionDetails(pendingAction).cancelText}
+        onConfirm={handleConfirmAction}
+        onCancel={() => setPendingAction(null)}
+        loading={isLoading}
+        variant={getActionDetails(pendingAction).variant}
+      />
     </div>
   );
 }
