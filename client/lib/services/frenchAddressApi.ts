@@ -32,6 +32,16 @@ export interface AddressSearchResult {
 	};
 }
 
+export interface GeoApiCommune {
+	nom: string;
+	code: string;
+	codeDepartement?: string;
+	codesPostaux?: string[];
+	centre?: {
+		coordinates: [number, number]; // [lon, lat]
+	};
+}
+
 const API_BASE = 'https://api-adresse.data.gouv.fr';
 
 /**
@@ -240,14 +250,14 @@ export async function getMunicipalitiesNearby(
 
 		// 3. Filter by distance and map to FrenchMunicipality
 		const municipalities = deptData
-			.filter((commune: any) => {
+			.filter((commune: GeoApiCommune) => {
 				if (!commune.centre || !commune.centre.coordinates)
 					return false;
 				const [cLon, cLat] = commune.centre.coordinates;
 				const distance = calculateDistance(lat, lon, cLat, cLon);
 				return distance <= radiusKm;
 			})
-			.map((commune: any) => ({
+			.map((commune: GeoApiCommune) => ({
 				name: commune.nom,
 				postcode:
 					commune.codesPostaux && commune.codesPostaux.length > 0
@@ -255,8 +265,8 @@ export async function getMunicipalitiesNearby(
 						: '',
 				citycode: commune.code,
 				coordinates: {
-					lat: commune.centre.coordinates[1],
-					lon: commune.centre.coordinates[0],
+					lat: commune.centre!.coordinates[1],
+					lon: commune.centre!.coordinates[0],
 				},
 				context: codeDepartement, // Using dept code as context since we don't have full context string
 			}));
