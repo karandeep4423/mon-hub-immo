@@ -11,6 +11,11 @@ import {
 	FeatureCards,
 	AgentsListSection,
 } from '@/components/accueil';
+import {
+	getMunicipalitiesNearby,
+	calculateDistance,
+} from '@/lib/services/frenchAddressApi';
+import { toast } from 'react-toastify';
 import Link from 'next/link';
 import { Footer } from '@/components/footer/footer';
 export default function MonAgentImmoPage() {
@@ -26,7 +31,13 @@ export default function MonAgentImmoPage() {
 	// Search state
 	const [searchCity, setSearchCity] = useState('');
 	const [searchPostalCode, setSearchPostalCode] = useState('');
+	const [searchCoordinates, setSearchCoordinates] = useState<{
+		lat: number;
+		lon: number;
+	} | null>(null);
 	const [searchPerformed, setSearchPerformed] = useState(false);
+	const [radiusSearchActive, setRadiusSearchActive] = useState(false);
+	const [nearbyCities, setNearbyCities] = useState<string[]>([]);
 	const [searching, setSearching] = useState(false);
 
 	// UI refs
@@ -46,6 +57,23 @@ export default function MonAgentImmoPage() {
 		const cityQuery = searchCity.toLowerCase().trim();
 		const postalQuery = searchPostalCode.trim();
 
+		// If radius search is active, filter by nearby cities
+		if (radiusSearchActive && nearbyCities.length > 0) {
+			return agents.filter((agent) => {
+				const agentCity =
+					agent.professionalInfo?.city?.toLowerCase() || '';
+				const agentPostalCode =
+					agent.professionalInfo?.postalCode || '';
+				
+				// Check if agent is in one of the nearby cities
+				// We match by city name or postal code
+				return nearbyCities.some(city => 
+                    city.toLowerCase() === agentCity || 
+                    (agentPostalCode && city.includes(agentPostalCode)) // Rough check, improved below
+                );
+			});
+		}
+
 		return agents.filter((agent) => {
 			const agentCity = agent.professionalInfo?.city?.toLowerCase() || '';
 			const agentPostalCode = agent.professionalInfo?.postalCode || '';
@@ -56,19 +84,97 @@ export default function MonAgentImmoPage() {
 
 			return cityMatch && postalMatch;
 		});
-	}, [agents, searchCity, searchPostalCode, searchPerformed]);
+	}, [
+		agents,
+		searchCity,
+		searchPostalCode,
+		searchPerformed,
+		radiusSearchActive,
+		nearbyCities,
+	]);
 
 	// Handle search button click
-	const handleSearch = () => {
+	const handleSearch = async () => {
 		if (!searchCity.trim() && !searchPostalCode.trim()) {
 			setSearchPerformed(false);
 			return;
 		}
 
 		setSearching(true);
+		setRadiusSearchActive(false);
+		setNearbyCities([]);
 
-		// Simulate a brief loading state for better UX
-		setTimeout(() => {
+		try {
+			// First, check if we have exact matches
+			const cityQuery = searchCity.toLowerCase().trim();
+			const postalQuery = searchPostalCode.trim();
+
+			const exactMatches = agents.filter((agent) => {
+				const agentCity =
+					agent.professionalInfo?.city?.toLowerCase() || '';
+				const agentPostalCode =
+					agent.professionalInfo?.postalCode || '';
+
+				const cityMatch = !cityQuery || agentCity.includes(cityQuery);
+				const postalMatch =
+					!postalQuery || agentPostalCode.includes(postalQuery);
+
+				return cityMatch && postalMatch;
+			});
+
+			// If no exact matches and we have coordinates, try radius search
+			if (exactMatches.length === 0 && searchCoordinates) {
+				console.log(
+					'No exact matches found. Trying radius search with coordinates:',
+					searchCoordinates,
+				);
+				
+				// Fetch nearby municipalities within 50km
+				const nearby = await getMunicipalitiesNearby(
+					searchCoordinates.lat,
+					searchCoordinates.lon,
+					50 // 50km radius
+				);
+
+				if (nearby.length > 0) {
+					console.log(`Found ${nearby.length} nearby municipalities`);
+					// Create a list of city names and postal codes to match against
+					const nearbyLocations = nearby.map(m => m.name.toLowerCase());
+                    // Also keep track of postal codes for better matching
+                    const nearbyPostcodes = nearby.map(m => m.postcode);
+
+					// Filter agents who are in these nearby locations
+					const radiusMatches = agents.filter((agent) => {
+						const agentCity =
+							agent.professionalInfo?.city?.toLowerCase() || '';
+                        const agentPostalCode = agent.professionalInfo?.postalCode || '';
+                        
+						return nearbyLocations.includes(agentCity) || nearbyPostcodes.includes(agentPostalCode);
+					});
+
+					if (radiusMatches.length > 0) {
+						setRadiusSearchActive(true);
+						setNearbyCities(nearbyLocations); // We'll use this in useMemo, but logic is duplicated slightly for clarity here
+                        
+                        toast.success(
+                            `Aucun agent à ${searchCity}, mais voici des agents à proximité !`,
+                            {
+                                autoClose: 5000,
+                            }
+                        );
+					} else {
+                        toast.error("Aucun agent trouvé dans ce secteur ni aux alentours.");
+                    }
+				} else {
+                    toast.error("Aucun agent trouvé dans ce secteur.");
+                }
+			} else if (exactMatches.length === 0) {
+                toast.error("Aucun agent trouvé dans ce secteur.");
+            }
+		} catch (error) {
+			console.error('Error during search:', error);
+			toast.error("Une erreur est survenue lors de la recherche.");
+		} finally {
 			setSearchPerformed(true);
 			setSearching(false);
 
@@ -79,7 +185,7 @@ export default function MonAgentImmoPage() {
 					block: 'start',
 				});
 			}, 100);
-		}, 300);
+		}
 	};
 
 	const scrollCarousel = (direction: 'left' | 'right') => {
@@ -129,6 +235,11 @@ export default function MonAgentImmoPage() {
 					onCitySelect={(location) => {
 						setSearchCity(location.name);
 						setSearchPostalCode(location.postcode);
+						if (location.coordinates) {
+							setSearchCoordinates(location.coordinates);
+						} else {
+							setSearchCoordinates(null);
+						}
 					}}
 					onSearch={handleSearch}
 				/>
@@ -146,11 +257,15 @@ export default function MonAgentImmoPage() {
 					filteredAgents={filteredAgents}
 					searchCity={searchCity}
 					searchPostalCode={searchPostalCode}
+					radiusSearchActive={radiusSearchActive}
 					onScrollCarousel={scrollCarousel}
 					onResetSearch={() => {
 						setSearchCity('');
 						setSearchPostalCode('');
+						setSearchCoordinates(null);
 						setSearchPerformed(false);
+						setRadiusSearchActive(false);
+						setNearbyCities([]);
 					}}
 				/>
 

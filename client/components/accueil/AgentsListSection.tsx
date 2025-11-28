@@ -10,6 +10,7 @@ interface AgentsListSectionProps {
 	searchPostalCode: string;
 	onScrollCarousel: (direction: 'left' | 'right') => void;
 	onResetSearch: () => void;
+	radiusSearchActive?: boolean;
 }
 
 export const AgentsListSection = forwardRef<
@@ -25,6 +26,7 @@ export const AgentsListSection = forwardRef<
 			searchPostalCode,
 			onScrollCarousel,
 			onResetSearch,
+			radiusSearchActive,
 		},
 		ref,
 	) => {
@@ -83,8 +85,17 @@ export const AgentsListSection = forwardRef<
 							<div className="mb-8 pb-6 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 								<div>
 									<h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-										Agents immobiliers à{' '}
-										{searchCity || searchPostalCode}
+										{radiusSearchActive ? (
+											<>
+												Agents à proximité de{' '}
+												{searchCity || searchPostalCode}
+											</>
+										) : (
+											<>
+												Agents immobiliers à{' '}
+												{searchCity || searchPostalCode}
+											</>
+										)}
 									</h2>
 									<p className="text-gray-600">
 										<span className="font-semibold text-brand">
@@ -96,6 +107,8 @@ export const AgentsListSection = forwardRef<
 											: ''}{' '}
 										trouvé
 										{filteredAgents.length > 1 ? 's' : ''}
+										{radiusSearchActive &&
+											' dans un rayon de 50km'}
 									</p>
 								</div>
 								<button

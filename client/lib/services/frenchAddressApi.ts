@@ -191,53 +191,75 @@ export async function getMunicipalitiesByPostalPrefix(
 /**
  * Get municipalities within a radius of given coordinates
  */
+/**
+ * Get municipalities within a radius of given coordinates
+ * Uses geo.api.gouv.fr to fetch all communes in the department and filters by distance
+ */
 export async function getMunicipalitiesNearby(
 	lat: number,
 	lon: number,
 	radiusKm: number = 10,
 ): Promise<FrenchMunicipality[]> {
 	try {
-		const params = new URLSearchParams({
-			lat: lat.toString(),
-			lon: lon.toString(),
-			type: 'municipality',
-			limit: '50',
-		});
+		// 1. Get the department code for these coordinates
+		const communeUrl = `https://geo.api.gouv.fr/communes?lat=${lat}&lon=${lon}&fields=codeDepartement,nom,code&format=json&geometry=centre`;
+		const communeResponse = await fetch(communeUrl);
 
-		const response = await fetch(`${API_BASE}/reverse/?${params}`);
-
-		if (!response.ok) {
-			logger.error('API reverse geocode error', response.statusText);
+		if (!communeResponse.ok) {
+			logger.error(
+				'GeoAPI error fetching commune',
+				communeResponse.statusText,
+			);
 			return [];
 		}
 
-		const data = await response.json();
-
-		if (!data.features || !Array.isArray(data.features)) {
+		const communeData = await communeResponse.json();
+		if (!communeData || communeData.length === 0) {
 			return [];
 		}
 
-		// Filter by radius
-		const municipalities = data.features
-			.map((feature: AddressSearchResult) => ({
-				name: feature.properties.name,
-				postcode: feature.properties.postcode,
-				citycode: feature.properties.citycode,
-				coordinates: {
-					lat: feature.geometry.coordinates[1],
-					lon: feature.geometry.coordinates[0],
-				},
-				context: feature.properties.context,
-			}))
-			.filter((municipality: FrenchMunicipality) => {
-				const distance = calculateDistance(
-					lat,
-					lon,
-					municipality.coordinates.lat,
-					municipality.coordinates.lon,
-				);
+		const codeDepartement = communeData[0].codeDepartement;
+
+		// 2. Get all communes in the department
+		const deptUrl = `https://geo.api.gouv.fr/communes?codeDepartement=${codeDepartement}&fields=nom,codesPostaux,centre&format=json&geometry=centre`;
+		const deptResponse = await fetch(deptUrl);
+
+		if (!deptResponse.ok) {
+			logger.error(
+				'GeoAPI error fetching department communes',
+				deptResponse.statusText,
+			);
+			return [];
+		}
+
+		const deptData = await deptResponse.json();
+
+		if (!deptData || !Array.isArray(deptData)) {
+			return [];
+		}
+
+		// 3. Filter by distance and map to FrenchMunicipality
+		const municipalities = deptData
+			.filter((commune: any) => {
+				if (!commune.centre || !commune.centre.coordinates)
+					return false;
+				const [cLon, cLat] = commune.centre.coordinates;
+				const distance = calculateDistance(lat, lon, cLat, cLon);
 				return distance <= radiusKm;
-			});
+			})
+			.map((commune: any) => ({
+				name: commune.nom,
+				postcode:
+					commune.codesPostaux && commune.codesPostaux.length > 0
+						? commune.codesPostaux[0]
+						: '',
+				citycode: commune.code,
+				coordinates: {
+					lat: commune.centre.coordinates[1],
+					lon: commune.centre.coordinates[0],
+				},
+				context: codeDepartement, // Using dept code as context since we don't have full context string
+			}));
 
 		return municipalities;
 	} catch (error) {
