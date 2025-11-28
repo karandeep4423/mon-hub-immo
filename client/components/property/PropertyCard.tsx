@@ -136,7 +136,13 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 					<div className="flex items-center justify-between mb-2">
 						<div className="flex items-baseline space-x-2">
 							<p className="text-2xl font-bold text-black">
-								{property.price.toLocaleString()} €
+								{(
+									property.price +
+									(property.price *
+										(property.agencyFeesPercentage || 0)) /
+										100
+								).toLocaleString()}{' '}
+								€
 							</p>
 							<p className="text-sm text-gray-600">
 								{property.surface} m²
@@ -201,8 +207,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 							<ProfileAvatar user={owner} size="sm" />
 							<div>
 								<p className="text-gray-700 font-medium text-sm">
-									{owner.firstName}{' '}
-									{owner.lastName}
+									{owner.firstName} {owner.lastName}
 								</p>
 								<p className="text-gray-500 text-xs capitalize">
 									{owner.userType}
