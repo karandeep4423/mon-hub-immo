@@ -121,29 +121,29 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 	};
 
 	return (
-		<div className="space-y-6">
-			<div className="flex justify-between items-center">
-				<div>
-					<h1 className="text-3xl font-bold text-gray-900">Gestion Annonces</h1>
-					<p className="text-gray-600 mt-1">Total: {totalItems ?? properties.length} annonce(s)</p>
+		<div className="space-y-4 sm:space-y-6">
+			<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+				<div className="min-w-0">
+					<h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Gestion Annonces</h1>
+					<p className="text-xs sm:text-sm text-gray-600 mt-1">Total: {totalItems ?? properties.length} annonce(s)</p>
 				</div>
-				<div className="flex gap-2">
-					<Button variant="secondary" size="md" onClick={() => exportAsCSV('csv')}><BarChart2 className="w-4 h-4 inline-block mr-2" />Export CSV</Button>
-					<Button variant="secondary" size="md" onClick={() => exportAsCSV('xls')}><BarChart2 className="w-4 h-4 inline-block mr-2" />Export XLS</Button>
+				<div className="flex flex-wrap gap-2">
+					<Button variant="secondary" size="md" onClick={() => exportAsCSV('csv')}><BarChart2 className="w-4 h-4 inline-block mr-1 sm:mr-2" />Export CSV</Button>
+					<Button variant="secondary" size="md" onClick={() => exportAsCSV('xls')}><BarChart2 className="w-4 h-4 inline-block mr-1 sm:mr-2" />Export XLS</Button>
  				</div>
 			</div>
 
-			<div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
-				<div className="flex gap-3 flex-1">
-					<input type="search" placeholder="Chercher par titre, localisation..." value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value })} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" />
-					<select value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })} className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500">
+			<div className="flex flex-col lg:flex-row gap-3 lg:gap-4 justify-between items-start lg:items-center">
+				<div className="w-full lg:flex-1 flex flex-col sm:flex-row gap-2 sm:gap-3">
+					<input type="search" placeholder="Chercher par titre, localisation..." value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value })} className="w-full sm:flex-1 px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+					<select value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })} className="w-full sm:w-auto px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500">
 						<option value="">Tous les types</option>
 						<option value="Appartement">Appartement</option>
 						<option value="Maison">Maison</option>
 						<option value="Terrain">Terrain</option>
 						<option value="Commercial">Commercial</option>
 					</select>
-					<select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500">
+					<select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} className="w-full sm:w-auto px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500">
 						<option value="">Tous les statuts</option>
 						<option value="active">Actif</option>
 						<option value="pending">En attente</option>
@@ -152,27 +152,27 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 				</div>
 
 				<div className="flex border border-gray-300 rounded-lg bg-gray-50">
-					<button onClick={() => setViewType('table')} className={`px-3 py-2 transition-colors ${viewType === 'table' ? 'bg-cyan-500 text-white' : 'text-gray-700 hover:bg-gray-100'}`} aria-label="Table view"><List className="w-4 h-4" /></button>
-					<button onClick={() => setViewType('grid')} className={`px-3 py-2 transition-colors ${viewType === 'grid' ? 'bg-cyan-500 text-white' : 'text-gray-700 hover:bg-gray-100'}`} aria-label="Grid view"><LayoutGrid className="w-4 h-4" /></button>
+					<button onClick={() => setViewType('table')} className={`px-2 sm:px-3 py-2 transition-colors text-sm ${viewType === 'table' ? 'bg-cyan-500 text-white' : 'text-gray-700 hover:bg-gray-100'}`} aria-label="Table view"><List className="w-4 h-4" /></button>
+					<button onClick={() => setViewType('grid')} className={`px-2 sm:px-3 py-2 transition-colors text-sm ${viewType === 'grid' ? 'bg-cyan-500 text-white' : 'text-gray-700 hover:bg-gray-100'}`} aria-label="Grid view"><LayoutGrid className="w-4 h-4" /></button>
 				</div>
 			</div>
 
-			<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-				<div className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-100 border rounded-lg p-4"><div><p className="text-sm text-gray-600">Total</p><p className="text-2xl font-bold text-gray-900 mt-1">{totalItems ?? properties.length}</p></div><Home className="text-3xl text-gray-500" /></div>
-				<div className="bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-100 border rounded-lg p-4"><div><p className="text-sm text-gray-600">Actives</p><p className="text-2xl font-bold text-gray-900 mt-1">{properties.filter((p:any) => p.status === 'active').length}</p></div><CheckCircle className="text-3xl text-green-500" /></div>
-				<div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-100 border rounded-lg p-4"><div><p className="text-sm text-gray-600">Vues</p><p className="text-2xl font-bold text-gray-900 mt-1">{properties.reduce((sum:number, p:any) => sum + (p.views || 0), 0)}</p></div><BarChart2 className="text-3xl text-indigo-500" /></div>
-				<div className="bg-gradient-to-br from-rose-50 to-pink-50 border-rose-100 border rounded-lg p-4"><div><p className="text-sm text-gray-600">Valeur Total</p><p className="text-2xl font-bold text-gray-900 mt-1">€{(properties.reduce((sum:number, p:any) => sum + (p.price || 0), 0) / 1000000).toFixed(1)}M</p></div><DollarSign className="text-3xl text-rose-500" /></div>
+			<div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+				<div className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-100 border rounded-lg p-3 sm:p-4"><div><p className="text-xs sm:text-sm text-gray-600">Total</p><p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{totalItems ?? properties.length}</p></div><Home className="text-2xl sm:text-3xl text-gray-500" /></div>
+				<div className="bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-100 border rounded-lg p-3 sm:p-4"><div><p className="text-xs sm:text-sm text-gray-600">Actives</p><p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{properties.filter((p:any) => p.status === 'active').length}</p></div><CheckCircle className="text-2xl sm:text-3xl text-green-500" /></div>
+				<div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-100 border rounded-lg p-3 sm:p-4"><div><p className="text-xs sm:text-sm text-gray-600">Vues</p><p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{properties.reduce((sum:number, p:any) => sum + (p.views || 0), 0)}</p></div><BarChart2 className="text-2xl sm:text-3xl text-indigo-500" /></div>
+				<div className="bg-gradient-to-br from-rose-50 to-pink-50 border-rose-100 border rounded-lg p-3 sm:p-4"><div><p className="text-xs sm:text-sm text-gray-600">Valeur Total</p><p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">€{(properties.reduce((sum:number, p:any) => sum + (p.price || 0), 0) / 1000000).toFixed(1)}M</p></div><DollarSign className="text-2xl sm:text-3xl text-rose-500" /></div>
 			</div>
 
 			{viewType === 'table' && (
 				<DataTable
 					columns={[
-						{ header: 'Annonce', accessor: 'title', width: '30%', render: (_: any, row: any) => (<div><p className="font-medium text-gray-900">{row.title}</p><p className="text-xs text-gray-500">{row.location || row.city}</p></div>) },
-						{ header: 'Type', accessor: 'type', width: '15%', render: (value: any, row: any) => (<Badge label={getPropertyTypeLabel(value || row.propertyType)} variant="info" size="sm" />) },
-						{ header: 'Prix', accessor: 'price', width: '15%', render: (value: any) => (<span className="font-medium text-gray-900">€{(Number(value || 0) / 1000).toFixed(0)}k</span>) },
-						{ header: 'Vues', accessor: 'views', width: '10%', render: (value: any) => (<span className="text-sm text-gray-700">{value || 0}</span>) },
-						{ header: 'Statut', accessor: 'status', width: '15%', render: (value: any) => (<Badge label={(value || '').charAt(0).toUpperCase() + (value || '').slice(1)} variant={statusVariant(value || '')} size="sm" />) },
-						{ header: 'Créée', accessor: 'createdAt', width: '15%', render: (value: any) => (<span className="text-sm text-gray-600">{new Date(value).toLocaleDateString('fr-FR')}</span>) },
+						{ header: 'Annonce', accessor: 'title', width: '30%', render: (_: any, row: any) => (<div className="min-w-0"><p className="font-medium text-gray-900 text-xs sm:text-sm truncate">{row.title}</p><p className="text-xs text-gray-500 truncate">{row.location || row.city}</p></div>) },
+						{ header: 'Type', accessor: 'type', width: '12%', render: (value: any, row: any) => (<Badge label={getPropertyTypeLabel(value || row.propertyType)} variant="info" size="sm" />) },
+						{ header: 'Prix', accessor: 'price', width: '12%', render: (value: any) => (<span className="font-medium text-gray-900 text-xs sm:text-sm">€{(Number(value || 0) / 1000).toFixed(0)}k</span>) },
+						{ header: 'Vues', accessor: 'views', width: '10%', render: (value: any) => (<span className="text-xs sm:text-sm text-gray-700">{value || 0}</span>) },
+						{ header: 'Statut', accessor: 'status', width: '13%', render: (value: any) => (<Badge label={(value || '').charAt(0).toUpperCase() + (value || '').slice(1)} variant={statusVariant(value || '')} size="sm" />) },
+						{ header: 'Créée', accessor: 'createdAt', width: '13%', render: (value: any) => (<span className="text-xs sm:text-sm text-gray-600">{new Date(value).toLocaleDateString('fr-FR')}</span>) },
 					]}
 					data={properties as any}
 					loading={loading}

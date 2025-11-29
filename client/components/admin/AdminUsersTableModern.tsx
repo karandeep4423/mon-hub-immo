@@ -164,17 +164,17 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 	};
 
 	return (
-		<div className="space-y-6">
-			<div className="flex justify-between items-center">
-				<div>
-					<h1 className="text-3xl font-bold text-gray-900">Gestion Utilisateurs</h1>
-					<p className="text-gray-600 mt-1">Total: {filteredUsers.length} utilisateur(s)</p>
+		<div className="space-y-4 sm:space-y-6">
+			<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+				<div className="min-w-0">
+					<h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Gestion Utilisateurs</h1>
+					<p className="text-xs sm:text-sm text-gray-600 mt-1">Total: {filteredUsers.length} utilisateur(s)</p>
 				</div>
-				<div className="flex gap-2">
-					<Button variant="secondary" size="md" onClick={() => setShowImport(true)}><Download className="w-4 h-4 inline-block mr-2" />Importer</Button>
-					<Button variant="secondary" size="md" onClick={() => exportToCSV()}><Upload className="w-4 h-4 inline-block mr-2" />Exporter CSV</Button>
-					<Button variant="secondary" size="md" onClick={() => exportToXLS()}><Upload className="w-4 h-4 inline-block mr-2" />Exporter XLS</Button>
-					<Button variant="primary" size="md" onClick={() => setShowCreate(true)}><Plus className="w-4 h-4 inline-block mr-2" />Nouveau</Button>
+				<div className="flex flex-wrap gap-2">
+					<Button variant="secondary" size="md" onClick={() => setShowImport(true)}><Download className="w-4 h-4 inline-block mr-1 sm:mr-2" />Importer</Button>
+					<Button variant="secondary" size="md" onClick={() => exportToCSV()}><Upload className="w-4 h-4 inline-block mr-1 sm:mr-2" />Exporter CSV</Button>
+					<Button variant="secondary" size="md" onClick={() => exportToXLS()}><Upload className="w-4 h-4 inline-block mr-1 sm:mr-2" />Exporter XLS</Button>
+					<Button variant="primary" size="md" onClick={() => setShowCreate(true)}><Plus className="w-4 h-4 inline-block mr-1 sm:mr-2" />Nouveau</Button>
 				</div>
 			</div>
 
@@ -203,10 +203,10 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 				/>
 			)}
 
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-				<FilterStatCard icon={<Users className="w-8 h-8" />} label="Total" value={filteredUsers.length} color="blue" />
-				<FilterStatCard icon={<CheckCircle className="w-8 h-8 text-green-500" />} label="Actifs" value={filteredUsers.filter(u => u.status === 'active').length} color="green" />
-				<FilterStatCard icon={<Clock className="w-8 h-8 text-yellow-500" />} label="En attente" value={filteredUsers.filter(u => u.status === 'pending').length} color="yellow" />
+			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+				<FilterStatCard icon={<Users className="w-6 h-6 sm:w-8 sm:h-8" />} label="Total" value={filteredUsers.length} color="blue" />
+				<FilterStatCard icon={<CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-500" />} label="Actifs" value={filteredUsers.filter(u => u.status === 'active').length} color="green" />
+				<FilterStatCard icon={<Clock className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500" />} label="En attente" value={filteredUsers.filter(u => u.status === 'pending').length} color="yellow" />
 			</div>
 
 			<DataTable
@@ -216,13 +216,13 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						accessor: 'firstName',
 						width: '25%',
 						render: (_, row: AdminUser) => (
-							<div className="flex items-center gap-3">
-								<div className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center text-white font-bold">
+							<div className="flex items-center gap-2 sm:gap-3 min-w-0">
+								<div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs sm:text-sm">
 									{(row.firstName && row.firstName.charAt) ? row.firstName.charAt(0) : (row.email ? row.email.charAt(0) : 'U')}
 								</div>
-								<div>
-									<p className="font-medium text-gray-900">{row.firstName} {row.lastName}</p>
-									<p className="text-xs text-gray-500">{row.email}</p>
+								<div className="min-w-0">
+									<p className="font-medium text-gray-900 text-xs sm:text-sm truncate">{row.firstName} {row.lastName}</p>
+									<p className="text-xs text-gray-500 truncate">{row.email}</p>
 								</div>
 							</div>
 						),
@@ -230,7 +230,7 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 					{
 						header: 'Type',
 						accessor: 'type',
-						width: '15%',
+						width: '12%',
 						render: (value) => {
 							const v = String(value || '').toLowerCase();
 							let label = v ? v.charAt(0).toUpperCase() + v.slice(1) : 'Apporteur';
@@ -244,40 +244,39 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 					{
 						header: 'Réseau',
 						accessor: 'network',
-						width: '12%',
-						render: (_value, row: AdminUser) => (<span className="text-sm text-gray-700">{row.professionalInfo?.network || '-'}</span>),
+						width: '10%',
+						render: (_value, row: AdminUser) => (<span className="text-xs sm:text-sm text-gray-700 truncate">{row.professionalInfo?.network || '-'}</span>),
 					},
 					{
-						header: 'Historique d\'activité',
+						header: 'Activité',
 						accessor: 'activity',
-						width: '20%',
+						width: '18%',
 						render: (_v, row: AdminUser) => (
-							<div className="text-sm text-gray-700 space-y-1">
-								<div> Annonces: <span className="font-medium">{row.propertiesCount ?? 0}</span></div>
-								<div> Collaborations: <span className="font-medium">{((row.collaborationsActive ?? 0) + (row.collaborationsClosed ?? 0))}</span></div>
-								<div> Connexions: <span className="font-medium">{row.connectionsCount ?? 0}</span></div>
-								<div> Dernière activité: <span className="font-medium">{row.lastActive ? (isNaN(new Date(row.lastActive).getTime()) ? '' : new Date(row.lastActive).toLocaleString('fr-FR')) : '-'}</span></div>
+							<div className="text-xs space-y-0.5">
+								<div>📋: <span className="font-medium">{row.propertiesCount ?? 0}</span></div>
+								<div>🤝: <span className="font-medium">{((row.collaborationsActive ?? 0) + (row.collaborationsClosed ?? 0))}</span></div>
+								<div>📱: <span className="font-medium">{row.connectionsCount ?? 0}</span></div>
 							</div>
 						),
 					},
 					{
 						header: 'Statut',
 						accessor: 'status',
-						width: '15%',
+						width: '12%',
 						render: (_value, row: AdminUser) => {
 							const value = (row.isBlocked ? 'blocked' : (row.isValidated ? 'active' : 'pending')) as 'active' | 'pending' | 'blocked';
 							return <Badge label={value && value.charAt ? value.charAt(0).toUpperCase() + value.slice(1) : String(value || '')} variant={statusVariant(value)} size="sm" />;
 						},
 					},
 					{
-						header: 'Date d\'inscription',
+						header: 'Inscription',
 						accessor: 'registeredAt',
-						width: '20%',
+						width: '13%',
 						render: (value) => {
-							if (!value) return <span className="text-sm text-gray-600">-</span>;
+							if (!value) return <span className="text-xs text-gray-600">-</span>;
 							const d = new Date(value);
-							if (isNaN(d.getTime())) return <span className="text-sm text-gray-600">-</span>;
-							return <span className="text-sm text-gray-600">{d.toLocaleDateString('fr-FR')}</span>;
+							if (isNaN(d.getTime())) return <span className="text-xs text-gray-600">-</span>;
+							return <span className="text-xs text-gray-600">{d.toLocaleDateString('fr-FR')}</span>;
 						},
 					},
 					{
@@ -285,11 +284,11 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						accessor: 'isPaid',
 						width: '12%',
 						render: (_value, row: AdminUser) => {
-							if (row.type !== 'agent') return <span className="text-sm text-gray-500">N/A</span>;
+							if (row.type !== 'agent') return <span className="text-xs text-gray-500">N/A</span>;
 							if (row.accessGrantedByAdmin) return <Badge label="Accès manuel" variant="info" size="sm" />;
 							if (row.isPaid) return <Badge label="Payé" variant="success" size="sm" />;
 							if (row.profileCompleted) return <Badge label="En attente" variant="warning" size="sm" />;
-							return <span className="text-sm text-gray-500">Profil incomplet</span>;
+							return <span className="text-xs text-gray-500">Profil incomplet</span>;
 						},
 					},
 				]}
@@ -332,13 +331,13 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 const FilterStatCard: React.FC<{ icon: React.ReactNode; label: string; value: number; color: string }> = ({ icon, label, value, color }) => {
 	const colors = { blue: 'from-blue-50 to-cyan-50 border-blue-100', green: 'from-emerald-50 to-green-50 border-emerald-100', yellow: 'from-amber-50 to-yellow-50 border-amber-100' };
 	return (
-		<div className={`bg-gradient-to-br ${colors[color as keyof typeof colors]} border rounded-lg p-4`}>
+		<div className={`bg-gradient-to-br ${colors[color as keyof typeof colors]} border rounded-lg p-3 sm:p-4`}>
 				<div className="flex items-center justify-between">
-					<div>
-						<p className="text-sm text-gray-600">{label}</p>
-						<p className="text-2xl font-bold text-gray-900">{value}</p>
+					<div className="min-w-0">
+						<p className="text-xs sm:text-sm text-gray-600 truncate">{label}</p>
+						<p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{value}</p>
 					</div>
-					<span className="text-3xl">{icon}</span>
+					<span className="text-2xl sm:text-3xl flex-shrink-0">{icon}</span>
 				</div>
 		</div>
 	);

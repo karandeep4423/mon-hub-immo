@@ -30,17 +30,17 @@ export default function AdminUserFilters({ onChange }: AdminUserFiltersProps) {
   };
 
   return (
-    <div className="flex gap-4 mb-4">
-      <input name="name" placeholder="Recherche nom..." value={local.name} onChange={handleChange} className="p-2 border rounded" />
-      <input name="email" placeholder="Recherche email..." value={local.email} onChange={handleChange} className="p-2 border rounded" />
-      <select name="userType" value={local.userType} onChange={handleChange} className="p-2 border rounded">
+    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 flex-wrap">
+      <input name="name" placeholder="Nom..." value={local.name} onChange={handleChange} className="w-full sm:flex-1 sm:min-w-32 p-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+      <input name="email" placeholder="Email..." value={local.email} onChange={handleChange} className="w-full sm:flex-1 sm:min-w-32 p-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+      <select name="userType" value={local.userType} onChange={handleChange} className="w-full sm:w-auto p-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-cyan-500">
         <option value="">Tous statuts</option>
         <option value="agent">Agent</option>
         <option value="apporteur">Apporteur</option>
         <option value="admin">Admin</option>
       </select>
-      <input name="network" placeholder="Réseau..." value={local.network} onChange={handleChange} className="p-2 border rounded" />
-      <select name="isValidated" value={local.isValidated} onChange={handleChange} className="p-2 border rounded">
+      <input name="network" placeholder="Réseau..." value={local.network} onChange={handleChange} className="w-full sm:flex-1 sm:min-w-32 p-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+      <select name="isValidated" value={local.isValidated} onChange={handleChange} className="w-full sm:w-auto p-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-cyan-500">
         <option value="">Tous</option>
         <option value="true">Validé</option>
         <option value="false">Non validé</option>

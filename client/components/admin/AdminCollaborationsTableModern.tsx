@@ -88,29 +88,29 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 	};
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-6 px-4 sm:px-6 lg:px-0">
 			{/* Header */}
-			<div className="flex justify-between items-center">
+			<div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
 				<div>
-					<h1 className="text-3xl font-bold text-gray-900">Collaborations</h1>
-					<p className="text-gray-600 mt-1">Total: {filteredCollaborations.length} collaboration(s)</p>
+					<h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Collaborations</h1>
+					<p className="text-sm sm:text-base text-gray-600 mt-1">Total: {filteredCollaborations.length} collaboration(s)</p>
 				</div>
 			</div>
 
 			{/* Filters */}
-			<div className="space-y-4">
-				<div className="flex gap-3 flex-wrap">
+			<div className="space-y-3 sm:space-y-4">
+				<div className="flex flex-col sm:flex-row gap-3 flex-wrap">
 					<input
 						type="search"
 						placeholder="Chercher agent, apporteur, annonce..."
 						value={filters.search}
 						onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-						className="flex-1 min-w-64 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+						className="w-full sm:flex-1 sm:min-w-48 px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
 					/>
 					<select
 						value={filters.status}
 						onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-						className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+						className="w-full sm:w-auto px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
 					>
 						<option value="">Tous les statuts</option>
 						<option value="pending">En attente</option>
@@ -119,10 +119,10 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 						<option value="cancelled">Annulée</option>
 					</select>
 				</div>
-				<div className="flex gap-2">
+				<div className="flex flex-wrap gap-2">
 					<button
 						onClick={() => setFilters({ ...filters, collabType: '' })}
-						className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+						className={`px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors whitespace-nowrap ${
 							!filters.collabType
 								? 'bg-cyan-600 text-white'
 								: 'border border-gray-300 text-gray-700 hover:bg-gray-50'
@@ -132,7 +132,7 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 					</button>
 					<button
 						onClick={() => setFilters({ ...filters, collabType: 'agent-agent' })}
-						className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+						className={`px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors whitespace-nowrap ${
 							filters.collabType === 'agent-agent'
 								? 'bg-cyan-600 text-white'
 								: 'border border-gray-300 text-gray-700 hover:bg-gray-50'
@@ -142,7 +142,7 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 					</button>
 					<button
 						onClick={() => setFilters({ ...filters, collabType: 'agent-apporteur' })}
-						className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+						className={`px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors whitespace-nowrap ${
 							filters.collabType === 'agent-apporteur'
 								? 'bg-cyan-600 text-white'
 								: 'border border-gray-300 text-gray-700 hover:bg-gray-50'
@@ -154,7 +154,7 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 			</div>
 
 			{/* Stats */}
-			<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+			<div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
 				<StatCard icon={<BarChart2 className="w-8 h-8 text-indigo-500" />} label="Total" value={filteredCollaborations.length} color="blue" />
 				<StatCard icon={<CheckCircle className="w-8 h-8 text-green-500" />} label="Actives" value={filteredCollaborations.filter(c => c.status === 'active').length} color="green" />
 				<StatCard icon={<Check className="w-8 h-8 text-purple-500" />} label="Complétées" value={filteredCollaborations.filter(c => c.status === 'completed').length} color="purple" />
@@ -162,35 +162,36 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 			</div>
 
 			{/* Table */}
+			<div className="overflow-x-auto -mx-4 sm:mx-0 rounded-lg border border-gray-200">
 			<DataTable
 				columns={[
 					{
 						header: 'Agent & Apporteur',
 						accessor: 'agent',
-						width: '30%',
+						width: '25%',
 					render: (_, row: AdminCollaboration) => {
 						const agentName = row.agentName || (typeof row.agent === 'string' ? row.agent : (row.agent ? `${row.agent.firstName ?? ''} ${row.agent.lastName ?? ''}`.trim() : ''));
 						const agentId = typeof row.agent === 'object' && row.agent ? row.agent._id : row.agentId;
 						const apporteurName = row.apporteurName || (typeof row.apporteur === 'string' ? row.apporteur : (row.apporteur ? `${row.apporteur.firstName ?? ''} ${row.apporteur.lastName ?? ''}`.trim() : ''));
 						const apporteurId = typeof row.apporteur === 'object' && row.apporteur ? row.apporteur._id : row.apporteurId;
 							return (
-								<div className="space-y-2">
-									<div className="flex items-center gap-2">
-										<div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs">
+								<div className="space-y-2 text-xs sm:text-sm">
+									<div className="flex items-center gap-2 min-w-0">
+										<div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-100 flex-shrink-0 flex items-center justify-center text-blue-600 font-bold text-xs">
 											{agentName ? agentName.charAt(0) : '?'}
 										</div>
 										{agentId ? (
-											<Link href={`/admin/users/${agentId}`} className="text-sm font-medium text-gray-900 hover:underline">{agentName || 'Unknown'}</Link>
+											<Link href={`/admin/users/${agentId}`} className="text-xs sm:text-sm font-medium text-gray-900 hover:underline truncate">{agentName || 'Unknown'}</Link>
 										) : (
-											<span className="text-sm font-medium text-gray-900">{agentName || 'Unknown'}</span>
+											<span className="text-xs sm:text-sm font-medium text-gray-900 truncate">{agentName || 'Unknown'}</span>
 										)}
 									</div>
-									<div className="flex items-center gap-2 ml-1">
-										<div className="w-6 h-6 flex items-center justify-center"><Handshake className="w-5 h-5 text-gray-500" /></div>
+									<div className="flex items-center gap-2 ml-0 sm:ml-1 min-w-0">
+										<div className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 flex items-center justify-center"><Handshake className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" /></div>
 										{apporteurId ? (
-											<Link href={`/admin/users/${apporteurId}`} className="text-xs text-gray-500 hover:underline">{apporteurName || 'Unknown'}</Link>
+											<Link href={`/admin/users/${apporteurId}`} className="text-xs text-gray-500 hover:underline truncate">{apporteurName || 'Unknown'}</Link>
 										) : (
-											<span className="text-xs text-gray-500">{apporteurName || 'Unknown'}</span>
+											<span className="text-xs text-gray-500 truncate">{apporteurName || 'Unknown'}</span>
 										)}
 									</div>
 								</div>
@@ -200,17 +201,17 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 					{
 						header: 'Annonce',
 						accessor: 'property',
-						width: '25%',
+						width: '20%',
 						render: (value, row: AdminCollaboration) => {
 							const propertyTitle = value || row.postId?.address || row.postId?.title || 'Unknown';
 							const isProperty = row.postType === 'Property';
 							return (
-									<div className="flex items-center gap-2">
-									<Home className="w-5 h-5 text-gray-600" />
+									<div className="flex items-center gap-2 min-w-0 text-xs sm:text-sm">
+									<Home className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
 									{isProperty && row.postId?._id ? (
-										<Link href={`/property/${row.postId._id}`} className="font-medium text-gray-900 hover:underline">{propertyTitle}</Link>
+										<Link href={`/property/${row.postId._id}`} className="font-medium text-gray-900 hover:underline truncate">{propertyTitle}</Link>
 									) : (
-										<span className="font-medium text-gray-900">{propertyTitle}</span>
+										<span className="font-medium text-gray-900 truncate">{propertyTitle}</span>
 									)}
 								</div>
 							);
@@ -223,7 +224,7 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 						render: (value, row: AdminCollaboration) => {
 							const commission = value || row.proposedCommission || 0;
 							return (
-								<span className="font-bold text-cyan-600">€{(commission / 1000).toFixed(1)}k</span>
+								<span className="font-bold text-cyan-600 text-xs sm:text-sm">€{(commission / 1000).toFixed(1)}k</span>
 							);
 						},
 					},
@@ -245,8 +246,8 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 						width: '15%',
 						render: (value, row: AdminCollaboration) => (
 							<div className="text-xs text-gray-600 space-y-1">
-								<p className="flex items-center gap-2"><Calendar className="w-4 h-4 text-gray-400" />{new Date(value).toLocaleDateString('fr-FR')}</p>
-								<p className="text-gray-500 flex items-center gap-2"><RefreshCw className="w-4 h-4 text-gray-400" />{new Date(row.updatedAt).toLocaleDateString('fr-FR')}</p>
+								<p className="flex items-center gap-1 sm:gap-2"><Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" /><span className="truncate">{new Date(value).toLocaleDateString('fr-FR')}</span></p>
+								<p className="text-gray-500 flex items-center gap-1 sm:gap-2"><RefreshCw className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" /><span className="truncate">{new Date(row.updatedAt).toLocaleDateString('fr-FR')}</span></p>
 							</div>
 						),
 					},
@@ -257,11 +258,11 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 				initialPageSize={10}
 				pageSizeOptions={[5, 10, 20, 50]}
 				actions={(row: AdminCollaboration) => (
-					<div className="flex items-center gap-2">
-						<Link href={`/collaboration/${row._id}`} className="p-1 hover:bg-blue-100 rounded transition-colors" title="Détails">
+					<div className="flex items-center gap-1 sm:gap-2">
+						<Link href={`/collaboration/${row._id}`} className="p-1 hover:bg-blue-100 rounded transition-colors flex-shrink-0" title="Détails">
 							<Eye className="w-4 h-4" />
 						</Link>
-						<Link href={`/chat?userId=${row.agentId}&propertyId=${row.propertyId}`} className="p-1 hover:bg-purple-100 rounded transition-colors" title="Historique des échanges">
+						<Link href={`/chat?userId=${row.agentId}&propertyId=${row.propertyId}`} className="p-1 hover:bg-purple-100 rounded transition-colors flex-shrink-0" title="Historique des échanges">
 							<MessageSquare className="w-4 h-4" />
 						</Link>
 						 
@@ -269,6 +270,7 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 					</div>
 				)}
 			/>
+			</div>
 		</div>
 	);
 };
@@ -286,13 +288,13 @@ const StatCard: React.FC<{ icon: React.ReactNode; label: string; value: string |
 		rose: 'from-rose-50 to-pink-50 border-rose-100',
 	};
 	return (
-		<div className={`bg-gradient-to-br ${colors[color as keyof typeof colors]} border rounded-lg p-4`}>
-			<div className="flex items-center justify-between">
-				<div>
-					<p className="text-sm text-gray-600">{label}</p>
-					<p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+		<div className={`bg-gradient-to-br ${colors[color as keyof typeof colors]} border rounded-lg p-3 sm:p-4`}>
+			<div className="flex items-center justify-between gap-3">
+				<div className="min-w-0">
+					<p className="text-xs sm:text-sm text-gray-600 truncate">{label}</p>
+					<p className="text-lg sm:text-2xl font-bold text-gray-900 mt-1 truncate">{value}</p>
 				</div>
-				<span className="text-3xl">{icon}</span>
+				<span className="text-2xl sm:text-3xl flex-shrink-0">{icon}</span>
 			</div>
 		</div>
 	);

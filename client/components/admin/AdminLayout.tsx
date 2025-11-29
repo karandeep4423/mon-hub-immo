@@ -78,20 +78,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 				Use a responsive, header-aware negative top offset instead of a fixed -650px.
 				We compute the offset from the measured header height so the content will
 				always sit correctly beneath the sticky header on all screen sizes. */}
-			<div
-				className="lg:ml-72"
-				// Keep main content below the sticky header by adding top padding equal to the header height.
-				// Additionally apply a small, computed upward translate when child content
-				// has pushed the main too far down (this avoids reintroducing hard-coded
-				// negative margins). The translate is only applied when required.
-				style={{ paddingTop: `${headerHeight}px`, transform: `translateY(${verticalOffset}px)` }}
-			>
-				<main className="p-4 sm:p-6 lg:p-8">
-					{children}
-				</main>
-			</div>
-
-			{/* Mobile bottom navigation for quick access to admin sections */}
+		<div
+			className="lg:ml-72"
+			style={{ paddingTop: `${headerHeight}px`, transform: `translateY(${verticalOffset}px)` }}
+		>
+			<main className="p-3 sm:p-4 md:p-6 lg:p-8 max-w-full overflow-hidden">
+				{children}
+			</main>
+		</div>			{/* Mobile bottom navigation for quick access to admin sections */}
 			<AdminMobileNav />
 
 			{/* Debug overlay removed - keeping layout clean for production */}
