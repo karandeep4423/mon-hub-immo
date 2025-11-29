@@ -43,19 +43,38 @@ export default function GoogleAnalytics() {
 					__html: `
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
+            
+            // Default consent to denied
+            gtag('consent', 'default', {
+              'ad_storage': 'denied',
+              'analytics_storage': 'denied',
+              'ad_user_data': 'denied',
+              'ad_personalization': 'denied',
+            });
+
             gtag('js', new Date());
             
             ${
 				consent.analytics && gtag.GA_TRACKING_ID
-					? `gtag('config', '${gtag.GA_TRACKING_ID}', {
-                page_path: window.location.pathname,
-              });`
+					? `
+                    gtag('consent', 'update', {
+                      'analytics_storage': 'granted'
+                    });
+                    gtag('config', '${gtag.GA_TRACKING_ID}', {
+                      page_path: window.location.pathname,
+                    });`
 					: ''
 			}
 
             ${
 				consent.marketing && gtag.ADS_ID
-					? `gtag('config', '${gtag.ADS_ID}');`
+					? `
+                    gtag('consent', 'update', {
+                      'ad_storage': 'granted',
+                      'ad_user_data': 'granted',
+                      'ad_personalization': 'granted'
+                    });
+                    gtag('config', '${gtag.ADS_ID}');`
 					: ''
 			}
           `,
