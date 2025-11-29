@@ -1,6 +1,10 @@
 import React from 'react';
 import { FaInstagram, FaLinkedin, FaFacebook, FaTiktok } from 'react-icons/fa';
+import { useCookieConsent } from '@/context/CookieConsentContext';
+
 export const Footer = () => {
+	const { openPreferences } = useCookieConsent();
+
 	return (
 		<div>
 			{/* Footer */}
@@ -152,9 +156,12 @@ export const Footer = () => {
 						Politique cookies
 					</a>{' '}
 					|
-					<a href="cookies" className="mx-2">
-						Cookies
-					</a>
+					<button
+						onClick={openPreferences}
+						className="mx-2 hover:text-[#00b4d8] transition-colors"
+					>
+						Gérer les cookies
+					</button>
 				</div>
 			</footer>
 		</div>

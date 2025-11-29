@@ -7,7 +7,11 @@ interface HeroSearchSectionProps {
 	searchPostalCode: string;
 	searching: boolean;
 	searchPerformed: boolean;
-	onCitySelect: (location: { name: string; postcode: string }) => void;
+	onCitySelect: (location: {
+		name: string;
+		postcode: string;
+		coordinates?: { lat: number; lon: number };
+	}) => void;
 	onSearch: () => void;
 }
 
@@ -68,7 +72,13 @@ export const HeroSearchSection = ({
 								<BaseLocationAutocomplete
 									mode="single"
 									value={searchCity}
-									onSelect={onCitySelect}
+									onSelect={(location) => {
+										onCitySelect({
+											name: location.name,
+											postcode: location.postcode,
+											coordinates: location.coordinates,
+										});
+									}}
 									placeholder={
 										Components.UI.FORM_PLACEHOLDERS
 											.CITY_SEARCH

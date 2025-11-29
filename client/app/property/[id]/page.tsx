@@ -211,7 +211,14 @@ function PropertyDetailsPageContent() {
 							<div className="mb-6">
 								<div className="flex items-baseline space-x-2 mb-2">
 									<h1 className="text-3xl font-bold text-gray-900">
-										{property.price.toLocaleString()} €
+										{(
+											property.price +
+											(property.price *
+												(property.agencyFeesPercentage ||
+													0)) /
+												100
+										).toLocaleString()}{' '}
+										€
 									</h1>
 									<span className="text-gray-600">
 										- {property.surface} m²
@@ -656,7 +663,13 @@ function PropertyDetailsPageContent() {
 										onClick={() =>
 											shareContent({
 												title: property.title,
-												text: `${property.title} - ${property.price.toLocaleString()}€`,
+												text: `${property.title} - ${(
+													property.price +
+													(property.price *
+														(property.agencyFeesPercentage ||
+															0)) /
+														100
+												).toLocaleString()}€`,
 											})
 										}
 									>

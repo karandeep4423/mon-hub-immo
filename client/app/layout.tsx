@@ -8,6 +8,10 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { SWRConfig } from 'swr';
 import { swrConfig } from '@/lib/swrConfig';
 import { RealtimeSyncProvider } from '@/providers/RealtimeSyncProvider';
+import { CookieConsentProvider } from '@/context/CookieConsentContext';
+import { CookieConsentBanner } from '@/components/gdpr/CookieConsentBanner';
+import { CookiePreferencesModal } from '@/components/gdpr/CookiePreferencesModal';
+import GoogleAnalytics from '@/components/gdpr/GoogleAnalytics';
 import 'react-toastify/dist/ReactToastify.css';
 import './globals.css';
 
@@ -30,24 +34,29 @@ export default function RootLayout({
 				<ErrorBoundary>
 					<SWRConfig value={swrConfig}>
 						<AuthInitializer>
-							<SocketWrapper>
-								<RealtimeSyncProvider>
-									<Header />
-									{children}
-								</RealtimeSyncProvider>
-							</SocketWrapper>
-							<ToastContainer
-								position="top-right"
-								autoClose={5000}
-								hideProgressBar={false}
-								newestOnTop={false}
-								closeOnClick
-								rtl={false}
-								pauseOnFocusLoss
-								draggable
-								pauseOnHover
-								theme="light"
-							/>
+							<CookieConsentProvider>
+								<SocketWrapper>
+									<RealtimeSyncProvider>
+										<Header />
+										{children}
+										<CookieConsentBanner />
+										<CookiePreferencesModal />
+										<GoogleAnalytics />
+									</RealtimeSyncProvider>
+								</SocketWrapper>
+								<ToastContainer
+									position="top-right"
+									autoClose={5000}
+									hideProgressBar={false}
+									newestOnTop={false}
+									closeOnClick
+									rtl={false}
+									pauseOnFocusLoss
+									draggable
+									pauseOnHover
+									theme="light"
+								/>
+							</CookieConsentProvider>
 						</AuthInitializer>
 					</SWRConfig>
 				</ErrorBoundary>

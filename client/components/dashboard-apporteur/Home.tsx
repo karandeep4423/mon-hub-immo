@@ -299,6 +299,31 @@ const Home = () => {
 							</svg>
 							Messages
 						</Button>
+						<a
+							href="mailto:contact@monhubimmo.fr"
+							className="w-full block"
+						>
+							<Button
+								variant="outline"
+								className="w-full justify-start border-2 border-gray-200 hover:border-green-400 hover:bg-green-50 transition-all duration-200"
+								size="lg"
+							>
+								<svg
+									className="w-5 h-5 mr-3"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth="2"
+										d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+									/>
+								</svg>
+								Contact Support
+							</Button>
+						</a>
 					</div>
 				</div>
 
