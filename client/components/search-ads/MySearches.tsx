@@ -150,7 +150,7 @@ export const MySearches = () => {
 		<div className="space-y-6" id="searches-section">
 			<div className="flex justify-between items-center">
 				<h2 className="text-2xl font-bold text-gray-900">
-					Mes Recherches
+					{user?.userType === 'admin' ? 'Toutes les Recherches' : 'Mes Recherches'}
 				</h2>
 				<Button
 					onClick={() =>

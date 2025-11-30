@@ -158,7 +158,9 @@ export const getMySearchAds = async (
 			return;
 		}
 
-		const searchAds = await SearchAd.find({ authorId: req.user.id })
+		// Admin can see all search ads, others see only their own
+		const filter = req.user.userType === 'admin' ? {} : { authorId: req.user.id };
+		const searchAds = await SearchAd.find(filter)
 			.populate('authorId', 'firstName lastName profileImage userType')
 			.sort({ createdAt: -1 });
 		res.status(200).json({ success: true, data: searchAds });
