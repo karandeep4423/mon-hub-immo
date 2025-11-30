@@ -53,17 +53,7 @@ export const SidebarAdminModern: React.FC<SidebarAdminModernProps> = ({ isOpen =
 			style={{ top: `${headerHeight}px`, height: `calc(100vh - ${headerHeight}px)` }}
 		>
 			{/* Header */}
-			<div className="p-6 border-b border-gray-200">
-				<Link href="/admin" className="flex items-center gap-2 group">
-					<div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center font-bold text-lg">
-						MH
-					</div>
-					<div>
-						<p className="font-black text-lg">MonHubImmo</p>
-				 
-					</div>
-				</Link>
-			</div>
+		 
 
 			{/* Navigation */}
 			<nav className="p-4 space-y-2 flex-1 overflow-y-auto">
