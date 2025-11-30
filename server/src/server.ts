@@ -26,6 +26,7 @@ import {
 } from './middleware/csrf';
 import { generalLimiter } from './middleware/rateLimiter';
 import adminRouter from './routes/admin';
+import adminChatRoutes from './routes/adminChat';
 
 dotenv.config();
 
@@ -225,6 +226,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/favorites', csrfProtection, favoritesRoutes);
 app.use('/api/appointments', csrfProtection, appointmentRoutes);
 app.use('/api/admin', adminRouter);
+app.use('/api/admin/chat', adminChatRoutes);
 // Mount payment routes (requires authentication inside route)
 import paymentRoutes from './routes/payment';
 app.use('/api/payment', paymentRoutes);

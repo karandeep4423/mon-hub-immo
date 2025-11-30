@@ -269,7 +269,7 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 						<Link href={`/collaboration/${row._id}`} className="p-1 hover:bg-blue-100 rounded transition-colors flex-shrink-0" title="Détails">
 							<Eye className="w-4 h-4" />
 						</Link>
-						<Link href={`/chat?userId=${row.agentId}&propertyId=${row.propertyId}`} className="p-1 hover:bg-purple-100 rounded transition-colors flex-shrink-0" title="Historique des échanges">
+						<Link href={`/admin/chat?collaborationId=${row._id}`} className="p-1 hover:bg-purple-100 rounded transition-colors flex-shrink-0" title="Historique des échanges">
 							<MessageSquare className="w-4 h-4" />
 						</Link>
 						 

@@ -8,6 +8,25 @@ import type {
 import { handleApiError } from '../utils/errorHandler';
 
 export class ChatApi {
+	/** Admin: get conversation participants from collaboration */
+	static async getConversationByCollaboration(collaborationId: string): Promise<{ conversation: { _id: string; ownerId: string; collaboratorId: string; status: string } | null }> {
+		try {
+			const response = await api.get('/admin/chat/conversation', { params: { collaborationId } });
+			return response.data;
+		} catch (error) {
+			throw handleApiError(error, 'chatApi.getConversationByCollaboration', 'Erreur lors de la récupération de la conversation');
+		}
+	}
+
+	/** Admin: get messages between two participants */
+	static async getMessagesBetween(userA: string, userB: string, limit = 100): Promise<{ messages: Message[]; count: number }> {
+		try {
+			const response = await api.get('/admin/chat/messages', { params: { userA, userB, limit } });
+			return response.data;
+		} catch (error) {
+			throw handleApiError(error, 'chatApi.getMessagesBetween', 'Erreur lors de la récupération des messages');
+		}
+	}
 	/**
 	 * Get users with existing conversations
 	 */
