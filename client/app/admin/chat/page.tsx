@@ -4,12 +4,13 @@ import { useSearchParams } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { ChatApi } from '@/lib/api/chatApi';
 import { useEffect, useState } from 'react';
+import type { ChatMessage } from '@/types/chat';
 
 export default function AdminChatPage() {
 	const params = useSearchParams();
 	const collaborationId = params.get('collaborationId') || '';
 	const [participants, setParticipants] = useState<{ ownerId: string; collaboratorId: string } | null>(null);
-	const [messages, setMessages] = useState<Array<{ _id: string; senderId: string; text?: string; createdAt: string }>>([]);
+	const [messages, setMessages] = useState<ChatMessage[]>([]);
 	const [loading, setLoading] = useState<boolean>(false);
 
 	useEffect(() => {
@@ -45,16 +46,48 @@ export default function AdminChatPage() {
 					{!loading && messages.length === 0 && (
 						<p className="text-sm text-gray-600">Aucun message pour cette collaboration.</p>
 					)}
-					<ul className="space-y-2">
-						{messages.map(m => (
-							<li key={m._id} className="flex items-start gap-2">
-								<div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white text-xs font-bold">{m.senderId?.slice(-2)}</div>
-								<div>
-									<p className="text-xs text-gray-500">{new Date(m.createdAt).toLocaleString('fr-FR')}</p>
-									<p className="text-sm text-gray-900">{m.text || ''}</p>
-								</div>
-							</li>
-						))}
+					<ul className="space-y-3">
+						{messages.map(m => {
+							const hasAttachments = Array.isArray(m.attachments) && m.attachments.length > 0;
+							return (
+								<li key={m._id} className="flex items-start gap-3">
+									<div className="w-9 h-9 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xs font-semibold">
+										{m.senderId.slice(-2)}
+									</div>
+									<div className="flex-1 min-w-0">
+										<p className="text-[11px] text-gray-500 mb-1">{new Date(m.createdAt).toLocaleString('fr-FR')}</p>
+										{m.text && <p className="text-sm text-gray-900 whitespace-pre-line mb-1">{m.text}</p>}
+										{hasAttachments && (
+											<div className="flex flex-col gap-2">
+												{m.attachments!.map(att => {
+													const isImage = att.type === 'image' || att.mime.startsWith('image/');
+													return (
+														<div key={att.url} className="group border rounded-md p-2 bg-gray-50 hover:bg-gray-100 transition-colors">
+															<div className="flex items-start gap-3">
+																{isImage ? (
+																	<a href={att.url} target="_blank" rel="noopener noreferrer" className="block w-24 h-24 overflow-hidden rounded-md bg-white shadow-sm">
+																		<img src={att.thumbnailUrl || att.url} alt={att.name} className="object-cover w-full h-full" />
+																	</a>
+																) : (
+																	<div className="w-10 h-10 flex items-center justify-center rounded bg-gradient-to-br from-slate-200 to-slate-300 text-slate-600 text-xs font-medium">
+																		{att.type === 'pdf' ? 'PDF' : att.type === 'doc' || att.type === 'docx' ? 'DOC' : 'FILE'}
+																	</div>
+																)}
+																<div className="flex-1 min-w-0">
+																	<p className="text-xs font-medium text-gray-800 truncate" title={att.name}>{att.name}</p>
+																	<p className="text-[11px] text-gray-500">{(att.size / 1024).toFixed(1)} Ko · {att.mime}</p>
+																	<a href={att.url} target="_blank" rel="noopener noreferrer" className="inline-block mt-1 text-[11px] text-blue-600 hover:text-blue-700 hover:underline">Ouvrir</a>
+																</div>
+															</div>
+														</div>
+													);
+												})}
+											</div>
+										)}
+									</div>
+								</li>
+							);
+						})}
 					</ul>
 				</div>
 			</div>
