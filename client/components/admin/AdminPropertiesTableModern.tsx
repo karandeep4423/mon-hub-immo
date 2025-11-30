@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { DataTable } from './ui/DataTable';
 import { useAdminProperties } from '@/hooks/useAdminProperties';
 import { Home, CheckCircle, BarChart2, DollarSign, Eye, Trash2, LayoutGrid, List } from 'lucide-react';
+import Pagination from '@/components/ui/Pagination'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export function AdminPropertiesTableModern({ initialProperties }: { initialProperties?: any[] }) {
@@ -212,9 +213,13 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 			)}
 
 			<div className="flex justify-center items-center gap-4 mt-6">
-				<Button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1 || loading} variant="secondary">Précédent</Button>
-				<span className="text-gray-700 font-medium">Page {currentPage ?? page} sur {totalPages ?? 1}</span>
-				<Button onClick={() => setPage(p => (totalPages ? Math.min(totalPages, p + 1) : p + 1))} disabled={page >= (totalPages ?? 1) || loading} variant="secondary">Suivant</Button>
+				<Pagination
+					currentPage={currentPage ?? page}
+					totalItems={totalItems ?? properties.length}
+					pageSize={limit}
+					onPageChange={(p) => setPage(p)}
+					className="w-full"
+				/>
 			</div>
 
 			{/* Confirm Delete Dialog */}

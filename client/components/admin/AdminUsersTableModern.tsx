@@ -12,6 +12,7 @@ import { adminService } from '@/lib/api/adminApi'; // Import the new admin servi
 import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
 import { DataTable } from './ui/DataTable';
+import Pagination from '@/components/ui/Pagination';
 import AdminUserFilters from './AdminUserFilters';
 import { toast } from 'react-toastify';
 import { Download, Upload, Plus, Users, CheckCircle, Clock, Eye, Edit, Unlock, UserX, Key, CreditCard, X } from 'lucide-react';
@@ -58,6 +59,8 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 	users: initialUsers,
 	loading: initialLoading,
 }) => {
+	const [page, setPage] = useState<number>(1);
+	const [limit, setLimit] = useState<number>(10);
 	const [filters, setFilters] = useState({ type: '', status: '', search: '', network: '', email: '' });
 	const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
 	const [showCreate, setShowCreate] = useState(false);
@@ -117,6 +120,12 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 			return matchSearch && matchEmail && matchType && matchStatus;
 		});
 	}, [users, filters]);
+
+	const totalPages = useMemo(() => Math.max(1, Math.ceil(filteredUsers.length / limit)), [filteredUsers.length, limit]);
+	const pagedUsers = useMemo(() => {
+		const start = (page - 1) * limit;
+		return filteredUsers.slice(start, start + limit);
+	}, [filteredUsers, page, limit]);
 
 	const exportToCSV = (usersToExport = filteredUsers) => {
 		const headers = ['_id','firstName','lastName','email','type','network','status','registeredAt','propertiesCount','collaborationsActive','collaborationsClosed','connectionsCount','lastActive'];
@@ -292,10 +301,8 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						},
 					},
 				]}
-				data={filteredUsers}
-				pagination
-				initialPageSize={10}
-				pageSizeOptions={[10, 25, 50]}
+				data={pagedUsers}
+				pagination={false}
 				loading={loading}
 				actions={(row: AdminUser) => (
 					<div className="flex items-center gap-2">
@@ -319,6 +326,14 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						)}
 					</div>
 				)}
+			/>
+
+			<Pagination
+				currentPage={page}
+				totalItems={filteredUsers.length}
+				pageSize={limit}
+				onPageChange={(p) => setPage(p)}
+				className="w-full"
 			/>
 
 			{showImport && (<ImportUsersModal open={showImport} onClose={() => setShowImport(false)} onSuccess={() => { setShowImport(false); refetch(); }} />)}

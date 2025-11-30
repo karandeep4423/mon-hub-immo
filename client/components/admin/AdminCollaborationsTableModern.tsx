@@ -5,6 +5,7 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Badge } from './ui/Badge';
 import { DataTable } from './ui/DataTable';
+import Pagination from '@/components/ui/Pagination';
 import { BarChart2, CheckCircle, Check, DollarSign, Handshake, Home, Eye, MessageSquare, Calendar, RefreshCw } from 'lucide-react';
 
 export interface AdminCollaboration {
@@ -52,6 +53,8 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 	loading,
 }) => {
 	const [filters, setFilters] = useState({ status: '', search: '', collabType: '' });
+	const [page, setPage] = useState<number>(1);
+	const [limit] = useState<number>(10);
 
 	const filteredCollaborations = useMemo(() => {
 		if (!collaborations) return [];
@@ -69,6 +72,12 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 			return matchSearch && matchStatus && matchCollabType;
 		});
 	}, [collaborations, filters]);
+
+	const totalPages = useMemo(() => Math.max(1, Math.ceil(filteredCollaborations.length / limit)), [filteredCollaborations.length, limit]);
+	const pagedCollaborations = useMemo(() => {
+		const start = (page - 1) * limit;
+		return filteredCollaborations.slice(start, start + limit);
+	}, [filteredCollaborations, page, limit]);
 
 	const statusVariant = (status: string) => {
 		if (status === 'active') return 'success';
@@ -252,11 +261,9 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 						),
 					},
 				]}
-				data={filteredCollaborations}
+				data={pagedCollaborations}
 				loading={loading}
-				pagination={true}
-				initialPageSize={10}
-				pageSizeOptions={[5, 10, 20, 50]}
+				pagination={false}
 				actions={(row: AdminCollaboration) => (
 					<div className="flex items-center gap-1 sm:gap-2">
 						<Link href={`/collaboration/${row._id}`} className="p-1 hover:bg-blue-100 rounded transition-colors flex-shrink-0" title="Détails">
@@ -269,6 +276,13 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 					 
 					</div>
 				)}
+			/>
+			<Pagination
+				currentPage={page}
+				totalItems={filteredCollaborations.length}
+				pageSize={limit}
+				onPageChange={(p) => setPage(p)}
+				className="w-full"
 			/>
 			</div>
 		</div>
