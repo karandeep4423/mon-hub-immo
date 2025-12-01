@@ -278,27 +278,6 @@ export const LoginWithUserType: React.FC = () => {
 							</div>
 						</div>
 					</div>
-
-					{/* Quote/Testimonial */}
-					<div className="pt-8 border-t border-white/20">
-						<p className="text-lg italic mb-3">
-							&quot;La plateforme la plus efficace pour développer
-							mon réseau professionnel&quot;
-						</p>
-						<div className="flex items-center space-x-3">
-							<div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-								<span className="text-sm font-bold">MC</span>
-							</div>
-							<div>
-								<p className="font-semibold text-sm">
-									Marie Curie
-								</p>
-								<p className="text-xs text-brand-100">
-									Agent immobilier, Paris
-								</p>
-							</div>
-						</div>
-					</div>
 				</div>
 			</div>
 

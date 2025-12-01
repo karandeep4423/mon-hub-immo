@@ -64,13 +64,14 @@ export default function MonAgentImmoPage() {
 					agent.professionalInfo?.city?.toLowerCase() || '';
 				const agentPostalCode =
 					agent.professionalInfo?.postalCode || '';
-				
+
 				// Check if agent is in one of the nearby cities
 				// We match by city name or postal code
-				return nearbyCities.some(city => 
-                    city.toLowerCase() === agentCity || 
-                    (agentPostalCode && city.includes(agentPostalCode)) // Rough check, improved below
-                );
+				return nearbyCities.some(
+					(city) =>
+						city.toLowerCase() === agentCity ||
+						(agentPostalCode && city.includes(agentPostalCode)), // Rough check, improved below
+				);
 			});
 		}
 
@@ -128,52 +129,59 @@ export default function MonAgentImmoPage() {
 					'No exact matches found. Trying radius search with coordinates:',
 					searchCoordinates,
 				);
-				
+
 				// Fetch nearby municipalities within 50km
 				const nearby = await getMunicipalitiesNearby(
 					searchCoordinates.lat,
 					searchCoordinates.lon,
-					50 // 50km radius
+					50, // 50km radius
 				);
 
 				if (nearby.length > 0) {
 					console.log(`Found ${nearby.length} nearby municipalities`);
 					// Create a list of city names and postal codes to match against
-					const nearbyLocations = nearby.map(m => m.name.toLowerCase());
-                    // Also keep track of postal codes for better matching
-                    const nearbyPostcodes = nearby.map(m => m.postcode);
+					const nearbyLocations = nearby.map((m) =>
+						m.name.toLowerCase(),
+					);
+					// Also keep track of postal codes for better matching
+					const nearbyPostcodes = nearby.map((m) => m.postcode);
 
 					// Filter agents who are in these nearby locations
 					const radiusMatches = agents.filter((agent) => {
 						const agentCity =
 							agent.professionalInfo?.city?.toLowerCase() || '';
-                        const agentPostalCode = agent.professionalInfo?.postalCode || '';
-                        
-						return nearbyLocations.includes(agentCity) || nearbyPostcodes.includes(agentPostalCode);
+						const agentPostalCode =
+							agent.professionalInfo?.postalCode || '';
+
+						return (
+							nearbyLocations.includes(agentCity) ||
+							nearbyPostcodes.includes(agentPostalCode)
+						);
 					});
 
 					if (radiusMatches.length > 0) {
 						setRadiusSearchActive(true);
 						setNearbyCities(nearbyLocations); // We'll use this in useMemo, but logic is duplicated slightly for clarity here
-                        
-                        toast.success(
-                            `Aucun agent à ${searchCity}, mais voici des agents à proximité !`,
-                            {
-                                autoClose: 5000,
-                            }
-                        );
+
+						toast.success(
+							`Aucun agent à ${searchCity}, mais voici des agents à proximité !`,
+							{
+								autoClose: 5000,
+							},
+						);
 					} else {
-                        toast.error("Aucun agent trouvé dans ce secteur ni aux alentours.");
-                    }
+						toast.error(
+							'Aucun agent trouvé dans ce secteur ni aux alentours.',
+						);
+					}
 				} else {
-                    toast.error("Aucun agent trouvé dans ce secteur.");
-                }
+					toast.error('Aucun agent trouvé dans ce secteur.');
+				}
 			} else if (exactMatches.length === 0) {
-                toast.error("Aucun agent trouvé dans ce secteur.");
-            }
+				toast.error('Aucun agent trouvé dans ce secteur.');
+			}
 		} catch (error) {
-			console.error('Error during search:', error);
-			toast.error("Une erreur est survenue lors de la recherche.");
+			toast.error('Une erreur est survenue lors de la recherche.');
 		} finally {
 			setSearchPerformed(true);
 			setSearching(false);

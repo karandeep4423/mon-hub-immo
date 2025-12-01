@@ -64,7 +64,8 @@ export default function Header() {
 											href="/accueil"
 											className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition-all duration-200"
 										>
-											Vous êtes agent immobilier ?
+											Vous êtes agent immobilier ou
+											apporteur d’affaires ?
 										</Link>
 									) : (
 										<Link
@@ -160,7 +161,8 @@ export default function Header() {
 											setIsMobileMenuOpen(false)
 										}
 									>
-										Vous êtes agent immobilier ?
+										Vous êtes agent immobilier ou apporteur
+										d’affaires ?
 									</Link>
 								) : (
 									<Link
