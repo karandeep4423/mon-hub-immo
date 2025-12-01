@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import ConfirmDialog from '../ui/ConfirmDialog';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Image from 'next/image';
 import CreateUserModal from './CreateUserModal';
 import ImportUsersModal from './ImportUsersModal';
