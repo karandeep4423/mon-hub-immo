@@ -3,8 +3,8 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Badge } from './ui/Badge';
-import { DataTable } from './ui/DataTable';
+import { Badge } from '@/components/ui/Badge';
+import { DataTable } from '@/components/ui/DataTable';
 import Pagination from '@/components/ui/Pagination';
 import { BarChart2, CheckCircle, Check, DollarSign, Handshake, Home, Eye, MessageSquare, Calendar, RefreshCw } from 'lucide-react';
 
@@ -178,7 +178,7 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 						header: 'Agent & Apporteur',
 						accessor: 'agent',
 						width: '25%',
-					render: (_, row: AdminCollaboration) => {
+						render: (_: any, row: AdminCollaboration) => {
 						const agentName = row.agentName || (typeof row.agent === 'string' ? row.agent : (row.agent ? `${row.agent.firstName ?? ''} ${row.agent.lastName ?? ''}`.trim() : ''));
 						const agentId = typeof row.agent === 'object' && row.agent ? row.agent._id : row.agentId;
 						const apporteurName = row.apporteurName || (typeof row.apporteur === 'string' ? row.apporteur : (row.apporteur ? `${row.apporteur.firstName ?? ''} ${row.apporteur.lastName ?? ''}`.trim() : ''));
@@ -211,7 +211,7 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 						header: 'Annonce',
 						accessor: 'property',
 						width: '20%',
-						render: (value, row: AdminCollaboration) => {
+						render: (value: any, row: AdminCollaboration) => {
 							const propertyTitle = value || row.postId?.address || row.postId?.title || 'Unknown';
 							const isProperty = row.postType === 'Property';
 							return (
@@ -230,7 +230,7 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 						header: 'Commission',
 						accessor: 'commission',
 						width: '15%',
-						render: (value, row: AdminCollaboration) => {
+						render: (value: any, row: AdminCollaboration) => {
 							const commission = value || row.proposedCommission || 0;
 							return (
 								<span className="font-bold text-cyan-600 text-xs sm:text-sm">€{(commission / 1000).toFixed(1)}k</span>
@@ -241,9 +241,9 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 						header: 'Statut',
 						accessor: 'status',
 						width: '15%',
-						render: (value) => (
+						render: (value: any) => (
 							<Badge
-								label={timelineStatus(value)}
+										children={timelineStatus(value)}
 								variant={statusVariant(value)}
 								size="sm"
 							/>
@@ -253,7 +253,7 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 						header: 'Dates',
 						accessor: 'createdAt',
 						width: '15%',
-						render: (value, row: AdminCollaboration) => (
+						render: (value: any, row: AdminCollaboration) => (
 							<div className="text-xs text-gray-600 space-y-1">
 								<p className="flex items-center gap-1 sm:gap-2"><Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" /><span className="truncate">{new Date(value).toLocaleDateString('fr-FR')}</span></p>
 								<p className="text-gray-500 flex items-center gap-1 sm:gap-2"><RefreshCw className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" /><span className="truncate">{new Date(row.updatedAt).toLocaleDateString('fr-FR')}</span></p>

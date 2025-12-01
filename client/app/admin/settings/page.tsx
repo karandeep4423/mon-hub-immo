@@ -2,7 +2,7 @@
 'use client';
 
 import AdminLayout from '@/components/admin/AdminLayout';
-import { Button } from '@/components/admin/ui/Button';
+import { Button } from '@/components/ui/Button';
 import React, { useState } from 'react';
 
 export default function AdminSettingsPage() {

@@ -9,9 +9,9 @@ import ImportUsersModal from './ImportUsersModal';
 import Link from 'next/link';
 import { useAdminUsers } from '@/hooks/useAdminUsers';
 import { adminService } from '@/lib/api/adminApi'; // Import the new admin service
-import { Badge } from './ui/Badge';
-import { Button } from './ui/Button';
-import { DataTable } from './ui/DataTable';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { DataTable } from '@/components/ui/DataTable';
 import Pagination from '@/components/ui/Pagination';
 import AdminUserFilters from './AdminUserFilters';
 import { toast } from 'react-toastify';
@@ -224,7 +224,7 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						header: 'Utilisateur',
 						accessor: 'firstName',
 						width: '25%',
-						render: (_, row: AdminUser) => (
+						render: (_: any, row: AdminUser) => (
 							<div className="flex items-center gap-2 sm:gap-3 min-w-0">
 								<div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs sm:text-sm">
 									{(row.firstName && row.firstName.charAt) ? row.firstName.charAt(0) : (row.email ? row.email.charAt(0) : 'U')}
@@ -240,27 +240,27 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						header: 'Type',
 						accessor: 'type',
 						width: '12%',
-						render: (value) => {
+						render: (value: any) => {
 							const v = String(value || '').toLowerCase();
 							let label = v ? v.charAt(0).toUpperCase() + v.slice(1) : 'Apporteur';
-							let variant: 'info' | 'default' | 'success' | 'warning' | 'error' = 'default';
+							let variant: 'info' | 'gray' | 'success' | 'warning' | 'error' = 'gray';
 							if (v === 'agent') { label = 'Agent'; variant = 'info'; }
-							else if (v === 'apporteur') { label = 'Apporteur'; variant = 'default'; }
+							else if (v === 'apporteur') { label = 'Apporteur'; variant = 'gray'; }
 							else if (v === 'admin' || v === 'administrator') { label = 'Admin'; variant = 'success'; }
-							return <Badge label={label} variant={variant} size="sm" />;
+							return <Badge variant={variant} size="sm">{label}</Badge>;
 						},
 					},
 					{
 						header: 'Réseau',
 						accessor: 'network',
 						width: '10%',
-						render: (_value, row: AdminUser) => (<span className="text-xs sm:text-sm text-gray-700 truncate">{row.professionalInfo?.network || '-'}</span>),
+						render: (_value: any, row: AdminUser) => (<span className="text-xs sm:text-sm text-gray-700 truncate">{row.professionalInfo?.network || '-'}</span>),
 					},
 					{
 						header: 'Activité',
 						accessor: 'activity',
 						width: '18%',
-						render: (_v, row: AdminUser) => (
+						render: (_v: any, row: AdminUser) => (
 							<div className="text-xs space-y-0.5">
 								<div>📋: <span className="font-medium">{row.propertiesCount ?? 0}</span></div>
 								<div>🤝: <span className="font-medium">{((row.collaborationsActive ?? 0) + (row.collaborationsClosed ?? 0))}</span></div>
@@ -272,16 +272,16 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						header: 'Statut',
 						accessor: 'status',
 						width: '12%',
-						render: (_value, row: AdminUser) => {
+						render: (_value: any, row: AdminUser) => {
 							const value = (row.isBlocked ? 'blocked' : (row.isValidated ? 'active' : 'pending')) as 'active' | 'pending' | 'blocked';
-							return <Badge label={value && value.charAt ? value.charAt(0).toUpperCase() + value.slice(1) : String(value || '')} variant={statusVariant(value)} size="sm" />;
+							return <Badge variant={statusVariant(value) as any} size="sm">{value && value.charAt ? value.charAt(0).toUpperCase() + value.slice(1) : String(value || '')}</Badge>;
 						},
 					},
 					{
 						header: 'Inscription',
 						accessor: 'registeredAt',
 						width: '13%',
-						render: (value) => {
+						render: (value: any) => {
 							if (!value) return <span className="text-xs text-gray-600">-</span>;
 							const d = new Date(value);
 							if (isNaN(d.getTime())) return <span className="text-xs text-gray-600">-</span>;
@@ -292,11 +292,11 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						header: 'Paiement',
 						accessor: 'isPaid',
 						width: '12%',
-						render: (_value, row: AdminUser) => {
+						render: (_value: any, row: AdminUser) => {
 							if (row.type !== 'agent') return <span className="text-xs text-gray-500">N/A</span>;
-							if (row.accessGrantedByAdmin) return <Badge label="Accès manuel" variant="info" size="sm" />;
-							if (row.isPaid) return <Badge label="Payé" variant="success" size="sm" />;
-							if (row.profileCompleted) return <Badge label="En attente" variant="warning" size="sm" />;
+							if (row.accessGrantedByAdmin) return <Badge variant="info" size="sm">Accès manuel</Badge>;
+							if (row.isPaid) return <Badge variant="success" size="sm">Payé</Badge>;
+							if (row.profileCompleted) return <Badge variant="warning" size="sm">En attente</Badge>;
 							return <span className="text-xs text-gray-500">Profil incomplet</span>;
 						},
 					},
@@ -497,9 +497,9 @@ const EditUserModal: React.FC<{ user: AdminUser; onClose: () => void; onSave: ()
 								<p className="text-sm text-gray-600">{form.email}</p>
 								<p className="text-sm text-gray-600">{form.phone || '-'}</p>
 								<div className="mt-3 flex flex-wrap gap-2">
-									<Badge label={`Rôle: ${(form.type || (form as any).userType) || 'apporteur'}`} variant="info" />
-									<Badge label={`Réseau: ${form.professionalInfo?.network || '-'}`} variant="default" />
-									<Badge label={`Validé: ${form.isValidated ? 'Oui' : 'Non'}`} variant={form.isValidated ? 'success' : 'warning'} />
+									<Badge variant="info">{`Rôle: ${(form.type || (form as any).userType) || 'apporteur'}`}</Badge>
+									<Badge variant="gray">{`Réseau: ${form.professionalInfo?.network || '-'}`}</Badge>
+									<Badge variant={form.isValidated ? 'success' : 'warning'}>{`Validé: ${form.isValidated ? 'Oui' : 'Non'}`}</Badge>
 								</div>
 							</div>
 						</div>

@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Badge } from './ui/Badge';
-import { Button } from './ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui';
 import { Features } from '@/lib/constants';
 import Link from 'next/link';
-import { DataTable } from './ui/DataTable';
+import { DataTable } from '@/components/ui/DataTable';
 import { useAdminProperties } from '@/hooks/useAdminProperties';
 import { Home, CheckCircle, BarChart2, DollarSign, Eye, Trash2, LayoutGrid, List } from 'lucide-react';
 import Pagination from '@/components/ui/Pagination'
@@ -55,7 +55,7 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 	const statusVariant = (status: string) => {
 		if (status === 'active') return 'success';
 		if (status === 'pending') return 'warning';
-		return 'default';
+		return 'gray';
 	};
 
 	const openDeleteModal = (propertyId: string) => {
@@ -169,10 +169,10 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 				<DataTable
 					columns={[
 						{ header: 'Annonce', accessor: 'title', width: '30%', render: (_: any, row: any) => (<div className="min-w-0"><p className="font-medium text-gray-900 text-xs sm:text-sm truncate">{row.title}</p><p className="text-xs text-gray-500 truncate">{row.location || row.city}</p></div>) },
-						{ header: 'Type', accessor: 'type', width: '12%', render: (value: any, row: any) => (<Badge label={getPropertyTypeLabel(value || row.propertyType)} variant="info" size="sm" />) },
+						{ header: 'Type', accessor: 'type', width: '12%', render: (value: any, row: any) => (<Badge variant="info" size="sm">{getPropertyTypeLabel(value || row.propertyType)}</Badge>) },
 						{ header: 'Prix', accessor: 'price', width: '12%', render: (value: any) => (<span className="font-medium text-gray-900 text-xs sm:text-sm">€{(Number(value || 0) / 1000).toFixed(0)}k</span>) },
 						{ header: 'Vues', accessor: 'views', width: '10%', render: (value: any) => (<span className="text-xs sm:text-sm text-gray-700">{value || 0}</span>) },
-						{ header: 'Statut', accessor: 'status', width: '13%', render: (value: any) => (<Badge label={(value || '').charAt(0).toUpperCase() + (value || '').slice(1)} variant={statusVariant(value || '')} size="sm" />) },
+						{ header: 'Statut', accessor: 'status', width: '13%', render: (value: any) => (<Badge variant={statusVariant(value || '') as any} size="sm">{(value || '').charAt(0).toUpperCase() + (value || '').slice(1)}</Badge>) },
 						{ header: 'Créée', accessor: 'createdAt', width: '13%', render: (value: any) => (<span className="text-xs sm:text-sm text-gray-600">{new Date(value).toLocaleDateString('fr-FR')}</span>) },
 					]}
 					data={properties as any}
@@ -196,7 +196,7 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 								<p className="text-xs text-gray-500 mb-3"><Home className="w-4 h-4 inline-block mr-2 text-gray-500" />{prop.location || prop.city}</p>
 								<div className="flex items-center justify-between mb-4">
 									<span className="text-lg font-bold text-cyan-600">€{(prop.price / 1000).toFixed(0)}k</span>
-									<Badge label={getPropertyTypeLabel(prop.propertyType || prop.type)} variant="info" size="sm" />
+									<Badge variant="info" size="sm">{getPropertyTypeLabel(prop.propertyType || prop.type)}</Badge>
 								</div>
 								<div className="flex items-center justify-between text-xs text-gray-600 mb-4 pb-4 border-b">
 									<span><Eye className="w-4 h-4 inline-block mr-2" />{prop.views || 0} vues</span>

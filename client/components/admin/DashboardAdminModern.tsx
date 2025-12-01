@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import Link from 'next/link';
-import { StatCard } from './ui/StatCard';
+import { StatCard } from '@/components/ui/StatCard';
 import { designTokens } from '@/lib/constants/designTokens';
 import { AdminStats } from '@/hooks/useAdminStats';
 import { Users, FileText, Home, Handshake, DollarSign, Globe, MapPin } from 'lucide-react';

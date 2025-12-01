@@ -48,3 +48,5 @@ export { LocationSearchWithRadius } from './LocationSearchWithRadius';
 export { PriceBreakdown } from './PriceBreakdown';
 export { RichTextEditor } from './RichTextEditor';
 export { RichTextDisplay } from './RichTextDisplay';
+export { DataTable } from './DataTable';
+export { StatCard } from './StatCard';
