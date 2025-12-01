@@ -151,8 +151,7 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 			<div className="flex flex-col lg:flex-row gap-3 lg:gap-4 justify-between items-start lg:items-center">
 				<div className="w-full lg:flex-1 flex flex-col sm:flex-row gap-2 sm:gap-3">
 					<div className="flex gap-2 mb-2 sm:mb-0">
-						<Button variant="secondary" size="sm" onClick={() => { setFilters({ ...filters, postType: '' }); setPage(1); }} className={filters.postType === '' ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white' : ''}>Tous types</Button>
-						<Button variant="secondary" size="sm" onClick={() => { setFilters({ ...filters, postType: 'property' }); setPage(1); }} className={filters.postType === 'property' ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white' : ''}>Annonces</Button>
+						<Button variant="secondary" size="sm" onClick={() => { setFilters({ ...filters, postType: 'property' }); setPage(1); }} className={filters.postType === 'property' || filters.postType === '' ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white' : ''}>Annonces</Button>
 						<Button variant="secondary" size="sm" onClick={() => { setFilters({ ...filters, postType: 'search', type: '' }); setPage(1); }} className={filters.postType === 'search' ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white' : ''}>Recherches</Button>
 					</div>
 					<div className="w-full sm:flex-1 min-w-40">
@@ -319,7 +318,7 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 					actions={(row: any) => (
 						<div className="flex items-center justify-end gap-1.5">
 							<Link 
-								href={`/property/${row._id}`} 
+								href={row.propertyType === 'Recherche' ? `/search-ads/${row._id}` : `/property/${row._id}`} 
 								className="p-2 hover:bg-blue-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-blue-200 group"
 								title="Voir"
 							>
@@ -352,10 +351,10 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 									<span><Eye className="w-4 h-4 inline-block mr-2" />{prop.views || 0} vues</span>
 									<span>📅 {new Date(prop.createdAt).toLocaleDateString('fr-FR')}</span>
 								</div>
-								<div className="flex gap-2">
-									<Link href={`/property/${prop._id}`} className="flex-1 px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded transition-colors text-sm font-medium">Voir</Link>
-									<button onClick={() => openDeleteModal(prop._id)} className="flex-1 px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded transition-colors text-sm font-medium">Supprimer</button>
-								</div>
+							<div className="flex gap-2">
+								<Link href={prop.propertyType === 'Recherche' ? `/search-ads/${prop._id}` : `/property/${prop._id}`} className="flex-1 px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded transition-colors text-sm font-medium">Voir</Link>
+								<button onClick={() => openDeleteModal(prop._id)} className="flex-1 px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded transition-colors text-sm font-medium">Supprimer</button>
+							</div>
 							</div>
 						</div>
 					))}
