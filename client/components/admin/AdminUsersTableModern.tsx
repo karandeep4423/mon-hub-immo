@@ -641,8 +641,8 @@ const EditUserModal: React.FC<{ user: AdminUser; onClose: () => void; onSave: ()
 						 </div>
 
 						<div className="mt-6 flex gap-3">
-							<button type="submit" disabled={busy} className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700">Enregistrer</button>
-							<button type="button" onClick={onClose} className="px-4 py-2 border rounded">Fermer</button>
+							<Button type="submit" disabled={busy} variant="primary" className="px-4 py-2">Enregistrer</Button>
+							<Button type="button" onClick={onClose} variant="outline" className="px-4 py-2">Fermer</Button>
 						</div>
 					</div>
 
@@ -657,12 +657,36 @@ const EditUserModal: React.FC<{ user: AdminUser; onClose: () => void; onSave: ()
 							</div>
 						</div>
 
-						<div className="space-y-2">
-							<div className="text-sm text-gray-600">Actions rapides</div>
-							<div className="flex flex-col gap-2">
-								   <button disabled={busy} type="button" onClick={handleValidateToggle} className="w-full px-3 py-2 bg-emerald-500 text-white rounded flex items-center gap-2 justify-center">{user.isValidated ? 'Retirer validation' : 'Valider utilisateur'}</button>
-								   <button disabled={busy} type="button" onClick={handleBlockToggle} className="w-full px-3 py-2 bg-amber-500 text-white rounded flex items-center gap-2 justify-center">{user.isBlocked ? 'Débloquer' : 'Bloquer'}</button>
-								   <button disabled={busy} type="button" onClick={handleGrantRevokeAccess} className="w-full px-3 py-2 bg-purple-500 text-white rounded flex items-center gap-2 justify-center">{user.accessGrantedByAdmin ? 'Révoquer accès manuel' : 'Donner accès manuel'}</button>
+							<div className="space-y-2">
+								<div className="text-sm text-gray-600">Actions rapides</div>
+								<div className="flex flex-col gap-2">
+									<Button
+										type="button"
+										onClick={handleValidateToggle}
+										disabled={busy}
+										variant="outline"
+										className="w-full justify-center"
+									>
+										{user.isValidated ? 'Retirer validation' : 'Valider utilisateur'}
+									</Button>
+									<Button
+										type="button"
+										onClick={handleBlockToggle}
+										disabled={busy}
+										variant="outline"
+										className="w-full justify-center"
+									>
+										{user.isBlocked ? 'Débloquer' : 'Bloquer'}
+									</Button>
+									<Button
+										type="button"
+										onClick={handleGrantRevokeAccess}
+										disabled={busy}
+										variant="outline"
+										className="w-full justify-center"
+									>
+										{user.accessGrantedByAdmin ? 'Révoquer accès manuel' : 'Donner accès manuel'}
+									</Button>
 											{confirmAction && (
 												<ConfirmDialog
 													isOpen={!!confirmAction}
@@ -676,7 +700,7 @@ const EditUserModal: React.FC<{ user: AdminUser; onClose: () => void; onSave: ()
 													loading={busy}
 												/>
 											)}
- 							</div>
+								</div>
 						</div>
 					</div>
 				</form>

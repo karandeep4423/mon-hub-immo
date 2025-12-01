@@ -2,7 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart2, Users, Home, Handshake, Settings, MessageSquare, TrendingUp } from 'lucide-react';
+import { BarChart2, Users, Home, Handshake, Settings, TrendingUp } from 'lucide-react';
 
 const navItems = [
 	{
@@ -27,12 +27,6 @@ const navItems = [
 		label: 'Collaborations',
 		href: '/admin/collaborations',
 		icon: <Handshake className="w-5 h-5" />,
-		badge: null,
-	},
-	{
-		label: 'Chat Admin',
-		href: '/admin/chat',
-		icon: <MessageSquare className="w-5 h-5" />,
 		badge: null,
 	},
 ];
@@ -93,16 +87,7 @@ export const SidebarAdminModern: React.FC<SidebarAdminModernProps> = ({ isOpen =
 			</nav>
 
 			{/* Quick Stats */}
-			<div className="p-4 border-t border-gray-200 bg-gradient-to-br from-gray-50 to-white">
-				<div className="bg-white rounded-lg p-3 shadow-sm border border-gray-100">
-					<div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
-						<TrendingUp className="w-3.5 h-3.5" />
-						<span className="font-medium">Performance</span>
-					</div>
-					<div className="text-lg font-bold text-gray-900">98.5%</div>
-					<div className="text-xs text-green-600 font-medium mt-0.5">+2.1% vs dernier mois</div>
-				</div>
-			</div>
+ 
 
 			{/* Footer */}
 			<div className="p-4 border-t border-gray-200 text-xs text-gray-500">
