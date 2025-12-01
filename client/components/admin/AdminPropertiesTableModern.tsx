@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from 'react';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/CustomSelect';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui';
@@ -147,20 +149,36 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 
 			<div className="flex flex-col lg:flex-row gap-3 lg:gap-4 justify-between items-start lg:items-center">
 				<div className="w-full lg:flex-1 flex flex-col sm:flex-row gap-2 sm:gap-3">
-					<input type="search" placeholder="Chercher par titre, localisation..." value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value })} className="w-full sm:flex-1 px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-sm" />
-					<select value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })} className="w-full sm:w-auto px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-sm">
-						<option value="">Tous types</option>
-						<option value="Appartement">Appartement</option>
-						<option value="Maison">Maison</option>
-						<option value="Terrain">Terrain</option>
-						<option value="Commercial">Commercial</option>
-					</select>
-					<select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} className="w-full sm:w-auto px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-sm">
-						<option value="">Tous statuts</option>
-						<option value="active">Actif</option>
-						<option value="pending">En attente</option>
-						<option value="archived">Archivé</option>
-					</select>
+					<div className="w-full sm:flex-1 min-w-40">
+						<Input name="search" placeholder="Chercher par titre, localisation..." value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value })} />
+					</div>
+					<div className="w-full sm:flex-1 min-w-40">
+						<Select
+							name="type"
+							value={filters.type}
+							onChange={(val) => setFilters({ ...filters, type: val })}
+							options={[
+								{ value: '', label: 'Tous types' },
+								{ value: 'Appartement', label: 'Appartement' },
+								{ value: 'Maison', label: 'Maison' },
+								{ value: 'Terrain', label: 'Terrain' },
+								{ value: 'Commercial', label: 'Commercial' },
+							]}
+						/>
+					</div>
+					<div className="w-full sm:flex-1 min-w-40">
+						<Select
+							name="status"
+							value={filters.status}
+							onChange={(val) => setFilters({ ...filters, status: val })}
+							options={[
+								{ value: '', label: 'Tous statuts' },
+								{ value: 'active', label: 'Actif' },
+								{ value: 'pending', label: 'En attente' },
+								{ value: 'archived', label: 'Archivé' },
+							]}
+						/>
+					</div>
 				</div>
 
 				<div className="flex border border-gray-300 rounded-lg bg-white shadow-sm">
