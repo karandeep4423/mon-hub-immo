@@ -400,6 +400,36 @@ export class PropertyService {
 	}
 
 	/**
+	 * Get properties with full pagination data (useful for counts)
+	 */
+	static async getPropertiesWithCount(
+		filters?: PropertyFilters,
+	): Promise<PropertiesResponse['data']> {
+		try {
+			const params = new URLSearchParams();
+
+			if (filters) {
+				Object.entries(filters).forEach(([key, value]) => {
+					if (value !== undefined && value !== null && value !== '') {
+						params.append(key, value.toString());
+					}
+				});
+			}
+
+			const response = await api.get<PropertiesResponse>(
+				`/property?${params.toString()}`,
+			);
+			return response.data.data;
+		} catch (error) {
+			throw handleApiError(
+				error,
+				'PropertyService.getPropertiesWithCount',
+				'Erreur lors de la récupération des biens',
+			);
+		}
+	}
+
+	/**
 	 * Get a single property by ID
 	 *
 	 * @static

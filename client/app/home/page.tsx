@@ -1,8 +1,12 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef, Suspense } from 'react';
-import { Property, PropertyFilters } from '@/lib/api/propertyApi';
-import { SearchAdFilters } from '@/lib/api/searchAdApi';
+import {
+	Property,
+	PropertyFilters,
+	PropertyService,
+} from '@/lib/api/propertyApi';
+import { SearchAdFilters, SearchAdApi } from '@/lib/api/searchAdApi';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { useAuth } from '@/hooks/useAuth';
 import { useProperties } from '@/hooks/useProperties';
@@ -71,6 +75,7 @@ function HomeContent() {
 		null,
 	);
 	const [myAreaLocations, setMyAreaLocations] = useState<LocationItem[]>([]);
+	const [myAreaCount, setMyAreaCount] = useState<number>(0);
 	const [isInitialLoad, setIsInitialLoad] = useState(true);
 
 	// Simplified restoration state management
@@ -321,6 +326,56 @@ function HomeContent() {
 
 		loadMyAreaLocations();
 	}, [user]);
+
+	// Calculate "Mon secteur" count (properties + search ads)
+	useEffect(() => {
+		const fetchMyAreaCount = async () => {
+			if (!user || myAreaLocations.length === 0) return;
+
+			try {
+				const postalCodes = myAreaLocations.map((loc) => loc.postcode);
+				if (postalCodes.length === 0) return;
+
+				const postalCodeFilter = postalCodes.join(',');
+
+				// Fetch properties (fetching all to ensure accurate count matching the list)
+				const properties = await PropertyService.getAllProperties({
+					postalCode: postalCodeFilter,
+				});
+
+				// Fetch search ads
+				const searchAds = await SearchAdApi.getAllSearchAds({
+					postalCode: postalCodeFilter,
+				});
+
+				logger.debug('[Home] Mon secteur debug:', {
+					propertiesLength: properties?.length,
+					searchAdsLength: searchAds?.length,
+				});
+
+				const propCount = Array.isArray(properties)
+					? properties.length
+					: 0;
+				const adsCount = Array.isArray(searchAds)
+					? searchAds.length
+					: 0;
+
+				setMyAreaCount(propCount + adsCount);
+				logger.debug(
+					'[Home] "Mon secteur" count updated:',
+					propCount + adsCount,
+				);
+			} catch (error) {
+				logger.error(
+					'[Home] Error fetching "Mon secteur" count:',
+					error,
+				);
+				setMyAreaCount(0);
+			}
+		};
+
+		fetchMyAreaCount();
+	}, [user, myAreaLocations]);
 
 	// Check geolocation permission and show prompt on first visit
 	useEffect(() => {
@@ -634,7 +689,7 @@ function HomeContent() {
 						!!user?.professionalInfo?.city &&
 						myAreaLocations.length > 0
 					}
-					myAreaLocationsCount={myAreaLocations.length}
+					myAreaCount={myAreaCount}
 					favoritePropertyIds={favoritePropertyIds}
 					favoriteSearchAdIds={favoriteSearchAdIds}
 				/>

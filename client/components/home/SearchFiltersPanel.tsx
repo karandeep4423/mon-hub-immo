@@ -38,7 +38,7 @@ interface SearchFiltersPanelProps {
 	filteredSearchAdsCount: number;
 	isAuthenticated: boolean;
 	hasMyArea: boolean;
-	myAreaLocationsCount: number;
+	myAreaCount: number;
 	favoritePropertyIds: Set<string>;
 	favoriteSearchAdIds: Set<string>;
 }
@@ -64,7 +64,7 @@ const SearchFiltersPanelComponent = ({
 	filteredSearchAdsCount,
 	isAuthenticated,
 	hasMyArea,
-	myAreaLocationsCount,
+	myAreaCount,
 	favoritePropertyIds,
 	favoriteSearchAdIds,
 }: SearchFiltersPanelProps) => {
@@ -113,7 +113,7 @@ const SearchFiltersPanelComponent = ({
 								: 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm'
 						}`}
 					>
-						Mon secteur ({myAreaLocationsCount})
+						Mon secteur ({myAreaCount})
 					</button>
 				)}
 				<button
@@ -274,7 +274,7 @@ export const SearchFiltersPanel = React.memo(
 				nextProps.filteredSearchAdsCount &&
 			prevProps.isAuthenticated === nextProps.isAuthenticated &&
 			prevProps.hasMyArea === nextProps.hasMyArea &&
-			prevProps.myAreaLocationsCount === nextProps.myAreaLocationsCount &&
+			prevProps.myAreaCount === nextProps.myAreaCount &&
 			prevProps.favoritePropertyIds.size ===
 				nextProps.favoritePropertyIds.size &&
 			prevProps.favoriteSearchAdIds.size ===
