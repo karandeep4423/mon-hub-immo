@@ -1,8 +1,6 @@
 'use client';
 import React from 'react';
-import Link from 'next/link';
 import { StatCard } from '@/components/ui/StatCard';
-import { designTokens } from '@/lib/constants/designTokens';
 import { AdminStats } from '@/hooks/useAdminStats';
 import { Users, FileText, Home, Handshake, DollarSign, Globe, MapPin } from 'lucide-react';
 
@@ -54,7 +52,7 @@ export const DashboardAdminModern: React.FC<DashboardAdminModernProps> = ({ stat
 		},
 		{
 			icon: <DollarSign className="w-7 h-7 text-[#E11D48]" />,
-			title: 'Frais d\'Agence',
+			title: 'Frais d&apos;Agence',
 			value: typeof stats.feesTotal === 'number'
 				? `€${stats.feesTotal.toLocaleString('fr-FR')}`
 				: stats.feesTotal,
@@ -67,10 +65,10 @@ export const DashboardAdminModern: React.FC<DashboardAdminModernProps> = ({ stat
 			{/* Header - Optimized for all screen sizes */}
 			<div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
 				<div>
-					<h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
-						Tableau de Bord
-					</h1>
-					<p className="text-sm text-gray-500 mt-1">Vue d'ensemble de votre plateforme</p>
+				<h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
+					Tableau de Bord
+				</h1>
+				<p className="text-sm text-gray-500 mt-1">Vue d&apos;ensemble de votre plateforme</p>
  				</div>
 				<div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-sm border border-gray-200">
 					<div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -175,28 +173,6 @@ export const DashboardAdminModern: React.FC<DashboardAdminModernProps> = ({ stat
 			{/* Quick Actions - Mobile optimized */}
 			 
 		</div>
-	);
-};
-
-interface QuickActionButtonProps {
-	label: string;
-	icon: string;
-	href: string;
-	description: string;
-}
-
-const QuickActionButton: React.FC<QuickActionButtonProps> = ({ label, icon, href, description }) => {
-	return (
-		<Link
-			href={href}
-			className="group p-4 bg-white/10 hover:bg-white/20 rounded-lg border border-white/20 transition-all duration-300 hover:scale-105"
-		>
-			<div className="flex items-center gap-3 mb-2">
-				<span className="text-3xl">{icon}</span>
-				<span className="font-semibold">{label}</span>
-			</div>
-			<p className="text-sm text-gray-300">{description}</p>
-		</Link>
 	);
 };
 

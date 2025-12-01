@@ -34,7 +34,6 @@ export default function AdminUserProfile() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [loadingStats, setLoadingStats] = useState(false);
 
   const fetchUser = useCallback(() => {
     setLoading(true);
@@ -55,7 +54,6 @@ export default function AdminUserProfile() {
           if (
             (data.propertiesCount == null || data.collaborationsActive == null || data.collaborationsClosed == null)
           ) {
-            setLoadingStats(true);
             fetch(`${API_ROOT}/api/admin/users/${id}/stats`, { credentials: 'include' })
               .then(r => (r.ok ? r.json() : null))
               .then(stats => {
@@ -63,8 +61,7 @@ export default function AdminUserProfile() {
                   setUser(prev => prev ? { ...prev, ...stats } : prev);
                 }
               })
-              .catch(() => void 0)
-              .finally(() => setLoadingStats(false));
+              .catch(() => void 0);
           }
         }
       })
@@ -74,7 +71,7 @@ export default function AdminUserProfile() {
       .finally(() => {
         setLoading(false);
       });
-  }, [id]);
+  }, [id, API_ROOT]);
 
   useEffect(() => {
     fetchUser();

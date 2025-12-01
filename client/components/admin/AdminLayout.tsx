@@ -2,9 +2,6 @@
 import React, { ReactNode, useState } from 'react';
 import SidebarAdminModern from './SidebarAdminModern';
 import AdminMobileNav from './AdminMobileNav';
-import { Menu, X, Bell, User } from 'lucide-react';
-import Link from 'next/link';
-import { useAuthStore } from '@/store/authStore';
 
 interface AdminLayoutProps {
 	children: ReactNode;
@@ -12,7 +9,6 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
 	const [menuOpen, setMenuOpen] = useState(false);
-	const user = useAuthStore((state) => state.user);
 
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">

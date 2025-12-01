@@ -110,22 +110,6 @@ function StatCard({ title, value, details, icon }: any) {
   );
 }
 
-function StatList({ title, items, color }: any) {
-  return (
-    <div className={`bg-white rounded-2xl shadow-md border-l-4 border-${color}-300 p-6`}>
-      <h3 className={`mb-4 font-extrabold text-lg text-${color}-700`}>{title}</h3>
-      <ul className="list-disc list-inside space-y-2">
-        {items.map((item: any) => (
-          <li key={item.name} className="flex justify-between pr-4">
-            <span>{item.name}</span>
-            <span className="font-bold">{item.count}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 function NavButton({ href, label, icon }: any) {
   return (
     <Link

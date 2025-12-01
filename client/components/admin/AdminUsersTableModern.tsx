@@ -60,7 +60,7 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 	loading: initialLoading,
 }) => {
 	const [page, setPage] = useState<number>(1);
-	const [limit, setLimit] = useState<number>(10);
+	const [limit] = useState<number>(10);
 	const [filters, setFilters] = useState({ type: '', status: '', search: '', network: '', email: '' });
 	const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
 	const [showCreate, setShowCreate] = useState(false);
@@ -121,7 +121,6 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 		});
 	}, [users, filters]);
 
-	const totalPages = useMemo(() => Math.max(1, Math.ceil(filteredUsers.length / limit)), [filteredUsers.length, limit]);
 	const pagedUsers = useMemo(() => {
 		const start = (page - 1) * limit;
 		return filteredUsers.slice(start, start + limit);
@@ -564,17 +563,6 @@ const EditUserModal: React.FC<{ user: AdminUser; onClose: () => void; onSave: ()
 			 }
 		 });
 	 };
-
-	const handleSendReminder = async () => {
-		setBusy(true);
-		try {
-			await adminService.sendPaymentReminder(user._id);
-			toast.success('Rappel envoyé');
-		} catch (err) {
-			console.error(err);
-			toast.error('Erreur');
-		} finally { setBusy(false); }
-	};
 
 	return (
 		<div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">

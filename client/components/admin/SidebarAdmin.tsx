@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { HomeIcon, UsersIcon, BuildingStorefrontIcon, Cog6ToothIcon, UserGroupIcon } from "@heroicons/react/24/outline";
+import { HomeIcon, UsersIcon, BuildingStorefrontIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 
 const links = [
   { href: "/admin", label: "Tableau de bord", icon: <HomeIcon className="h-5 w-5" /> },

@@ -2,16 +2,13 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '../ui/Button';
 
 interface AccountValidationModalProps {
 	isOpen: boolean;
-	onClose?: () => void;
 }
 
 export const AccountValidationModal: React.FC<AccountValidationModalProps> = ({
 	isOpen,
-	onClose,
 }) => {
 	const router = useRouter();
 

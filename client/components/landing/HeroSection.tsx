@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { LuHandshake, LuMessageCircle } from 'react-icons/lu';
 
 export const HeroSection = () => {

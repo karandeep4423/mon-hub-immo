@@ -1,11 +1,11 @@
 // Centralized exports for modern admin components
 // Use these imports instead of importing from individual files
 
-// UI Components
-export * from './ui/StatCard';
-export * from './ui/DataTable';
-export * from './ui/Badge';
-export * from './ui/Button';
+// UI Components (import directly from components/ui)
+export { StatCard } from '@/components/ui/StatCard';
+export { DataTable } from '@/components/ui/DataTable';
+export { Badge } from '@/components/ui/Badge';
+export { Button } from '@/components/ui/Button';
 
 // Layout
 export { default as AdminLayout } from './AdminLayout';

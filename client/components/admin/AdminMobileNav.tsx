@@ -2,7 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart2, Users, Home, Handshake, MessageSquare } from 'lucide-react';
+import { BarChart2, Users, Home, Handshake } from 'lucide-react';
 
 const nav = [
   { href: '/admin', label: 'Tableau', icon: BarChart2 },

@@ -75,7 +75,6 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 		});
 	}, [collaborations, filters]);
 
-	const totalPages = useMemo(() => Math.max(1, Math.ceil(filteredCollaborations.length / limit)), [filteredCollaborations.length, limit]);
 	const pagedCollaborations = useMemo(() => {
 		const start = (page - 1) * limit;
 		return filteredCollaborations.slice(start, start + limit);
@@ -258,12 +257,9 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 						width: '15%',
 						render: (value: any) => (
 							<div className="flex justify-center">
-								<Badge
-									children={timelineStatus(value)}
-									variant={statusVariant(value)}
-									size="sm"
-									className="shadow-sm"
-								/>
+								<Badge variant={statusVariant(value)} size="sm" className="shadow-sm">
+									{timelineStatus(value)}
+								</Badge>
 							</div>
 						),
 					},

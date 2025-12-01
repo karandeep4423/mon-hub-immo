@@ -11,10 +11,7 @@ import {
 	FeatureCards,
 	AgentsListSection,
 } from '@/components/accueil';
-import {
-	getMunicipalitiesNearby,
-	calculateDistance,
-} from '@/lib/services/frenchAddressApi';
+import { getMunicipalitiesNearby } from '@/lib/services/frenchAddressApi';
 import { toast } from 'react-toastify';
 import Link from 'next/link';
 import { Footer } from '@/components/footer/footer';
@@ -180,7 +177,7 @@ export default function MonAgentImmoPage() {
 			} else if (exactMatches.length === 0) {
 				toast.error('Aucun agent trouvé dans ce secteur.');
 			}
-		} catch (error) {
+		} catch {
 			toast.error('Une erreur est survenue lors de la recherche.');
 		} finally {
 			setSearchPerformed(true);

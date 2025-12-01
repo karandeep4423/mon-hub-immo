@@ -1,6 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { ChatApi } from '@/lib/api/chatApi';
 import { useEffect, useState } from 'react';
@@ -9,7 +10,6 @@ import type { ChatMessage } from '@/types/chat';
 export default function AdminChatPage() {
 	const params = useSearchParams();
 	const collaborationId = params.get('collaborationId') || '';
-	const [participants, setParticipants] = useState<{ ownerId: string; collaboratorId: string } | null>(null);
 	const [messages, setMessages] = useState<ChatMessage[]>([]);
 	const [loading, setLoading] = useState<boolean>(false);
 	const [userMap, setUserMap] = useState<Record<string, { firstName?: string; lastName?: string; avatarUrl?: string }>>({});
@@ -23,7 +23,6 @@ export default function AdminChatPage() {
 				if (conv?.conversation?.ownerId && conv.conversation.collaboratorId) {
 					const ownerId = conv.conversation.ownerId;
 					const collaboratorId = conv.conversation.collaboratorId;
-					setParticipants({ ownerId, collaboratorId });
 					// Fetch messages
 					const msgs = await ChatApi.getMessagesBetween(ownerId, collaboratorId, 100);
 					const allMessages = msgs.messages || [];
@@ -107,8 +106,8 @@ export default function AdminChatPage() {
 														<div key={att.url} className="group border rounded-md p-2 bg-gray-50 hover:bg-gray-100 transition-colors">
 															<div className="flex items-start gap-3">
 																{isImage ? (
-																	<a href={att.url} target="_blank" rel="noopener noreferrer" className="block w-24 h-24 overflow-hidden rounded-md bg-white shadow-sm">
-																		<img src={att.thumbnailUrl || att.url} alt={att.name} className="object-cover w-full h-full" />
+																	<a href={att.url} target="_blank" rel="noopener noreferrer" className="block w-24 h-24 overflow-hidden rounded-md bg-white shadow-sm relative">
+																		<Image src={att.thumbnailUrl || att.url} alt={att.name} fill className="object-cover" unoptimized />
 																	</a>
 																) : (
 																	<div className="w-10 h-10 flex items-center justify-center rounded bg-gradient-to-br from-slate-200 to-slate-300 text-slate-600 text-xs font-medium">

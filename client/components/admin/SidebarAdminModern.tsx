@@ -2,7 +2,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart2, Users, Home, Handshake, Settings, TrendingUp } from 'lucide-react';
+import { BarChart2, Users, Home, Handshake } from 'lucide-react';
 
 const navItems = [
 	{

@@ -5,7 +5,7 @@ import { AdminPropertiesTableModern } from '@/components/admin/AdminPropertiesTa
 import { useAdminProperties } from '@/hooks/useAdminProperties';
 
 export default function AdminPropertiesPage() {
-	const { properties, loading } = useAdminProperties({});
+	const { properties } = useAdminProperties({});
 
 	return (
 		<AdminLayout>

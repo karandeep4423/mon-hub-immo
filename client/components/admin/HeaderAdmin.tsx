@@ -1,7 +1,5 @@
 'use client';
-import React, { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { designTokens } from '@/lib/constants/designTokens';
+import React from 'react';
 
 interface HeaderAdminProps {
 	onMenuToggle?: () => void;

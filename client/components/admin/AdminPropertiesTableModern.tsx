@@ -44,7 +44,7 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 	const [deleteLoading, setDeleteLoading] = useState(false);
 	const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
 
-	const { properties: fetchedProperties, loading, totalItems, currentPage, totalPages, refetch } = useAdminProperties({
+	const { properties: fetchedProperties, loading, totalItems, currentPage, refetch } = useAdminProperties({
 		search: filters.search,
 		status: filters.status,
 		propertyType: filters.type,
@@ -92,7 +92,7 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 				// alert('Erreur lors de la suppression');
 				setDeleteLoading(false);
 			}
-		} catch (err) {
+		} catch {
 			// alert('Erreur lors de la suppression');
 			setDeleteLoading(false);
 		}
