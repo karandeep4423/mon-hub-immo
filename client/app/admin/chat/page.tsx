@@ -26,24 +26,37 @@ export default function AdminChatPage() {
 					setParticipants({ ownerId, collaboratorId });
 					// Fetch messages
 					const msgs = await ChatApi.getMessagesBetween(ownerId, collaboratorId, 100);
-					setMessages(msgs.messages || []);
-					// Fetch user details (parallel)
+					const allMessages = msgs.messages || [];
+					setMessages(allMessages);
+					// Collect unique sender IDs (include owner & collaborator explicitly)
+					const uniqueIds = Array.from(new Set([
+						ownerId,
+						collaboratorId,
+						...allMessages.map(m => m.senderId),
+					]));
+					// Fetch user details for every unique id (parallel)
 					try {
-						const [ownerUser, collabUser] = await Promise.all([
-							ChatApi.getUserById(ownerId),
-							ChatApi.getUserById(collaboratorId),
-						]);
-						setUserMap({
-							[ownerId]: {
-								firstName: ownerUser.firstName,
-								lastName: ownerUser.lastName,
-								avatarUrl: ownerUser.avatarUrl,
-							},
-							[collaboratorId]: {
-								firstName: collabUser.firstName,
-								lastName: collabUser.lastName,
-								avatarUrl: collabUser.avatarUrl,
-							},
+						const users = await Promise.all(uniqueIds.map(id => ChatApi.getUserById(id)));
+						setUserMap(prev => {
+							const next = { ...prev };
+							users.forEach((u, idx) => {
+								const id = uniqueIds[idx];
+								if (!next[id]) {
+									next[id] = {
+										firstName: u.firstName,
+										lastName: u.lastName,
+										avatarUrl: u.avatarUrl,
+									};
+								} else {
+									next[id] = {
+										...next[id],
+										firstName: next[id].firstName || u.firstName,
+										lastName: next[id].lastName || u.lastName,
+										avatarUrl: next[id].avatarUrl || u.avatarUrl,
+									};
+								}
+							});
+							return next;
 						});
 					} catch (userErr) {
 						console.warn('[AdminChatPage] user fetch error', userErr);
@@ -75,8 +88,8 @@ export default function AdminChatPage() {
 						{messages.map(m => {
 							const hasAttachments = Array.isArray(m.attachments) && m.attachments.length > 0;
 							const userInfo = userMap[m.senderId];
-							const fullName = userInfo ? `${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() || m.senderId : m.senderId;
-							const initials = userInfo ? `${(userInfo.firstName || '').charAt(0)}${(userInfo.lastName || '').charAt(0)}`.toUpperCase() || fullName.slice(0,2).toUpperCase() : m.senderId.slice(-2);
+							const fullName = userInfo ? (`${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() || 'Inconnu') : 'Inconnu';
+							const initials = (userInfo && ((userInfo.firstName || '').charAt(0) + (userInfo.lastName || '').charAt(0)).toUpperCase().trim()) || (fullName.charAt(0) || '?').toUpperCase();
 							return (
 								<li key={m._id} className="flex items-start gap-3">
 									<div className="w-9 h-9 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xs font-semibold" title={fullName} aria-label={fullName}>
