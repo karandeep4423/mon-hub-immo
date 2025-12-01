@@ -3,6 +3,8 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/CustomSelect';
 import { Badge } from '@/components/ui/Badge';
 import { DataTable } from '@/components/ui/DataTable';
 import Pagination from '@/components/ui/Pagination';
@@ -114,24 +116,28 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 
 			<div className="space-y-3">
 				<div className="flex flex-col sm:flex-row gap-3">
-					<input
-						type="search"
-						placeholder="Chercher agent, apporteur, annonce..."
-						value={filters.search}
-						onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-						className="w-full sm:flex-1 px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-sm"
-					/>
-					<select
-						value={filters.status}
-						onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-						className="w-full sm:w-auto px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-sm"
-					>
-						<option value="">Tous statuts</option>
-						<option value="pending">En attente</option>
-						<option value="active">Active</option>
-						<option value="completed">Complétée</option>
-						<option value="cancelled">Annulée</option>
-					</select>
+					<div className="w-full sm:flex-1 min-w-40">
+						<Input
+							name="search"
+							placeholder="Chercher agent, apporteur, annonce..."
+							value={filters.search}
+							onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+						/>
+					</div>
+					<div className="w-full sm:flex-1 min-w-40">
+						<Select
+							name="status"
+							value={filters.status}
+							onChange={(val) => setFilters({ ...filters, status: val })}
+							options={[
+								{ value: '', label: 'Tous statuts' },
+								{ value: 'pending', label: 'En attente' },
+								{ value: 'active', label: 'Active' },
+								{ value: 'completed', label: 'Complétée' },
+								{ value: 'cancelled', label: 'Annulée' },
+							]}
+						/>
+					</div>
 				</div>
 				<div className="flex flex-wrap gap-2">
 					<button
