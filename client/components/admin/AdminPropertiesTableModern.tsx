@@ -36,7 +36,7 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 
 	const [page, setPage] = useState<number>(1);
 	const [limit] = useState<number>(10);
-	const [filters, setFilters] = useState({ type: '', status: '', search: '' });
+	const [filters, setFilters] = useState({ type: '', status: '', search: '', postType: '' });
 	const [viewType, setViewType] = useState<'table' | 'grid'>('table');
 
 	// Delete modal state
@@ -48,6 +48,7 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 		search: filters.search,
 		status: filters.status,
 		propertyType: filters.type,
+		postType: filters.postType,
 		page,
 		limit,
 	});
@@ -149,6 +150,11 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 
 			<div className="flex flex-col lg:flex-row gap-3 lg:gap-4 justify-between items-start lg:items-center">
 				<div className="w-full lg:flex-1 flex flex-col sm:flex-row gap-2 sm:gap-3">
+					<div className="flex gap-2 mb-2 sm:mb-0">
+						<Button variant="secondary" size="sm" onClick={() => { setFilters({ ...filters, postType: '' }); setPage(1); }} className={filters.postType === '' ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white' : ''}>Tous types</Button>
+						<Button variant="secondary" size="sm" onClick={() => { setFilters({ ...filters, postType: 'property' }); setPage(1); }} className={filters.postType === 'property' ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white' : ''}>Annonces</Button>
+						<Button variant="secondary" size="sm" onClick={() => { setFilters({ ...filters, postType: 'search', type: '' }); setPage(1); }} className={filters.postType === 'search' ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white' : ''}>Recherches</Button>
+					</div>
 					<div className="w-full sm:flex-1 min-w-40">
 						<Input name="search" placeholder="Chercher par titre, localisation..." value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value })} />
 					</div>
@@ -157,6 +163,7 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 							name="type"
 							value={filters.type}
 							onChange={(val) => setFilters({ ...filters, type: val })}
+							disabled={filters.postType === 'search'}
 							options={[
 								{ value: '', label: 'Tous types' },
 								{ value: 'Appartement', label: 'Appartement' },
