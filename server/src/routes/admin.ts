@@ -1,6 +1,6 @@
 // routes/admin.ts
 import express from 'express';
-import { getAdminUsers, validateUser, getAdminUserProfile, createAdminUser, updateAdminUser, deleteAdminUser, importUsersFromCSV, getAdminStats, blockUser, unblockUser, sendPaymentReminder, grantAdminAccess, revokeAdminAccess } from '../controllers/adminController';
+import { getAdminUsers, validateUser, getAdminUserProfile, getAdminUserStats, createAdminUser, updateAdminUser, deleteAdminUser, importUsersFromCSV, getAdminStats, blockUser, unblockUser, sendPaymentReminder, grantAdminAccess, revokeAdminAccess } from '../controllers/adminController';
 import { getAdminProperties, deleteAdminProperty } from '../controllers/propertyController';
 import { authenticateToken, requireAdmin } from '../middleware/auth';
 import { uploadCSV } from '../middleware/uploadMiddleware';
@@ -18,6 +18,9 @@ router.get('/stats', getAdminStats);
 
 // GET - profil détaillé
 router.get('/users/:id', getAdminUserProfile);
+
+// GET - per-user stats
+router.get('/users/:id/stats', getAdminUserStats);
 
 // GET - liste de toutes les propriétés pour l'admin
 router.get('/properties', getAdminProperties);

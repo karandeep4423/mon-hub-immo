@@ -290,6 +290,45 @@ export const getAdminUserProfile = async (req: Request, res: Response) => {
   res.json({ ...user, propertiesCount, collaborationsCount });
 };
 
+// Per-user detailed stats (properties count, collaborations active/closed)
+export const getAdminUserStats = async (req: Request, res: Response) => {
+  const userId = req.params.id;
+  if (!userId) return res.status(400).json({ error: 'Missing user id' });
+
+  try {
+    const uid = new mongoose.Types.ObjectId(userId);
+    // Properties: count documents owned by this user
+    const propertiesCount = await Property.countDocuments({ owner: uid });
+
+    // Collaborations: count both as post owner and as collaborator, by status
+    const [ownerAgg, collabAgg] = await Promise.all([
+      Collaboration.aggregate([
+        { $match: { postOwnerId: uid } },
+        { $group: {
+          _id: '$postOwnerId',
+          active: { $sum: { $cond: [{ $eq: ['$status', 'active'] }, 1, 0] } },
+          closed: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } },
+        } },
+      ]),
+      Collaboration.aggregate([
+        { $match: { collaboratorId: uid } },
+        { $group: {
+          _id: '$collaboratorId',
+          active: { $sum: { $cond: [{ $eq: ['$status', 'active'] }, 1, 0] } },
+          closed: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } },
+        } },
+      ]),
+    ]);
+
+    const active = (ownerAgg[0]?.active || 0) + (collabAgg[0]?.active || 0);
+    const closed = (ownerAgg[0]?.closed || 0) + (collabAgg[0]?.closed || 0);
+
+    res.json({ propertiesCount, collaborationsActive: active, collaborationsClosed: closed });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to compute user stats', details: (err as Error).message });
+  }
+};
+
 // Create an admin user (basic)
 export const createAdminUser = async (req: AuthRequest, res: Response) => {
   try {
