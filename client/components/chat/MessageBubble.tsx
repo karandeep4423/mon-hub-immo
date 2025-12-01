@@ -310,6 +310,18 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
 		const containerClasses = getContainerClasses(isMyMessage);
 		const bubbleClasses = getBubbleClasses(isMyMessage);
 
+		// Resolve sender user to display name (only for received messages)
+		const senderUser = !isMyMessage
+			? chatStore.getState().users.find(
+				(u) => u._id === message.senderId,
+			  )
+			: null;
+		const senderName = senderUser
+			? [senderUser.firstName, senderUser.lastName]
+					.filter(Boolean)
+					.join(' ') || senderUser.email
+			: '';
+
 		const [confirmOpen, setConfirmOpen] = React.useState(false);
 		const [deleting, setDeleting] = React.useState(false);
 		const openConfirm = (e?: React.MouseEvent) => {
@@ -334,6 +346,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = React.memo(
 				data-message-id={message._id}
 			>
 				<div className={`${bubbleClasses} relative group`}>
+					{/* Sender name (for incoming messages) */}
+					{!isMyMessage && senderName && (
+						<div className="mb-1 text-xs font-semibold text-gray-600">
+							{senderName}
+						</div> 
+					)}
 					{/* Hover-only delete icon for my messages */}
 					{isMyMessage && (
 						<button
