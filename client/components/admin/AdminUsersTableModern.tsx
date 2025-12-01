@@ -15,7 +15,7 @@ import { DataTable } from '@/components/ui/DataTable';
 import Pagination from '@/components/ui/Pagination';
 import AdminUserFilters from './AdminUserFilters';
 import { toast } from 'react-toastify';
-import { Download, Upload, Plus, Users, CheckCircle, Clock, Eye, Edit, Unlock, UserX, Key, CreditCard, X } from 'lucide-react';
+import { Download, Upload, Plus, Users, CheckCircle, Clock, Eye, Edit, Unlock, UserX, Key, CreditCard, X, Globe } from 'lucide-react';
 
 // Use env-configured API root so production builds call the correct backend
 const API_ROOT = (() => {
@@ -173,17 +173,36 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 	};
 
 	return (
-		<div className="space-y-4 sm:space-y-6">
-			<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+		<div className="space-y-5 animate-in fade-in duration-500">
+			{/* Header - Mobile optimized */}
+			<div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start">
 				<div className="min-w-0">
-					<h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Gestion Utilisateurs</h1>
-					<p className="text-xs sm:text-sm text-gray-600 mt-1">Total: {filteredUsers.length} utilisateur(s)</p>
+					<h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+						Gestion Utilisateurs
+					</h1>
+					<p className="text-sm text-gray-600 mt-1 flex items-center gap-2">
+						<Users className="w-4 h-4" />
+						<span className="font-medium">{filteredUsers.length}</span> utilisateur{filteredUsers.length > 1 ? 's' : ''}
+					</p>
 				</div>
 				<div className="flex flex-wrap gap-2">
-					<Button variant="secondary" size="md" onClick={() => setShowImport(true)}><Download className="w-4 h-4 inline-block mr-1 sm:mr-2" />Importer</Button>
-					<Button variant="secondary" size="md" onClick={() => exportToCSV()}><Upload className="w-4 h-4 inline-block mr-1 sm:mr-2" />Exporter CSV</Button>
-					<Button variant="secondary" size="md" onClick={() => exportToXLS()}><Upload className="w-4 h-4 inline-block mr-1 sm:mr-2" />Exporter XLS</Button>
-					<Button variant="primary" size="md" onClick={() => setShowCreate(true)}><Plus className="w-4 h-4 inline-block mr-1 sm:mr-2" />Nouveau</Button>
+					<Button variant="secondary" size="md" onClick={() => setShowImport(true)} className="text-xs sm:text-sm">
+						<Download className="w-4 h-4 mr-1.5" />
+						<span className="hidden sm:inline">Importer</span>
+						<span className="sm:hidden">Import</span>
+					</Button>
+					<Button variant="secondary" size="md" onClick={() => exportToCSV()} className="text-xs sm:text-sm">
+						<Upload className="w-4 h-4 mr-1.5" />
+						<span className="hidden sm:inline">CSV</span>
+					</Button>
+					<Button variant="secondary" size="md" onClick={() => exportToXLS()} className="text-xs sm:text-sm">
+						<Upload className="w-4 h-4 mr-1.5" />
+						<span className="hidden sm:inline">XLS</span>
+					</Button>
+					<Button variant="primary" size="md" onClick={() => setShowCreate(true)} className="text-xs sm:text-sm">
+						<Plus className="w-4 h-4 mr-1.5" />
+						Nouveau
+					</Button>
 				</div>
 			</div>
 
@@ -212,12 +231,15 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 				/>
 			)}
 
-			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-				<FilterStatCard icon={<Users className="w-6 h-6 sm:w-8 sm:h-8" />} label="Total" value={filteredUsers.length} color="blue" />
-				<FilterStatCard icon={<CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-500" />} label="Actifs" value={filteredUsers.filter(u => u.status === 'active').length} color="green" />
-				<FilterStatCard icon={<Clock className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500" />} label="En attente" value={filteredUsers.filter(u => u.status === 'pending').length} color="yellow" />
+			{/* Stats Cards - More compact on mobile */}
+			<div className="grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
+				<FilterStatCard icon={<Users className="w-5 h-5 sm:w-7 sm:h-7" />} label="Total" value={filteredUsers.length} color="blue" />
+				<FilterStatCard icon={<CheckCircle className="w-5 h-5 sm:w-7 sm:h-7" />} label="Actifs" value={filteredUsers.filter(u => u.status === 'active').length} color="green" />
+				<FilterStatCard icon={<Clock className="w-5 h-5 sm:w-7 sm:h-7" />} label="Attente" value={filteredUsers.filter(u => u.status === 'pending').length} color="yellow" />
 			</div>
 
+			{/* DataTable with responsive wrapper */}
+			<div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
 			<DataTable
 				columns={[
 					{
@@ -225,13 +247,13 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						accessor: 'firstName',
 						width: '25%',
 						render: (_: any, row: AdminUser) => (
-							<div className="flex items-center gap-2 sm:gap-3 min-w-0">
-								<div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs sm:text-sm">
+							<div className="flex items-center gap-2 min-w-0">
+								<div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs sm:text-sm shadow-md">
 									{(row.firstName && row.firstName.charAt) ? row.firstName.charAt(0) : (row.email ? row.email.charAt(0) : 'U')}
 								</div>
 								<div className="min-w-0">
-									<p className="font-medium text-gray-900 text-xs sm:text-sm truncate">{row.firstName} {row.lastName}</p>
-									<p className="text-xs text-gray-500 truncate">{row.email}</p>
+									<p className="font-semibold text-gray-900 text-xs sm:text-sm truncate">{row.firstName} {row.lastName}</p>
+									<p className="text-xs text-gray-500 truncate hidden sm:block">{row.email}</p>
 								</div>
 							</div>
 						),
@@ -254,17 +276,31 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						header: 'Réseau',
 						accessor: 'network',
 						width: '10%',
-						render: (_value: any, row: AdminUser) => (<span className="text-xs sm:text-sm text-gray-700 truncate">{row.professionalInfo?.network || '-'}</span>),
+						render: (_value: any, row: AdminUser) => (
+							<div className="flex items-center gap-1.5">
+								<Globe className="w-3.5 h-3.5 text-gray-400 hidden sm:block" />
+								<span className="text-xs sm:text-sm font-medium text-gray-700 truncate max-w-[120px]">{row.professionalInfo?.network || '-'}</span>
+							</div>
+						),
 					},
 					{
 						header: 'Activité',
 						accessor: 'activity',
 						width: '18%',
 						render: (_v: any, row: AdminUser) => (
-							<div className="text-xs space-y-0.5">
-								<div>📋: <span className="font-medium">{row.propertiesCount ?? 0}</span></div>
-								<div>🤝: <span className="font-medium">{((row.collaborationsActive ?? 0) + (row.collaborationsClosed ?? 0))}</span></div>
-								<div>📱: <span className="font-medium">{row.connectionsCount ?? 0}</span></div>
+							<div className="flex flex-wrap gap-2 justify-center">
+								<div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200/50 shadow-sm">
+									<span className="text-[10px] text-gray-600">📋</span>
+									<span className="text-xs font-semibold text-blue-700">{row.propertiesCount ?? 0}</span>
+								</div>
+								<div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200/50 shadow-sm">
+									<span className="text-[10px] text-gray-600">🤝</span>
+									<span className="text-xs font-semibold text-purple-700">{((row.collaborationsActive ?? 0) + (row.collaborationsClosed ?? 0))}</span>
+								</div>
+								<div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/50 shadow-sm">
+									<span className="text-[10px] text-gray-600">📱</span>
+									<span className="text-xs font-semibold text-emerald-700">{row.connectionsCount ?? 0}</span>
+								</div>
 							</div>
 						),
 					},
@@ -274,7 +310,13 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						width: '12%',
 						render: (_value: any, row: AdminUser) => {
 							const value = (row.isBlocked ? 'blocked' : (row.isValidated ? 'active' : 'pending')) as 'active' | 'pending' | 'blocked';
-							return <Badge variant={statusVariant(value) as any} size="sm">{value && value.charAt ? value.charAt(0).toUpperCase() + value.slice(1) : String(value || '')}</Badge>;
+							return (
+								<div className="flex justify-center">
+									<Badge variant={statusVariant(value) as any} size="sm" className="shadow-sm">
+										{value && value.charAt ? value.charAt(0).toUpperCase() + value.slice(1) : String(value || '')}
+									</Badge>
+								</div>
+							);
 						},
 					},
 					{
@@ -282,10 +324,18 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						accessor: 'registeredAt',
 						width: '13%',
 						render: (value: any) => {
-							if (!value) return <span className="text-xs text-gray-600">-</span>;
+							if (!value) return <span className="text-xs text-gray-500 hidden sm:inline">-</span>;
 							const d = new Date(value);
-							if (isNaN(d.getTime())) return <span className="text-xs text-gray-600">-</span>;
-							return <span className="text-xs text-gray-600">{d.toLocaleDateString('fr-FR')}</span>;
+							if (isNaN(d.getTime())) return <span className="text-xs text-gray-500 hidden sm:inline">-</span>;
+							const isRecent = (Date.now() - d.getTime()) < 7 * 24 * 60 * 60 * 1000;
+							return (
+								<div className="flex items-center gap-1.5 hidden sm:flex">
+									<span className={`text-xs ${isRecent ? 'text-emerald-600 font-medium' : 'text-gray-600'}`}>
+										{d.toLocaleDateString('fr-FR')}
+									</span>
+									{isRecent && <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-100 text-emerald-700 font-medium">Nouveau</span>}
+								</div>
+							);
 						},
 					},
 					{
@@ -293,11 +343,11 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						accessor: 'isPaid',
 						width: '12%',
 						render: (_value: any, row: AdminUser) => {
-							if (row.type !== 'agent') return <span className="text-xs text-gray-500">N/A</span>;
-							if (row.accessGrantedByAdmin) return <Badge variant="info" size="sm">Accès manuel</Badge>;
-							if (row.isPaid) return <Badge variant="success" size="sm">Payé</Badge>;
-							if (row.profileCompleted) return <Badge variant="warning" size="sm">En attente</Badge>;
-							return <span className="text-xs text-gray-500">Profil incomplet</span>;
+							if (row.type !== 'agent') return <span className="text-xs text-gray-400 hidden md:inline">N/A</span>;
+							if (row.accessGrantedByAdmin) return <Badge variant="info" size="sm" className="shadow-sm hidden md:inline-flex">Accès manuel</Badge>;
+							if (row.isPaid) return <Badge variant="success" size="sm" className="shadow-sm hidden md:inline-flex">Payé</Badge>;
+							if (row.profileCompleted) return <Badge variant="warning" size="sm" className="shadow-sm hidden md:inline-flex">En attente</Badge>;
+							return <span className="text-xs text-gray-400 hidden md:inline">Profil incomplet</span>;
 						},
 					},
 				]}
@@ -305,40 +355,89 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 				pagination={false}
 				loading={loading}
 				actions={(row: AdminUser) => (
-					<div className="flex items-center gap-2">
-						<Link href={`/admin/users/${row._id}`} className="p-1 hover:bg-gray-100 rounded transition-colors" title="Voir"><Eye className="w-4 h-4" /></Link>
-						<button onClick={() => setEditingUser(row)} className="p-1 hover:bg-blue-100 rounded transition-colors" title="Éditer"><Edit className="w-4 h-4" /></button>
-						{row.isBlocked ? (
-							<button title="Débloquer" onClick={() => setTableConfirmAction({ label: 'Débloquer cet utilisateur ?', type: 'unblock', onConfirm: async () => { setActionBusy(true); try { await adminService.unblockUser(row._id); await refetch(); toast.success('Utilisateur débloqué.'); } catch (err) { console.error(err); toast.error('Erreur.'); } finally { setActionBusy(false); setTableConfirmAction(null); } } })} className="p-1 hover:bg-green-100 rounded transition-colors"><Unlock className="w-4 h-4" /></button>
-						) : (
-							<button title="Bloquer" onClick={() => setTableConfirmAction({ label: 'Bloquer cet utilisateur ?', type: 'block', onConfirm: async () => { setActionBusy(true); try { await adminService.blockUser(row._id); await refetch(); toast.warn('Utilisateur bloqué.'); } catch (err) { console.error(err); toast.error('Erreur.'); } finally { setActionBusy(false); setTableConfirmAction(null); } } })} className="p-1 hover:bg-amber-100 rounded transition-colors"><UserX className="w-4 h-4" /></button>
-						)}
-						{/* --- Manual Access Buttons --- */}
-						{row.type === 'agent' && !row.isPaid && (
-							row.accessGrantedByAdmin ? (
-								<button title="Révoquer l'accès manuel" onClick={() => setTableConfirmAction({ label: 'Révoquer l\'accès manuel pour cet utilisateur ?', type: 'revoke_manual', onConfirm: async () => { setActionBusy(true); try { await adminService.revokeAdminAccess(row._id); await refetch(); toast.info('Accès manuel révoqué.'); } catch (err) { console.error(err); toast.error('Erreur.'); } finally { setActionBusy(false); setTableConfirmAction(null); } } })} className="p-1 hover:bg-red-100 rounded transition-colors"><X className="w-4 h-4" /></button>
+					<div className="flex items-center justify-end gap-1.5">
+						<Link 
+							href={`/admin/users/${row._id}`} 
+							className="p-2 hover:bg-blue-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-blue-200 group"
+							title="Voir"
+						>
+							<Eye className="w-4 h-4 text-gray-600 group-hover:text-blue-600 transition-colors" />
+						</Link>
+						<button 
+							onClick={() => setEditingUser(row)} 
+							className="p-2 hover:bg-purple-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-purple-200 group"
+							title="Éditer"
+						>
+							<Edit className="w-4 h-4 text-gray-600 group-hover:text-purple-600 transition-colors" />
+						</button>
+						
+						<div className="hidden lg:flex">
+							{row.isBlocked ? (
+								<button 
+									title="Débloquer" 
+									onClick={() => setTableConfirmAction({ label: 'Débloquer cet utilisateur ?', type: 'unblock', onConfirm: async () => { setActionBusy(true); try { await adminService.unblockUser(row._id); await refetch(); toast.success('Utilisateur débloqué.'); } catch (err) { console.error(err); toast.error('Erreur.'); } finally { setActionBusy(false); setTableConfirmAction(null); } } })} 
+									className="p-2 hover:bg-green-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-green-200 group"
+								>
+									<Unlock className="w-4 h-4 text-gray-600 group-hover:text-green-600 transition-colors" />
+								</button>
 							) : (
-								<button title="Donner l'accès manuel" onClick={() => setTableConfirmAction({ label: 'Donner l\'accès manuel à cet utilisateur (outrepasse le paiement) ?', type: 'grant_manual', onConfirm: async () => { setActionBusy(true); try { await adminService.grantAdminAccess(row._id); await refetch(); toast.success('Accès manuel accordé.'); } catch (err: any) { console.error(err); const msg = err?.response?.data?.error || err?.message || 'Erreur.'; toast.error(msg); } finally { setActionBusy(false); setTableConfirmAction(null); } } })} className="p-1 hover:bg-purple-100 rounded transition-colors"><Key className="w-4 h-4" /></button>
-							)
+								<button 
+									title="Bloquer" 
+									onClick={() => setTableConfirmAction({ label: 'Bloquer cet utilisateur ?', type: 'block', onConfirm: async () => { setActionBusy(true); try { await adminService.blockUser(row._id); await refetch(); toast.warn('Utilisateur bloqué.'); } catch (err) { console.error(err); toast.error('Erreur.'); } finally { setActionBusy(false); setTableConfirmAction(null); } } })} 
+									className="p-2 hover:bg-amber-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-amber-200 group"
+								>
+									<UserX className="w-4 h-4 text-gray-600 group-hover:text-amber-600 transition-colors" />
+								</button>
+							)}
+						</div>
+
+						{row.type === 'agent' && !row.isPaid && (
+							<div className="hidden lg:flex">
+								{row.accessGrantedByAdmin ? (
+									<button 
+										title="Révoquer l'accès manuel" 
+										onClick={() => setTableConfirmAction({ label: 'Révoquer l\'accès manuel pour cet utilisateur ?', type: 'revoke_manual', onConfirm: async () => { setActionBusy(true); try { await adminService.revokeAdminAccess(row._id); await refetch(); toast.info('Accès manuel révoqué.'); } catch (err) { console.error(err); toast.error('Erreur.'); } finally { setActionBusy(false); setTableConfirmAction(null); } } })} 
+										className="p-2 hover:bg-red-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-red-200 group"
+									>
+										<X className="w-4 h-4 text-gray-600 group-hover:text-red-600 transition-colors" />
+									</button>
+								) : (
+									<button 
+										title="Donner l'accès manuel" 
+										onClick={() => setTableConfirmAction({ label: 'Donner l\'accès manuel à cet utilisateur (outrepasse le paiement) ?', type: 'grant_manual', onConfirm: async () => { setActionBusy(true); try { await adminService.grantAdminAccess(row._id); await refetch(); toast.success('Accès manuel accordé.'); } catch (err: any) { console.error(err); const msg = err?.response?.data?.error || err?.message || 'Erreur.'; toast.error(msg); } finally { setActionBusy(false); setTableConfirmAction(null); } } })} 
+										className="p-2 hover:bg-purple-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-purple-200 group"
+									>
+										<Key className="w-4 h-4 text-gray-600 group-hover:text-purple-600 transition-colors" />
+									</button>
+								)}
+							</div>
 						)}
+
 						{row.type === 'agent' && !row.isPaid && row.profileCompleted && (
-							<button title="Envoyer rappel paiement" onClick={async () => { try { await adminService.sendPaymentReminder(row._id); toast.success('Rappel de paiement envoyé.'); } catch (err) { console.error(err); toast.error('Erreur lors de l\'envoi du rappel.'); } }} className="p-1 hover:bg-orange-100 rounded transition-colors"><CreditCard className="w-4 h-4" /></button>
+							<button 
+								title="Envoyer rappel paiement" 
+								onClick={async () => { try { await adminService.sendPaymentReminder(row._id); toast.success('Rappel de paiement envoyé.'); } catch (err) { console.error(err); toast.error('Erreur lors de l\'envoi du rappel.'); } }} 
+								className="p-2 hover:bg-orange-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-orange-200 group hidden lg:flex"
+							>
+								<CreditCard className="w-4 h-4 text-gray-600 group-hover:text-orange-600 transition-colors" />
+							</button>
 						)}
 					</div>
 				)}
 			/>
 
-			<Pagination
-				currentPage={page}
-				totalItems={filteredUsers.length}
-				pageSize={limit}
-				onPageChange={(p) => setPage(p)}
-				className="w-full"
-			/>
+		<Pagination
+			currentPage={page}
+			totalItems={filteredUsers.length}
+			pageSize={limit}
+			onPageChange={(p) => setPage(p)}
+			className="w-full"
+		/>
 
-			{showImport && (<ImportUsersModal open={showImport} onClose={() => setShowImport(false)} onSuccess={() => { setShowImport(false); refetch(); }} />)}
-			{editingUser && (<EditUserModal user={editingUser} onClose={() => setEditingUser(null)} onSave={() => { setEditingUser(null); refetch(); }} />)}
-			{showCreate && (<CreateUserModal onClose={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); refetch(); }} />)}
+		{showImport && (<ImportUsersModal open={showImport} onClose={() => setShowImport(false)} onSuccess={() => { setShowImport(false); refetch(); }} />)}
+		{editingUser && (<EditUserModal user={editingUser} onClose={() => setEditingUser(null)} onSave={() => { setEditingUser(null); refetch(); }} />)}
+		{showCreate && (<CreateUserModal onClose={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); refetch(); }} />)}
+	</div>
 		</div>
 	);
 };

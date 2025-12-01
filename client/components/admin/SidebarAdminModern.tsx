@@ -1,15 +1,14 @@
- 'use client';
-import React, { useState } from 'react';
+'use client';
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { designTokens } from '@/lib/constants/designTokens';
-import { BarChart2, Users, Home, Handshake, Settings } from 'lucide-react';
+import { BarChart2, Users, Home, Handshake, Settings, MessageSquare, TrendingUp } from 'lucide-react';
 
 const navItems = [
 	{
 		label: 'Tableau de bord',
 		href: '/admin',
-		icon: <BarChart2 className="w-5 h-5" />, 
+		icon: <BarChart2 className="w-5 h-5" />,
 		badge: null,
 	},
 	{
@@ -30,33 +29,33 @@ const navItems = [
 		icon: <Handshake className="w-5 h-5" />,
 		badge: null,
 	},
- 
+	{
+		label: 'Chat Admin',
+		href: '/admin/chat',
+		icon: <MessageSquare className="w-5 h-5" />,
+		badge: null,
+	},
 ];
 
 interface SidebarAdminModernProps {
 	isOpen?: boolean;
 	onClose?: () => void;
-	headerHeight?: number;
 }
 
-export const SidebarAdminModern: React.FC<SidebarAdminModernProps> = ({ isOpen = true, onClose, headerHeight = 64 }) => {
+export const SidebarAdminModern: React.FC<SidebarAdminModernProps> = ({ isOpen = true, onClose }) => {
 	const pathname = usePathname();
 
 	return (
 		<aside
 			className={`
-				fixed left-0 z-40 w-72 bg-white
-				text-gray-900 shadow transition-transform duration-300 border-r border-gray-200
+				fixed left-0 top-16 z-40 w-72 h-[calc(100vh-4rem)] bg-white
+				border-r border-gray-200 shadow-xl transition-all duration-300 ease-in-out
 				${isOpen ? 'translate-x-0' : '-translate-x-full'}
-				lg:translate-x-0 lg:sticky flex flex-col
+				lg:translate-x-0 flex flex-col
 			`}
-			style={{ top: `${headerHeight}px`, height: `calc(100vh - ${headerHeight}px)` }}
 		>
-			{/* Header */}
-		 
-
 			{/* Navigation */}
-			<nav className="p-4 space-y-2 flex-1 overflow-y-auto">
+			<nav className="p-4 space-y-1.5 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300">
 				{navItems.map((item) => {
 					const isActive =
 						item.href === '/admin'
@@ -68,17 +67,23 @@ export const SidebarAdminModern: React.FC<SidebarAdminModernProps> = ({ isOpen =
 							href={item.href}
 							onClick={onClose}
 							className={`
-								flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300
+								flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200
+								group relative overflow-hidden
 								${isActive
-									? 'bg-gradient-to-r from-cyan-500 to-blue-500 shadow-lg text-white'
-									: 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+									? 'bg-gradient-to-r from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30 text-white scale-[1.02]'
+									: 'text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:shadow-sm'
 								}
 							`}
 						>
-							<span className="text-xl">{item.icon}</span>
-							<span className="font-medium">{item.label}</span>
+							{isActive && (
+								<div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+							)}
+							<span className={`${isActive ? 'text-white' : 'text-gray-600 group-hover:text-cyan-600'} transition-colors relative z-10`}>
+								{item.icon}
+							</span>
+							<span className="font-semibold text-sm relative z-10">{item.label}</span>
 							{item.badge && (
-								<span className="ml-auto bg-red-500 text-xs font-bold px-2 py-1 rounded-full text-white">
+								<span className="ml-auto bg-red-500 text-xs font-bold px-2 py-1 rounded-full text-white shadow-md relative z-10">
 									{item.badge}
 								</span>
 							)}
@@ -87,10 +92,24 @@ export const SidebarAdminModern: React.FC<SidebarAdminModernProps> = ({ isOpen =
 				})}
 			</nav>
 
+			{/* Quick Stats */}
+			<div className="p-4 border-t border-gray-200 bg-gradient-to-br from-gray-50 to-white">
+				<div className="bg-white rounded-lg p-3 shadow-sm border border-gray-100">
+					<div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+						<TrendingUp className="w-3.5 h-3.5" />
+						<span className="font-medium">Performance</span>
+					</div>
+					<div className="text-lg font-bold text-gray-900">98.5%</div>
+					<div className="text-xs text-green-600 font-medium mt-0.5">+2.1% vs dernier mois</div>
+				</div>
+			</div>
+
 			{/* Footer */}
-			<div className="p-4 border-t border-gray-200 text-xs text-gray-500 text-center">
-				<p>&copy; 2025 MonHubImmo</p>
-				<p className="mt-1">Admin Dashboard v1.0</p>
+			<div className="p-4 border-t border-gray-200 text-xs text-gray-500">
+				<div className="flex items-center justify-between">
+					<span>&copy; 2025 MonHubImmo</span>
+					<span className="text-cyan-600 font-semibold">v1.0</span>
+				</div>
 			</div>
 		</aside>
 	);

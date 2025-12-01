@@ -125,68 +125,193 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 		<div className="space-y-4 sm:space-y-6">
 			<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
 				<div className="min-w-0">
-					<h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Gestion Annonces</h1>
-					<p className="text-xs sm:text-sm text-gray-600 mt-1">Total: {totalItems ?? properties.length} annonce(s)</p>
+					<h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+						Gestion Annonces
+					</h1>
+					<div className="flex items-center gap-2 mt-1.5">
+						<Home className="w-4 h-4 text-gray-500" />
+						<p className="text-xs sm:text-sm text-gray-600">Total: <span className="font-semibold text-gray-900">{totalItems ?? properties.length}</span> annonce(s)</p>
+					</div>
 				</div>
 				<div className="flex flex-wrap gap-2">
-					<Button variant="secondary" size="md" onClick={() => exportAsCSV('csv')}><BarChart2 className="w-4 h-4 inline-block mr-1 sm:mr-2" />Export CSV</Button>
-					<Button variant="secondary" size="md" onClick={() => exportAsCSV('xls')}><BarChart2 className="w-4 h-4 inline-block mr-1 sm:mr-2" />Export XLS</Button>
+					<Button variant="secondary" size="md" onClick={() => exportAsCSV('csv')}>
+						<BarChart2 className="w-4 h-4 inline-block sm:mr-2" />
+						<span className="hidden sm:inline">Export CSV</span>
+					</Button>
+					<Button variant="secondary" size="md" onClick={() => exportAsCSV('xls')}>
+						<BarChart2 className="w-4 h-4 inline-block sm:mr-2" />
+						<span className="hidden sm:inline">Export XLS</span>
+					</Button>
  				</div>
 			</div>
 
 			<div className="flex flex-col lg:flex-row gap-3 lg:gap-4 justify-between items-start lg:items-center">
 				<div className="w-full lg:flex-1 flex flex-col sm:flex-row gap-2 sm:gap-3">
-					<input type="search" placeholder="Chercher par titre, localisation..." value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value })} className="w-full sm:flex-1 px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500" />
-					<select value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })} className="w-full sm:w-auto px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500">
-						<option value="">Tous les types</option>
+					<input type="search" placeholder="Chercher par titre, localisation..." value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value })} className="w-full sm:flex-1 px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-sm" />
+					<select value={filters.type} onChange={(e) => setFilters({ ...filters, type: e.target.value })} className="w-full sm:w-auto px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-sm">
+						<option value="">Tous types</option>
 						<option value="Appartement">Appartement</option>
 						<option value="Maison">Maison</option>
 						<option value="Terrain">Terrain</option>
 						<option value="Commercial">Commercial</option>
 					</select>
-					<select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} className="w-full sm:w-auto px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500">
-						<option value="">Tous les statuts</option>
+					<select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} className="w-full sm:w-auto px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-sm">
+						<option value="">Tous statuts</option>
 						<option value="active">Actif</option>
 						<option value="pending">En attente</option>
 						<option value="archived">Archivé</option>
 					</select>
 				</div>
 
-				<div className="flex border border-gray-300 rounded-lg bg-gray-50">
-					<button onClick={() => setViewType('table')} className={`px-2 sm:px-3 py-2 transition-colors text-sm ${viewType === 'table' ? 'bg-cyan-500 text-white' : 'text-gray-700 hover:bg-gray-100'}`} aria-label="Table view"><List className="w-4 h-4" /></button>
-					<button onClick={() => setViewType('grid')} className={`px-2 sm:px-3 py-2 transition-colors text-sm ${viewType === 'grid' ? 'bg-cyan-500 text-white' : 'text-gray-700 hover:bg-gray-100'}`} aria-label="Grid view"><LayoutGrid className="w-4 h-4" /></button>
+				<div className="flex border border-gray-300 rounded-lg bg-white shadow-sm">
+					<button onClick={() => setViewType('table')} className={`px-3 py-2 transition-all text-sm rounded-l-lg ${viewType === 'table' ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md' : 'text-gray-700 hover:bg-gray-50'}`} aria-label="Table view" title="Vue tableau"><List className="w-4 h-4" /></button>
+					<button onClick={() => setViewType('grid')} className={`px-3 py-2 transition-all text-sm rounded-r-lg ${viewType === 'grid' ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md' : 'text-gray-700 hover:bg-gray-50'}`} aria-label="Grid view" title="Vue grille"><LayoutGrid className="w-4 h-4" /></button>
 				</div>
 			</div>
 
-			<div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
-				<div className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-100 border rounded-lg p-3 sm:p-4"><div><p className="text-xs sm:text-sm text-gray-600">Total</p><p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{totalItems ?? properties.length}</p></div><Home className="text-2xl sm:text-3xl text-gray-500" /></div>
-				<div className="bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-100 border rounded-lg p-3 sm:p-4"><div><p className="text-xs sm:text-sm text-gray-600">Actives</p><p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{properties.filter((p:any) => p.status === 'active').length}</p></div><CheckCircle className="text-2xl sm:text-3xl text-green-500" /></div>
-				<div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-100 border rounded-lg p-3 sm:p-4"><div><p className="text-xs sm:text-sm text-gray-600">Vues</p><p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{properties.reduce((sum:number, p:any) => sum + (p.views || 0), 0)}</p></div><BarChart2 className="text-2xl sm:text-3xl text-indigo-500" /></div>
-				<div className="bg-gradient-to-br from-rose-50 to-pink-50 border-rose-100 border rounded-lg p-3 sm:p-4"><div><p className="text-xs sm:text-sm text-gray-600">Valeur Total</p><p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">€{(properties.reduce((sum:number, p:any) => sum + (p.price || 0), 0) / 1000000).toFixed(1)}M</p></div><DollarSign className="text-2xl sm:text-3xl text-rose-500" /></div>
+			<div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+				<div className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200 border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+					<div className="flex items-start justify-between">
+						<div>
+							<p className="text-xs font-medium text-gray-600">Total</p>
+							<p className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mt-1">{totalItems ?? properties.length}</p>
+						</div>
+						<div className="p-2 bg-blue-100 rounded-lg">
+							<Home className="w-5 h-5 text-blue-600" />
+						</div>
+					</div>
+				</div>
+				<div className="bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200 border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+					<div className="flex items-start justify-between">
+						<div>
+							<p className="text-xs font-medium text-gray-600">Actives</p>
+							<p className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent mt-1">{properties.filter((p:any) => p.status === 'active').length}</p>
+						</div>
+						<div className="p-2 bg-emerald-100 rounded-lg">
+							<CheckCircle className="w-5 h-5 text-emerald-600" />
+						</div>
+					</div>
+				</div>
+				<div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200 border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+					<div className="flex items-start justify-between">
+						<div>
+							<p className="text-xs font-medium text-gray-600">Vues</p>
+							<p className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mt-1">{properties.reduce((sum:number, p:any) => sum + (p.views || 0), 0)}</p>
+						</div>
+						<div className="p-2 bg-purple-100 rounded-lg">
+							<BarChart2 className="w-5 h-5 text-purple-600" />
+						</div>
+					</div>
+				</div>
+				<div className="bg-gradient-to-br from-rose-50 to-pink-50 border-rose-200 border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+					<div className="flex items-start justify-between">
+						<div>
+							<p className="text-xs font-medium text-gray-600">Valeur Total</p>
+							<p className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent mt-1">€{(properties.reduce((sum:number, p:any) => sum + (p.price || 0), 0) / 1000000).toFixed(1)}M</p>
+						</div>
+						<div className="p-2 bg-rose-100 rounded-lg">
+							<DollarSign className="w-5 h-5 text-rose-600" />
+						</div>
+					</div>
+				</div>
 			</div>
 
-			{viewType === 'table' && (
+		{viewType === 'table' && (
+			<div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
 				<DataTable
 					columns={[
-						{ header: 'Annonce', accessor: 'title', width: '30%', render: (_: any, row: any) => (<div className="min-w-0"><p className="font-medium text-gray-900 text-xs sm:text-sm truncate">{row.title}</p><p className="text-xs text-gray-500 truncate">{row.location || row.city}</p></div>) },
-						{ header: 'Type', accessor: 'type', width: '12%', render: (value: any, row: any) => (<Badge variant="info" size="sm">{getPropertyTypeLabel(value || row.propertyType)}</Badge>) },
-						{ header: 'Prix', accessor: 'price', width: '12%', render: (value: any) => (<span className="font-medium text-gray-900 text-xs sm:text-sm">€{(Number(value || 0) / 1000).toFixed(0)}k</span>) },
-						{ header: 'Vues', accessor: 'views', width: '10%', render: (value: any) => (<span className="text-xs sm:text-sm text-gray-700">{value || 0}</span>) },
-						{ header: 'Statut', accessor: 'status', width: '13%', render: (value: any) => (<Badge variant={statusVariant(value || '') as any} size="sm">{(value || '').charAt(0).toUpperCase() + (value || '').slice(1)}</Badge>) },
-						{ header: 'Créée', accessor: 'createdAt', width: '13%', render: (value: any) => (<span className="text-xs sm:text-sm text-gray-600">{new Date(value).toLocaleDateString('fr-FR')}</span>) },
+						{ 
+							header: 'Annonce', 
+							accessor: 'title', 
+							width: '30%', 
+							render: (_: any, row: any) => (
+								<div className="min-w-0">
+									<p className="font-semibold text-gray-900 text-sm truncate">{row.title}</p>
+									<p className="text-xs text-gray-500 truncate mt-0.5">{row.location || row.city}</p>
+								</div>
+							) 
+						},
+						{ 
+							header: 'Type', 
+							accessor: 'type', 
+							width: '12%', 
+							render: (value: any, row: any) => (
+								<Badge variant="info" size="sm" className="shadow-sm">
+									{getPropertyTypeLabel(value || row.propertyType)}
+								</Badge>
+							) 
+						},
+						{ 
+							header: 'Prix', 
+							accessor: 'price', 
+							width: '12%', 
+							render: (value: any) => (
+								<div className="flex items-center gap-1.5">
+									<div className="px-2 py-1 rounded-lg bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200/50">
+										<span className="font-bold text-sm bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
+											€{(Number(value || 0) / 1000).toFixed(0)}k
+										</span>
+									</div>
+								</div>
+							) 
+						},
+						{ 
+							header: 'Vues', 
+							accessor: 'views', 
+							width: '10%', 
+							render: (value: any) => (
+								<div className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200/50 w-fit">
+									<BarChart2 className="w-3.5 h-3.5 text-purple-600" />
+									<span className="text-xs font-semibold text-purple-700">{value || 0}</span>
+								</div>
+							) 
+						},
+						{ 
+							header: 'Statut', 
+							accessor: 'status', 
+							width: '13%', 
+							render: (value: any) => (
+								<div className="flex justify-center">
+									<Badge variant={statusVariant(value || '') as any} size="sm" className="shadow-sm">
+										{(value || '').charAt(0).toUpperCase() + (value || '').slice(1)}
+									</Badge>
+								</div>
+							) 
+						},
+						{ 
+							header: 'Créée', 
+							accessor: 'createdAt', 
+							width: '13%', 
+							render: (value: any) => (
+								<span className="text-xs text-gray-600 hidden sm:inline">
+									{new Date(value).toLocaleDateString('fr-FR')}
+								</span>
+							) 
+						},
 					]}
 					data={properties as any}
 					loading={loading}
 					actions={(row: any) => (
-						<div className="flex items-center gap-2">
-							<Link href={`/property/${row._id}`} className="p-1 hover:bg-blue-100 rounded transition-colors" title="Voir"><Eye className="w-4 h-4" /></Link>
-							<button className="p-1 hover:bg-red-100 rounded transition-colors" title="Supprimer" onClick={() => openDeleteModal(row._id)}><Trash2 className="w-4 h-4 text-red-600" /></button>
+						<div className="flex items-center justify-end gap-1.5">
+							<Link 
+								href={`/property/${row._id}`} 
+								className="p-2 hover:bg-blue-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-blue-200 group"
+								title="Voir"
+							>
+								<Eye className="w-4 h-4 text-gray-600 group-hover:text-blue-600 transition-colors" />
+							</Link>
+							<button 
+								className="p-2 hover:bg-red-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-red-200 group" 
+								title="Supprimer" 
+								onClick={() => openDeleteModal(row._id)}
+							>
+								<Trash2 className="w-4 h-4 text-gray-600 group-hover:text-red-600 transition-colors" />
+							</button>
 						</div>
 					)}
 				/>
-			)}
-
-			{viewType === 'grid' && (
+			</div>
+		)}			{viewType === 'grid' && (
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 					{properties.map((prop: any) => (
 						<div key={prop._id} className="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow group">

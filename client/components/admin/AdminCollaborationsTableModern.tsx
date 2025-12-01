@@ -97,31 +97,36 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 	};
 
 	return (
-		<div className="space-y-6 px-4 sm:px-6 lg:px-0">
-			{/* Header */}
-			<div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+		<div className="space-y-4 sm:space-y-6">
+			<div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
 				<div>
-					<h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Collaborations</h1>
-					<p className="text-sm sm:text-base text-gray-600 mt-1">Total: {filteredCollaborations.length} collaboration(s)</p>
+					<h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+						Collaborations
+					</h1>
+					<div className="flex items-center gap-2 mt-1.5">
+						<Handshake className="w-4 h-4 text-gray-500" />
+						<p className="text-xs sm:text-sm text-gray-600">
+							Total: <span className="font-semibold text-gray-900">{filteredCollaborations.length}</span> collaboration(s)
+						</p>
+					</div>
 				</div>
 			</div>
 
-			{/* Filters */}
-			<div className="space-y-3 sm:space-y-4">
-				<div className="flex flex-col sm:flex-row gap-3 flex-wrap">
+			<div className="space-y-3">
+				<div className="flex flex-col sm:flex-row gap-3">
 					<input
 						type="search"
 						placeholder="Chercher agent, apporteur, annonce..."
 						value={filters.search}
 						onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-						className="w-full sm:flex-1 sm:min-w-48 px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+						className="w-full sm:flex-1 px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-sm"
 					/>
 					<select
 						value={filters.status}
 						onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-						className="w-full sm:w-auto px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+						className="w-full sm:w-auto px-3 sm:px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-sm"
 					>
-						<option value="">Tous les statuts</option>
+						<option value="">Tous statuts</option>
 						<option value="pending">En attente</option>
 						<option value="active">Active</option>
 						<option value="completed">Complétée</option>
@@ -131,19 +136,19 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 				<div className="flex flex-wrap gap-2">
 					<button
 						onClick={() => setFilters({ ...filters, collabType: '' })}
-						className={`px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors whitespace-nowrap ${
+						className={`px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg font-medium transition-all shadow-sm ${
 							!filters.collabType
-								? 'bg-cyan-600 text-white'
+								? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md'
 								: 'border border-gray-300 text-gray-700 hover:bg-gray-50'
 						}`}
 					>
-						Tous les types
+						Tous types
 					</button>
 					<button
 						onClick={() => setFilters({ ...filters, collabType: 'agent-agent' })}
-						className={`px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors whitespace-nowrap ${
+						className={`px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg font-medium transition-all shadow-sm ${
 							filters.collabType === 'agent-agent'
-								? 'bg-cyan-600 text-white'
+								? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md'
 								: 'border border-gray-300 text-gray-700 hover:bg-gray-50'
 						}`}
 					>
@@ -151,9 +156,9 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 					</button>
 					<button
 						onClick={() => setFilters({ ...filters, collabType: 'agent-apporteur' })}
-						className={`px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg font-medium transition-colors whitespace-nowrap ${
+						className={`px-3 sm:px-4 py-2 text-xs sm:text-sm rounded-lg font-medium transition-all shadow-sm ${
 							filters.collabType === 'agent-apporteur'
-								? 'bg-cyan-600 text-white'
+								? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md'
 								: 'border border-gray-300 text-gray-700 hover:bg-gray-50'
 						}`}
 					>
@@ -162,16 +167,14 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 				</div>
 			</div>
 
-			{/* Stats */}
-			<div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-				<StatCard icon={<BarChart2 className="w-8 h-8 text-indigo-500" />} label="Total" value={filteredCollaborations.length} color="blue" />
-				<StatCard icon={<CheckCircle className="w-8 h-8 text-green-500" />} label="Actives" value={filteredCollaborations.filter(c => c.status === 'active').length} color="green" />
-				<StatCard icon={<Check className="w-8 h-8 text-purple-500" />} label="Complétées" value={filteredCollaborations.filter(c => c.status === 'completed').length} color="purple" />
-				<StatCard icon={<DollarSign className="w-8 h-8 text-rose-500" />} label="Commissions" value={`€${(filteredCollaborations.reduce((sum, c) => sum + ((c.commission || c.proposedCommission) || 0), 0) / 1000).toFixed(1)}k`} color="rose" />
+			<div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+				<StatCard icon={<BarChart2 className="w-5 h-5 text-indigo-600" />} label="Total" value={filteredCollaborations.length} color="blue" />
+				<StatCard icon={<CheckCircle className="w-5 h-5 text-green-600" />} label="Actives" value={filteredCollaborations.filter(c => c.status === 'active').length} color="green" />
+				<StatCard icon={<Check className="w-5 h-5 text-purple-600" />} label="Complétées" value={filteredCollaborations.filter(c => c.status === 'completed').length} color="purple" />
+				<StatCard icon={<DollarSign className="w-5 h-5 text-rose-600" />} label="Commissions" value={`€${(filteredCollaborations.reduce((sum, c) => sum + ((c.commission || c.proposedCommission) || 0), 0) / 1000).toFixed(1)}k`} color="rose" />
 			</div>
 
-			{/* Table */}
-			<div className="overflow-x-auto -mx-4 sm:mx-0 rounded-lg border border-gray-200">
+			<div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
 			<DataTable
 				columns={[
 					{
@@ -233,7 +236,13 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 						render: (value: any, row: AdminCollaboration) => {
 							const commission = value || row.proposedCommission || 0;
 							return (
-								<span className="font-bold text-cyan-600 text-xs sm:text-sm">€{(commission / 1000).toFixed(1)}k</span>
+								<div className="flex justify-center">
+									<div className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200/50 shadow-sm">
+										<span className="font-bold text-sm bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
+											€{(commission / 1000).toFixed(1)}k
+										</span>
+									</div>
+								</div>
 							);
 						},
 					},
@@ -242,11 +251,14 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 						accessor: 'status',
 						width: '15%',
 						render: (value: any) => (
-							<Badge
-										children={timelineStatus(value)}
-								variant={statusVariant(value)}
-								size="sm"
-							/>
+							<div className="flex justify-center">
+								<Badge
+									children={timelineStatus(value)}
+									variant={statusVariant(value)}
+									size="sm"
+									className="shadow-sm"
+								/>
+							</div>
 						),
 					},
 					{
@@ -254,7 +266,7 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 						accessor: 'createdAt',
 						width: '15%',
 						render: (value: any, row: AdminCollaboration) => (
-							<div className="text-xs text-gray-600 space-y-1">
+							<div className="text-xs text-gray-600 space-y-1 hidden sm:block">
 								<p className="flex items-center gap-1 sm:gap-2"><Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" /><span className="truncate">{new Date(value).toLocaleDateString('fr-FR')}</span></p>
 								<p className="text-gray-500 flex items-center gap-1 sm:gap-2"><RefreshCw className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" /><span className="truncate">{new Date(row.updatedAt).toLocaleDateString('fr-FR')}</span></p>
 							</div>
@@ -265,15 +277,21 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 				loading={loading}
 				pagination={false}
 				actions={(row: AdminCollaboration) => (
-					<div className="flex items-center gap-1 sm:gap-2">
-						<Link href={`/collaboration/${row._id}`} className="p-1 hover:bg-blue-100 rounded transition-colors flex-shrink-0" title="Détails">
-							<Eye className="w-4 h-4" />
+					<div className="flex items-center justify-end gap-1.5">
+						<Link 
+							href={`/collaboration/${row._id}`} 
+							className="p-2 hover:bg-blue-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-blue-200 group"
+							title="Détails"
+						>
+							<Eye className="w-4 h-4 text-gray-600 group-hover:text-blue-600 transition-colors" />
 						</Link>
-						<Link href={`/admin/chat?collaborationId=${row._id}`} className="p-1 hover:bg-purple-100 rounded transition-colors flex-shrink-0" title="Historique des échanges">
-							<MessageSquare className="w-4 h-4" />
+						<Link 
+							href={`/admin/chat?collaborationId=${row._id}`} 
+							className="p-2 hover:bg-purple-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-purple-200 group"
+							title="Historique"
+						>
+							<MessageSquare className="w-4 h-4 text-gray-600 group-hover:text-purple-600 transition-colors" />
 						</Link>
-						 
-					 
 					</div>
 				)}
 			/>
