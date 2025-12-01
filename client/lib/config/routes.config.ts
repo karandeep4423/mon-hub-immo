@@ -10,6 +10,7 @@
  */
 export const PROTECTED_ROUTES = [
 	'/dashboard',
+	'/admin',
 	'/search-ads/create',
 	'/search-ads/edit',
 	'/collaboration',
