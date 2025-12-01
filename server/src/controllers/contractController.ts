@@ -391,10 +391,13 @@ export const getContract = async (
 		}
 
 		const collaboration = await Collaboration.findById(id)
-			.populate('postOwnerId', 'firstName lastName email profileImage')
+			.populate(
+				'postOwnerId',
+				'firstName lastName email profileImage userType phone professionalInfo',
+			)
 			.populate(
 				'collaboratorId',
-				'firstName lastName email profileImage',
+				'firstName lastName email profileImage userType phone professionalInfo',
 			);
 
 		if (!collaboration) {
@@ -423,56 +426,240 @@ export const getContract = async (
 			!collaboration.contractText ||
 			collaboration.contractText.trim() === ''
 		) {
-			const ownerName = `${(collaboration.postOwnerId as unknown as PopulatedUser).firstName} ${(collaboration.postOwnerId as unknown as PopulatedUser).lastName}`;
-			const collaboratorName = `${(collaboration.collaboratorId as unknown as PopulatedUser).firstName} ${(collaboration.collaboratorId as unknown as PopulatedUser).lastName}`;
-			const ownerCommission = 100 - collaboration.proposedCommission;
-			const collaboratorCommission = collaboration.proposedCommission;
+			const owner =
+				collaboration.postOwnerId as unknown as PopulatedUser & {
+					userType: string;
+					phone?: string;
+					professionalInfo?: {
+						siretNumber?: string;
+						city?: string;
+						postalCode?: string;
+					};
+				};
+			const collaborator =
+				collaboration.collaboratorId as unknown as PopulatedUser & {
+					userType: string;
+					phone?: string;
+					professionalInfo?: {
+						siretNumber?: string;
+						city?: string;
+						postalCode?: string;
+					};
+				};
 
-			const defaultTemplate = `CONTRAT DE COLLABORATION IMMOBILIÈRE
+			const ownerName = `${owner.firstName} ${owner.lastName}`;
+			const collaboratorName = `${collaborator.firstName} ${collaborator.lastName}`;
+			const ownerAddress =
+				owner.professionalInfo?.city &&
+				owner.professionalInfo?.postalCode
+					? `${owner.professionalInfo.city} (${owner.professionalInfo.postalCode})`
+					: 'Adresse non renseignée';
+			const collaboratorAddress =
+				collaborator.professionalInfo?.city &&
+				collaborator.professionalInfo?.postalCode
+					? `${collaborator.professionalInfo.city} (${collaborator.professionalInfo.postalCode})`
+					: 'Adresse non renseignée';
 
-ENTRE LES SOUSSIGNÉS :
+			let contractTemplate = '';
 
-D'une part,
-${ownerName}
-Agent immobilier propriétaire du bien
-Ci-après dénommé « L'AGENT PROPRIÉTAIRE »
+			// Case 1: Property Owner is "apporteur" (User Type: apporteur)
+			// Note: The prompt says "if the property owner is 'D'APPORTEUR D'AFFAIRES'".
+			// Assuming this maps to userType === 'apporteur'.
+			if (owner.userType === 'apporteur') {
+				contractTemplate = `CONTRAT D'APPORTEUR D'AFFAIRES
+(Mise en relation via la plateforme MonHubImmo)
 
-Et d'autre part,
-${collaboratorName}
-Agent immobilier apporteur
-Ci-après dénommé « L'AGENT APPORTEUR »
+Entre les soussignés :
 
-ARTICLE 1 - OBJET DU CONTRAT
-Le présent contrat a pour objet de définir les modalités de collaboration entre les deux agents immobiliers pour la vente du bien immobilier référencé dans cette collaboration.
+Le Professionnel de l’immobilier
+Nom / Dénomination : ${collaboratorName}
+Adresse : ${collaboratorAddress}
+Téléphone : ${collaborator.phone || '..............................................................................'}
+Email : ${collaborator.email}
+Statut : ${collaborator.userType === 'agent' ? 'Agent Immobilier' : 'Professionnel'}
+(ci-après désigné « Le Professionnel »)
 
-ARTICLE 2 - OBLIGATIONS DE L'AGENT PROPRIÉTAIRE
-L'Agent Propriétaire s'engage à :
-- Fournir toutes les informations nécessaires concernant le bien
-- Assurer la coordination des visites
-- Gérer les aspects administratifs et juridiques de la vente
+Et
 
-ARTICLE 3 - OBLIGATIONS DE L'AGENT APPORTEUR
-L'Agent Apporteur s'engage à :
-- Prospecter activement pour trouver des acquéreurs potentiels
-- Organiser les visites en coordination avec l'Agent Propriétaire
-- Assurer le suivi des clients prospects
+L’Apporteur d’affaires
+Nom : ${owner.lastName}
+Prénom : ${owner.firstName}
+Adresse : ${ownerAddress}
+Téléphone : ${owner.phone || '..................................................................................'}
+Email : ${owner.email}
+(ci-après désigné « L’Apporteur »)
 
-ARTICLE 4 - RÉPARTITION DES COMMISSIONS
-La commission sera répartie comme suit :
-- Agent Propriétaire : ${ownerCommission}%
-- Agent Apporteur : ${collaboratorCommission}%
+Les deux parties conviennent ce qui suit :
 
-ARTICLE 5 - DURÉE
-Le présent contrat prend effet à compter de sa signature par les deux parties et reste valable jusqu'à la finalisation de la vente ou résiliation par l'une des parties.
+1. Objet du contrat
+L’Apporteur met en relation, via la plateforme MonHubImmo, un prospect (vendeur, acquéreur, bailleur, locataire ou propriétaire d’un bien) avec le Professionnel. La mission de l’Apporteur se limite strictement à la mise en relation. Aucun conseil, négociation, estimation, visite ou action commerciale ne peut être réalisée par l’Apporteur.
+La plateforme MonHubImmo ne perçoit ni ne manipule aucun fonds.
 
-ARTICLE 6 - RÉSILIATION
-Chaque partie peut résilier le présent contrat moyennant un préavis de 7 jours par notification écrite.
+2. Fonctionnement de la mise en relation
+La mise en relation est effectuée exclusivement via la plateforme MonHubImmo. Le Professionnel reçoit les coordonnées du prospect et reste libre d’accepter ou non la prise en charge du contact. L’Apporteur s’engage à informer le prospect qu’il sera contacté par le Professionnel.
+La responsabilité de MonHubImmo se limite au rôle de plateforme technique et ne participe aucunement à l’accord entre les deux parties.
 
-Fait en deux exemplaires originaux.
+3. Rôle respectif des parties
+L’Apporteur :
+• Se limite à transmettre un contact.
+• Ne perçoit aucun fonds.
+• Ne représente pas le Professionnel.
+• Ne peut en aucun cas se présenter comme agent immobilier.
 
-Date : ${new Date().toLocaleDateString('fr-FR')}`;
+Le Professionnel :
+• Traite ou non le prospect présenté.
+• Informe l’Apporteur de l’issue de la relation si une transaction aboutit.
+• Rédige et signe, le cas échéant, le document officiel d’apporteur d’affaires prévu par son réseau ou agence, ce contrat n’étant qu’un accord préalable.
 
-			collaboration.contractText = defaultTemplate;
+Chaque partie conserve la preuve de la mise en relation (date + capture d’écran de la fiche transmise via MonHubImmo).
+
+4. Rémunération de l’Apporteur
+La rémunération est déterminée directement entre l’Apporteur et le Professionnel selon les conditions suivantes :
+Montant convenu : ${collaboration.proposedCommission ? collaboration.proposedCommission + '% de la commission agence' : '......................................................................................'}
+
+La rémunération est due uniquement :
+- si la mise en relation a été réalisée via MonHubImmo,
+- si le prospect aboutit à une transaction signée par acte authentique,
+- et si un document officiel du réseau / agence du Professionnel vient confirmer l’accord.
+
+MonHubImmo n’est jamais partie à la rémunération et ne perçoit aucune commission.
+Chaque partie reste responsable de son propre régime fiscal (ex. micro‑BNC ou activité commerciale selon les cas).
+
+5. Indépendance des parties
+L’Apporteur et le Professionnel agissent de manière totalement indépendante. Le présent contrat ne crée ni contrat de travail, ni mandat, ni partenariat exclusif, ni obligation de résultat.
+
+6. Confidentialité
+Les informations échangées entre les deux parties sont confidentielles et destinées uniquement à la mise en relation.
+Aucune donnée ne peut être utilisée à d’autres fins.
+
+7. Protection des données
+Chaque partie s’engage à respecter la réglementation en vigueur (RGPD) concernant les données personnelles du prospect.
+
+8. Durée et résiliation
+Le présent contrat prend effet à la date de signature et reste valable jusqu’à résiliation par l’une ou l’autre des parties, sans préavis particulier.
+Une collaboration peut être interrompue librement en cas de désaccord.
+
+9. Litiges
+En cas de différend, les parties s’engagent à rechercher une solution amiable avant toute procédure.
+
+Fait à ......................................................, le ${new Date().toLocaleDateString('fr-FR')}
+
+Le Professionnel
+Signature précédée de la mention « Lu et approuvé »
+
+L’Apporteur
+Signature précédée de la mention « Lu et approuvé »`;
+			} else {
+				// Case 2: Property Owner is "agent" (User Type: agent)
+				// Also covers default case if userType is missing/other
+				contractTemplate = `CONTRAT DE COLLABORATION ENTRE PROFESSIONNELS DE L’IMMOBILIER
+(Mise en relation via la plateforme MonHubImmo)
+
+Conditions préalables obligatoires
+Le contrat est valide à condition que :
+• Les cases vierges soient remplies :
+  - Identité complète du Délégant / Délégué
+  - Numéro de carte professionnelle (obligatoire)
+  - Modalités de rémunération
+  - Pouvoirs confiés (visite / publicité / communication)
+• Le partage d’honoraires soit exprimé clairement Exemples :
+  - « 50/50 sur les honoraires encaissés HT du Délégant »
+  - « Montant fixe de 3 000 € HT »
+• Les signatures originales soient apposées
+  - Signature électronique certifiée (DocuSign, Yousign…) recommandée
+  - Ou signature manuscrite scannée
+• Le contrat soit cohérent avec le mandat initial
+  - Le Délégant doit avoir le droit de déléguer / collaborer
+  - Le mandat ne doit pas interdire la délégation
+
+Entre les soussignés :
+
+Le Professionnel Délégant
+Nom / Dénomination : ${ownerName}
+Adresse : ${ownerAddress}
+Téléphone : ${owner.phone || '.............................................................................................................'}
+Email : ${owner.email}
+Numéro de carte professionnelle : ${owner.professionalInfo?.siretNumber || '........................................................................'}
+(ci-après « Le Délégant »)
+
+Et
+
+Le Professionnel Délégué
+Nom / Dénomination : ${collaboratorName}
+Adresse : ${collaboratorAddress}
+Téléphone : ${collaborator.phone || '.............................................................................................................'}
+Email : ${collaborator.email}
+Numéro de carte professionnelle : ${collaborator.professionalInfo?.siretNumber || '........................................................................'}
+(ci-après « Le Délégué »)
+
+Les deux parties conviennent ce qui suit :
+
+1. Objet de la collaboration
+La présente collaboration vise à faciliter, via la plateforme MonHubImmo, le partage d’un mandat ou l’échange d’un client (acquéreur, vendeur, investisseur ou locataire) entre deux professionnels de l’immobilier.
+La plateforme MonHubImmo est uniquement un outil de mise en relation : elle n’intervient pas dans l’accord entre les parties, ne négocie aucune condition et ne perçoit aucune commission.
+
+2. Nature du partage
+La collaboration peut porter sur :
+- une délégation de mandat (mandat simple ou exclusif),
+- un partage d’acquéreur ou de projet,
+- la co‑vente ou vente collaborative entre professionnels.
+Chaque partie reste entièrement responsable des documents obligatoires relevant de son réseau, franchise ou agence.
+
+3. Transmission des informations
+Le Délégant transmet au Délégué :
+- les informations essentielles sur le bien ou le client,
+- les éléments nécessaires à la bonne exécution de la mission,
+- les pouvoirs autorisés (visites, publicité, communication, etc.), dans les limites prévues au mandat initial.
+Le Délégué s’engage à :
+- utiliser les informations reçues uniquement dans le cadre de la collaboration,
+- respecter les obligations légales et déontologiques liées à son activité,
+- représenter le bien ou le client conformément aux consignes du Délégant.
+
+4. Rémunération et partage d’honoraires
+La rémunération du Délégué est définie ainsi :
+Modalités convenues entre les parties :
+${collaboration.proposedCommission ? collaboration.proposedCommission + '% de la commission' : '..............................................................................................................................'}
+(exemple : 50/50 – 60/40 – montant fixe – % des honoraires du Délégant)
+
+Les honoraires ne sont dus que si une transaction est réalisée et signée par acte authentique.
+Le versement des commissions s’effectue directement entre le Délégant et le Délégué, selon les règles de leurs cartes professionnelles respectives.
+MonHubImmo ne manipule ni ne perçoit aucun fonds lié à la transaction.
+
+5. Indépendance et responsabilités
+Les deux professionnels agissent en totale indépendance.
+Le présent contrat :
+- ne constitue pas un mandat commun,
+- ne crée aucun lien de subordination,
+- ne transforme pas l’un des professionnels en représentant de l’autre.
+Chaque partie reste responsable des obligations légales propres à son activité.
+
+6. Durée de la collaboration
+La collaboration prend effet à la date de signature. Elle prend automatiquement fin :
+- à la fin du mandat initial,
+- à la réalisation de la transaction,
+- ou sur simple notification écrite d’une des parties.
+Préavis recommandé : 7 jours.
+
+7. Confidentialité
+Les informations échangées sont strictement confidentielles. Elles ne peuvent être utilisées en dehors de la mission confiée.
+
+8. RGPD – Données personnelles
+Chaque partie garantit le respect de la réglementation en vigueur concernant les données personnelles.
+Les données reçues via MonHubImmo ne peuvent être détournées à d’autres fins.
+
+9. Litiges
+En cas de désaccord, les deux parties s’engagent à privilégier une solution amiable avant toute procédure.
+
+Fait à .............................................., le ${new Date().toLocaleDateString('fr-FR')}
+
+Le Délégant
+Signature précédée de la mention « Lu et approuvé »
+
+Le Délégué
+Signature précédée de la mention « Lu et approuvé »`;
+			}
+
+			collaboration.contractText = contractTemplate;
 			collaboration.contractModified = false;
 			await collaboration.save();
 		}
