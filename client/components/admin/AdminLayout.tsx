@@ -4,6 +4,17 @@ import SidebarAdminModern from './SidebarAdminModern';
 import AdminMobileNav from './AdminMobileNav';
 import { useAuth } from '@/hooks/useAuth';
 import { usePathname, useRouter } from 'next/navigation';
+import type { User } from '@/types/auth';
+
+const isAdminUser = (u: User | null | undefined): boolean => {
+	if (!u) return false;
+	// Normalize role/userType
+	const rawRole = u.userType;
+	const role = typeof rawRole === 'string' ? rawRole.toLowerCase() : '';
+	// Some backends may also set a boolean flag
+	const flag = (u as unknown as { isAdmin?: boolean }).isAdmin === true;
+	return flag || role === 'admin' || role === 'administrator';
+};
 
 interface AdminLayoutProps {
 	children: ReactNode;
@@ -21,10 +32,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 		if (loading) return;
 		// If user exists and is not admin on /admin, redirect to dashboard
 		const isAdminRoute = pathname?.startsWith('/admin');
-		const rawRole: unknown = (user as any)?.role ?? (user as any)?.type ?? (user as any)?.userType;
-		const role = typeof rawRole === 'string' ? rawRole.toLowerCase() : undefined;
-		const isAdminFlag = Boolean((user as any)?.isAdmin);
-		if (isAdminRoute && user && !(isAdminFlag || role === 'admin' || role === 'administrator')) {
+		if (isAdminRoute && user && !isAdminUser(user as User)) {
 			router.replace('/dashboard');
 		}
 	}, [loading, user, pathname, router]);
@@ -49,14 +57,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 			<div className="lg:ml-72 pt-16">
 				<main className="p-4 sm:p-6 lg:p-8 pb-20 lg:pb-8 max-w-[1600px] mx-auto">
 					{/* Prevent rendering protected content briefly for non-admins */}
-					{loading
-						? children
-						: ((): React.ReactNode => {
-							const rawRole: unknown = (user as any)?.role ?? (user as any)?.type ?? (user as any)?.userType;
-							const role = typeof rawRole === 'string' ? rawRole.toLowerCase() : undefined;
-							const isAdminFlag = Boolean((user as any)?.isAdmin);
-							return user && (isAdminFlag || role === 'admin' || role === 'administrator') ? children : null;
-						})()}
+					{loading ? children : (user && isAdminUser(user as User) ? children : null)}
 				</main>
 			</div>
 
