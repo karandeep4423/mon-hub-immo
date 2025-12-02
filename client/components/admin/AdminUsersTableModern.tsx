@@ -416,7 +416,23 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						{row.type === 'agent' && !row.isPaid && row.profileCompleted && (
 							<button 
 								title="Envoyer rappel paiement" 
-								onClick={async () => { try { await adminService.sendPaymentReminder(row._id); toast.success('Rappel de paiement envoyé.'); } catch (err) { console.error(err); toast.error('Erreur lors de l\'envoi du rappel.'); } }} 
+								onClick={() => setTableConfirmAction({
+									label: 'Envoyer un rappel de paiement à cet utilisateur ?',
+									type: 'payment_reminder',
+									onConfirm: async () => {
+										setActionBusy(true);
+										try {
+											await adminService.sendPaymentReminder(row._id);
+											toast.success('Rappel de paiement envoyé.');
+										} catch (err) {
+											console.error(err);
+											toast.error('Erreur lors de l\'envoi du rappel.');
+										} finally {
+											setActionBusy(false);
+											setTableConfirmAction(null);
+										}
+									}
+								})} 
 								className="p-2 hover:bg-orange-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-orange-200 group hidden lg:flex"
 							>
 								<CreditCard className="w-4 h-4 text-gray-600 group-hover:text-orange-600 transition-colors" />
