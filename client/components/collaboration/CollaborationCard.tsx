@@ -44,14 +44,32 @@ export const CollaborationCard: React.FC<CollaborationCardProps> = ({
 		return '';
 	}, [collaboration.postId]);
 
-	// Fetch property using SWR (with automatic deduplication)
+	// Check if property data is already populated
+	const populatedProperty = useMemo(() => {
+		if (
+			collaboration.postType === 'Property' &&
+			typeof collaboration.postId === 'object' &&
+			collaboration.postId !== null
+		) {
+			// It's populated, cast it to Property (partial)
+			// We need to be careful about types here, but for display purposes it should be enough
+			return collaboration.postId as unknown as import('@/lib/api/propertyApi').Property;
+		}
+		return null;
+	}, [collaboration.postId, collaboration.postType]);
+
+	// Fetch property using SWR ONLY if not populated
 	const {
-		data: property,
+		data: fetchedProperty,
 		isLoading: isLoadingProperty,
 		error: propertyError,
 	} = useProperty(
-		postId && collaboration.postType === 'Property' ? postId : undefined,
+		!populatedProperty && postId && collaboration.postType === 'Property'
+			? postId
+			: undefined,
 	);
+
+	const property = populatedProperty || fetchedProperty;
 
 	// Fetch search ad using SWR (with automatic deduplication)
 	const {

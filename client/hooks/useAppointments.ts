@@ -24,9 +24,12 @@ import type {
  * Fetch all appointments for current user
  * Used in: AppointmentsManager, Dashboard
  */
-export function useAppointments(userId?: string) {
+export function useAppointments(
+	userId?: string,
+	options: { enabled?: boolean } = { enabled: true },
+) {
 	return useSWR(
-		swrKeys.appointments.myAppointments(userId),
+		options.enabled ? swrKeys.appointments.myAppointments(userId) : null,
 		() => appointmentApi.getMyAppointments(),
 		{
 			revalidateOnFocus: true, // Refetch on tab focus for appointments

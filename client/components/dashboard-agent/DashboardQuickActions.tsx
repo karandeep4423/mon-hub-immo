@@ -107,7 +107,7 @@ export const DashboardQuickActions: React.FC<DashboardQuickActionsProps> = ({
 					</Button>
 				</Link>
 
-				<a href="mailto:contact@monhubimmo.fr" className="w-full">
+				<a href="mailto:contact@monhubimmo.com" className="w-full">
 					<Button
 						variant="outline"
 						className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
