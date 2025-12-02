@@ -20,7 +20,8 @@ export interface ISecurityLog extends Document {
 			| 'account_access_revoked'
 			| 'account_validated'
 			| 'email_send_failed'
-		| 'failed_verification_attempt';
+		| 'failed_verification_attempt'
+		| 'account_deleted';
 	ipAddress?: string;
 	userAgent?: string;
 	metadata?: {
@@ -63,6 +64,7 @@ const securityLogSchema = new Schema<ISecurityLog>(
 				'account_validated',
 				'email_send_failed',
 				'failed_verification_attempt',
+				'account_deleted',
 			],
 			index: true,
 		},

@@ -108,6 +108,21 @@ export default function AdminUserProfile() {
     }
   };
 
+  const handleDelete = async (userId: string) => {
+    try {
+      const response = await fetch(`${API_ROOT}/api/admin/users/${userId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Delete failed');
+      // Redirect to users list after successful deletion
+      window.location.href = '/admin/users';
+    } catch (err) {
+      console.error(err);
+      alert('Erreur lors de la suppression de l\'utilisateur');
+    }
+  };
+
   if (loading) return <div className="flex justify-center items-center h-64">Chargement du profil...</div>;
   if (error) return <div className="text-red-500 text-center mt-10">{error}</div>;
   if (!user) return <div className="text-center mt-10">Utilisateur introuvable.</div>;
@@ -121,7 +136,7 @@ export default function AdminUserProfile() {
             Retour à la liste des utilisateurs
           </Link>
         </div>
-        <UserProfileModern user={user} onValidate={handleValidate} onBlock={handleBlock} />
+        <UserProfileModern user={user} onValidate={handleValidate} onBlock={handleBlock} onDelete={handleDelete} />
       </div>
     </div>
   );

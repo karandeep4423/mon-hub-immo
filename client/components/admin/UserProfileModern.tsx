@@ -32,9 +32,10 @@ interface UserProfileModernProps {
   user: UserProfile;
   onValidate: (id: string, value: boolean) => Promise<void>;
   onBlock: (id: string, value: boolean) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
 }
 
-type ConfirmAction = 'validate' | 'invalidate' | 'block' | 'unblock' | null;
+type ConfirmAction = 'validate' | 'invalidate' | 'block' | 'unblock' | 'delete' | null;
 
 type KnownUserType = '' | 'agent' | 'apporteur' | 'admin';
 
@@ -56,7 +57,7 @@ const InfoRow: React.FC<{ icon?: React.ReactNode; label: string; value?: React.R
   </div>
 );
 
-export function UserProfileModern({ user, onValidate, onBlock }: UserProfileModernProps) {
+export function UserProfileModern({ user, onValidate, onBlock, onDelete }: UserProfileModernProps) {
   const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
   const [pendingAction, setPendingAction] = useState<ConfirmAction>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -95,6 +96,14 @@ export function UserProfileModern({ user, onValidate, onBlock }: UserProfileMode
           cancelText: 'Annuler',
           variant: 'primary' as const,
         };
+      case 'delete':
+        return {
+          title: 'Supprimer l\'utilisateur',
+          description: `Cette action est irréversible. Toutes les annonces, collaborations et messages de ${fullName} seront définitivement supprimés. Êtes-vous sûr de vouloir continuer ?`,
+          confirmText: 'Supprimer définitivement',
+          cancelText: 'Annuler',
+          variant: 'danger' as const,
+        };
       default:
         return { title: '', description: '', confirmText: '', cancelText: '', variant: 'primary' as const };
     }
@@ -115,6 +124,9 @@ export function UserProfileModern({ user, onValidate, onBlock }: UserProfileMode
           break;
         case 'unblock':
           await onBlock(user._id, false);
+          break;
+        case 'delete':
+          await onDelete(user._id);
           break;
       }
     } finally {
@@ -195,6 +207,9 @@ export function UserProfileModern({ user, onValidate, onBlock }: UserProfileMode
                     </Button>
                   )}
                 </div>
+                <Button variant="danger" size="sm" onClick={() => setPendingAction('delete')} disabled={isLoading} className="w-full">
+                  Supprimer l&apos;utilisateur
+                </Button>
               </div>
             </div>
           </Card>

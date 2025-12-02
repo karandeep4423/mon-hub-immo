@@ -19,6 +19,7 @@ export type SecurityEventType =
 	| 'account_access_granted'
 	| 'account_access_revoked'
     | 'account_validated'
+	| 'account_deleted'
 	| 'email_send_failed'
 	| 'failed_verification_attempt';
 

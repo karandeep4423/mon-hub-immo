@@ -561,10 +561,75 @@ export const deleteAdminUser = async (req: Request, res: Response) => {
   if (!userId) return res.status(400).json({ error: 'Missing user id' });
 
   try {
-    logger.info('[AdminController] deleteAdminUser called', { actorId: (req as any).userId || (req as any).user?.id || null, userId });
+    const actorId = (req as any).userId || (req as any).user?.id || null;
+    logger.info('[AdminController] deleteAdminUser called', { actorId, userId });
+
+    // Find user first to get details for logging
+    const user = await User.findById(userId);
+    if (!user) {
+      logger.warn('[AdminController] deleteAdminUser - user not found', { userId });
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Delete user's properties (annonces)
+    const { Property } = await import('../models/Property');
+    const deletedProperties = await Property.deleteMany({ owner: userId });
+    logger.info('[AdminController] Deleted user properties', { userId, count: deletedProperties.deletedCount });
+
+    // Delete user's search ads
+    const { SearchAd } = await import('../models/SearchAd');
+    const deletedSearchAds = await SearchAd.deleteMany({ createdBy: userId });
+    logger.info('[AdminController] Deleted user search ads', { userId, count: deletedSearchAds.deletedCount });
+
+    // Delete collaborations where user is involved
+    const { Collaboration } = await import('../models/Collaboration');
+    const deletedCollaborations = await Collaboration.deleteMany({
+      $or: [{ agent: userId }, { apporteur: userId }]
+    });
+    logger.info('[AdminController] Deleted user collaborations', { userId, count: deletedCollaborations.deletedCount });
+
+    // Delete user's messages
+    const Message = (await import('../models/Chat')).default;
+    const deletedMessages = await Message.deleteMany({
+      $or: [{ senderId: userId }, { receiverId: userId }]
+    });
+    logger.info('[AdminController] Deleted user messages', { userId, count: deletedMessages.deletedCount });
+
+    // Delete the user
     await User.findByIdAndDelete(userId);
-    logger.info('[AdminController] deleteAdminUser success', { userId });
-    res.json({ success: true });
+
+    // Log security event
+    await logSecurityEvent({
+      userId: actorId,
+      eventType: 'account_deleted',
+      req,
+      metadata: {
+        deletedUserId: userId,
+        email: user.email,
+        propertiesDeleted: deletedProperties.deletedCount,
+        searchAdsDeleted: deletedSearchAds.deletedCount,
+        collaborationsDeleted: deletedCollaborations.deletedCount,
+        messagesDeleted: deletedMessages.deletedCount,
+      }
+    });
+
+    logger.info('[AdminController] deleteAdminUser success', {
+      userId,
+      propertiesDeleted: deletedProperties.deletedCount,
+      searchAdsDeleted: deletedSearchAds.deletedCount,
+      collaborationsDeleted: deletedCollaborations.deletedCount,
+      messagesDeleted: deletedMessages.deletedCount,
+    });
+
+    res.json({
+      success: true,
+      deleted: {
+        properties: deletedProperties.deletedCount,
+        searchAds: deletedSearchAds.deletedCount,
+        collaborations: deletedCollaborations.deletedCount,
+        messages: deletedMessages.deletedCount,
+      }
+    });
   } catch (err) {
     logger.error('[AdminController] deleteAdminUser failed', { error: err instanceof Error ? err.message : String(err), userId });
     res.status(500).json({ error: 'Failed to delete user', details: (err as Error).message });

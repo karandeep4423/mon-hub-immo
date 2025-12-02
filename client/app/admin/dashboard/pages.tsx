@@ -27,7 +27,6 @@ interface DashboardAdminProps {
 export function DashboardAdmin({ stats: initialStats }: DashboardAdminProps) {
   const [stats, setStats] = React.useState<DashboardStats | null>(initialStats || null);
   const [loading, setLoading] = React.useState<boolean>(!initialStats);
-  const [rawData, setRawData] = React.useState<unknown>(null);
 
   React.useEffect(() => {
     if (initialStats) return;
@@ -45,8 +44,6 @@ export function DashboardAdmin({ stats: initialStats }: DashboardAdminProps) {
       })
       .then((data) => {
         if (!mounted) return;
-        // Keep raw response for debugging
-        setRawData(data);
         // Map backend shape to DashboardStats expected shape
         // Some deployments return a minimal payload like:
         // { usersCount: 50, propertiesCount: 42, collaborationsCount: 69 }
