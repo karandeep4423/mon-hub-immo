@@ -34,8 +34,9 @@ export default function SetPasswordClient() {
           return;
         }
 
-        const payload = { email, token: payloadData.token, newPassword: payloadData.newPassword };
-        if (!payload.token || !payload.newPassword) {
+        // Always use the token from URL (state) to avoid missing value from hidden input
+        const payload = { email, token, newPassword: payloadData.newPassword };
+        if (!token || !payload.newPassword) {
           setErrors({ confirmPassword: 'Token et mot de passe requis' });
           authToastError('Token et mot de passe requis');
           return;
@@ -46,7 +47,8 @@ export default function SetPasswordClient() {
         const res = await authService.setPasswordFromInvite(payload as { email: string; token: string; newPassword: string });
         if (res.success) {
           showPasswordResetSuccess();
-          setTimeout(() => router.push('/auth/login'), 1500);
+          // Rediriger directement vers la vérification email pour saisir le code
+          setTimeout(() => router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`), 1200);
         } else {
           authToastError(res.message || 'Erreur lors de la mise à jour du mot de passe');
         }

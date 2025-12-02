@@ -15,7 +15,11 @@ export interface ISecurityLog extends Document {
 		| 'logout'
 		| 'email_verified'
 			| 'invite_sent'
+			| 'temp_password_sent'
+			| 'account_access_granted'
+			| 'account_access_revoked'
 			| 'account_validated'
+			| 'email_send_failed'
 		| 'failed_verification_attempt';
 	ipAddress?: string;
 	userAgent?: string;
@@ -52,7 +56,12 @@ const securityLogSchema = new Schema<ISecurityLog>(
 				'account_unlocked',
 				'logout',
 				'email_verified',
+				'invite_sent',
+				'temp_password_sent',
+				'account_access_granted',
+				'account_access_revoked',
 				'account_validated',
+				'email_send_failed',
 				'failed_verification_attempt',
 			],
 			index: true,

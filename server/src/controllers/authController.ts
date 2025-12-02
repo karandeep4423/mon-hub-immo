@@ -17,6 +17,7 @@ import {
 	getPasswordResetTemplate,
 	getPasswordResetConfirmationTemplate,
 	getAccountLockedTemplate,
+	sendInviteToSetPassword,
 } from '../utils/emailService';
 import { AuthRequest } from '../types/auth';
 import { signupSchema } from '../validation/schemas';
@@ -657,14 +658,39 @@ export const verifyEmail = async (
 		// Check if user already exists (shouldn't happen, but safety check)
 		const existingUser = await User.findOne({ email });
 		if (existingUser) {
-			// Clean up pending verification
-			await pendingVerification.deleteOne();
+			 // If user exists and is NOT yet verified, this is from admin-created flow
+			 // Just mark their email as verified and clean up pending verification
+			 if (!existingUser.isEmailVerified) {
+				 existingUser.isEmailVerified = true;
+				 await existingUser.save();
 
-			res.status(400).json({
-				success: false,
-				message: 'Un compte existe déjà avec cet email.',
-			});
-			return;
+				 // Clean up pending verification
+				 await pendingVerification.deleteOne();
+
+				 // Log successful verification
+				 await logSecurityEvent({
+					 userId: (existingUser._id as unknown as string).toString(),
+					 eventType: 'email_verified',
+					 req,
+					 metadata: { email, flow: 'admin_invite' },
+				 });
+
+				 res.json({
+					 success: true,
+					 message: 'Email vérifié avec succès',
+					 requiresAdminValidation: !existingUser.isValidated,
+				 });
+				 return;
+			 }
+
+			 // User already verified - shouldn't happen
+			 await pendingVerification.deleteOne();
+
+			 res.status(400).json({
+				 success: false,
+				 message: 'Un compte existe déjà avec cet email.',
+			 });
+			 return;
 		}
 
 		// Create real User from PendingVerification - but DO NOT validate the account until admin approves
@@ -789,7 +815,7 @@ export const setPasswordFromInvite = async (
 		}
 
 		const user = await User.findOne({ email, passwordResetCode: token, passwordResetExpires: { $gt: new Date() } }).select(
-			'+passwordResetCode +passwordResetExpires +password',
+			'+passwordResetCode +passwordResetExpires +password +firstName +lastName +isEmailVerified',
 		);
 		if (!user) {
 			res.status(400).json({ success: false, message: 'Token invalide ou expiré' });
@@ -817,10 +843,39 @@ export const setPasswordFromInvite = async (
 
 		await user.save();
 
-		// Log event
-		await logSecurityEvent({ userId: (user._id as unknown as string).toString(), eventType: 'password_reset_success', req, metadata: { email } });
+	// Log event
+	await logSecurityEvent({ userId: (user._id as unknown as string).toString(), eventType: 'password_reset_success', req, metadata: { email } });
 
-		res.json({ success: true, message: 'Mot de passe mis à jour' });
+	// Generate and send verification code if user is not yet verified
+	logger.info('[AuthController] setPasswordFromInvite - checking email verification', { email, isEmailVerified: user.isEmailVerified });
+	if (!user.isEmailVerified) {
+		try {
+			logger.info('[AuthController] Generating verification code for unverified user', { email });
+			const verificationCode = generateVerificationCode();
+			 const emailVerificationExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+			// Store in PendingVerification
+			await PendingVerification.findOneAndUpdate(
+				{ email },
+				 { emailVerificationCode: verificationCode, emailVerificationExpires },
+				{ upsert: true, new: true },
+			);
+
+			// Send verification code email
+			await sendEmail({
+				to: user.email,
+				subject: 'Code de vérification - MonHubImmo',
+				html: getVerificationCodeTemplate(`${user.firstName} ${user.lastName}`, verificationCode),
+			});
+
+			logger.info('[AuthController] Verification code sent after password set', { email });
+		} catch (emailError) {
+			logger.error('[AuthController] Failed to send verification code after password set', emailError);
+			await logSecurityEvent({ userId: (user._id as unknown as string).toString(), eventType: 'email_send_failed', req, metadata: { email, error: String(emailError) } });
+		}
+	} else {
+		logger.info('[AuthController] User already verified, skipping code generation', { email });
+	}		res.json({ success: true, message: 'Mot de passe mis à jour' });
 	} catch (error) {
 		logger.error('[AuthController] setPasswordFromInvite error', error);
 		res.status(500).json({ success: false, message: 'Erreur serveur interne' });

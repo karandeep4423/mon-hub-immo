@@ -12,7 +12,7 @@ import {
   generateVerificationCode,
   sendAccountValidated,
   sendTemporaryPassword,
-  sendPasswordResetCodeEmail,
+  sendInviteToSetPassword,
   sendPaymentReminderEmail,
 } from '../utils/emailService';
 
@@ -460,28 +460,27 @@ export const createAdminUser = async (req: AuthRequest, res: Response) => {
     // Determine invite behavior
     const sendInvite = payload.sendInvite === undefined ? !payload.password : !!payload.sendInvite;
     if (sendInvite && !payload.password) {
-      // Use a 6-digit verification code for the user to enter on the reset page
-      const code = generateVerificationCode();
-      newUser.passwordResetCode = code;
-      // Code valid for 1 hour
-      newUser.passwordResetExpires = new Date(Date.now() + 1 * 60 * 60 * 1000);
+      // Generate a secure invite token to let the user define their password for the first time
+      const token = crypto.randomBytes(32).toString('hex');
+      newUser.passwordResetCode = token;
+      // Invite links valid for 24 hours
+      newUser.passwordResetExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     }
 
     await newUser.save();
 
-    // If we created an invite token, send invite email
+    // If we created an invite token, send invite email to set password (first-time setup)
     if (sendInvite && !payload.password) {
       try {
-        const inviteUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/auth/reset-password?email=${encodeURIComponent(newUser.email)}`;
-        await sendPasswordResetCodeEmail({
+        const inviteUrl = `${process.env.CLIENT_URL || process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/set-password?email=${encodeURIComponent(newUser.email)}&token=${encodeURIComponent(String(newUser.passwordResetCode))}`;
+        await sendInviteToSetPassword({
           to: newUser.email,
           name: `${newUser.firstName} ${newUser.lastName}`,
-          code: String(newUser.passwordResetCode),
           inviteUrl,
         });
-        await logSecurityEvent({ userId: (newUser._id as unknown as string).toString(), eventType: 'invite_sent', req, metadata: {} });
+        await logSecurityEvent({ userId: (newUser._id as unknown as string).toString(), eventType: 'invite_sent', req, metadata: { method: 'invite_link' } });
       } catch (err) {
-        await logSecurityEvent({ userId: (newUser._id as unknown as string).toString(), eventType: 'invite_sent', req, metadata: { error: String(err) } });
+        await logSecurityEvent({ userId: (newUser._id as unknown as string).toString(), eventType: 'invite_sent', req, metadata: { error: String(err), method: 'invite_link' } });
       }
     }
 
@@ -654,20 +653,19 @@ export const importUsersFromCSV = async (req: Request, res: Response) => {
         // If admin wants to invite on update and no password present, set invite
         const sendInvite = typeof row.sendinvite !== 'undefined' ? (String(row.sendinvite).toLowerCase() === 'true') : sendInviteDefault;
         if (sendInvite && !existing.password) {
-          const code = generateVerificationCode();
-          existing.passwordResetCode = code;
-          existing.passwordResetExpires = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hour
+          const token = crypto.randomBytes(32).toString('hex');
+          existing.passwordResetCode = token;
+          existing.passwordResetExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
           await existing.save();
-          // Send invite email with code and link to reset-password page
+          // Send invite email with secure link to set-password page
           try {
-            const inviteUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/auth/reset-password?email=${encodeURIComponent(existing.email)}`;
-            await sendPasswordResetCodeEmail({
+            const inviteUrl = `${process.env.CLIENT_URL || process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/set-password?email=${encodeURIComponent(existing.email)}&token=${encodeURIComponent(String(existing.passwordResetCode))}`;
+            await sendInviteToSetPassword({
               to: existing.email,
               name: `${existing.firstName} ${existing.lastName}`,
-              code: String(existing.passwordResetCode),
               inviteUrl,
             });
-            await logSecurityEvent({ userId: (existing._id as unknown as string).toString(), eventType: 'invite_sent', req, metadata: {} });
+            await logSecurityEvent({ userId: (existing._id as unknown as string).toString(), eventType: 'invite_sent', req, metadata: { method: 'invite_link' } });
           } catch (err) {
             errors.push(`Failed to send invite to ${existing.email}: ${(err as Error).message}`);
           }
@@ -681,9 +679,9 @@ export const importUsersFromCSV = async (req: Request, res: Response) => {
       const sendInvite = typeof row.sendinvite !== 'undefined' ? (String(row.sendinvite).toLowerCase() === 'true') : sendInviteDefault;
       // If we should send an invite and the admin did not provide a password
       if (sendInvite && !row.password) {
-        const code = generateVerificationCode();
-        u.passwordResetCode = code;
-        u.passwordResetExpires = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hour
+        const token = crypto.randomBytes(32).toString('hex');
+        u.passwordResetCode = token;
+        u.passwordResetExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
       }
 
       // If row explicitly sets isvalidated = true, mark validated (admin explicit validation)
@@ -697,14 +695,13 @@ export const importUsersFromCSV = async (req: Request, res: Response) => {
         // Send invite if configured
         if (sendInvite) {
           try {
-            const inviteUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/auth/reset-password?email=${encodeURIComponent(u.email)}`;
-            await sendPasswordResetCodeEmail({
+            const inviteUrl = `${process.env.CLIENT_URL || process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/set-password?email=${encodeURIComponent(u.email)}&token=${encodeURIComponent(String(u.passwordResetCode))}`;
+            await sendInviteToSetPassword({
               to: u.email,
               name: `${u.firstName} ${u.lastName}`,
-              code: String(u.passwordResetCode),
               inviteUrl,
             });
-            await logSecurityEvent({ userId: (u._id as unknown as string).toString(), eventType: 'invite_sent', req, metadata: {} });
+            await logSecurityEvent({ userId: (u._id as unknown as string).toString(), eventType: 'invite_sent', req, metadata: { method: 'invite_link' } });
           } catch (err) {
             errors.push(`Failed to send invite to ${u.email}: ${(err as Error).message}`);
           }
