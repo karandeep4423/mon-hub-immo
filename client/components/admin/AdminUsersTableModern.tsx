@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-"use client";
+ "use client";
 
 import React, { useState, useMemo } from 'react';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
@@ -61,7 +60,7 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 }) => {
 	const [page, setPage] = useState<number>(1);
 	const [limit] = useState<number>(10);
-	const [filters, setFilters] = useState({ type: '', status: '', search: '', network: '', email: '' });
+	const [filters, setFilters] = useState<{ type: '' | 'agent' | 'apporteur' | 'admin'; status: '' | 'active' | 'pending' | 'blocked'; search: string; network: string; email: string }>({ type: '', status: '', search: '', network: '', email: '' });
 	const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
 	const [showCreate, setShowCreate] = useState(false);
 	const [showImport, setShowImport] = useState(false);
@@ -80,10 +79,11 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 		URL.revokeObjectURL(url);
 	};
 
-	const hookFilters: any = {
+	interface HookFilters { name?: string; userType?: 'agent' | 'apporteur' | 'admin' | ''; isValidated?: 'true' | 'false'; isBlocked?: 'true'; network?: string; email?: string }
+	const hookFilters: HookFilters = {
 		name: filters.search || undefined,
 		userType: filters.type || undefined,
-	} as any;
+	};
 	if (filters.status === 'active') hookFilters.isValidated = 'true';
 	else if (filters.status === 'pending') hookFilters.isValidated = 'false';
 	else if (filters.status === 'blocked') hookFilters.isBlocked = 'true';
@@ -92,13 +92,13 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 	const users = initialUsers || hookUsers;
 	const loading = initialLoading !== undefined ? initialLoading : hookLoading;
 
-	const filteredUsers = useMemo(() => {
+	const filteredUsers = useMemo<AdminUser[]>(() => {
 		if (!users) return [];
 		const usersToFilter = (users || []).map((u: AdminUser) => {
 			const uu = u as unknown as Record<string, unknown>;
-			const status = (uu['status'] as string) || ((uu['isBlocked'] as boolean) ? 'blocked' : (uu['isValidated'] as boolean) ? 'active' : 'pending');
-			const registeredAt = (uu['registeredAt'] as string) || (uu['createdAt'] as string) || (uu['createdAtISO'] as string) || (uu['created_at'] as string) || undefined;
-			const type = (uu['type'] as string) || (uu['userType'] as string) || (uu['role'] as string) || 'apporteur';
+			const status = ((uu['status'] as string) || ((uu['isBlocked'] as boolean) ? 'blocked' : (uu['isValidated'] as boolean) ? 'active' : 'pending')) as 'active' | 'pending' | 'blocked';
+			const registeredAt = ((uu['registeredAt'] as string) || (uu['createdAt'] as string) || (uu['createdAtISO'] as string) || (uu['created_at'] as string) || '') as string;
+			const type = ((uu['type'] as string) || (uu['userType'] as string) || (uu['role'] as string) || 'apporteur') as 'agent' | 'apporteur' | 'admin';
 			return ({
 				...u,
 				status,
@@ -126,12 +126,12 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 		return filteredUsers.slice(start, start + limit);
 	}, [filteredUsers, page, limit]);
 
-	const exportToCSV = (usersToExport = filteredUsers) => {
+	const exportToCSV = (usersToExport: AdminUser[] = filteredUsers) => {
 		const headers = ['_id','firstName','lastName','email','type','network','status','registeredAt','propertiesCount','collaborationsActive','collaborationsClosed','connectionsCount','lastActive'];
 		const csvRows = [headers.join(',')];
 		for (const u of usersToExport) {
 			const row = headers.map((h) => {
-				const v = (u as any)[h];
+				const v = (u as unknown as Record<string, unknown>)[h];
 				if (v === undefined || v === null) return '""';
 				const s = String(v).replace(/"/g, '""');
 				return `"${s}"`;
@@ -143,21 +143,21 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 		download(`users-${new Date().toISOString().slice(0,10)}.csv`, blob);
 	};
 
-	const exportToXLS = (usersToExport = filteredUsers) => {
+	const exportToXLS = (usersToExport: AdminUser[] = filteredUsers) => {
 		const headers = ['ID','Prénom','Nom','Email','Type','Réseau','Statut','Inscription','Annonces','Collab.','Connexions','Dernière activité'];
 		const rows = usersToExport.map((u) => [
-			(u as any)._id || '',
-			(u as any).firstName || '',
-			(u as any).lastName || '',
-			(u as any).email || '',
-			(u as any).type || '',
-			(u as any).professionalInfo?.network || '-',
-			(u as any).status || '',
-			(u as any).registeredAt || '',
-			(u as any).propertiesCount ?? 0,
-			((u as any).collaborationsActive ?? 0) + ((u as any).collaborationsClosed ?? 0),
-			(u as any).connectionsCount ?? 0,
-			(u as any).lastActive || '',
+			(u as unknown as Record<string, unknown>)['_id'] || '',
+			(u as unknown as Record<string, unknown>)['firstName'] || '',
+			(u as unknown as Record<string, unknown>)['lastName'] || '',
+			(u as unknown as Record<string, unknown>)['email'] || '',
+			(u as unknown as Record<string, unknown>)['type'] || '',
+			(u as AdminUser).professionalInfo?.network || '-',
+			(u as unknown as Record<string, unknown>)['status'] || '',
+			(u as unknown as Record<string, unknown>)['registeredAt'] || '',
+			(Number((u as unknown as Record<string, unknown>)['propertiesCount']) || 0),
+			(Number((u as unknown as Record<string, unknown>)['collaborationsActive']) || 0) + (Number((u as unknown as Record<string, unknown>)['collaborationsClosed']) || 0),
+			(Number((u as unknown as Record<string, unknown>)['connectionsCount']) || 0),
+			(u as unknown as Record<string, unknown>)['lastActive'] || '',
 		]);
 
 		const table = '<table><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>' + rows.map(r => `<tr>${r.map(c => `<td>${String(c)}</td>`).join('')}</tr>`).join('') + '</table>';
@@ -165,7 +165,7 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 		download(`users-${new Date().toISOString().slice(0,10)}.xls`, blob);
 	};
 
-	const statusVariant = (status: string) => {
+	const statusVariant = (status: string): 'success' | 'warning' | 'error' => {
 		if (status === 'active') return 'success';
 		if (status === 'pending') return 'warning';
 		return 'error';
@@ -206,9 +206,9 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 			</div>
 
 			<AdminUserFilters
-				onChange={(f: any) => {
-					setFilters({
-						type: f.userType || '',
+					onChange={(f: { userType?: string; isValidated?: string; name?: string; network?: string; email?: string }) => {
+						setFilters({
+							type: (f.userType as 'agent' | 'apporteur' | 'admin' | '') || '',
 						status: f.isValidated === 'true' ? 'active' : f.isValidated === 'false' ? 'pending' : '',
 						search: f.name || '',
 						network: f.network || '',
@@ -245,7 +245,7 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						header: 'Utilisateur',
 						accessor: 'firstName',
 						width: '25%',
-						render: (_: any, row: AdminUser) => (
+						render: (_: unknown, row: AdminUser) => (
 							<div className="flex items-center gap-2 min-w-0">
 								<div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs sm:text-sm shadow-md">
 									{(row.firstName && row.firstName.charAt) ? row.firstName.charAt(0) : (row.email ? row.email.charAt(0) : 'U')}
@@ -261,7 +261,7 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						header: 'Type',
 						accessor: 'type',
 						width: '12%',
-						render: (value: any) => {
+						render: (value: unknown) => {
 							const v = String(value || '').toLowerCase();
 							let label = v ? v.charAt(0).toUpperCase() + v.slice(1) : 'Apporteur';
 							let variant: 'info' | 'gray' | 'success' | 'warning' | 'error' = 'gray';
@@ -275,7 +275,7 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						header: 'Réseau',
 						accessor: 'network',
 						width: '10%',
-						render: (_value: any, row: AdminUser) => (
+						render: (_value: unknown, row: AdminUser) => (
 							<div className="flex items-center gap-1.5">
 								<Globe className="w-3.5 h-3.5 text-gray-400 hidden sm:block" />
 								<span className="text-xs sm:text-sm font-medium text-gray-700 truncate max-w-[120px]">{row.professionalInfo?.network || '-'}</span>
@@ -286,7 +286,7 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						header: 'Activité',
 						accessor: 'activity',
 						width: '18%',
-						render: (_v: any, row: AdminUser) => (
+						render: (_v: unknown, row: AdminUser) => (
 							<div className="flex flex-wrap gap-2 justify-center">
 								<div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200/50 shadow-sm">
 									<span className="text-[10px] text-gray-600">📋</span>
@@ -307,11 +307,11 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						header: 'Statut',
 						accessor: 'status',
 						width: '12%',
-						render: (_value: any, row: AdminUser) => {
+						render: (_value: unknown, row: AdminUser) => {
 							const value = (row.isBlocked ? 'blocked' : (row.isValidated ? 'active' : 'pending')) as 'active' | 'pending' | 'blocked';
 							return (
 								<div className="flex justify-center">
-									<Badge variant={statusVariant(value) as any} size="sm" className="shadow-sm">
+									<Badge variant={statusVariant(value)} size="sm" className="shadow-sm">
 										{value && value.charAt ? value.charAt(0).toUpperCase() + value.slice(1) : String(value || '')}
 									</Badge>
 								</div>
@@ -322,9 +322,10 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						header: 'Inscription',
 						accessor: 'registeredAt',
 						width: '13%',
-						render: (value: any) => {
+						render: (value: unknown) => {
 							if (!value) return <span className="text-xs text-gray-500 hidden sm:inline">-</span>;
-							const d = new Date(value);
+							const str = typeof value === 'string' ? value : String(value);
+							const d = new Date(str);
 							if (isNaN(d.getTime())) return <span className="text-xs text-gray-500 hidden sm:inline">-</span>;
 							const isRecent = (Date.now() - d.getTime()) < 7 * 24 * 60 * 60 * 1000;
 							return (
@@ -341,7 +342,7 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						header: 'Paiement',
 						accessor: 'isPaid',
 						width: '12%',
-						render: (_value: any, row: AdminUser) => {
+						render: (_value: unknown, row: AdminUser) => {
 							if (row.type !== 'agent') return <span className="text-xs text-gray-400 hidden md:inline">N/A</span>;
 							if (row.accessGrantedByAdmin) return <Badge variant="info" size="sm" className="shadow-sm hidden md:inline-flex">Accès manuel</Badge>;
 							if (row.isPaid) return <Badge variant="success" size="sm" className="shadow-sm hidden md:inline-flex">Payé</Badge>;
@@ -403,7 +404,7 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 								) : (
 									<button 
 										title="Donner l'accès manuel" 
-										onClick={() => setTableConfirmAction({ label: 'Donner l\'accès manuel à cet utilisateur (outrepasse le paiement) ?', type: 'grant_manual', onConfirm: async () => { setActionBusy(true); try { await adminService.grantAdminAccess(row._id); await refetch(); toast.success('Accès manuel accordé.'); } catch (err: any) { console.error(err); const msg = err?.response?.data?.error || err?.message || 'Erreur.'; toast.error(msg); } finally { setActionBusy(false); setTableConfirmAction(null); } } })} 
+										onClick={() => setTableConfirmAction({ label: 'Donner l\'accès manuel à cet utilisateur (outrepasse le paiement) ?', type: 'grant_manual', onConfirm: async () => { setActionBusy(true); try { await adminService.grantAdminAccess(row._id); await refetch(); toast.success('Accès manuel accordé.'); } catch (err: unknown) { console.error(err); const msg = (err as { response?: { data?: { error?: string } } }).response?.data?.error || (err as { message?: string }).message || 'Erreur.'; toast.error(msg); } finally { setActionBusy(false); setTableConfirmAction(null); } } })} 
 										className="p-2 hover:bg-purple-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-purple-200 group"
 									>
 										<Key className="w-4 h-4 text-gray-600 group-hover:text-purple-600 transition-colors" />
@@ -456,6 +457,20 @@ const FilterStatCard: React.FC<{ icon: React.ReactNode; label: string; value: nu
 	);
 };
 
+interface AdminUserUpdatePayload {
+	firstName?: string;
+	lastName?: string;
+	email?: string;
+	phone?: string;
+	profileImage?: string;
+	userType?: AdminUser['type'];
+	type?: AdminUser['type'];
+	professionalInfo?: AdminUser['professionalInfo'];
+	profileCompleted?: boolean;
+	isValidated?: boolean;
+	isBlocked?: boolean;
+}
+
 const EditUserModal: React.FC<{ user: AdminUser; onClose: () => void; onSave: () => void; }> = ({ user, onClose, onSave }) => {
 	 const [form, setForm] = useState<AdminUser>({ ...user, professionalInfo: user.professionalInfo || { network: '' } });
 	 const roleOptions = [
@@ -470,25 +485,25 @@ const EditUserModal: React.FC<{ user: AdminUser; onClose: () => void; onSave: ()
 		e.preventDefault();
 		setBusy(true);
 		try {
-			const calls: Promise<any>[] = [];
+			const calls: Promise<Response>[] = [];
 			if (form.isValidated !== user.isValidated) {
 				calls.push(fetch(`${API_ROOT}/api/admin/users/${user._id}/validate`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ value: !!form.isValidated }) }));
 			}
 			if (form.isBlocked !== user.isBlocked) {
 				calls.push(fetch(`${API_ROOT}/api/admin/users/${user._id}/${form.isBlocked ? 'block' : 'unblock'}`, { method: 'POST', credentials: 'include' }));
 			}
-			const cleaned = {
+			const cleaned: AdminUserUpdatePayload = {
 				firstName: form.firstName,
 				lastName: form.lastName,
 				email: form.email,
-				phone: (form as any).phone || undefined,
-				profileImage: (form as any).profileImage || undefined,
+				phone: form.phone || undefined,
+				profileImage: form.profileImage || undefined,
 				...(form.type ? { userType: form.type, type: form.type } : {}),
 				professionalInfo: form.professionalInfo || undefined,
 				profileCompleted: form.profileCompleted === true,
 				...(form.isValidated === user.isValidated ? { isValidated: form.isValidated } : {}),
 				...(form.isBlocked === user.isBlocked ? { isBlocked: form.isBlocked } : {}),
-			} as any;
+			};
 			calls.push(fetch(`${API_ROOT}/api/admin/users/${user._id}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cleaned) }));
 
 			const results = await Promise.all(calls);
@@ -555,10 +570,10 @@ const EditUserModal: React.FC<{ user: AdminUser; onClose: () => void; onSave: ()
 					 else await adminService.grantAdminAccess(user._id);
 					 toast.success(user.accessGrantedByAdmin ? 'Accès révoqué' : 'Accès accordé');
 					 onSave();
-				 } catch (err: any) {
-					 console.error(err);
-					 const msg = err?.response?.data?.error || err?.message || 'Erreur.';
-					 toast.error(msg);
+					 } catch (err: unknown) {
+						 console.error(err);
+						 const msg = (err as { response?: { data?: { error?: string } }; message?: string }).response?.data?.error || (err as { message?: string }).message || 'Erreur.';
+						 toast.error(msg);
 				 } finally { setBusy(false); setConfirmAction(null); }
 			 }
 		 });
@@ -584,7 +599,7 @@ const EditUserModal: React.FC<{ user: AdminUser; onClose: () => void; onSave: ()
 								<p className="text-sm text-gray-600">{form.email}</p>
 								<p className="text-sm text-gray-600">{form.phone || '-'}</p>
 								<div className="mt-3 flex flex-wrap gap-2">
-									<Badge variant="info">{`Rôle: ${(form.type || (form as any).userType) || 'apporteur'}`}</Badge>
+									<Badge variant="info">{`Rôle: ${(form.type || form.userType) || 'apporteur'}`}</Badge>
 									<Badge variant="gray">{`Réseau: ${form.professionalInfo?.network || '-'}`}</Badge>
 									<Badge variant={form.isValidated ? 'success' : 'warning'}>{`Validé: ${form.isValidated ? 'Oui' : 'Non'}`}</Badge>
 								</div>
@@ -610,7 +625,7 @@ const EditUserModal: React.FC<{ user: AdminUser; onClose: () => void; onSave: ()
 								 </label>
 								 <label className="block">
 									 <span className="text-sm text-gray-600">Téléphone</span>
-									 <input className="mt-1 block w-full border rounded px-3 py-2" value={(form as any).phone || ''} onChange={(e) => setForm({ ...form, phone: e.target.value } as any)} />
+									<input className="mt-1 block w-full border rounded px-3 py-2" value={form.phone || ''} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
 								 </label>
 							 </div>
 

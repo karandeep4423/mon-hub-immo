@@ -1,12 +1,20 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-'use client';
+ 'use client';
 
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/Button';
 import React, { useState } from 'react';
 
+type AdminSettings = {
+	platformName: string;
+	maxUsersPerAgent: number;
+	commissionPercentage: number;
+	maintenanceMode: boolean;
+	emailNotifications: boolean;
+	smsNotifications: boolean;
+};
+
 export default function AdminSettingsPage() {
-	const [settings, setSettings] = useState({
+	const [settings, setSettings] = useState<AdminSettings>({
 		platformName: 'MonHubImmo',
 		maxUsersPerAgent: 10,
 		commissionPercentage: 5,
@@ -17,7 +25,7 @@ export default function AdminSettingsPage() {
 
 	const [saved, setSaved] = useState(false);
 
-	const handleChange = (key: string, value: any) => {
+	const handleChange = <K extends keyof AdminSettings>(key: K, value: AdminSettings[K]) => {
 		setSettings({ ...settings, [key]: value });
 		setSaved(false);
 	};
@@ -50,19 +58,19 @@ export default function AdminSettingsPage() {
 							<SettingField
 								label="Nom de la plateforme"
 								value={settings.platformName}
-								onChange={(v) => handleChange('platformName', v)}
+								onChange={(v) => handleChange('platformName', v as string)}
 								type="text"
 							/>
 							<SettingField
 								label="Max utilisateurs par agent"
 								value={settings.maxUsersPerAgent}
-								onChange={(v) => handleChange('maxUsersPerAgent', v)}
+								onChange={(v) => handleChange('maxUsersPerAgent', v as number)}
 								type="number"
 							/>
 							<SettingField
 								label="Commission (%) par défaut"
 								value={settings.commissionPercentage}
-								onChange={(v) => handleChange('commissionPercentage', v)}
+								onChange={(v) => handleChange('commissionPercentage', v as number)}
 								type="number"
 							/>
 						</SettingSection>
@@ -175,18 +183,23 @@ const SettingSection: React.FC<{ title: string; icon: string; children: React.Re
 	</div>
 );
 
+type SettingFieldType = 'text' | 'number';
+
 const SettingField: React.FC<{
 	label: string;
-	value: any;
-	onChange: (value: any) => void;
-	type?: string;
+	value: string | number;
+	onChange: (value: string | number) => void;
+	type?: SettingFieldType;
 }> = ({ label, value, onChange, type = 'text' }) => (
 	<div>
 		<label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
 		<input
 			type={type}
 			value={value}
-			onChange={(e) => onChange(e.target.value)}
+			onChange={(e) => {
+				const v = type === 'number' ? Number(e.target.value) : e.target.value;
+				onChange(v);
+			}}
 			className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
 		/>
 	</div>

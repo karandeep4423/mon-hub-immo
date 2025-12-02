@@ -13,7 +13,7 @@ import { useAdminProperties } from '@/hooks/useAdminProperties';
 import { Home, CheckCircle, BarChart2, DollarSign, Eye, Trash2, LayoutGrid, List } from 'lucide-react';
 import Pagination from '@/components/ui/Pagination'
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export function AdminPropertiesTableModern({ initialProperties }: { initialProperties?: any[] }) {
 	// helpers
 	const getPropertyTypeLabel = (type: string) => {

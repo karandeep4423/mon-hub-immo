@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -20,7 +19,7 @@ export interface AdminCollaboration {
 	apporteurName?: string;
 	property?: string;
 	propertyId?: string;
-	postId?: Record<string, any>;
+	postId?: CollaborationPostRef;
 	postOwnerId?: { _id: string; firstName?: string; lastName?: string; userType?: string };
 	collaboratorId?: { _id: string; firstName?: string; lastName?: string; userType?: string };
 	postType?: string;
@@ -29,6 +28,12 @@ export interface AdminCollaboration {
 	proposedCommission?: number;
 	createdAt: string;
 	updatedAt: string;
+}
+
+interface CollaborationPostRef extends Record<string, unknown> {
+	_id?: string;
+	title?: string;
+	address?: string;
 }
 
 interface AdminCollaborationsTableModernProps {
@@ -186,7 +191,7 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 						header: 'Agent & Apporteur',
 						accessor: 'agent',
 						width: '25%',
-						render: (_: any, row: AdminCollaboration) => {
+						render: (_value: unknown, row: AdminCollaboration) => {
 						const agentName = row.agentName || (typeof row.agent === 'string' ? row.agent : (row.agent ? `${row.agent.firstName ?? ''} ${row.agent.lastName ?? ''}`.trim() : ''));
 						const agentId = typeof row.agent === 'object' && row.agent ? row.agent._id : row.agentId;
 						const apporteurName = row.apporteurName || (typeof row.apporteur === 'string' ? row.apporteur : (row.apporteur ? `${row.apporteur.firstName ?? ''} ${row.apporteur.lastName ?? ''}`.trim() : ''));
@@ -219,8 +224,9 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 						header: 'Annonce',
 						accessor: 'property',
 						width: '20%',
-						render: (value: any, row: AdminCollaboration) => {
-							const propertyTitle = value || row.postId?.address || row.postId?.title || 'Unknown';
+						render: (value: unknown, row: AdminCollaboration) => {
+							const valStr = typeof value === 'string' ? value : undefined;
+							const propertyTitle = valStr || row.postId?.address || row.postId?.title || 'Unknown';
 							const isProperty = row.postType === 'Property';
 							return (
 									<div className="flex items-center gap-2 min-w-0 text-xs sm:text-sm">
@@ -238,8 +244,9 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 						header: 'Commission',
 						accessor: 'commission',
 						width: '15%',
-						render: (value: any, row: AdminCollaboration) => {
-							const commission = value || row.proposedCommission || 0;
+						render: (value: unknown, row: AdminCollaboration) => {
+							const num = typeof value === 'number' ? value : undefined;
+							const commission = num ?? row.proposedCommission ?? 0;
 							return (
 								<div className="flex justify-center">
 									<div className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200/50 shadow-sm">
@@ -255,24 +262,31 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 						header: 'Statut',
 						accessor: 'status',
 						width: '15%',
-						render: (value: any) => (
+						render: (value: unknown) => {
+							const val = typeof value === 'string' ? value : String(value ?? '');
+							return (
 							<div className="flex justify-center">
-								<Badge variant={statusVariant(value)} size="sm" className="shadow-sm">
-									{timelineStatus(value)}
+								<Badge variant={statusVariant(val)} size="sm" className="shadow-sm">
+									{timelineStatus(val)}
 								</Badge>
 							</div>
-						),
+						);
+						},
 					},
 					{
 						header: 'Dates',
 						accessor: 'createdAt',
 						width: '15%',
-						render: (value: any, row: AdminCollaboration) => (
-							<div className="text-xs text-gray-600 space-y-1 hidden sm:block">
-								<p className="flex items-center gap-1 sm:gap-2"><Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" /><span className="truncate">{new Date(value).toLocaleDateString('fr-FR')}</span></p>
-								<p className="text-gray-500 flex items-center gap-1 sm:gap-2"><RefreshCw className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" /><span className="truncate">{new Date(row.updatedAt).toLocaleDateString('fr-FR')}</span></p>
-							</div>
-						),
+						render: (value: unknown, row: AdminCollaboration) => {
+							const created = typeof value === 'string' || typeof value === 'number' ? new Date(value) : new Date(row.createdAt);
+							const updated = new Date(row.updatedAt);
+							return (
+								<div className="text-xs text-gray-600 space-y-1 hidden sm:block">
+									<p className="flex items-center gap-1 sm:gap-2"><Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" /><span className="truncate">{created.toLocaleDateString('fr-FR')}</span></p>
+									<p className="text-gray-500 flex items-center gap-1 sm:gap-2"><RefreshCw className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 flex-shrink-0" /><span className="truncate">{updated.toLocaleDateString('fr-FR')}</span></p>
+								</div>
+							);
+						},
 					},
 				]}
 				data={pagedCollaborations}

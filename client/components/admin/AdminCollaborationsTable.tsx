@@ -1,14 +1,20 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useEffect, useState, useMemo } from "react";
 import Link from 'next/link';
 import { collaborationApi } from '@/lib/api/collaborationApi';
 
 // Adapte l'interface à ce que retourne l'API backend
+export interface CollaborationPostRef {
+  _id?: string;
+  title?: string;
+  address?: string;
+  location?: string;
+}
+
 export interface Collaboration {
   _id: string;
   postType: "Property" | "SearchAd";
-  postId: { title?: string } | null; // avec populate: possède title/description
+  postId: CollaborationPostRef | null; // avec populate: possède title/description
   postOwnerId?: { _id: string; firstName?: string; lastName?: string; profileImage?: string };
   collaboratorId?: { _id: string; firstName?: string; lastName?: string; profileImage?: string };
   status: "pending" | "accepted" | "active" | "completed" | "cancelled" | "rejected";
@@ -125,8 +131,10 @@ export default function AdminCollaborationsTable({ collaborations, loading }: Ad
             {paged.map(collab => (
               <tr key={collab._id} className="border-b hover:bg-[#E0F4FF]">
                 <td className="p-2">
-                  {collab.postType === 'Property' ? (
-                    <Link href={`/property/${(collab.postId as any)?._id || ''}`} className="text-blue-600 hover:underline">{(collab.postId as any)?.address || (collab.postId as any)?.location || collab.postId?.title || '-'}</Link>
+                  {collab.postType === 'Property' && collab.postId && collab.postId._id ? (
+                    <Link href={`/property/${collab.postId._id}`} className="text-blue-600 hover:underline">
+                      {collab.postId.address || collab.postId.location || collab.postId.title || '-'}
+                    </Link>
                   ) : (
                     collab.postId?.title ?? '-'
                   )}

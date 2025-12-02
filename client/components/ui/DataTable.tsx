@@ -1,17 +1,18 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 
-interface DataTableProps {
-	columns: {
-		header: string;
-		accessor: string;
-		render?: (value: any, row: any) => React.ReactNode;
-		width?: string;
-	}[];
-	data: any[];
+export interface DataTableColumn<T> {
+	header: string;
+	accessor: string;
+	render?: (value: unknown, row: T) => React.ReactNode;
+	width?: string;
+}
+
+interface DataTableProps<T> {
+	columns: Array<DataTableColumn<T>>;
+	data: T[];
 	loading?: boolean;
-	onRowClick?: (row: any) => void;
-	actions?: (row: any) => React.ReactNode;
+	onRowClick?: (row: T) => void;
+	actions?: (row: T) => React.ReactNode;
 	/** Enable client-side pagination */
 	pagination?: boolean;
 	/** Initial rows per page */
@@ -20,7 +21,7 @@ interface DataTableProps {
 	pageSizeOptions?: number[];
 }
 
-export const DataTable: React.FC<DataTableProps> = ({
+export const DataTable = <T,>({
 	columns,
 	data,
 	loading,
@@ -29,7 +30,7 @@ export const DataTable: React.FC<DataTableProps> = ({
 	pagination = false,
 	initialPageSize = 10,
 	pageSizeOptions = [10, 25, 50],
-}) => {
+}: DataTableProps<T>) => {
 	// Pagination state (client-side)
 	const [pageSize, setPageSize] = React.useState<number>(initialPageSize);
 	const [currentPage, setCurrentPage] = React.useState<number>(1);
@@ -65,7 +66,7 @@ export const DataTable: React.FC<DataTableProps> = ({
 				<table className="w-full min-w-full">
 					<thead>
 						<tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-								    {columns.map((col) => (
+							    {columns.map((col) => (
 								<th
 									key={col.accessor}
 									className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700 whitespace-nowrap"
@@ -91,11 +92,14 @@ export const DataTable: React.FC<DataTableProps> = ({
 										onClick={() => onRowClick?.(row)}
 										className="hover:bg-gray-50 transition-colors cursor-pointer"
 									>
-										{columns.map((col) => (
-											<td key={col.accessor} className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-700">
-												{col.render ? col.render(row[col.accessor], row) : row[col.accessor]}
-											</td>
-										))}
+										{columns.map((col) => {
+											const value: unknown = (row as unknown as Record<string, unknown>)[col.accessor];
+											return (
+												<td key={col.accessor} className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-700">
+													{col.render ? col.render(value, row) : (value as React.ReactNode)}
+												</td>
+											);
+										})}
 										{actions && (
 											<td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-sm">
 												{actions(row)}
