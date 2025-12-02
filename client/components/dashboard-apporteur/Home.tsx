@@ -300,7 +300,7 @@ const Home = () => {
 							Messages
 						</Button>
 						<a
-							href="mailto:contact@monhubimmo.fr"
+							href="mailto:contact@monhubimmo.com"
 							className="w-full block"
 						>
 							<Button

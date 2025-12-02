@@ -30,7 +30,9 @@ export const DashboardContent: React.FC = () => {
 	const { kpis, loading: statsLoading } = useDashboardStats(user?._id);
 
 	// Use SWR for appointment stats with automatic cache management
-	const { data: appointments } = useAppointments(user?._id);
+	const { data: appointments } = useAppointments(user?._id, {
+		enabled: activeTab === 'overview' || activeTab === 'appointments',
+	});
 
 	const appointmentStats = useMemo(() => {
 		if (!appointments) {
