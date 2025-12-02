@@ -13,8 +13,20 @@ import { useAdminProperties } from '@/hooks/useAdminProperties';
 import { Home, CheckCircle, BarChart2, DollarSign, Eye, Trash2, LayoutGrid, List } from 'lucide-react';
 import Pagination from '@/components/ui/Pagination'
 
+interface Property {
+	_id: string;
+	title: string;
+	propertyType?: string;
+	type?: string;
+	city?: string;
+	location?: string;
+	price: number;
+	views?: number;
+	status: string;
+	createdAt: string;
+}
 
-export function AdminPropertiesTableModern({ initialProperties }: { initialProperties?: any[] }) {
+export function AdminPropertiesTableModern({ initialProperties }: { initialProperties?: Property[] }) {
 	// helpers
 	const getPropertyTypeLabel = (type: string) => {
 		if (!type) return '';
@@ -101,18 +113,18 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 	const exportAsCSV = (fileExt: 'csv' | 'xls' = 'csv') => {
 		const rowsSource = properties;
 		if (!rowsSource || rowsSource.length === 0) return;
-		const rows = rowsSource.map((p: any) => ({
+		const rows = rowsSource.map((p: Property) => ({
 			id: p._id,
 			title: p.title,
-			type: getPropertyTypeLabel(p.propertyType || p.type),
+			type: getPropertyTypeLabel((p.propertyType || p.type) ?? ''),
 			location: p.city || p.location,
 			price: p.price,
 			views: p.views || 0,
 			status: p.status,
 			createdAt: new Date(p.createdAt).toISOString(),
 		}));
-		const header = ['id', 'title', 'type', 'location', 'price', 'views', 'status', 'createdAt'];
-		const csvContent = [header.join(','), ...rows.map(r => header.map(h => `"${String((r as any)[h] ?? '')}"`).join(','))].join('\n');
+		const header = ['id', 'title', 'type', 'location', 'price', 'views', 'status', 'createdAt'] as const;
+		const csvContent = [header.join(','), ...rows.map(r => header.map(h => `"${String(r[h as keyof typeof r] ?? '')}")`).join(','))].join('\n');
 		const blob = new Blob([csvContent], { type: fileExt === 'csv' ? 'text/csv;charset=utf-8;' : 'application/vnd.ms-excel' });
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement('a');
@@ -208,8 +220,8 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 				<div className="bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200 border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
 					<div className="flex items-start justify-between">
 						<div>
-							<p className="text-xs font-medium text-gray-600">Actives</p>
-							<p className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent mt-1">{properties.filter((p:any) => p.status === 'active').length}</p>
+					<p className="text-xs font-medium text-gray-600">Actives</p>
+					<p className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent mt-1">{properties.filter((p: Property) => p.status === 'active').length}</p>
 						</div>
 						<div className="p-2 bg-emerald-100 rounded-lg">
 							<CheckCircle className="w-5 h-5 text-emerald-600" />
@@ -219,8 +231,8 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 				<div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200 border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
 					<div className="flex items-start justify-between">
 						<div>
-							<p className="text-xs font-medium text-gray-600">Vues</p>
-							<p className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mt-1">{properties.reduce((sum:number, p:any) => sum + (p.views || 0), 0)}</p>
+					<p className="text-xs font-medium text-gray-600">Vues</p>
+					<p className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mt-1">{properties.reduce((sum: number, p: Property) => sum + (p.views || 0), 0)}</p>
 						</div>
 						<div className="p-2 bg-purple-100 rounded-lg">
 							<BarChart2 className="w-5 h-5 text-purple-600" />
@@ -230,8 +242,8 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 				<div className="bg-gradient-to-br from-rose-50 to-pink-50 border-rose-200 border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
 					<div className="flex items-start justify-between">
 						<div>
-							<p className="text-xs font-medium text-gray-600">Valeur Total</p>
-							<p className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent mt-1">€{(properties.reduce((sum:number, p:any) => sum + (p.price || 0), 0) / 1000000).toFixed(1)}M</p>
+					<p className="text-xs font-medium text-gray-600">Valeur Total</p>
+					<p className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent mt-1">€{(properties.reduce((sum: number, p: Property) => sum + (p.price || 0), 0) / 1000000).toFixed(1)}M</p>
 						</div>
 						<div className="p-2 bg-rose-100 rounded-lg">
 							<DollarSign className="w-5 h-5 text-rose-600" />
@@ -248,28 +260,34 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 							header: 'Annonce', 
 							accessor: 'title', 
 							width: '30%', 
-							render: (_: any, row: any) => (
+							render: (_: unknown, row: unknown) => {
+								const prop = row as Property;
+								return (
 								<div className="min-w-0">
-									<p className="font-semibold text-gray-900 text-sm truncate">{row.title}</p>
-									<p className="text-xs text-gray-500 truncate mt-0.5">{row.location || row.city}</p>
+									<p className="font-semibold text-gray-900 text-sm truncate">{prop.title}</p>
+									<p className="text-xs text-gray-500 truncate mt-0.5">{prop.location || prop.city}</p>
 								</div>
-							) 
+								);
+							} 
 						},
 						{ 
 							header: 'Type', 
 							accessor: 'type', 
 							width: '12%', 
-							render: (value: any, row: any) => (
-								<Badge variant="info" size="sm" className="shadow-sm">
-									{getPropertyTypeLabel(value || row.propertyType)}
-								</Badge>
-							) 
+							render: (value: unknown, row: unknown) => {
+								const prop = row as Property;
+								return (
+							<Badge variant="info" size="sm" className="shadow-sm">
+								{getPropertyTypeLabel(((value as string) || prop.propertyType) ?? '')}
+							</Badge>
+								);
+							} 
 						},
 						{ 
 							header: 'Prix', 
 							accessor: 'price', 
 							width: '12%', 
-							render: (value: any) => (
+							render: (value: unknown) => (
 								<div className="flex items-center gap-1.5">
 									<div className="px-2 py-1 rounded-lg bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200/50">
 										<span className="font-bold text-sm bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
@@ -283,10 +301,10 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 							header: 'Vues', 
 							accessor: 'views', 
 							width: '10%', 
-							render: (value: any) => (
+							render: (value: unknown) => (
 								<div className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200/50 w-fit">
 									<BarChart2 className="w-3.5 h-3.5 text-purple-600" />
-									<span className="text-xs font-semibold text-purple-700">{value || 0}</span>
+									<span className="text-xs font-semibold text-purple-700">{Number(value) || 0}</span>
 								</div>
 							) 
 						},
@@ -294,10 +312,10 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 							header: 'Statut', 
 							accessor: 'status', 
 							width: '13%', 
-							render: (value: any) => (
+							render: (value: unknown) => (
 								<div className="flex justify-center">
-									<Badge variant={statusVariant(value || '') as any} size="sm" className="shadow-sm">
-										{(value || '').charAt(0).toUpperCase() + (value || '').slice(1)}
+								<Badge variant={statusVariant(String(value || '')) as "success" | "warning" | "gray" | "primary" | "secondary" | "info" | "error"} size="sm" className="shadow-sm">
+									{String(value || '').charAt(0).toUpperCase() + String(value || '').slice(1)}
 									</Badge>
 								</div>
 							) 
@@ -306,19 +324,21 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 							header: 'Créée', 
 							accessor: 'createdAt', 
 							width: '13%', 
-							render: (value: any) => (
-								<span className="text-xs text-gray-600 hidden sm:inline">
-									{new Date(value).toLocaleDateString('fr-FR')}
-								</span>
+							render: (value: unknown) => (
+							<span className="text-xs text-gray-600 hidden sm:inline">
+								{new Date(String(value)).toLocaleDateString('fr-FR')}
+							</span>
 							) 
 						},
 					]}
-					data={properties as any}
+					data={properties}
 					loading={loading}
-					actions={(row: any) => (
+					actions={(row: unknown) => {
+						const prop = row as Property;
+						return (
 						<div className="flex items-center justify-end gap-1.5">
 							<Link 
-								href={row.propertyType === 'Recherche' ? `/search-ads/${row._id}` : `/property/${row._id}`} 
+								href={prop.propertyType === 'Recherche' ? `/search-ads/${prop._id}` : `/property/${prop._id}`} 
 								className="p-2 hover:bg-blue-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-blue-200 group"
 								title="Voir"
 							>
@@ -327,17 +347,18 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 							<button 
 								className="p-2 hover:bg-red-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-red-200 group" 
 								title="Supprimer" 
-								onClick={() => openDeleteModal(row._id)}
+								onClick={() => openDeleteModal(prop._id)}
 							>
 								<Trash2 className="w-4 h-4 text-gray-600 group-hover:text-red-600 transition-colors" />
 							</button>
 						</div>
-					)}
+						);
+					}}
 				/>
 			</div>
 		)}			{viewType === 'grid' && (
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-					{properties.map((prop: any) => (
+					{properties.map((prop: Property) => (
 						<div key={prop._id} className="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow group">
 							<div className="w-full h-40 bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-4xl group-hover:scale-105 transition-transform"><Home className="w-10 h-10 text-gray-600" /></div>
 							<div className="p-4">
@@ -345,7 +366,7 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 								<p className="text-xs text-gray-500 mb-3"><Home className="w-4 h-4 inline-block mr-2 text-gray-500" />{prop.location || prop.city}</p>
 								<div className="flex items-center justify-between mb-4">
 									<span className="text-lg font-bold text-cyan-600">€{(prop.price / 1000).toFixed(0)}k</span>
-									<Badge variant="info" size="sm">{getPropertyTypeLabel(prop.propertyType || prop.type)}</Badge>
+									<Badge variant="info" size="sm">{getPropertyTypeLabel((prop.propertyType || prop.type) ?? '')}</Badge>
 								</div>
 								<div className="flex items-center justify-between text-xs text-gray-600 mb-4 pb-4 border-b">
 									<span><Eye className="w-4 h-4 inline-block mr-2" />{prop.views || 0} vues</span>

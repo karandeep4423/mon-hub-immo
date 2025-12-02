@@ -18,6 +18,9 @@ interface AuthenticatedRequest extends Request {
 
 export const getAllCollaborationsAdmin = async (req: Request, res: Response) => {
   try {
+    logger.info('[CollaborationController] getAllCollaborationsAdmin called', {
+      actorId: (req as any).user?.id || null,
+    });
     const collaborations = await Collaboration.find()
       .populate('postId')
       .populate('postOwnerId', 'firstName lastName email profileImage')
@@ -32,8 +35,14 @@ export const getAllCollaborationsAdmin = async (req: Request, res: Response) => 
       apporteurId: c.collaboratorId?._id?.toString() || c.collaboratorId,
     }));
     
+    logger.info('[CollaborationController] getAllCollaborationsAdmin success', {
+      count: mappedCollaborations.length,
+    });
     res.status(200).json({ success: true, collaborations: mappedCollaborations });
   } catch (error) {
+	logger.error('[CollaborationController] getAllCollaborationsAdmin failed', {
+		error: error instanceof Error ? error.message : String(error),
+	});
 	res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };
@@ -396,6 +405,12 @@ export const adminCloseCollaboration = async (
 		const userId = req.user?.id;
 		const userType = req.user?.userType;
 
+		logger.info('[CollaborationController] adminCloseCollaboration called', {
+			actorId: userId || null,
+			id,
+			action,
+		});
+
 		if (!userId || userType !== 'admin') {
 			res.status(403).json({ success: false, message: 'Admin access required' });
 			return;
@@ -467,6 +482,7 @@ export const adminCloseCollaboration = async (
 			});
 		}
 
+		logger.info('[CollaborationController] adminCloseCollaboration success', { id, action });
 		res.status(200).json({ success: true, message: 'Action performed', collaboration });
 	} catch (error) {
 		logger.error('[CollaborationController] Error admin closing collaboration', error);
@@ -483,6 +499,8 @@ export const adminForceComplete = async (
 		const { id } = req.params;
 		const userId = req.user?.id;
 		const userType = req.user?.userType;
+
+		logger.info('[CollaborationController] adminForceComplete called', { actorId: userId || null, id });
 
 		if (!userId || userType !== 'admin') {
 			res.status(403).json({ success: false, message: 'Admin access required' });
@@ -540,6 +558,7 @@ export const adminForceComplete = async (
 			});
 		}
 
+		logger.info('[CollaborationController] adminForceComplete success', { id });
 		res.status(200).json({ success: true, message: 'Collaboration force-completed', collaboration });
 	} catch (error) {
 		logger.error('[CollaborationController] Error admin force completing collaboration', error);

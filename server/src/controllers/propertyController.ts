@@ -469,6 +469,10 @@ export const getAdminProperties = async (
 	res: Response,
 ): Promise<void> => {
 	try {
+		logger.info('[PropertyController] getAdminProperties called', {
+			actorId: (req as any).user?.id || null,
+			query: req.query,
+		});
 		const {
 			page = 1,
 			limit,
@@ -1379,6 +1383,7 @@ export const deleteAdminProperty = async (
 ): Promise<void> => {
 	try {
 		const { id } = req.params;
+		logger.info('[PropertyController] deleteAdminProperty called', { actorId: (req as any).user?.id || null, id });
 
 		// Validate ObjectId format
 		if (!isValidObjectId(id)) {
@@ -1433,6 +1438,7 @@ export const deleteAdminProperty = async (
 		// Delete the property from database
 		await Property.findByIdAndDelete(id);
 
+		logger.info('[PropertyController] deleteAdminProperty success', { id });
 		res.status(200).json({
 			success: true,
 			message: 'Propriété supprimée avec succès',

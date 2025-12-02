@@ -27,7 +27,7 @@ interface DashboardAdminProps {
 export function DashboardAdmin({ stats: initialStats }: DashboardAdminProps) {
   const [stats, setStats] = React.useState<DashboardStats | null>(initialStats || null);
   const [loading, setLoading] = React.useState<boolean>(!initialStats);
-  const [rawData, setRawData] = React.useState<any>(null);
+  const [rawData, setRawData] = React.useState<unknown>(null);
 
   React.useEffect(() => {
     if (initialStats) return;
@@ -82,12 +82,6 @@ export function DashboardAdmin({ stats: initialStats }: DashboardAdminProps) {
       <div className="max-w-4xl mx-auto px-4">
         <h1 className="text-2xl font-bold mb-6">Tableau de bord plateforme</h1>
         <p>Chargement des statistiques…</p>
-        {rawData && (
-          <div className="mt-4 p-4 bg-gray-100 rounded text-sm">
-            <strong>DEBUG - raw response:</strong>
-            <pre className="whitespace-pre-wrap break-words mt-2">{JSON.stringify(rawData, null, 2)}</pre>
-          </div>
-        )}
       </div>
     );
   }
@@ -97,12 +91,6 @@ export function DashboardAdmin({ stats: initialStats }: DashboardAdminProps) {
       <div className="max-w-4xl mx-auto px-4">
         <h1 className="text-2xl font-bold mb-6">Tableau de bord plateforme</h1>
         <p>Aucune statistique disponible.</p>
-        {rawData && (
-          <div className="mt-4 p-4 bg-gray-100 rounded text-sm">
-            <strong>DEBUG - raw response:</strong>
-            <pre className="whitespace-pre-wrap break-words mt-2">{JSON.stringify(rawData, null, 2)}</pre>
-          </div>
-        )}
       </div>
     );
   }

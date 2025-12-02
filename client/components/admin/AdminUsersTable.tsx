@@ -48,8 +48,8 @@ export default function AdminUsersTable({ users, loading, onEdit, onDelete }: Ad
     }
     if (sortBy) {
       list = [...list].sort((a, b) => {
-        const va = (a as any)[sortBy] ?? '';
-        const vb = (b as any)[sortBy] ?? '';
+        const va = (a[sortBy as keyof AdminUser]) ?? '';
+        const vb = (b[sortBy as keyof AdminUser]) ?? '';
         if (va < vb) return sortDirection === 'asc' ? -1 : 1;
         if (va > vb) return sortDirection === 'asc' ? 1 : -1;
         return 0;

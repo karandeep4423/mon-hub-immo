@@ -4,8 +4,22 @@ import React from 'react';
 import Link from 'next/link';
 import { Users, Home, Handshake, ArrowLeft, DollarSign } from 'lucide-react';
 
-// Passe "stats" depuis tes props/page loader comme avant !
-export default function DashboardAdmin({ stats }: { stats: any }) {
+interface DashboardStats {
+	agentsTotal: number;
+	agentsActive: number;
+	agentsPending: number;
+	agentsUnsubscribed: number;
+	propertiesActive: number;
+	propertiesArchived: number;
+	propertiesInCollab: number;
+	collabOpen: number;
+	collabClosed: number;
+	feesTotal: number;
+	topNetworks: Array<{ name: string; count: number }>;
+	topRegions: Array<{ name: string; count: number }>;
+}
+
+export default function DashboardAdmin({ stats }: { stats: DashboardStats }) {
   return (
     <div className="max-w-6xl mx-auto px-4">
       <h1 className="text-3xl font-black mb-10 text-[#009CD8]">Tableau de bord général</h1>
@@ -52,7 +66,7 @@ export default function DashboardAdmin({ stats }: { stats: any }) {
             <span className="text-2xl"><Users className="w-6 h-6" /></span> Top Réseaux
           </h2>
           <div className="space-y-3">
-            {(stats.topNetworks || []).map((network: any, idx: number) => (
+            {(stats.topNetworks || []).map((network, idx) => (
               <div key={idx} className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-100">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center text-white font-bold text-xs">{idx + 1}</div>
@@ -69,7 +83,7 @@ export default function DashboardAdmin({ stats }: { stats: any }) {
             <span className="text-2xl"><Home className="w-6 h-6" /></span> Top Régions
           </h2>
           <div className="space-y-3">
-            {(stats.topRegions || []).map((region: any, idx: number) => (
+            {(stats.topRegions || []).map((region, idx) => (
               <div key={idx} className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-100">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-400 to-indigo-500 flex items-center justify-center text-white font-bold text-xs">{idx + 1}</div>
@@ -92,7 +106,20 @@ export default function DashboardAdmin({ stats }: { stats: any }) {
   );
 }
 
-function StatCard({ title, value, details, icon }: any) {
+interface StatDetail {
+	label: string;
+	value: number;
+	color: string;
+}
+
+interface StatCardProps {
+	title: string;
+	value: number | string;
+	details?: StatDetail[];
+	icon: React.ReactNode;
+}
+
+function StatCard({ title, value, details, icon }: StatCardProps) {
   return (
     <div className="bg-white p-8 rounded-2xl shadow-xl transition-transform hover:scale-105 hover:shadow-2xl flex flex-col gap-2 border-b-4 border-[#00BCE4]">
       <div className="text-3xl mb-0">{icon}</div>
@@ -100,7 +127,7 @@ function StatCard({ title, value, details, icon }: any) {
       <div className="uppercase font-semibold text-gray-400 tracking-widest text-sm mb-2">{title}</div>
       {details && (
         <div className="flex flex-wrap gap-2">
-          {details.map((d: any) => (
+          {details.map((d) => (
             <span key={d.label} className={`px-3 py-1 rounded-full font-medium text-xs ${d.color}`}>{d.label} : {d.value}</span>
           ))}
         </div>
@@ -109,7 +136,13 @@ function StatCard({ title, value, details, icon }: any) {
   );
 }
 
-function NavButton({ href, label, icon }: any) {
+interface NavButtonProps {
+	href: string;
+	label: string;
+	icon?: React.ReactNode;
+}
+
+function NavButton({ href, label, icon }: NavButtonProps) {
   return (
     <Link
       href={href}
