@@ -1,4 +1,5 @@
 import Keyv from 'keyv';
+import { logger } from './logger';
 
 let keyvClient: Keyv | null = null;
 let isInitialized = false;
@@ -22,22 +23,22 @@ export const getRedisClient = async (): Promise<Keyv | null> => {
 		});
 
 		keyvClient.on('error', (err) => {
-			console.error('❌ Keyv Client Error:', err);
+			logger.error('[RedisClient] Keyv Client Error:', err);
 			isInitialized = false;
 		});
 
 		keyvClient.on('disconnect', () => {
-			console.log('⚠️ Keyv disconnected');
+			logger.warn('[RedisClient] Keyv disconnected');
 			isInitialized = false;
 		});
 
 		isInitialized = true;
 
-		console.log('✅ Token blacklist connected (in-memory mode)');
+		logger.info('[RedisClient] Token blacklist connected (in-memory mode)');
 
 		return keyvClient;
 	} catch (error) {
-		console.error('❌ Keyv connection failed:', error);
+		logger.error('[RedisClient] Keyv connection failed:', error);
 		keyvClient = null;
 		isInitialized = false;
 		return null;
@@ -55,8 +56,8 @@ export const blacklistToken = async (
 ): Promise<void> => {
 	const client = await getRedisClient();
 	if (!client) {
-		console.warn(
-			'⚠️ Keyv unavailable - token not blacklisted:',
+		logger.warn(
+			'[RedisClient] Keyv unavailable - token not blacklisted:',
 			token.substring(0, 20),
 		);
 		return;
@@ -65,9 +66,11 @@ export const blacklistToken = async (
 	try {
 		// Keyv uses milliseconds, convert from seconds
 		await client.set(token, 'revoked', expiresInSeconds * 1000);
-		console.log(`🚫 Token blacklisted (TTL: ${expiresInSeconds}s)`);
+		logger.debug(
+			`[RedisClient] Token blacklisted (TTL: ${expiresInSeconds}s)`,
+		);
 	} catch (error) {
-		console.error('❌ Failed to blacklist token:', error);
+		logger.error('[RedisClient] Failed to blacklist token:', error);
 	}
 };
 
@@ -87,7 +90,7 @@ export const isTokenBlacklisted = async (token: string): Promise<boolean> => {
 		const result = await client.get(token);
 		return result === 'revoked';
 	} catch (error) {
-		console.error('❌ Failed to check token blacklist:', error);
+		logger.error('[RedisClient] Failed to check token blacklist:', error);
 		// On error, allow the request (fail open for availability)
 		return false;
 	}
@@ -100,9 +103,9 @@ export const closeRedisConnection = async (): Promise<void> => {
 	if (keyvClient && isInitialized) {
 		try {
 			await keyvClient.disconnect();
-			console.log('✅ Token blacklist disconnected');
+			logger.info('[RedisClient] Token blacklist disconnected');
 		} catch (error) {
-			console.error('❌ Error closing Keyv connection:', error);
+			logger.error('[RedisClient] Error closing Keyv connection:', error);
 		} finally {
 			keyvClient = null;
 			isInitialized = false;

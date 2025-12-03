@@ -1,7 +1,6 @@
 import nodemailer from 'nodemailer';
 import * as brevo from '@getbrevo/brevo';
 import { logger } from './logger';
-import { getResponsiveStyles } from './email/styles';
 import { getSignupAcknowledgementTemplate } from './email/templates/signupAcknowledgement';
 import { getAccountValidatedTemplate } from './email/templates/accountValidated';
 import { getInviteTemplate } from './email/templates/invite';
@@ -50,7 +49,10 @@ const createMailtrapTransporter = (): nodemailer.Transporter => {
 // High-level, typed helpers used by controllers/services
 // Prefer these instead of building subjects/html ad-hoc in route handlers.
 
-export const sendSignupAcknowledgement = async (opts: { to: string; name: string }): Promise<void> => {
+export const sendSignupAcknowledgement = async (opts: {
+	to: string;
+	name: string;
+}): Promise<void> => {
 	const { to, name } = opts;
 	logger.info('[EmailService] sendSignupAcknowledgement');
 	await sendEmail({
@@ -60,7 +62,11 @@ export const sendSignupAcknowledgement = async (opts: { to: string; name: string
 	});
 };
 
-export const sendAccountValidated = async (opts: { to: string; name: string; email: string }): Promise<void> => {
+export const sendAccountValidated = async (opts: {
+	to: string;
+	name: string;
+	email: string;
+}): Promise<void> => {
 	const { to, name, email } = opts;
 	logger.info('[EmailService] sendAccountValidated');
 	await sendEmail({
@@ -70,7 +76,11 @@ export const sendAccountValidated = async (opts: { to: string; name: string; ema
 	});
 };
 
-export const sendInviteToSetPassword = async (opts: { to: string; name: string; inviteUrl: string }): Promise<void> => {
+export const sendInviteToSetPassword = async (opts: {
+	to: string;
+	name: string;
+	inviteUrl: string;
+}): Promise<void> => {
 	const { to, name, inviteUrl } = opts;
 	logger.info('[EmailService] sendInviteToSetPassword');
 	await sendEmail({
@@ -80,7 +90,11 @@ export const sendInviteToSetPassword = async (opts: { to: string; name: string; 
 	});
 };
 
-export const sendTemporaryPassword = async (opts: { to: string; name: string; tempPassword: string }): Promise<void> => {
+export const sendTemporaryPassword = async (opts: {
+	to: string;
+	name: string;
+	tempPassword: string;
+}): Promise<void> => {
 	const { to, name, tempPassword } = opts;
 	logger.info('[EmailService] sendTemporaryPassword');
 	await sendEmail({
@@ -90,7 +104,11 @@ export const sendTemporaryPassword = async (opts: { to: string; name: string; te
 	});
 };
 
-export const sendVerificationCodeEmail = async (opts: { to: string; name: string; code?: string }): Promise<void> => {
+export const sendVerificationCodeEmail = async (opts: {
+	to: string;
+	name: string;
+	code?: string;
+}): Promise<void> => {
 	const { to, name } = opts;
 	const code = opts.code ?? generateVerificationCode();
 	logger.info('[EmailService] sendVerificationCodeEmail');
@@ -101,7 +119,12 @@ export const sendVerificationCodeEmail = async (opts: { to: string; name: string
 	});
 };
 
-export const sendPasswordResetCodeEmail = async (opts: { to: string; name: string; code: string; inviteUrl?: string }): Promise<void> => {
+export const sendPasswordResetCodeEmail = async (opts: {
+	to: string;
+	name: string;
+	code: string;
+	inviteUrl?: string;
+}): Promise<void> => {
 	const { to, name, code, inviteUrl } = opts;
 	logger.info('[EmailService] sendPasswordResetCodeEmail');
 	await sendEmail({
@@ -111,7 +134,10 @@ export const sendPasswordResetCodeEmail = async (opts: { to: string; name: strin
 	});
 };
 
-export const sendPasswordResetConfirmationEmail = async (opts: { to: string; name: string }): Promise<void> => {
+export const sendPasswordResetConfirmationEmail = async (opts: {
+	to: string;
+	name: string;
+}): Promise<void> => {
 	const { to, name } = opts;
 	logger.info('[EmailService] sendPasswordResetConfirmationEmail');
 	await sendEmail({
@@ -121,7 +147,12 @@ export const sendPasswordResetConfirmationEmail = async (opts: { to: string; nam
 	});
 };
 
-export const sendAccountLockedEmail = async (opts: { to: string; name: string; lockDurationMinutes: number; unlockTime: string }): Promise<void> => {
+export const sendAccountLockedEmail = async (opts: {
+	to: string;
+	name: string;
+	lockDurationMinutes: number;
+	unlockTime: string;
+}): Promise<void> => {
 	const { to, name, lockDurationMinutes, unlockTime } = opts;
 	logger.info('[EmailService] sendAccountLockedEmail');
 	await sendEmail({
@@ -131,7 +162,11 @@ export const sendAccountLockedEmail = async (opts: { to: string; name: string; l
 	});
 };
 
-export const sendPaymentReminderEmail = async (opts: { to: string; name: string; billingUrl: string }): Promise<void> => {
+export const sendPaymentReminderEmail = async (opts: {
+	to: string;
+	name: string;
+	billingUrl: string;
+}): Promise<void> => {
 	const { to, name, billingUrl } = opts;
 	logger.info('[EmailService] sendPaymentReminderEmail');
 	const html = getPaymentReminderTemplate(name, billingUrl);
@@ -239,8 +274,7 @@ export const sendEmail = async (options: EmailOptions): Promise<void> => {
 				message?: string;
 				response?: { data?: unknown; status?: number };
 			};
-			logger.error('[EmailService] ❌ Failed to send email via Brevo');
-			console.error('[Brevo Email Error]:', {
+			logger.error('[EmailService] Failed to send email via Brevo', {
 				message: err?.message,
 				response: err?.response?.data,
 				status: err?.response?.status,
