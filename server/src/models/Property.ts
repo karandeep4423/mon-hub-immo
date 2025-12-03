@@ -648,7 +648,9 @@ propertySchema.statics.findByLocation = function (
 	const query: any = { status: 'active' };
 
 	if (city) {
-		query.city = new RegExp(city, 'i');
+		// Use escaped regex to prevent ReDoS attacks
+		const escaped = city.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+		query.city = new RegExp(escaped, 'i');
 	}
 
 	if (postalCode) {
