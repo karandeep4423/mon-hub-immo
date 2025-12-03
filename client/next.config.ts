@@ -11,13 +11,17 @@ const nextConfig: NextConfig = {
 			},
 			{
 				protocol: 'https',
+				hostname: 'mon-hub-immo.s3.eu-west-3.amazonaws.com',
+				port: '',
+				pathname: '/**',
+			},
+			{
+				protocol: 'https',
 				hostname: 'static.bienici.com',
 				port: '',
 				pathname: '/**',
 			},
 		],
-		// Disable optimization for S3 images to avoid 403 errors
-		unoptimized: process.env.NODE_ENV === 'production',
 	},
 };
 

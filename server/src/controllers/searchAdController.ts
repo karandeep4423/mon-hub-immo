@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { SearchAd } from '../models/SearchAd';
 import { AuthRequest } from '../types/auth';
 import { logger } from '../utils/logger'; // Corrected import
-import { sanitizeHtmlContent } from '../utils/sanitize';
+import { sanitizeHtmlContent, createSafeRegex } from '../utils/sanitize';
 
 export const createSearchAd = async (
 	req: AuthRequest,
@@ -80,13 +80,13 @@ export const getAllSearchAds = async (
 				propertyType,
 			];
 			filter.propertyTypes = {
-				$in: mappedTypes.map((t) => new RegExp(`^${t}$`, 'i')),
+				$in: mappedTypes.map((t) => createSafeRegex(`^${t}$`)),
 			};
 		}
 
 		// Text search across title, description, and cities
 		if (search) {
-			const searchRegex = new RegExp(search as string, 'i');
+			const searchRegex = createSafeRegex(search as string);
 			filter.$or = [
 				{ title: searchRegex },
 				{ description: searchRegex },
@@ -99,7 +99,7 @@ export const getAllSearchAds = async (
 			// Support comma-separated cities
 			const cities = (city as string).split(',').map((c) => c.trim());
 			filter['location.cities'] = {
-				$in: cities.map((c) => new RegExp(c, 'i')),
+				$in: cities.map((c) => createSafeRegex(c)),
 			};
 		}
 
@@ -115,7 +115,7 @@ export const getAllSearchAds = async (
 				{ 'location.postalCodes': { $in: postalCodes } },
 				{
 					'location.cities': {
-						$in: postalCodes.map((pc) => new RegExp(pc, 'i')),
+						$in: postalCodes.map((pc) => createSafeRegex(pc)),
 					},
 				},
 			);
@@ -159,7 +159,8 @@ export const getMySearchAds = async (
 		}
 
 		// Admin can see all search ads, others see only their own
-		const filter = req.user.userType === 'admin' ? {} : { authorId: req.user.id };
+		const filter =
+			req.user.userType === 'admin' ? {} : { authorId: req.user.id };
 		const searchAds = await SearchAd.find(filter)
 			.populate('authorId', 'firstName lastName profileImage userType')
 			.sort({ createdAt: -1 });

@@ -7,7 +7,8 @@ import { AUTH_ENDPOINTS } from './constants/api/endpoints';
 
 // Normalize NEXT_PUBLIC_API_URL so it always ends with a single '/api' segment
 const _rawApi = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-const API_BASE_URL = _rawApi.replace(/\/+$/, '').replace(/\/api$/i, '') + '/api';
+const API_BASE_URL =
+	_rawApi.replace(/\/+$/, '').replace(/\/api$/i, '') + '/api';
 
 export const api = axios.create({
 	baseURL: API_BASE_URL,
@@ -90,7 +91,9 @@ api.interceptors.response.use(
 			try {
 				const code = error.response?.data?.code;
 				if (code === 'PAYMENT_REQUIRED') {
-					toast.info('Votre compte nécessite un paiement pour accéder à cette fonctionnalité.');
+					toast.info(
+						'Votre compte nécessite un paiement pour accéder à cette fonctionnalité.',
+					);
 					if (typeof window !== 'undefined') {
 						// Avoid redirect loop: don't redirect if we're already on the payment page
 						const currentPath = window.location.pathname || '';
@@ -107,11 +110,11 @@ api.interceptors.response.use(
 		}
 
 		// Handle profile incomplete (403) - redirect user to complete profile page
+		// Note: Toast is handled by authStore.refreshUser to avoid duplicate notifications
 		if (error.response?.status === 403) {
 			try {
 				const code = error.response?.data?.code;
 				if (code === 'PROFILE_INCOMPLETE') {
-					toast.info('Veuillez compléter votre profil pour continuer.');
 					if (typeof window !== 'undefined') {
 						const currentPath = window.location.pathname || '';
 						if (!currentPath.startsWith('/auth/complete-profile')) {

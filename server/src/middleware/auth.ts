@@ -7,103 +7,142 @@ import { getAccessTokenFromCookies } from '../utils/cookieHelper';
 import { logger } from '../utils/logger';
 import { isTokenBlacklisted } from '../utils/redisClient';
 
- export const authenticateToken = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
+export const authenticateToken = async (
+	req: AuthRequest,
+	res: Response,
+	next: NextFunction,
 ): Promise<void> => {
-  try {
-    const authDebug = process.env.AUTH_DEBUG === 'true';
+	try {
+		const authDebug = process.env.AUTH_DEBUG === 'true';
 
-    if (authDebug) {
-      logger.info('[authenticateToken] incoming', {
-        method: (req as Request).method,
-        url: (req as Request).originalUrl,
-        origin: req.headers.origin,
-        cookieKeys: Object.keys(req.cookies || {}),
-        authHeader: req.headers.authorization ? '(present)' : '(absent)',
-      });
-    }
+		if (authDebug) {
+			logger.info('[authenticateToken] incoming', {
+				method: (req as Request).method,
+				url: (req as Request).originalUrl,
+				origin: req.headers.origin,
+				cookieKeys: Object.keys(req.cookies || {}),
+				authHeader: req.headers.authorization
+					? '(present)'
+					: '(absent)',
+			});
+		}
 
-    // Get token from httpOnly cookies first
-    let token = getAccessTokenFromCookies(req.cookies);
-    if (authDebug) logger.debug('[authenticateToken] Token from cookie', { tokenPresent: !!token });
+		// Get token from httpOnly cookies first
+		let token = getAccessTokenFromCookies(req.cookies);
+		if (authDebug)
+			logger.debug('[authenticateToken] Token from cookie', {
+				tokenPresent: !!token,
+			});
 
-    // Fallback to Authorization: Bearer <token> for diagnostics when cookie not present
-    if (!token) {
-      const rawAuth = (req.headers.authorization || '') as string;
-      if (rawAuth.startsWith('Bearer ')) {
-        token = rawAuth.slice(7);
-        if (authDebug) logger.info('[authenticateToken] token found in Authorization header (fallback)');
-      }
-    }
+		// Fallback to Authorization: Bearer <token> for diagnostics when cookie not present
+		if (!token) {
+			const rawAuth = (req.headers.authorization || '') as string;
+			if (rawAuth.startsWith('Bearer ')) {
+				token = rawAuth.slice(7);
+				if (authDebug)
+					logger.info(
+						'[authenticateToken] token found in Authorization header (fallback)',
+					);
+			}
+		}
 
-    if (!token) {
-      if (authDebug) logger.warn('[authenticateToken] Pas de token d\u2019acc\u00e8s dans les cookies ou header', { url: (req as Request).originalUrl });
-      res.status(401).json({
-        success: false,
-        message: 'Authentification requise',
-      });
-      return;
-    }
+		if (!token) {
+			if (authDebug)
+				logger.warn(
+					'[authenticateToken] Pas de token d\u2019acc\u00e8s dans les cookies ou header',
+					{ url: (req as Request).originalUrl },
+				);
+			res.status(401).json({
+				success: false,
+				message: 'Authentification requise',
+			});
+			return;
+		}
 
-    // Check if token is blacklisted (revoked during logout)
-    const isBlacklisted = await isTokenBlacklisted(token);
-    if (isBlacklisted) {
-      if (authDebug) logger.warn('[authenticateToken] Token r\u00e9voqu\u00e9 d\u00e9tect\u00e9');
-      res.status(401).json({
-        success: false,
-        message: 'Token r\u00e9voqu\u00e9 - veuillez vous reconnecter',
-      });
-      return;
-    }
+		// Check if token is blacklisted (revoked during logout)
+		const isBlacklisted = await isTokenBlacklisted(token);
+		if (isBlacklisted) {
+			if (authDebug)
+				logger.warn(
+					'[authenticateToken] Token r\u00e9voqu\u00e9 d\u00e9tect\u00e9',
+				);
+			res.status(401).json({
+				success: false,
+				message: 'Token r\u00e9voqu\u00e9 - veuillez vous reconnecter',
+			});
+			return;
+		}
 
-    const decoded = verifyToken(token);
-    if (authDebug) logger.debug('[authenticateToken] Token d\u00e9cod\u00e9', { decoded });
+		const decoded = verifyToken(token);
+		if (authDebug)
+			logger.debug('[authenticateToken] Token d\u00e9cod\u00e9', {
+				decoded,
+			});
 
-    // Fetch user data from database
-    const user = await User.findById(decoded.userId);
-    if (!user) {
-      if (authDebug) logger.warn('[authenticateToken] Utilisateur non trouv\u00e9 en base', { userId: decoded.userId });
-      res.status(401).json({
-        success: false,
-        message: 'Utilisateur non trouv\u00e9',
-      });
-      return;
-    }
+		// Fetch user data from database
+		const user = await User.findById(decoded.userId);
+		if (!user) {
+			if (authDebug)
+				logger.warn(
+					'[authenticateToken] Utilisateur non trouv\u00e9 en base',
+					{ userId: decoded.userId },
+				);
+			res.status(401).json({
+				success: false,
+				message: 'Utilisateur non trouv\u00e9',
+			});
+			return;
+		}
 
-    // Reject if account is administratively blocked
-    if ((user as any).isBlocked) {
-      if (authDebug) logger.warn('[authenticateToken] Attempted access with blocked user account', { userId: user._id });
-      res.status(403).json({ success: false, message: 'Account blocked by admin' });
-      return;
-    }
+		// Reject if account is administratively blocked
+		if (user.isBlocked) {
+			if (authDebug)
+				logger.warn(
+					'[authenticateToken] Attempted access with blocked user account',
+					{ userId: user._id },
+				);
+			res.status(403).json({
+				success: false,
+				message: 'Account blocked by admin',
+			});
+			return;
+		}
 
-    // Reject if account is not yet validated by admin (for non-admin users)
-    if (!(user as any).isValidated && user.userType !== 'admin') {
-      if (authDebug) logger.warn('[authenticateToken] Attempted access with unvalidated user account', { userId: user._id });
-      res.status(403).json({ success: false, message: 'Compte non valid\u00e9 par l\'administrateur' });
-      return;
-    }
+		// Reject if account is not yet validated by admin (for non-admin users)
+		if (!user.isValidated && user.userType !== 'admin') {
+			if (authDebug)
+				logger.warn(
+					'[authenticateToken] Attempted access with unvalidated user account',
+					{ userId: user._id },
+				);
+			res.status(403).json({
+				success: false,
+				message: "Compte non valid\u00e9 par l'administrateur",
+			});
+			return;
+		}
 
-    // Attach user data to request
-    req.userId = (user._id as mongoose.Types.ObjectId).toString();
-    req.user = {
-      id: (user._id as mongoose.Types.ObjectId).toString(),
-      userType: user.userType as 'agent' | 'apporteur' | 'admin',
-    };
-    if (authDebug) logger.info('[authenticateToken] User attach\u00e9 \u00e0 la requ\u00eate', { user: req.user });
+		// Attach user data to request
+		req.userId = (user._id as mongoose.Types.ObjectId).toString();
+		req.user = {
+			id: (user._id as mongoose.Types.ObjectId).toString(),
+			userType: user.userType as 'agent' | 'apporteur' | 'admin',
+		};
+		if (authDebug)
+			logger.info(
+				'[authenticateToken] User attach\u00e9 \u00e0 la requ\u00eate',
+				{ user: req.user },
+			);
 
-    next();
-  } catch (error) {
-    logger.error('[authenticateToken] Erreur attrap\u00e9e:', error);
-    res.status(403).json({
-      success: false,
-      message: 'Token invalide ou expir\u00e9',
-    });
-  }
+		next();
+	} catch (error) {
+		logger.error('[authenticateToken] Erreur attrap\u00e9e:', error);
+		res.status(403).json({
+			success: false,
+			message: 'Token invalide ou expir\u00e9',
+		});
+	}
 };
-
 
 // Optional authentication - doesn't fail if no token provided
 export const optionalAuth = async (
@@ -142,13 +181,20 @@ export const optionalAuth = async (
 	}
 };
 
+export const requireAdmin = (
+	req: AuthRequest,
+	res: Response,
+	next: NextFunction,
+) => {
+	logger.debug('[Middleware] Admin role verification:', {
+		userType: req.user?.userType,
+	});
 
-export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
-  console.log('[Middleware] Vérification rôle admin:', req.user?.userType);
-
-  if (req.user?.userType !== 'admin') {
-    console.log('[Middleware] Accès non autorisé - rôle insuffisant');
-    return res.status(403).json({ error: 'Accès réservé à l’administration.' });
-  }
-  next();
+	if (req.user?.userType !== 'admin') {
+		logger.warn('[Middleware] Unauthorized access - insufficient role');
+		return res
+			.status(403)
+			.json({ error: "Accès réservé à l'administration." });
+	}
+	next();
 };

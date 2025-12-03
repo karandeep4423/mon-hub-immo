@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import DOMPurify from 'dompurify';
 
 interface RichTextDisplayProps {
 	content: string;
@@ -22,10 +23,34 @@ export const RichTextDisplay: React.FC<RichTextDisplayProps> = ({
 
 	const decodedContent = decodeHTML(content);
 
+	// Sanitize HTML to prevent XSS attacks
+	const sanitizedContent = DOMPurify.sanitize(decodedContent, {
+		ALLOWED_TAGS: [
+			'p',
+			'br',
+			'strong',
+			'em',
+			'u',
+			'ul',
+			'ol',
+			'li',
+			'a',
+			'span',
+			'div',
+			'h1',
+			'h2',
+			'h3',
+			'h4',
+			'h5',
+			'h6',
+		],
+		ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
+	});
+
 	return (
 		<div
 			className={`prose prose-sm max-w-none ${className}`}
-			dangerouslySetInnerHTML={{ __html: decodedContent }}
+			dangerouslySetInnerHTML={{ __html: sanitizedContent }}
 		/>
 	);
 };
