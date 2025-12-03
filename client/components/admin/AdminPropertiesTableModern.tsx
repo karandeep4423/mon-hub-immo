@@ -55,6 +55,7 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 	const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 	const [deleteLoading, setDeleteLoading] = useState(false);
 	const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
+	const [isSearchAdToDelete, setIsSearchAdToDelete] = useState(false);
 
 	const { properties: fetchedProperties, loading, totalItems, currentPage, refetch } = useAdminProperties({
 		search: filters.search,
@@ -73,14 +74,16 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 		return 'gray';
 	};
 
-	const openDeleteModal = (propertyId: string) => {
+	const openDeleteModal = (propertyId: string, isSearchAd: boolean = false) => {
 		setSelectedPropertyId(propertyId);
+		setIsSearchAdToDelete(isSearchAd);
 		setShowConfirmDialog(true);
 	};
 
 	const closeDeleteModal = () => {
 		setShowConfirmDialog(false);
 		setSelectedPropertyId(null);
+		setIsSearchAdToDelete(false);
 		setDeleteLoading(false);
 	};
 
@@ -90,7 +93,10 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 		try {
 			const raw = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 			const API_ROOT = raw.replace(/\/+$/, '').replace(/\/api$/i, '');
-			const res = await fetch(`${API_ROOT}/api/admin/properties/${selectedPropertyId}`, {
+			const endpoint = isSearchAdToDelete 
+				? `${API_ROOT}/api/admin/search-ads/${selectedPropertyId}`
+				: `${API_ROOT}/api/admin/properties/${selectedPropertyId}`;
+			const res = await fetch(endpoint, {
 				method: 'DELETE',
 				credentials: 'include',
 			});
@@ -344,13 +350,13 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 							>
 								<Eye className="w-4 h-4 text-gray-600 group-hover:text-blue-600 transition-colors" />
 							</Link>
-							<button 
-								className="p-2 hover:bg-red-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-red-200 group" 
-								title="Supprimer" 
-								onClick={() => openDeleteModal(prop._id)}
-							>
-								<Trash2 className="w-4 h-4 text-gray-600 group-hover:text-red-600 transition-colors" />
-							</button>
+						<button 
+							className="p-2 hover:bg-red-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-red-200 group" 
+							title="Supprimer" 
+							onClick={() => openDeleteModal(prop._id, filters.postType === 'search' || prop.propertyType === 'Recherche')}
+						>
+							<Trash2 className="w-4 h-4 text-gray-600 group-hover:text-red-600 transition-colors" />
+						</button>
 						</div>
 						);
 					}}
@@ -374,7 +380,7 @@ export function AdminPropertiesTableModern({ initialProperties }: { initialPrope
 								</div>
 							<div className="flex gap-2">
 								<Link href={prop.propertyType === 'Recherche' ? `/search-ads/${prop._id}` : `/property/${prop._id}`} className="flex-1 px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded transition-colors text-sm font-medium">Voir</Link>
-								<button onClick={() => openDeleteModal(prop._id)} className="flex-1 px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded transition-colors text-sm font-medium">Supprimer</button>
+								<button onClick={() => openDeleteModal(prop._id, filters.postType === 'search' || prop.propertyType === 'Recherche')} className="flex-1 px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded transition-colors text-sm font-medium">Supprimer</button>
 							</div>
 							</div>
 						</div>

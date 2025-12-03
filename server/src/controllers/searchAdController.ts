@@ -310,3 +310,43 @@ export const updateSearchAdStatus = async (req: AuthRequest, res: Response) => {
 		});
 	}
 };
+
+// Admin delete search ad (no ownership check)
+export const deleteAdminSearchAd = async (
+	req: AuthRequest,
+	res: Response,
+): Promise<void> => {
+	try {
+		const { id } = req.params;
+		const searchAd = await SearchAd.findById(id);
+
+		if (!searchAd) {
+			res.status(404).json({
+				success: false,
+				message: 'Annonce de recherche introuvable',
+			});
+			return;
+		}
+
+		await searchAd.deleteOne();
+		logger.info('[Admin] Search ad deleted', {
+			adminId: req.user?.id,
+			searchAdId: id,
+		});
+
+		res.status(200).json({
+			success: true,
+			message: 'Annonce de recherche supprimée',
+		});
+	} catch (error) {
+		logger.error('[Admin] Failed to delete search ad', {
+			error: (error as Error).message,
+			searchAdId: req.params.id,
+		});
+		res.status(500).json({
+			success: false,
+			message: "Échec de la suppression de l'annonce de recherche",
+			error: (error as Error).message,
+		});
+	}
+};

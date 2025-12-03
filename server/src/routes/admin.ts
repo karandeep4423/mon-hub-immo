@@ -2,6 +2,7 @@
 import express from 'express';
 import { getAdminUsers, validateUser, getAdminUserProfile, getAdminUserStats, createAdminUser, updateAdminUser, deleteAdminUser, importUsersFromCSV, getAdminStats, blockUser, unblockUser, sendPaymentReminder, grantAdminAccess, revokeAdminAccess } from '../controllers/adminController';
 import { getAdminProperties, deleteAdminProperty } from '../controllers/propertyController';
+import { deleteAdminSearchAd } from '../controllers/searchAdController';
 import { authenticateToken, requireAdmin } from '../middleware/auth';
 import { uploadCSV } from '../middleware/uploadMiddleware';
 
@@ -27,6 +28,9 @@ router.get('/properties', getAdminProperties);
 
 // DELETE - supprimer une propriété
 router.delete('/properties/:id', deleteAdminProperty);
+
+// DELETE - supprimer une annonce de recherche (admin)
+router.delete('/search-ads/:id', deleteAdminSearchAd);
 
 // PUT - valider/refuser un utilisateur
 router.put('/users/:id/validate', validateUser);
