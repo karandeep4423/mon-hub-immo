@@ -1,6 +1,6 @@
 // routes/admin.ts
 import express from 'express';
-import { getAdminUsers, validateUser, getAdminUserProfile, getAdminUserStats, createAdminUser, updateAdminUser, deleteAdminUser, importUsersFromCSV, getAdminStats, blockUser, unblockUser, sendPaymentReminder, grantAdminAccess, revokeAdminAccess } from '../controllers/adminController';
+import { getAdminUsers, validateUser, getAdminUserProfile, getAdminUserStats, createAdminUser, updateAdminUser, deleteAdminUser, importUsersFromCSV, getAdminStats, blockUser, unblockUser, sendPaymentReminder, grantAdminAccess, revokeAdminAccess, deleteAdminCollaboration } from '../controllers/adminController';
 import { getAdminProperties, deleteAdminProperty } from '../controllers/propertyController';
 import { deleteAdminSearchAd } from '../controllers/searchAdController';
 import { authenticateToken, requireAdmin } from '../middleware/auth';
@@ -31,6 +31,9 @@ router.delete('/properties/:id', deleteAdminProperty);
 
 // DELETE - supprimer une annonce de recherche (admin)
 router.delete('/search-ads/:id', deleteAdminSearchAd);
+
+// DELETE - supprimer une collaboration (admin)
+router.delete('/collaborations/:id', deleteAdminCollaboration);
 
 // PUT - valider/refuser un utilisateur
 router.put('/users/:id/validate', validateUser);

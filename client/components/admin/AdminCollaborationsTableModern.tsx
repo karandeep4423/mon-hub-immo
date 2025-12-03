@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/CustomSelect';
 import { Badge } from '@/components/ui/Badge';
 import { DataTable } from '@/components/ui/DataTable';
+import { ConfirmDialog } from '@/components/ui';
 import Pagination from '@/components/ui/Pagination';
-import { BarChart2, CheckCircle, Check, DollarSign, Handshake, Home, Eye, MessageSquare, Calendar, RefreshCw } from 'lucide-react';
+import { BarChart2, CheckCircle, Check, DollarSign, Handshake, Home, Eye, MessageSquare, Calendar, RefreshCw, Trash2 } from 'lucide-react';
 
 export interface AdminCollaboration {
 	_id: string;
@@ -63,6 +64,11 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 	const [page, setPage] = useState<number>(1);
 	const [limit] = useState<number>(10);
 
+	// Delete modal state
+	const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+	const [deleteLoading, setDeleteLoading] = useState(false);
+	const [selectedCollaborationId, setSelectedCollaborationId] = useState<string | null>(null);
+
 	const filteredCollaborations = useMemo(() => {
 		if (!collaborations) return [];
 		return collaborations.filter((c) => {
@@ -100,6 +106,37 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 			cancelled: 'Annulée',
 		};
 		return statuses[status] || status;
+	};
+
+	const openDeleteModal = (collaborationId: string) => {
+		setSelectedCollaborationId(collaborationId);
+		setShowConfirmDialog(true);
+	};
+
+	const closeDeleteModal = () => {
+		setShowConfirmDialog(false);
+		setSelectedCollaborationId(null);
+		setDeleteLoading(false);
+	};
+
+	const confirmDelete = async () => {
+		if (!selectedCollaborationId) return;
+		setDeleteLoading(true);
+		try {
+			const raw = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+			const API_ROOT = raw.replace(/\/+$/, '').replace(/\/api$/i, '');
+			const res = await fetch(`${API_ROOT}/api/admin/collaborations/${selectedCollaborationId}`, {
+				method: 'DELETE',
+				credentials: 'include',
+			});
+			if (res.ok) {
+				window.location.reload(); // Refresh to update the list
+			} else {
+				setDeleteLoading(false);
+			}
+		} catch {
+			setDeleteLoading(false);
+		}
 	};
 
 	return (
@@ -308,6 +345,13 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 						>
 							<MessageSquare className="w-4 h-4 text-gray-600 group-hover:text-purple-600 transition-colors" />
 						</Link>
+						<button 
+							className="p-2 hover:bg-red-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-red-200 group" 
+							title="Supprimer" 
+							onClick={() => openDeleteModal(row._id)}
+						>
+							<Trash2 className="w-4 h-4 text-gray-600 group-hover:text-red-600 transition-colors" />
+						</button>
 					</div>
 				)}
 			/>
@@ -317,6 +361,19 @@ export const AdminCollaborationsTableModern: React.FC<AdminCollaborationsTableMo
 				pageSize={limit}
 				onPageChange={(p) => setPage(p)}
 				className="w-full"
+			/>
+
+			{/* Confirm Delete Dialog */}
+			<ConfirmDialog
+				isOpen={showConfirmDialog}
+				title="Supprimer la collaboration"
+				description="Êtes-vous sûr de vouloir supprimer cette collaboration ? Cette action est irréversible."
+				confirmText="Supprimer"
+				cancelText="Annuler"
+				onConfirm={confirmDelete}
+				onCancel={closeDeleteModal}
+				variant="danger"
+				loading={deleteLoading}
 			/>
 			</div>
 		</div>
