@@ -23,7 +23,9 @@ import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 export const PropertyManager: React.FC = () => {
 	const { user } = useAuth();
 	const [showForm, setShowForm] = useState(false);
-	const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+	const [editingProperty, setEditingProperty] = useState<Property | null>(
+		null,
+	);
 	const [currentPage, setCurrentPage] = useState(1);
 	const itemsPerPage = 6;
 
@@ -37,16 +39,32 @@ export const PropertyManager: React.FC = () => {
 	// Get mutation functions
 	const { invalidatePropertyCaches } = usePropertyMutations(user?._id);
 
-	const properties = useMemo(() => propertiesData?.properties || [], [propertiesData]);
-	const pagination = useMemo(() => propertiesData?.pagination, [propertiesData]);
+	const properties = useMemo(
+		() => propertiesData?.properties || [],
+		[propertiesData],
+	);
+	const pagination = useMemo(
+		() => propertiesData?.pagination,
+		[propertiesData],
+	);
 	const error = fetchError?.message || null;
 
 	// Property filters hook
-	const { filteredProperties, filters, setFilters, resetFilters, hasActiveFilters } =
-		usePropertyFilters({ properties });
+	const {
+		filteredProperties,
+		filters,
+		setFilters,
+		resetFilters,
+		hasActiveFilters,
+	} = usePropertyFilters({ properties });
 
 	// Page state (restore tabs/filters/pagination + scroll)
-	const { key: pageKey, savedState, save, urlOverrides } = usePageState({
+	const {
+		key: pageKey,
+		savedState,
+		save,
+		urlOverrides,
+	} = usePageState({
 		hasFilters: true,
 		hasPagination: true,
 		getCurrentState: () => ({
@@ -69,14 +87,21 @@ export const PropertyManager: React.FC = () => {
 	}, []);
 
 	// Use paginated properties from backend or filtered client-side if filters exist
-	const displayProperties = hasActiveFilters ? filteredProperties : properties;
-	const totalItems = hasActiveFilters ? filteredProperties.length : pagination?.totalItems || properties.length;
+	const displayProperties = hasActiveFilters
+		? filteredProperties
+		: properties;
+	const totalItems = hasActiveFilters
+		? filteredProperties.length
+		: pagination?.totalItems || properties.length;
 
 	// Reset to page 1 when filters change
 	const handleFiltersChange = (newFilters: typeof filters) => {
 		setFilters(newFilters);
 		setCurrentPage(1);
-		save({ filters: newFilters as unknown as Record<string, unknown>, currentPage: 1 });
+		save({
+			filters: newFilters as unknown as Record<string, unknown>,
+			currentPage: 1,
+		});
 	};
 
 	const handleResetFilters = () => {
@@ -86,8 +111,14 @@ export const PropertyManager: React.FC = () => {
 	};
 
 	// Property actions hook
-	const { updateStatus, deleteLoading, showConfirmDialog, openDeleteDialog, closeDeleteDialog, confirmDelete } =
-		usePropertyActions({ onSuccess: invalidatePropertyCaches });
+	const {
+		updateStatus,
+		deleteLoading,
+		showConfirmDialog,
+		openDeleteDialog,
+		closeDeleteDialog,
+		confirmDelete,
+	} = usePropertyActions({ onSuccess: invalidatePropertyCaches });
 
 	const handleFormSuccess = () => {
 		setShowForm(false);
@@ -113,8 +144,8 @@ export const PropertyManager: React.FC = () => {
 		return (
 			<div className="text-center py-12">
 				<p className="text-gray-600">
-					Vous devez être connecté en tant&apos;agent, apporteur ou admin
-					pour gérer des annonces.
+					Vous devez être connecté en tant&apos;agent, apporteur ou
+					admin pour gérer des annonces.
 				</p>
 			</div>
 		);
@@ -138,9 +169,12 @@ export const PropertyManager: React.FC = () => {
 
 	return (
 		<div className="space-y-6" id="properties-section">
-			<PropertyHeader propertiesCount={properties.length} onCreateClick={() => setShowForm(true)} />
+			<PropertyHeader
+				propertiesCount={properties.length}
+				onCreateClick={() => setShowForm(true)}
+			/>
 			{error && (
-				<div className="bg-red-50 border border}-red-200 rounded-lg p-4">
+				<div className="bg-red-50 border border-red-200 rounded-lg p-4">
 					<p className="text-red-800">{error}</p>
 				</div>
 			)}
@@ -156,7 +190,9 @@ export const PropertyManager: React.FC = () => {
 				/>
 			)}
 			{loading ? (
-				<PageLoader message={Features.Properties.PROPERTY_LOADING.PAGE} />
+				<PageLoader
+					message={Features.Properties.PROPERTY_LOADING.PAGE}
+				/>
 			) : properties.length === 0 ? (
 				<PropertyEmptyState onCreateClick={() => setShowForm(true)} />
 			) : filteredProperties.length === 0 && hasActiveFilters ? (
@@ -189,12 +225,24 @@ export const PropertyManager: React.FC = () => {
 			{/* Confirm Delete Dialog */}
 			<ConfirmDialog
 				isOpen={showConfirmDialog}
-				title={Features.Properties.PROPERTY_CONFIRMATION_DIALOGS.DELETE_TITLE}
-				description={Features.Properties.PROPERTY_CONFIRMATION_DIALOGS.DELETE_DESCRIPTION}
+				title={
+					Features.Properties.PROPERTY_CONFIRMATION_DIALOGS
+						.DELETE_TITLE
+				}
+				description={
+					Features.Properties.PROPERTY_CONFIRMATION_DIALOGS
+						.DELETE_DESCRIPTION
+				}
 				onConfirm={confirmDelete}
 				onCancel={closeDeleteDialog}
-				confirmText={Features.Properties.PROPERTY_CONFIRMATION_DIALOGS.DELETE_CONFIRM}
-				cancelText={Features.Properties.PROPERTY_CONFIRMATION_DIALOGS.DELETE_CANCEL}
+				confirmText={
+					Features.Properties.PROPERTY_CONFIRMATION_DIALOGS
+						.DELETE_CONFIRM
+				}
+				cancelText={
+					Features.Properties.PROPERTY_CONFIRMATION_DIALOGS
+						.DELETE_CANCEL
+				}
 				variant="danger"
 				loading={deleteLoading}
 			/>
