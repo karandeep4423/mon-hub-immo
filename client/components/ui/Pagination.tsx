@@ -31,7 +31,8 @@ export const Pagination: React.FC<PaginationProps> = ({
 
 				// Get element position relative to viewport
 				const elementPosition = element.getBoundingClientRect().top;
-				const offsetPosition = elementPosition + window.pageYOffset - 20;
+				const offsetPosition =
+					elementPosition + window.pageYOffset - 20;
 
 				window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
 			}, 50);
@@ -157,28 +158,30 @@ export const Pagination: React.FC<PaginationProps> = ({
 			</ul>
 
 			{/* sm+ : numbered pagination with ellipsis (responsive) */}
-			<ul className="hidden sm:flex lg:hidden items-center gap-2 justify-center mt-4">
+			<ul className="hidden sm:flex lg:hidden items-center gap-1 justify-center mt-4 flex-wrap">
 				<li>
 					<button
 						onClick={() => goTo(currentPage - 1)}
 						disabled={currentPage === 1}
-						className={`px-3 py-2 rounded-md text-sm font-medium ${
+						className={`px-2 py-1.5 rounded-md text-xs font-medium ${
 							currentPage === 1
 								? 'bg-gray-200 text-gray-500 cursor-not-allowed'
 								: 'bg-brand text-white hover:bg-brand-dark'
 						}`}
 					>
-						Précédent
+						Préc
 					</button>
 				</li>
 				{pagesSm.map((p, idx) => (
 					<li key={`${p}-${idx}`}>
 						{p === '...' ? (
-							<span className="px-3 py-2 text-gray-500">...</span>
+							<span className="px-1.5 py-1.5 text-gray-500 text-xs">
+								...
+							</span>
 						) : (
 							<button
 								onClick={() => goTo(p as number)}
-								className={`px-3 py-2 rounded-md text-sm font-medium ${
+								className={`px-2.5 py-1.5 rounded-md text-xs font-medium ${
 									p === currentPage
 										? 'bg-brand text-white'
 										: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -196,24 +199,24 @@ export const Pagination: React.FC<PaginationProps> = ({
 					<button
 						onClick={() => goTo(currentPage + 1)}
 						disabled={currentPage === totalPages}
-						className={`px-3 py-2 rounded-md text-sm font-medium ${
+						className={`px-2 py-1.5 rounded-md text-xs font-medium ${
 							currentPage === totalPages
 								? 'bg-gray-200 text-gray-500 cursor-not-allowed'
 								: 'bg-brand text-white hover:bg-brand-dark'
 						}`}
 					>
-						Suivant
+						Suiv
 					</button>
 				</li>
 			</ul>
 
 			{/* lg+ : numbered pagination with more pages visible */}
-			<ul className="hidden lg:flex items-center gap-2 justify-center mt-4">
+			<ul className="hidden lg:flex items-center gap-1.5 justify-center mt-4 flex-wrap">
 				<li>
 					<button
 						onClick={() => goTo(currentPage - 1)}
 						disabled={currentPage === 1}
-						className={`px-3 py-2 rounded-md text-sm font-medium ${
+						className={`px-2.5 py-1.5 rounded-md text-sm font-medium ${
 							currentPage === 1
 								? 'bg-gray-200 text-gray-500 cursor-not-allowed'
 								: 'bg-brand text-white hover:bg-brand-dark'
@@ -225,11 +228,13 @@ export const Pagination: React.FC<PaginationProps> = ({
 				{pagesLg.map((p, idx) => (
 					<li key={`${p}-${idx}`}>
 						{p === '...' ? (
-							<span className="px-3 py-2 text-gray-500">...</span>
+							<span className="px-2 py-1.5 text-gray-500">
+								...
+							</span>
 						) : (
 							<button
 								onClick={() => goTo(p as number)}
-								className={`px-3 py-2 rounded-md text-sm font-medium ${
+								className={`px-3 py-1.5 rounded-md text-sm font-medium ${
 									p === currentPage
 										? 'bg-brand text-white'
 										: 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -247,7 +252,7 @@ export const Pagination: React.FC<PaginationProps> = ({
 					<button
 						onClick={() => goTo(currentPage + 1)}
 						disabled={currentPage === totalPages}
-						className={`px-3 py-2 rounded-md text-sm font-medium ${
+						className={`px-2.5 py-1.5 rounded-md text-sm font-medium ${
 							currentPage === totalPages
 								? 'bg-gray-200 text-gray-500 cursor-not-allowed'
 								: 'bg-brand text-white hover:bg-brand-dark'
@@ -262,4 +267,3 @@ export const Pagination: React.FC<PaginationProps> = ({
 };
 
 export default Pagination;
-
