@@ -17,7 +17,6 @@ import {
 	getPasswordResetTemplate,
 	getPasswordResetConfirmationTemplate,
 	getAccountLockedTemplate,
-	sendInviteToSetPassword,
 } from '../utils/emailService';
 import { AuthRequest } from '../types/auth';
 import { signupSchema } from '../validation/schemas';
@@ -100,8 +99,19 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 			return;
 		}
 
-		const { firstName, lastName, email, password, phone, userType } =
-			parsed.data;
+		const {
+			firstName,
+			lastName,
+			email,
+			password,
+			phone,
+			userType,
+			agentType,
+			tCard,
+			sirenNumber,
+			rsacNumber,
+			collaboratorCertificate,
+		} = parsed.data;
 
 		// Sanitize inputs to prevent XSS attacks
 		const sanitizedFirstName = sanitizeString(firstName);
@@ -139,6 +149,20 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 			existingPending.firstName = sanitizedFirstName;
 			existingPending.lastName = sanitizedLastName;
 			existingPending.phone = sanitizedPhone;
+			// Update agent professional info
+			if (userType === 'agent') {
+				existingPending.agentType = agentType;
+				existingPending.tCard =
+					agentType === 'independent' ? tCard : undefined;
+				existingPending.sirenNumber =
+					agentType === 'commercial' ? sirenNumber : undefined;
+				existingPending.rsacNumber =
+					agentType === 'commercial' ? rsacNumber : undefined;
+				existingPending.collaboratorCertificate =
+					agentType === 'employee'
+						? collaboratorCertificate
+						: undefined;
+			}
 
 			// Handle new identity card upload if provided
 			if (userType === 'agent' && req.file) {
@@ -218,6 +242,24 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 			emailVerificationCode: verificationCode,
 			emailVerificationExpires: verificationExpires,
 			identityCardTempKey, // Store temp S3 key
+			// Agent professional info
+			agentType: userType === 'agent' ? agentType : undefined,
+			tCard:
+				userType === 'agent' && agentType === 'independent'
+					? tCard
+					: undefined,
+			sirenNumber:
+				userType === 'agent' && agentType === 'commercial'
+					? sirenNumber
+					: undefined,
+			rsacNumber:
+				userType === 'agent' && agentType === 'commercial'
+					? rsacNumber
+					: undefined,
+			collaboratorCertificate:
+				userType === 'agent' && agentType === 'employee'
+					? collaboratorCertificate
+					: undefined,
 		};
 
 		logger.debug('[AuthController] Creating pending verification', {
@@ -256,7 +298,10 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 				html: ackTemplate,
 			});
 		} catch (ackError) {
-			logger.error('[AuthController] Failed to send signup acknowledgement', ackError);
+			logger.error(
+				'[AuthController] Failed to send signup acknowledgement',
+				ackError,
+			);
 		}
 
 		res.status(201).json({
@@ -336,14 +381,19 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 		}
 
 		// Check if user is administratively blocked
-		if ((user as any).isBlocked) {
+		if (user.isBlocked) {
 			await logSecurityEvent({
 				userId: (user._id as unknown as string).toString(),
 				eventType: 'account_blocked',
 				req,
-				metadata: { reason: 'Attempt to login while account is blocked by admin' },
+				metadata: {
+					reason: 'Attempt to login while account is blocked by admin',
+				},
 			});
-			res.status(403).json({ success: false, message: 'Account blocked by admin' });
+			res.status(403).json({
+				success: false,
+				message: 'Account blocked by admin',
+			});
 			return;
 		}
 
@@ -532,9 +582,17 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 				userId: (user._id as unknown as string).toString(),
 				eventType: 'login_failure',
 				req,
-				metadata: { email, reason: 'Attempt to login before admin validation' },
+				metadata: {
+					email,
+					reason: 'Attempt to login before admin validation',
+				},
 			});
-			res.status(403).json({ success: false, message: 'Compte non validé par l\'administrateur. Veuillez attendre la validation.', requiresAdminValidation: true });
+			res.status(403).json({
+				success: false,
+				message:
+					"Compte non validé par l'administrateur. Veuillez attendre la validation.",
+				requiresAdminValidation: true,
+			});
 			return;
 		}
 
@@ -595,7 +653,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 			// Add these flags to help frontend routing
 			requiresProfileCompletion:
 				user.userType === 'agent' && !user.profileCompleted,
-			requiresPasswordChange: !!(user as any).mustChangePassword,
+			requiresPasswordChange: !!user.mustChangePassword,
 		});
 	} catch (error) {
 		logger.error('[AuthController] Login error', error);
@@ -658,39 +716,39 @@ export const verifyEmail = async (
 		// Check if user already exists (shouldn't happen, but safety check)
 		const existingUser = await User.findOne({ email });
 		if (existingUser) {
-			 // If user exists and is NOT yet verified, this is from admin-created flow
-			 // Just mark their email as verified and clean up pending verification
-			 if (!existingUser.isEmailVerified) {
-				 existingUser.isEmailVerified = true;
-				 await existingUser.save();
+			// If user exists and is NOT yet verified, this is from admin-created flow
+			// Just mark their email as verified and clean up pending verification
+			if (!existingUser.isEmailVerified) {
+				existingUser.isEmailVerified = true;
+				await existingUser.save();
 
-				 // Clean up pending verification
-				 await pendingVerification.deleteOne();
+				// Clean up pending verification
+				await pendingVerification.deleteOne();
 
-				 // Log successful verification
-				 await logSecurityEvent({
-					 userId: (existingUser._id as unknown as string).toString(),
-					 eventType: 'email_verified',
-					 req,
-					 metadata: { email, flow: 'admin_invite' },
-				 });
+				// Log successful verification
+				await logSecurityEvent({
+					userId: (existingUser._id as unknown as string).toString(),
+					eventType: 'email_verified',
+					req,
+					metadata: { email, flow: 'admin_invite' },
+				});
 
-				 res.json({
-					 success: true,
-					 message: 'Email vérifié avec succès',
-					 requiresAdminValidation: !existingUser.isValidated,
-				 });
-				 return;
-			 }
+				res.json({
+					success: true,
+					message: 'Email vérifié avec succès',
+					requiresAdminValidation: !existingUser.isValidated,
+				});
+				return;
+			}
 
-			 // User already verified - shouldn't happen
-			 await pendingVerification.deleteOne();
+			// User already verified - shouldn't happen
+			await pendingVerification.deleteOne();
 
-			 res.status(400).json({
-				 success: false,
-				 message: 'Un compte existe déjà avec cet email.',
-			 });
-			 return;
+			res.status(400).json({
+				success: false,
+				message: 'Un compte existe déjà avec cet email.',
+			});
+			return;
 		}
 
 		// Create real User from PendingVerification - but DO NOT validate the account until admin approves
@@ -704,6 +762,18 @@ export const verifyEmail = async (
 			isEmailVerified: true,
 			isValidated: false,
 			profileCompleted: false,
+			// Transfer agent professional info from signup
+			professionalInfo:
+				pendingVerification.userType === 'agent'
+					? {
+							agentType: pendingVerification.agentType,
+							tCard: pendingVerification.tCard,
+							sirenNumber: pendingVerification.sirenNumber,
+							rsacNumber: pendingVerification.rsacNumber,
+							collaboratorCertificate:
+								pendingVerification.collaboratorCertificate,
+						}
+					: undefined,
 		});
 
 		await newUser.save();
@@ -777,7 +847,10 @@ export const verifyEmail = async (
 				html: ackTemplate,
 			});
 		} catch (ackError) {
-			logger.error('[AuthController] Failed to send pending validation email', ackError);
+			logger.error(
+				'[AuthController] Failed to send pending validation email',
+				ackError,
+			);
 		}
 
 		// Return success but indicate that admin validation is required - DO NOT LOG IN USER YET
@@ -810,28 +883,47 @@ export const setPasswordFromInvite = async (
 		};
 
 		if (!email || !token || !newPassword) {
-			res.status(400).json({ success: false, message: 'email, token et newPassword sont requis' });
+			res.status(400).json({
+				success: false,
+				message: 'email, token et newPassword sont requis',
+			});
 			return;
 		}
 
-		const user = await User.findOne({ email, passwordResetCode: token, passwordResetExpires: { $gt: new Date() } }).select(
+		const user = await User.findOne({
+			email,
+			passwordResetCode: token,
+			passwordResetExpires: { $gt: new Date() },
+		}).select(
 			'+passwordResetCode +passwordResetExpires +password +firstName +lastName +isEmailVerified',
 		);
 		if (!user) {
-			res.status(400).json({ success: false, message: 'Token invalide ou expiré' });
+			res.status(400).json({
+				success: false,
+				message: 'Token invalide ou expiré',
+			});
 			return;
 		}
 
 		// Check password history
-		const inHistory = await isPasswordInHistory(newPassword, user.passwordHistory || []);
+		const inHistory = await isPasswordInHistory(
+			newPassword,
+			user.passwordHistory || [],
+		);
 		if (inHistory) {
-			res.status(400).json({ success: false, message: 'Ce mot de passe a déjà été utilisé récemment.' });
+			res.status(400).json({
+				success: false,
+				message: 'Ce mot de passe a déjà été utilisé récemment.',
+			});
 			return;
 		}
 
 		// Update password and clear reset fields
 		if (user.password) {
-			user.passwordHistory = updatePasswordHistory(user.password, user.passwordHistory || []);
+			user.passwordHistory = updatePasswordHistory(
+				user.password,
+				user.passwordHistory || [],
+			);
 		}
 		user.password = newPassword;
 		user.passwordResetCode = undefined;
@@ -843,42 +935,79 @@ export const setPasswordFromInvite = async (
 
 		await user.save();
 
-	// Log event
-	await logSecurityEvent({ userId: (user._id as unknown as string).toString(), eventType: 'password_reset_success', req, metadata: { email } });
+		// Log event
+		await logSecurityEvent({
+			userId: (user._id as unknown as string).toString(),
+			eventType: 'password_reset_success',
+			req,
+			metadata: { email },
+		});
 
-	// Generate and send verification code if user is not yet verified
-	logger.info('[AuthController] setPasswordFromInvite - checking email verification', { email, isEmailVerified: user.isEmailVerified });
-	if (!user.isEmailVerified) {
-		try {
-			logger.info('[AuthController] Generating verification code for unverified user', { email });
-			const verificationCode = generateVerificationCode();
-			 const emailVerificationExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+		// Generate and send verification code if user is not yet verified
+		logger.info(
+			'[AuthController] setPasswordFromInvite - checking email verification',
+			{ email, isEmailVerified: user.isEmailVerified },
+		);
+		if (!user.isEmailVerified) {
+			try {
+				logger.info(
+					'[AuthController] Generating verification code for unverified user',
+					{ email },
+				);
+				const verificationCode = generateVerificationCode();
+				const emailVerificationExpires = new Date(
+					Date.now() + 10 * 60 * 1000,
+				); // 10 minutes
 
-			// Store in PendingVerification
-			await PendingVerification.findOneAndUpdate(
+				// Store in PendingVerification
+				await PendingVerification.findOneAndUpdate(
+					{ email },
+					{
+						emailVerificationCode: verificationCode,
+						emailVerificationExpires,
+					},
+					{ upsert: true, new: true },
+				);
+
+				// Send verification code email
+				await sendEmail({
+					to: user.email,
+					subject: 'Code de vérification - MonHubImmo',
+					html: getVerificationCodeTemplate(
+						`${user.firstName} ${user.lastName}`,
+						verificationCode,
+					),
+				});
+
+				logger.info(
+					'[AuthController] Verification code sent after password set',
+					{ email },
+				);
+			} catch (emailError) {
+				logger.error(
+					'[AuthController] Failed to send verification code after password set',
+					emailError,
+				);
+				await logSecurityEvent({
+					userId: (user._id as unknown as string).toString(),
+					eventType: 'email_send_failed',
+					req,
+					metadata: { email, error: String(emailError) },
+				});
+			}
+		} else {
+			logger.info(
+				'[AuthController] User already verified, skipping code generation',
 				{ email },
-				 { emailVerificationCode: verificationCode, emailVerificationExpires },
-				{ upsert: true, new: true },
 			);
-
-			// Send verification code email
-			await sendEmail({
-				to: user.email,
-				subject: 'Code de vérification - MonHubImmo',
-				html: getVerificationCodeTemplate(`${user.firstName} ${user.lastName}`, verificationCode),
-			});
-
-			logger.info('[AuthController] Verification code sent after password set', { email });
-		} catch (emailError) {
-			logger.error('[AuthController] Failed to send verification code after password set', emailError);
-			await logSecurityEvent({ userId: (user._id as unknown as string).toString(), eventType: 'email_send_failed', req, metadata: { email, error: String(emailError) } });
 		}
-	} else {
-		logger.info('[AuthController] User already verified, skipping code generation', { email });
-	}		res.json({ success: true, message: 'Mot de passe mis à jour' });
+		res.json({ success: true, message: 'Mot de passe mis à jour' });
 	} catch (error) {
 		logger.error('[AuthController] setPasswordFromInvite error', error);
-		res.status(500).json({ success: false, message: 'Erreur serveur interne' });
+		res.status(500).json({
+			success: false,
+			message: 'Erreur serveur interne',
+		});
 	}
 };
 
@@ -1022,10 +1151,10 @@ export const forgotPassword = async (
 		try {
 			const inviteUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/auth/reset-password?email=${encodeURIComponent(email)}`;
 			const emailTemplate = getPasswordResetTemplate(
-					`${user.firstName} ${user.lastName}`,
-					resetCode,
-					inviteUrl,
-				);
+				`${user.firstName} ${user.lastName}`,
+				resetCode,
+				inviteUrl,
+			);
 
 			await sendEmail({
 				to: email,
@@ -1259,11 +1388,13 @@ export const getProfile = async (
 				subscriptionStatus: user.subscriptionStatus || null,
 				// Derived account status for frontend display
 				accountStatus:
-					user.userType === 'agent' && user.profileCompleted && !user.isPaid
-						? 'profil en attente d\'activation'
+					user.userType === 'agent' &&
+					user.profileCompleted &&
+					!user.isPaid
+						? "profil en attente d'activation"
 						: user.isPaid
-						? 'active'
-						: 'incomplete',
+							? 'active'
+							: 'incomplete',
 			},
 		});
 	} catch (error) {
@@ -1386,7 +1517,33 @@ export const updateProfile = async (
 				user.professionalInfo.alertFrequency =
 					professionalInfo.alertFrequency;
 			}
-			// Note: identityCard is NOT updated here - only set during initial profile completion
+			// Update identity card if provided
+			if (professionalInfo.identityCard !== undefined) {
+				// Delete old identity card from S3 if it exists
+				if (user.professionalInfo.identityCard?.key) {
+					try {
+						const s3Service = new S3Service();
+						await s3Service.deleteImage(
+							user.professionalInfo.identityCard.key,
+						);
+						logger.debug(
+							'[AuthController] Old identity card deleted from S3',
+							user.professionalInfo.identityCard.key,
+						);
+					} catch (deleteError) {
+						logger.error(
+							'[AuthController] Failed to delete old identity card from S3',
+							deleteError,
+						);
+						// Continue with update even if delete fails
+					}
+				}
+				user.professionalInfo.identityCard = {
+					url: professionalInfo.identityCard.url,
+					key: professionalInfo.identityCard.key,
+					uploadedAt: new Date(),
+				};
+			}
 		}
 
 		await user.save();
@@ -1569,7 +1726,9 @@ export const completeProfile = async (
 
 		// When profile is completed but user hasn't paid yet, mark subscriptionStatus
 		if (user.profileCompleted) {
-			user.subscriptionStatus = user.isPaid ? 'active' : 'pending_activation';
+			user.subscriptionStatus = user.isPaid
+				? 'active'
+				: 'pending_activation';
 		}
 
 		await user.save();
@@ -1860,8 +2019,8 @@ export const changePassword = async (
 
 		// Update password (will be hashed by pre-save hook)
 		user.password = newPassword;
-        // Clear mustChangePassword flag if present
-        user.mustChangePassword = false;
+		// Clear mustChangePassword flag if present
+		user.mustChangePassword = false;
 		await user.save();
 
 		// Log password change

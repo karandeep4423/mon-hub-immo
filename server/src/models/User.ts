@@ -19,6 +19,11 @@ export interface IUser extends Document {
 
 	// Professional information for agents
 	professionalInfo?: {
+		agentType?: 'independent' | 'commercial' | 'employee';
+		tCard?: string;
+		sirenNumber?: string;
+		rsacNumber?: string;
+		collaboratorCertificate?: string;
 		postalCode?: string;
 		city?: string;
 		interventionRadius?: number;
@@ -77,10 +82,10 @@ export interface IUser extends Document {
 	stripeCustomerId?: string;
 	stripeSubscriptionId?: string;
 	subscriptionStatus?: string;
-    isValidated: boolean;                   // Ajout admin
-    validatedAt?: Date;
-    validatedBy?: mongoose.Types.ObjectId;
-	isBlocked?: boolean;                    // Admin can block user from logging in
+	isValidated: boolean; // Ajout admin
+	validatedAt?: Date;
+	validatedBy?: mongoose.Types.ObjectId;
+	isBlocked?: boolean; // Admin can block user from logging in
 	blockedAt?: Date;
 	blockedBy?: mongoose.Types.ObjectId;
 	accessGrantedByAdmin?: boolean; // Admin can override payment status
@@ -115,7 +120,7 @@ const userSchema = new Schema<IUser>(
 		},
 		userType: {
 			type: String,
-			enum: ['agent', 'apporteur', 'guest','admin'],
+			enum: ['agent', 'apporteur', 'guest', 'admin'],
 		},
 		isEmailVerified: {
 			type: Boolean,
@@ -155,6 +160,27 @@ const userSchema = new Schema<IUser>(
 			default: null,
 		},
 		professionalInfo: {
+			agentType: {
+				type: String,
+				enum: ['independent', 'commercial', 'employee'],
+				trim: true,
+			},
+			tCard: {
+				type: String,
+				trim: true,
+			},
+			sirenNumber: {
+				type: String,
+				trim: true,
+			},
+			rsacNumber: {
+				type: String,
+				trim: true,
+			},
+			collaboratorCertificate: {
+				type: String,
+				trim: true,
+			},
 			postalCode: {
 				type: String,
 				trim: true,
@@ -324,7 +350,10 @@ const userSchema = new Schema<IUser>(
 			 Allow either a 6-digit numeric code (legacy/verification style) OR
 			 a longer hex/alphanumeric token used for secure invite/reset links.
 			*/
-			match: [/^([0-9]{6}|[0-9A-Za-z]{24,128})$/, 'Code de réinitialisation invalide'],
+			match: [
+				/^([0-9]{6}|[0-9A-Za-z]{24,128})$/,
+				'Code de réinitialisation invalide',
+			],
 		},
 		passwordResetExpires: {
 			type: Date,
@@ -373,20 +402,20 @@ const userSchema = new Schema<IUser>(
 			type: String,
 			default: null,
 		},
-        isValidated: {
-            type: Boolean,
-            default: false,
-            index: true,
-        },
-        validatedAt: {
-            type: Date,
-            default: null,
-        },
-        validatedBy: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
-            default: null,
-        },
+		isValidated: {
+			type: Boolean,
+			default: false,
+			index: true,
+		},
+		validatedAt: {
+			type: Date,
+			default: null,
+		},
+		validatedBy: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'User',
+			default: null,
+		},
 		isBlocked: {
 			type: Boolean,
 			default: false,
