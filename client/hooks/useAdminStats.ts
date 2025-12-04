@@ -1,6 +1,7 @@
 'use client';
-import { useState, useEffect } from 'react';
+import useSWR from 'swr';
 import { adminService } from '@/lib/api/adminApi';
+import { swrKeys } from '@/lib/swrKeys';
 
 export interface TopItem {
 	name: string;
@@ -26,33 +27,26 @@ export interface AdminStats {
 }
 
 export function useAdminStats() {
-	const [stats, setStats] = useState<AdminStats | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
+	const {
+		data: stats,
+		isLoading: loading,
+		error,
+		mutate,
+	} = useSWR<AdminStats>(
+		swrKeys.admin.stats,
+		async () => {
+			const res = await adminService.getStats();
+			return res.data as AdminStats;
+		},
+		{
+			revalidateOnFocus: false,
+		},
+	);
 
-	useEffect(() => {
-		let mounted = true;
-		setLoading(true);
-
-		adminService
-			.getStats()
-			.then((res) => {
-				if (!mounted) return;
-				setStats(res.data as AdminStats);
-			})
-			.catch((err) => {
-				if (!mounted) return;
-				setError(String(err.message || err));
-			})
-			.finally(() => {
-				if (!mounted) return;
-				setLoading(false);
-			});
-
-		return () => {
-			mounted = false;
-		};
-	}, []);
-
-	return { stats, loading, error };
+	return {
+		stats: stats ?? null,
+		loading,
+		error: error?.message ?? null,
+		refetch: mutate,
+	};
 }

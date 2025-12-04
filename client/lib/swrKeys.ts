@@ -88,4 +88,20 @@ export const swrKeys = {
 		messages: (peerId: string, userId?: string) =>
 			userId ? ['chat', 'messages', peerId, userId] : null,
 	},
+
+	// Admin
+	admin: {
+		stats: ['admin', 'stats'],
+		users: (filters?: Record<string, unknown>) => [
+			'admin',
+			'users',
+			filters,
+		],
+		collaborations: ['admin', 'collaborations'],
+		properties: (filters?: Record<string, unknown>) => [
+			'admin',
+			'properties',
+			filters,
+		],
+	},
 } as const;

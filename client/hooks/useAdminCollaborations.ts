@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import useSWR from 'swr';
 import { adminService } from '@/lib/api/adminApi';
+import { swrKeys } from '@/lib/swrKeys';
 
 // Adapte cette interface à la structure Collaboration de ton backend (exemple simplifié)
 export interface Collaboration {
@@ -16,33 +17,31 @@ export interface Collaboration {
 }
 
 export function useAdminCollaborations() {
-	const [collaborations, setCollaborations] = useState<Collaboration[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [refreshKey, setRefreshKey] = useState(0);
+	const {
+		data: collaborations,
+		isLoading: loading,
+		mutate,
+	} = useSWR<Collaboration[]>(
+		swrKeys.admin.collaborations,
+		async () => {
+			const res = await adminService.getAllCollaborations();
+			// Sort by createdAt descending (newest first)
+			return [...(res.data.collaborations || [])].sort(
+				(a: Collaboration, b: Collaboration) => {
+					const dateA = new Date(a.createdAt || 0).getTime();
+					const dateB = new Date(b.createdAt || 0).getTime();
+					return dateB - dateA;
+				},
+			);
+		},
+		{
+			revalidateOnFocus: false,
+		},
+	);
 
-	const refetch = useCallback(() => {
-		setRefreshKey((k) => k + 1);
-	}, []);
-
-	useEffect(() => {
-		setLoading(true);
-
-		adminService
-			.getAllCollaborations()
-			.then((res) => {
-				// Sort by createdAt descending (newest first)
-				const sorted = [...(res.data.collaborations || [])].sort(
-					(a: Collaboration, b: Collaboration) => {
-						const dateA = new Date(a.createdAt || 0).getTime();
-						const dateB = new Date(b.createdAt || 0).getTime();
-						return dateB - dateA;
-					},
-				);
-				setCollaborations(sorted);
-			})
-			.catch(console.error)
-			.finally(() => setLoading(false));
-	}, [refreshKey]);
-
-	return { collaborations, loading, refetch };
+	return {
+		collaborations: collaborations ?? [],
+		loading,
+		refetch: mutate,
+	};
 }
