@@ -57,6 +57,8 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 	const { user, updateUser } = useAuth();
 	const [identityCardFile, setIdentityCardFile] = useState<File | null>(null);
 	const [isUploadingFile, setIsUploadingFile] = useState(false);
+	const [showExistingIdentityCard, setShowExistingIdentityCard] =
+		useState(true);
 	// Ensure authenticated users only; redirects to login if not
 	useRequireAuth();
 
@@ -67,6 +69,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 		setFieldValue,
 		setFieldError,
 		handleSubmit,
+		setValues,
 	} = useForm<ProfileCompletionFormData>({
 		initialValues: {
 			firstName: user?.firstName || '',
@@ -154,8 +157,8 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 
 				let identityCardData;
 
-				// Upload identity card file if provided (only in initial setup, not edit mode)
-				if (identityCardFile && !editMode) {
+				// Upload identity card file if provided
+				if (identityCardFile) {
 					setIsUploadingFile(true);
 					const uploadResponse =
 						await authService.uploadIdentityCard(identityCardFile);
@@ -209,6 +212,9 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 								independentAgent: data.independentAgent,
 								alertsEnabled: data.alertsEnabled,
 								alertFrequency: data.alertFrequency,
+								...(identityCardData && {
+									identityCard: identityCardData,
+								}),
 							},
 						})
 					: await authService.completeProfile({
@@ -254,8 +260,13 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 					} else {
 						// If user needs to pay, redirect to payment page
 						// response.user may not have a strict TS type for 'isPaid', so narrow safely
-						const respUser = response.user as unknown as Record<string, unknown>;
-						const isPaidVal = respUser['isPaid'] as boolean | undefined;
+						const respUser = response.user as unknown as Record<
+							string,
+							unknown
+						>;
+						const isPaidVal = respUser['isPaid'] as
+							| boolean
+							| undefined;
 						if (isPaidVal === false || isPaidVal === undefined) {
 							showProfileCompletionSuccess();
 							router.push('/payment');
@@ -376,6 +387,41 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 		},
 	});
 
+	// Sync form values when user data loads
+	useEffect(() => {
+		if (user) {
+			setValues({
+				firstName: user.firstName || '',
+				lastName: user.lastName || '',
+				email: user.email || '',
+				phone: user.phone || '',
+				profileImage: user.profileImage || '',
+				postalCode: user.professionalInfo?.postalCode || '',
+				city: user.professionalInfo?.city || '',
+				interventionRadius:
+					user.professionalInfo?.interventionRadius || 20,
+				coveredCities:
+					user.professionalInfo?.coveredCities?.join(', ') || '',
+				network: user.professionalInfo?.network || '',
+				siretNumber: user.professionalInfo?.siretNumber || '',
+				mandateTypes: user.professionalInfo?.mandateTypes || [],
+				yearsExperience:
+					user.professionalInfo?.yearsExperience?.toString() || '',
+				personalPitch: user.professionalInfo?.personalPitch || '',
+				collaborateWithAgents:
+					user.professionalInfo?.collaborateWithAgents ?? true,
+				shareCommission:
+					user.professionalInfo?.shareCommission ?? false,
+				independentAgent:
+					user.professionalInfo?.independentAgent ?? false,
+				alertsEnabled: user.professionalInfo?.alertsEnabled ?? false,
+				alertFrequency:
+					user.professionalInfo?.alertFrequency || 'quotidien',
+				acceptTerms: editMode ? true : false,
+			});
+		}
+	}, [user, setValues, editMode]);
+
 	useEffect(() => {
 		// Only proceed with role/completion checks when we have a user
 		if (!user || isSubmitting) return;
@@ -494,7 +540,6 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 								value={values.firstName}
 								onChange={handleChange}
 								error={errors.firstName}
-								disabled={!editMode}
 							/>
 
 							<div className="md:col-start-2 flex items-center justify-center">
@@ -514,7 +559,6 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 								value={values.lastName}
 								onChange={handleChange}
 								error={errors.lastName}
-								disabled={!editMode}
 							/>
 						</div>
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -645,23 +689,107 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 								placeholder="Ex: IAD, Century 21, Orpi, Indépendant..."
 							/>
 
-							<Input
-								label="Numéro SIRET"
-								name="siretNumber"
-								value={values.siretNumber}
-								onChange={handleChange}
-								error={errors.siretNumber}
-								placeholder={
-									Features.Auth.AUTH_PLACEHOLDERS.SIRET
-								}
-							/>
+							{/* Show appropriate professional number based on agent type */}
+							{user?.professionalInfo?.agentType ===
+							'independent' ? (
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-1">
+										Carte professionnelle (T card)
+									</label>
+									<p className="px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-700">
+										{user.professionalInfo.tCard ||
+											'Non renseigné'}
+									</p>
+									<p className="text-xs text-gray-500 mt-1">
+										Fourni lors de l&apos;inscription
+									</p>
+								</div>
+							) : user?.professionalInfo?.agentType ===
+							  'commercial' ? (
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-1">
+										Numéro SIREN
+									</label>
+									<p className="px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-700">
+										{user.professionalInfo.sirenNumber ||
+											'Non renseigné'}
+									</p>
+									<p className="text-xs text-gray-500 mt-1">
+										Fourni lors de l&apos;inscription
+									</p>
+								</div>
+							) : user?.professionalInfo?.agentType ===
+							  'employee' ? (
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-1">
+										Certificat d&apos;autorisation
+									</label>
+									<p className="px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-700">
+										{user.professionalInfo
+											.collaboratorCertificate ||
+											'Non renseigné'}
+									</p>
+									<p className="text-xs text-gray-500 mt-1">
+										Fourni lors de l&apos;inscription
+									</p>
+								</div>
+							) : (
+								<Input
+									label="Numéro SIRET"
+									name="siretNumber"
+									value={values.siretNumber}
+									onChange={handleChange}
+									error={errors.siretNumber}
+									placeholder={
+										Features.Auth.AUTH_PLACEHOLDERS.SIRET
+									}
+								/>
+							)}
 						</div>
+
+						{/* Show RSAC for commercial agents */}
+						{user?.professionalInfo?.agentType === 'commercial' &&
+							user.professionalInfo.rsacNumber && (
+								<div className="mt-4">
+									<label className="block text-sm font-medium text-gray-700 mb-1">
+										Numéro RSAC
+									</label>
+									<p className="px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-gray-700 max-w-md">
+										{user.professionalInfo.rsacNumber}
+									</p>
+									<p className="text-xs text-gray-500 mt-1">
+										Fourni lors de l&apos;inscription
+									</p>
+								</div>
+							)}
+
+						{/* Show agent type badge */}
+						{user?.professionalInfo?.agentType && (
+							<div className="mt-4 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-brand-50 text-brand-700 border border-brand-200">
+								{user.professionalInfo.agentType ===
+								'independent'
+									? '🏢 Agent immobilier indépendant'
+									: user.professionalInfo.agentType ===
+										  'commercial'
+										? '💼 Agent commercial immobilier'
+										: "👔 Négociateur VRP employé d'agence"}
+							</div>
+						)}
 
 						<div className="mt-4">
 							<FileUpload
 								label="Carte d'identité (optionnel)"
 								onChange={(file) => setIdentityCardFile(file)}
 								value={identityCardFile}
+								existingFileUrl={
+									showExistingIdentityCard
+										? user?.professionalInfo?.identityCard
+												?.url
+										: undefined
+								}
+								onRemoveExisting={() =>
+									setShowExistingIdentityCard(false)
+								}
 								helperText="Photo ou PDF de votre carte d'identité pour vérification"
 							/>
 						</div>

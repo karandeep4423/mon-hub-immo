@@ -26,6 +26,11 @@ export interface User {
 	profileCompleted: boolean; // Make sure this is included
 
 	professionalInfo?: {
+		agentType?: 'independent' | 'commercial' | 'employee';
+		tCard?: string;
+		sirenNumber?: string;
+		rsacNumber?: string;
+		collaboratorCertificate?: string;
 		postalCode?: string;
 		city?: string;
 		interventionRadius?: number;

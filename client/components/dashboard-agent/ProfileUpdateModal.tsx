@@ -4,6 +4,7 @@ import React from 'react';
 import { toast } from 'react-toastify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { Modal } from '../ui/Modal';
 import { ProfileImageUploader } from '../ui/ProfileImageUploader';
 import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/lib/api/authApi';
@@ -139,154 +140,131 @@ export const ProfileUpdateModal: React.FC<ProfileUpdateModalProps> = ({
 	if (!isOpen) return null;
 
 	return (
-		<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-			<div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-				{/* Header */}
-				<div className="flex items-center justify-between p-6 border-b">
-					<h2 className="text-xl font-semibold text-gray-900">
-						Update Profile
-					</h2>
-					<button
-						onClick={handleClose}
+		<Modal
+			isOpen={isOpen}
+			onClose={handleClose}
+			title="Update Profile"
+			size="md"
+		>
+			{/* Form */}
+			<form onSubmit={handleSubmit} className="space-y-6">
+				<div className="grid grid-cols-2 gap-4">
+					<Input
+						label="First Name"
+						type="text"
+						name="firstName"
+						value={formData.firstName}
+						onChange={(e) =>
+							setFieldValue('firstName', e.target.value)
+						}
+						error={errors.firstName}
+						placeholder="John"
+						required
 						disabled={isSubmitting}
-						className="text-gray-400 hover:text-gray-600 transition-colors"
-					>
-						<svg
-							className="w-6 h-6"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth="2"
-								d="M6 18L18 6M6 6l12 12"
-							/>
-						</svg>
-					</button>
+					/>
+					<Input
+						label="Last Name"
+						type="text"
+						name="lastName"
+						value={formData.lastName}
+						onChange={(e) =>
+							setFieldValue('lastName', e.target.value)
+						}
+						error={errors.lastName}
+						placeholder="Doe"
+						required
+						disabled={isSubmitting}
+					/>
 				</div>
 
-				{/* Form */}
-				<form onSubmit={handleSubmit} className="p-6 space-y-6">
-					<div className="grid grid-cols-2 gap-4">
-						<Input
-							label="First Name"
-							type="text"
-							name="firstName"
-							value={formData.firstName}
-							onChange={(e) =>
-								setFieldValue('firstName', e.target.value)
-							}
-							error={errors.firstName}
-							placeholder="John"
-							required
-							disabled={isSubmitting}
-						/>
-						<Input
-							label="Last Name"
-							type="text"
-							name="lastName"
-							value={formData.lastName}
-							onChange={(e) =>
-								setFieldValue('lastName', e.target.value)
-							}
-							error={errors.lastName}
-							placeholder="Doe"
-							required
-							disabled={isSubmitting}
-						/>
-					</div>
+				<Input
+					label="Phone Number"
+					type="tel"
+					name="phone"
+					value={formData.phone}
+					onChange={(e) => setFieldValue('phone', e.target.value)}
+					error={errors.phone}
+					placeholder="+1234567890"
+					disabled={isSubmitting}
+				/>
 
-					<Input
-						label="Phone Number"
-						type="tel"
-						name="phone"
-						value={formData.phone}
-						onChange={(e) => setFieldValue('phone', e.target.value)}
-						error={errors.phone}
-						placeholder="+1234567890"
-						disabled={isSubmitting}
-					/>
+				<ProfileImageUploader
+					currentImageUrl={formData.profileImage}
+					onImageUploaded={handleImageUploaded}
+					onRemove={handleImageRemove}
+					disabled={isSubmitting}
+					size="medium"
+					uploadingText="Uploading profile image..."
+				/>
 
-					<ProfileImageUploader
-						currentImageUrl={formData.profileImage}
-						onImageUploaded={handleImageUploaded}
-						onRemove={handleImageRemove}
-						disabled={isSubmitting}
-						size="medium"
-						uploadingText="Uploading profile image..."
-					/>
+				{/* Show error if any */}
+				{errors.profileImage && (
+					<p className="text-sm text-red-600 mt-1">
+						{errors.profileImage}
+					</p>
+				)}
 
-					{/* Show error if any */}
-					{errors.profileImage && (
-						<p className="text-sm text-red-600 mt-1">
-							{errors.profileImage}
-						</p>
-					)}
-
-					{/* Read-only fields */}
-					<div className="bg-gray-50 rounded-lg p-4 space-y-3">
-						<h4 className="text-sm font-medium text-gray-700">
-							Account Information (Read Only)
-						</h4>
-						<div className="grid grid-cols-1 gap-3 text-sm">
-							<div>
-								<span className="font-medium text-gray-600">
-									Email:
-								</span>
-								<span className="ml-2 text-gray-900">
-									{user.email}
-								</span>
-							</div>
-							<div>
-								<span className="font-medium text-gray-600">
-									Account Type:
-								</span>
-								<span className="ml-2 text-gray-900 capitalize">
-									{user.userType}
-								</span>
-							</div>
-							<div>
-								<span className="font-medium text-gray-600">
-									Email Status:
-								</span>
-								<span
-									className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
-										user.isEmailVerified
-											? 'bg-green-100 text-green-800'
-											: 'bg-red-100 text-red-800'
-									}`}
-								>
-									{user.isEmailVerified
-										? 'Verified'
-										: 'Not Verified'}
-								</span>
-							</div>
+				{/* Read-only fields */}
+				<div className="bg-gray-50 rounded-lg p-4 space-y-3">
+					<h4 className="text-sm font-medium text-gray-700">
+						Account Information (Read Only)
+					</h4>
+					<div className="grid grid-cols-1 gap-3 text-sm">
+						<div>
+							<span className="font-medium text-gray-600">
+								Email:
+							</span>
+							<span className="ml-2 text-gray-900">
+								{user.email}
+							</span>
+						</div>
+						<div>
+							<span className="font-medium text-gray-600">
+								Account Type:
+							</span>
+							<span className="ml-2 text-gray-900 capitalize">
+								{user.userType}
+							</span>
+						</div>
+						<div>
+							<span className="font-medium text-gray-600">
+								Email Status:
+							</span>
+							<span
+								className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
+									user.isEmailVerified
+										? 'bg-green-100 text-green-800'
+										: 'bg-red-100 text-red-800'
+								}`}
+							>
+								{user.isEmailVerified
+									? 'Verified'
+									: 'Not Verified'}
+							</span>
 						</div>
 					</div>
+				</div>
 
-					{/* Actions */}
-					<div className="flex space-x-3 pt-4">
-						<Button
-							type="button"
-							variant="outline"
-							onClick={handleClose}
-							disabled={isSubmitting}
-							className="flex-1"
-						>
-							Cancel
-						</Button>
-						<Button
-							type="submit"
-							loading={isSubmitting}
-							className="flex-1"
-						>
-							Save Changes
-						</Button>
-					</div>
-				</form>
-			</div>
-		</div>
+				{/* Actions */}
+				<div className="flex space-x-3 pt-4">
+					<Button
+						type="button"
+						variant="outline"
+						onClick={handleClose}
+						disabled={isSubmitting}
+						className="flex-1"
+					>
+						Cancel
+					</Button>
+					<Button
+						type="submit"
+						loading={isSubmitting}
+						className="flex-1"
+					>
+						Save Changes
+					</Button>
+				</div>
+			</form>
+		</Modal>
 	);
 };

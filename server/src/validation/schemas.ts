@@ -131,6 +131,12 @@ export const updateProfileSchema = z.object({
 			independentAgent: z.boolean().optional(),
 			alertsEnabled: z.boolean().optional(),
 			alertFrequency: z.enum(['quotidien', 'hebdomadaire']).optional(),
+			identityCard: z
+				.object({
+					url: z.string().url(),
+					key: z.string(),
+				})
+				.optional(),
 		})
 		.optional(),
 });
@@ -210,6 +216,12 @@ export const signupSchema = z
 			.or(z.literal('').transform(() => undefined)),
 		userType: z.enum(['agent', 'apporteur']),
 		confirmPassword: z.string().optional(),
+		// Agent professional info fields
+		agentType: z.enum(['independent', 'commercial', 'employee']).optional(),
+		tCard: z.string().trim().optional(),
+		sirenNumber: z.string().trim().optional(),
+		rsacNumber: z.string().trim().optional(),
+		collaboratorCertificate: z.string().trim().optional(),
 	})
 	.refine(
 		(data) =>

@@ -7,6 +7,8 @@ interface FileUploadProps {
 	accept?: string;
 	onChange: (file: File | null) => void;
 	value?: File | null;
+	existingFileUrl?: string;
+	onRemoveExisting?: () => void;
 	error?: string;
 	helperText?: string;
 }
@@ -16,6 +18,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 	accept = 'image/*,application/pdf',
 	onChange,
 	value,
+	existingFileUrl,
+	onRemoveExisting,
 	error,
 	helperText,
 }) => {
@@ -130,7 +134,65 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 				{label}
 			</label>
 
-			{!value ? (
+			{/* Show existing file from URL */}
+			{!value && existingFileUrl ? (
+				<div className="border-2 border-green-300 bg-green-50 rounded-lg p-4 flex items-center gap-3">
+					<div className="relative w-16 h-16 rounded overflow-hidden">
+						{existingFileUrl.toLowerCase().endsWith('.pdf') ? (
+							<div className="w-full h-full flex items-center justify-center bg-gray-100">
+								<svg
+									className="w-8 h-8 text-red-500"
+									fill="currentColor"
+									viewBox="0 0 20 20"
+								>
+									<path
+										fillRule="evenodd"
+										d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
+										clipRule="evenodd"
+									/>
+								</svg>
+							</div>
+						) : (
+							<Image
+								src={existingFileUrl}
+								alt="Fichier téléchargé"
+								fill
+								className="object-cover"
+							/>
+						)}
+					</div>
+					<div className="flex-1 min-w-0">
+						<p className="text-sm font-medium text-green-700">
+							✓ Fichier déjà téléchargé
+						</p>
+						<p className="text-xs text-gray-500">
+							Lors de l&apos;inscription
+						</p>
+					</div>
+					{onRemoveExisting && (
+						<button
+							type="button"
+							onClick={onRemoveExisting}
+							className="flex-shrink-0 text-gray-400 hover:text-red-500"
+							title="Remplacer le fichier"
+						>
+							<svg
+								className="w-5 h-5"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									strokeWidth={2}
+									d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+								/>
+							</svg>
+						</button>
+					)}
+				</div>
+			) : !value ? (
 				<div
 					onClick={() => fileInputRef.current?.click()}
 					onDragEnter={handleDragEnter}
