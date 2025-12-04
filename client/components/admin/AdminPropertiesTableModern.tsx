@@ -17,6 +17,7 @@ import {
 	BarChart2,
 	DollarSign,
 	Eye,
+	Pencil,
 	Trash2,
 	LayoutGrid,
 	List,
@@ -525,6 +526,17 @@ export function AdminPropertiesTableModern({
 									>
 										<Eye className="w-4 h-4 text-gray-600 group-hover:text-blue-600 transition-colors" />
 									</Link>
+									<Link
+										href={
+											prop.propertyType === 'Recherche'
+												? `/search-ads/edit/${prop._id}?returnPath=/admin/properties`
+												: `/property/edit/${prop._id}?returnPath=/admin/properties`
+										}
+										className="p-2 hover:bg-amber-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-amber-200 group"
+										title="Modifier"
+									>
+										<Pencil className="w-4 h-4 text-gray-600 group-hover:text-amber-600 transition-colors" />
+									</Link>
 									<button
 										className="p-2 hover:bg-red-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-red-200 group"
 										title="Supprimer"
@@ -588,9 +600,19 @@ export function AdminPropertiesTableModern({
 												? `/search-ads/${prop._id}`
 												: `/property/${prop._id}`
 										}
-										className="flex-1 px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded transition-colors text-sm font-medium"
+										className="flex-1 px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded transition-colors text-sm font-medium text-center"
 									>
 										Voir
+									</Link>
+									<Link
+										href={
+											prop.propertyType === 'Recherche'
+												? `/search-ads/edit/${prop._id}?returnPath=/admin/properties`
+												: `/property/edit/${prop._id}?returnPath=/admin/properties`
+										}
+										className="flex-1 px-3 py-2 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded transition-colors text-sm font-medium text-center"
+									>
+										Modifier
 									</Link>
 									<button
 										onClick={() =>

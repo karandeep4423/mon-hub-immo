@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { adminService } from '@/lib/api/adminApi';
 
 // Adapte cette interface à la structure Collaboration de ton backend (exemple simplifié)
@@ -18,6 +18,11 @@ export interface Collaboration {
 export function useAdminCollaborations() {
 	const [collaborations, setCollaborations] = useState<Collaboration[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [refreshKey, setRefreshKey] = useState(0);
+
+	const refetch = useCallback(() => {
+		setRefreshKey((k) => k + 1);
+	}, []);
 
 	useEffect(() => {
 		setLoading(true);
@@ -25,7 +30,6 @@ export function useAdminCollaborations() {
 		adminService
 			.getAllCollaborations()
 			.then((res) => {
-				console.log('[adminCollab] Réponse API complète:', res.data);
 				// Sort by createdAt descending (newest first)
 				const sorted = [...(res.data.collaborations || [])].sort(
 					(a: Collaboration, b: Collaboration) => {
@@ -38,7 +42,7 @@ export function useAdminCollaborations() {
 			})
 			.catch(console.error)
 			.finally(() => setLoading(false));
-	}, []);
+	}, [refreshKey]);
 
-	return { collaborations, loading };
+	return { collaborations, loading, refetch };
 }

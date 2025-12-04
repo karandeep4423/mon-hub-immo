@@ -1,7 +1,26 @@
 // routes/admin.ts
 import express from 'express';
-import { getAdminUsers, validateUser, getAdminUserProfile, getAdminUserStats, createAdminUser, updateAdminUser, deleteAdminUser, importUsersFromCSV, getAdminStats, blockUser, unblockUser, sendPaymentReminder, grantAdminAccess, revokeAdminAccess } from '../controllers/adminController';
-import { getAdminProperties, deleteAdminProperty } from '../controllers/propertyController';
+import {
+	getAdminUsers,
+	validateUser,
+	getAdminUserProfile,
+	getAdminUserStats,
+	createAdminUser,
+	updateAdminUser,
+	deleteAdminUser,
+	importUsersFromCSV,
+	getAdminStats,
+	blockUser,
+	unblockUser,
+	sendPaymentReminder,
+	grantAdminAccess,
+	revokeAdminAccess,
+} from '../controllers/adminController';
+import {
+	getAdminProperties,
+	deleteAdminProperty,
+	updateAdminProperty,
+} from '../controllers/propertyController';
 import { authenticateToken, requireAdmin } from '../middleware/auth';
 import { uploadCSV } from '../middleware/uploadMiddleware';
 
@@ -24,6 +43,9 @@ router.get('/users/:id/stats', getAdminUserStats);
 
 // GET - liste de toutes les propriétés pour l'admin
 router.get('/properties', getAdminProperties);
+
+// PUT - update a property (admin)
+router.put('/properties/:id', updateAdminProperty);
 
 // DELETE - supprimer une propriété
 router.delete('/properties/:id', deleteAdminProperty);

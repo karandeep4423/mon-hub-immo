@@ -7,6 +7,9 @@ import { Select } from '@/components/ui/CustomSelect';
 import { Badge } from '@/components/ui/Badge';
 import { DataTable } from '@/components/ui/DataTable';
 import Pagination from '@/components/ui/Pagination';
+import { ConfirmDialog } from '@/components/ui';
+import { adminService } from '@/lib/api/adminApi';
+import { toast } from 'react-toastify';
 import {
 	BarChart2,
 	CheckCircle,
@@ -15,9 +18,13 @@ import {
 	Handshake,
 	Home,
 	Eye,
+	Pencil,
 	MessageSquare,
 	Calendar,
 	RefreshCw,
+	Trash2,
+	XCircle,
+	CheckSquare,
 } from 'lucide-react';
 
 export interface AdminCollaboration {
@@ -74,6 +81,7 @@ interface CollaborationPostRef extends Record<string, unknown> {
 interface AdminCollaborationsTableModernProps {
 	collaborations?: AdminCollaboration[];
 	loading?: boolean;
+	onRefetch?: () => void;
 }
 
 const getCollaborationType = (
@@ -102,7 +110,7 @@ const getCollaborationType = (
 
 export const AdminCollaborationsTableModern: React.FC<
 	AdminCollaborationsTableModernProps
-> = ({ collaborations, loading }) => {
+> = ({ collaborations, loading, onRefetch }) => {
 	const [filters, setFilters] = useState({
 		status: '',
 		search: '',
@@ -110,6 +118,60 @@ export const AdminCollaborationsTableModern: React.FC<
 	});
 	const [page, setPage] = useState<number>(1);
 	const [limit] = useState<number>(10);
+
+	// Admin action states
+	const [actionLoading, setActionLoading] = useState(false);
+	const [editingCollaboration, setEditingCollaboration] =
+		useState<AdminCollaboration | null>(null);
+	const [confirmDialog, setConfirmDialog] = useState<{
+		open: boolean;
+		title: string;
+		message: string;
+		onConfirm: () => void;
+		variant?: 'danger' | 'warning' | 'info';
+	}>({ open: false, title: '', message: '', onConfirm: () => {} });
+
+	const handleDeleteCollaboration = async (id: string) => {
+		setActionLoading(true);
+		try {
+			await adminService.deleteCollaboration(id);
+			toast.success('Collaboration supprimée avec succès');
+			onRefetch?.();
+		} catch {
+			toast.error('Erreur lors de la suppression');
+		} finally {
+			setActionLoading(false);
+			setConfirmDialog({ ...confirmDialog, open: false });
+		}
+	};
+
+	const handleCancelCollaboration = async (id: string) => {
+		setActionLoading(true);
+		try {
+			await adminService.closeCollaboration(id, 'cancel');
+			toast.success('Collaboration annulée avec succès');
+			onRefetch?.();
+		} catch {
+			toast.error("Erreur lors de l'annulation");
+		} finally {
+			setActionLoading(false);
+			setConfirmDialog({ ...confirmDialog, open: false });
+		}
+	};
+
+	const handleCompleteCollaboration = async (id: string) => {
+		setActionLoading(true);
+		try {
+			await adminService.forceCompleteCollaboration(id);
+			toast.success('Collaboration complétée avec succès');
+			onRefetch?.();
+		} catch {
+			toast.error('Erreur lors de la complétion');
+		} finally {
+			setActionLoading(false);
+			setConfirmDialog({ ...confirmDialog, open: false });
+		}
+	};
 
 	const filteredCollaborations = useMemo(() => {
 		if (!collaborations) return [];
@@ -506,21 +568,91 @@ export const AdminCollaborationsTableModern: React.FC<
 					loading={loading}
 					pagination={false}
 					actions={(row: AdminCollaboration) => (
-						<div className="flex items-center justify-end gap-1.5">
+						<div className="flex items-center justify-end gap-1">
 							<Link
 								href={`/collaboration/${row._id}`}
-								className="p-2 hover:bg-blue-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-blue-200 group"
+								className="p-1.5 hover:bg-blue-50 rounded-lg transition-all border border-transparent hover:border-blue-200 group"
 								title="Détails"
 							>
 								<Eye className="w-4 h-4 text-gray-600 group-hover:text-blue-600 transition-colors" />
 							</Link>
+							<button
+								onClick={() => setEditingCollaboration(row)}
+								className="p-1.5 hover:bg-amber-50 rounded-lg transition-all border border-transparent hover:border-amber-200 group"
+								title="Modifier"
+							>
+								<Pencil className="w-4 h-4 text-gray-600 group-hover:text-amber-600 transition-colors" />
+							</button>
 							<Link
 								href={`/admin/chat?collaborationId=${row._id}`}
-								className="p-2 hover:bg-purple-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-purple-200 group"
+								className="p-1.5 hover:bg-purple-50 rounded-lg transition-all border border-transparent hover:border-purple-200 group"
 								title="Historique"
 							>
 								<MessageSquare className="w-4 h-4 text-gray-600 group-hover:text-purple-600 transition-colors" />
 							</Link>
+							{row.status !== 'completed' &&
+								row.status !== 'cancelled' && (
+									<>
+										<button
+											onClick={() =>
+												setConfirmDialog({
+													open: true,
+													title: 'Compléter la collaboration',
+													message:
+														'Êtes-vous sûr de vouloir forcer la complétion de cette collaboration ?',
+													variant: 'info',
+													onConfirm: () =>
+														handleCompleteCollaboration(
+															row._id,
+														),
+												})
+											}
+											className="p-1.5 hover:bg-green-50 rounded-lg transition-all border border-transparent hover:border-green-200 group"
+											title="Forcer complétion"
+											disabled={actionLoading}
+										>
+											<CheckSquare className="w-4 h-4 text-gray-600 group-hover:text-green-600 transition-colors" />
+										</button>
+										<button
+											onClick={() =>
+												setConfirmDialog({
+													open: true,
+													title: 'Annuler la collaboration',
+													message:
+														'Êtes-vous sûr de vouloir annuler cette collaboration ?',
+													variant: 'warning',
+													onConfirm: () =>
+														handleCancelCollaboration(
+															row._id,
+														),
+												})
+											}
+											className="p-1.5 hover:bg-orange-50 rounded-lg transition-all border border-transparent hover:border-orange-200 group"
+											title="Annuler"
+											disabled={actionLoading}
+										>
+											<XCircle className="w-4 h-4 text-gray-600 group-hover:text-orange-600 transition-colors" />
+										</button>
+									</>
+								)}
+							<button
+								onClick={() =>
+									setConfirmDialog({
+										open: true,
+										title: 'Supprimer la collaboration',
+										message:
+											'Êtes-vous sûr de vouloir supprimer définitivement cette collaboration ? Cette action est irréversible.',
+										variant: 'danger',
+										onConfirm: () =>
+											handleDeleteCollaboration(row._id),
+									})
+								}
+								className="p-1.5 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-200 group"
+								title="Supprimer"
+								disabled={actionLoading}
+							>
+								<Trash2 className="w-4 h-4 text-gray-600 group-hover:text-red-600 transition-colors" />
+							</button>
 						</div>
 					)}
 				/>
@@ -531,6 +663,151 @@ export const AdminCollaborationsTableModern: React.FC<
 					onPageChange={(p) => setPage(p)}
 					className="w-full"
 				/>
+
+				{/* Confirm Dialog */}
+				<ConfirmDialog
+					isOpen={confirmDialog.open}
+					title={confirmDialog.title}
+					description={confirmDialog.message}
+					onConfirm={confirmDialog.onConfirm}
+					onCancel={() =>
+						setConfirmDialog({ ...confirmDialog, open: false })
+					}
+					confirmText="Confirmer"
+					cancelText="Annuler"
+					loading={actionLoading}
+				/>
+
+				{/* Edit Collaboration Modal */}
+				{editingCollaboration && (
+					<EditCollaborationModal
+						collaboration={editingCollaboration}
+						onClose={() => setEditingCollaboration(null)}
+						onSave={() => {
+							setEditingCollaboration(null);
+							onRefetch?.();
+						}}
+					/>
+				)}
+			</div>
+		</div>
+	);
+};
+
+// Edit Collaboration Modal Component
+const EditCollaborationModal: React.FC<{
+	collaboration: AdminCollaboration;
+	onClose: () => void;
+	onSave: () => void;
+}> = ({ collaboration, onClose, onSave }) => {
+	const [form, setForm] = useState({
+		commission:
+			collaboration.commission || collaboration.proposedCommission || 0,
+		status: collaboration.status,
+		adminNote: '',
+	});
+	const [busy, setBusy] = useState(false);
+
+	const statusOptions = [
+		{ value: 'pending', label: 'En attente' },
+		{ value: 'active', label: 'Active' },
+		{ value: 'completed', label: 'Complétée' },
+		{ value: 'cancelled', label: 'Annulée' },
+	];
+
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		setBusy(true);
+		try {
+			await adminService.updateCollaboration(collaboration._id, {
+				commission: form.commission,
+				status: form.status,
+				...(form.adminNote ? { adminNote: form.adminNote } : {}),
+			});
+			toast.success('Collaboration mise à jour');
+			onSave();
+		} catch (err) {
+			console.error(err);
+			toast.error('Erreur lors de la mise à jour');
+		} finally {
+			setBusy(false);
+		}
+	};
+
+	return (
+		<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+			<div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
+				<div className="p-6 border-b">
+					<h2 className="text-xl font-bold text-gray-900">
+						Modifier la collaboration
+					</h2>
+				</div>
+				<form onSubmit={handleSubmit} className="p-6 space-y-4">
+					<div>
+						<label className="block text-sm font-medium text-gray-700 mb-1">
+							Commission (%)
+						</label>
+						<Input
+							type="number"
+							min={0}
+							max={100}
+							step={0.5}
+							value={form.commission}
+							onChange={(e) =>
+								setForm({
+									...form,
+									commission: parseFloat(e.target.value) || 0,
+								})
+							}
+						/>
+					</div>
+					<div>
+						<label className="block text-sm font-medium text-gray-700 mb-1">
+							Statut
+						</label>
+						<Select
+							options={statusOptions}
+							value={form.status}
+							onChange={(value) =>
+								setForm({
+									...form,
+									status: value as AdminCollaboration['status'],
+								})
+							}
+						/>
+					</div>
+					<div>
+						<label className="block text-sm font-medium text-gray-700 mb-1">
+							Note admin (optionnel)
+						</label>
+						<textarea
+							className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+							rows={3}
+							placeholder="Ajouter une note visible dans l'historique..."
+							value={form.adminNote}
+							onChange={(e) =>
+								setForm({ ...form, adminNote: e.target.value })
+							}
+						/>
+					</div>
+					<div className="flex justify-end gap-3 pt-4">
+						<button
+							type="button"
+							onClick={onClose}
+							className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+							disabled={busy}
+						>
+							Annuler
+						</button>
+						<button
+							type="submit"
+							className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50"
+							disabled={busy}
+						>
+							{busy ? 'Enregistrement...' : 'Enregistrer'}
+						</button>
+					</div>
+				</form>
 			</div>
 		</div>
 	);

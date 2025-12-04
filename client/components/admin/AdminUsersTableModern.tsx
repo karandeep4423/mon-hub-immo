@@ -29,6 +29,7 @@ import {
 	CreditCard,
 	X,
 	Globe,
+	Trash2,
 } from 'lucide-react';
 
 export interface AdminUser {
@@ -865,6 +866,40 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 										<CreditCard className="w-4 h-4 text-gray-600 group-hover:text-orange-600 transition-colors" />
 									</button>
 								)}
+
+							{/* Delete User Button */}
+							<button
+								title="Supprimer l'utilisateur"
+								onClick={() =>
+									setTableConfirmAction({
+										label: 'Supprimer définitivement cet utilisateur ? Cette action supprimera aussi ses biens, collaborations et messages.',
+										type: 'delete',
+										onConfirm: async () => {
+											setActionBusy(true);
+											try {
+												await adminService.deleteUser(
+													row._id,
+												);
+												await refetch();
+												toast.success(
+													'Utilisateur supprimé.',
+												);
+											} catch (err) {
+												console.error(err);
+												toast.error(
+													'Erreur lors de la suppression.',
+												);
+											} finally {
+												setActionBusy(false);
+												setTableConfirmAction(null);
+											}
+										},
+									})
+								}
+								className="p-2 hover:bg-red-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-red-200 group hidden lg:flex"
+							>
+								<Trash2 className="w-4 h-4 text-gray-600 group-hover:text-red-600 transition-colors" />
+							</button>
 						</div>
 					)}
 				/>

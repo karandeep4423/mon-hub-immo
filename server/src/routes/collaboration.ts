@@ -26,17 +26,17 @@ import {
 	updateProgressStatus,
 	signCollaboration,
 	completeCollaboration,
- 	getCollaborationById,
- 	adminCloseCollaboration,
- 	adminForceComplete,
+	getCollaborationById,
+	adminCloseCollaboration,
+	adminForceComplete,
+	adminUpdateCollaboration,
+	adminDeleteCollaboration,
 } from '../controllers/collaborationController';
 
 import { getAllCollaborationsAdmin } from '../controllers/collaborationController';
 import { requireAdmin } from '../middleware/auth';
 
 const router = Router();
-
-
 
 // Zod param validators
 const collaborationParamValidation = [
@@ -159,7 +159,31 @@ router.get('/all', requireAdmin, getAllCollaborationsAdmin);
 router.get('/:id', ...collaborationParamValidation, getCollaborationById);
 
 // Admin endpoints: close or force-complete a collaboration
-router.post('/:id/admin/close', ...collaborationParamValidation, requireAdmin, adminCloseCollaboration);
-router.post('/:id/admin/force-complete', ...collaborationParamValidation, requireAdmin, adminForceComplete);
+router.post(
+	'/:id/admin/close',
+	...collaborationParamValidation,
+	requireAdmin,
+	adminCloseCollaboration,
+);
+router.post(
+	'/:id/admin/force-complete',
+	...collaborationParamValidation,
+	requireAdmin,
+	adminForceComplete,
+);
+
+// Admin endpoints: update or delete a collaboration
+router.put(
+	'/:id/admin',
+	...collaborationParamValidation,
+	requireAdmin,
+	adminUpdateCollaboration,
+);
+router.delete(
+	'/:id/admin',
+	...collaborationParamValidation,
+	requireAdmin,
+	adminDeleteCollaboration,
+);
 
 export default router;

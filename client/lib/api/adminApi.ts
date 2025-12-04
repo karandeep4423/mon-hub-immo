@@ -49,6 +49,14 @@ export const adminService = {
 	},
 
 	/**
+	 * Deletes a user.
+	 * @param userId - The ID of the user to delete.
+	 */
+	deleteUser: (userId: string) => {
+		return api.delete(`/admin/users/${userId}`);
+	},
+
+	/**
 	 * Creates a new user (admin only).
 	 * @param payload - The user data to create.
 	 */
@@ -92,6 +100,15 @@ export const adminService = {
 
 	// ==================== Properties ====================
 	/**
+	 * Updates a property.
+	 * @param propertyId - The ID of the property to update.
+	 * @param payload - The property data to update.
+	 */
+	updateProperty: (propertyId: string, payload: Record<string, unknown>) => {
+		return api.put(`/admin/properties/${propertyId}`, payload);
+	},
+
+	/**
 	 * Deletes a property.
 	 * @param propertyId - The ID of the property to delete.
 	 */
@@ -105,5 +122,49 @@ export const adminService = {
 	 */
 	getAllCollaborations: () => {
 		return api.get('/collaboration/all');
+	},
+
+	/**
+	 * Updates a collaboration.
+	 * @param collaborationId - The ID of the collaboration to update.
+	 * @param payload - The collaboration data to update.
+	 */
+	updateCollaboration: (
+		collaborationId: string,
+		payload: Record<string, unknown>,
+	) => {
+		return api.put(`/collaboration/${collaborationId}/admin`, payload);
+	},
+
+	/**
+	 * Deletes a collaboration.
+	 * @param collaborationId - The ID of the collaboration to delete.
+	 */
+	deleteCollaboration: (collaborationId: string) => {
+		return api.delete(`/collaboration/${collaborationId}/admin`);
+	},
+
+	/**
+	 * Closes/cancels a collaboration.
+	 * @param collaborationId - The ID of the collaboration.
+	 * @param action - 'cancel' or 'complete'.
+	 */
+	closeCollaboration: (
+		collaborationId: string,
+		action: 'cancel' | 'complete',
+	) => {
+		return api.post(`/collaboration/${collaborationId}/admin/close`, {
+			action,
+		});
+	},
+
+	/**
+	 * Force completes a collaboration.
+	 * @param collaborationId - The ID of the collaboration to force complete.
+	 */
+	forceCompleteCollaboration: (collaborationId: string) => {
+		return api.post(
+			`/collaboration/${collaborationId}/admin/force-complete`,
+		);
 	},
 };

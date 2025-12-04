@@ -9,3 +9,4 @@ export type { PropertyFiltersState } from './PropertyFilters';
 export { PropertyListItem } from './PropertyListItem';
 export { PropertyEmptyState, NoResultsState } from './PropertyEmptyStates';
 export { PropertyHeader } from './PropertyHeader';
+export { EditPropertyForm } from './EditPropertyForm';

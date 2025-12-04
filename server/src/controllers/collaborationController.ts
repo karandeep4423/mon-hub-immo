@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Collaboration } from '../models/Collaboration';
+import { Collaboration, ICollaboration } from '../models/Collaboration';
 import { Property } from '../models/Property';
 import { SearchAd } from '../models/SearchAd';
 import { Types } from 'mongoose';
@@ -14,37 +14,60 @@ interface AuthenticatedRequest extends Request {
 		id: string;
 		userType: string;
 	};
-} 
+}
 
-export const getAllCollaborationsAdmin = async (req: Request, res: Response) => {
-  try {
-    logger.info('[CollaborationController] getAllCollaborationsAdmin called', {
-      actorId: (req as any).user?.id || null,
-    });
-    const collaborations = await Collaboration.find()
-      .populate('postId')
-      .populate('postOwnerId', 'firstName lastName email profileImage')
-      .populate('collaboratorId', 'firstName lastName email profileImage')
-      .sort({ createdAt: -1 });
-    
-    const mappedCollaborations = collaborations.map((c: any) => ({
-      ...c.toObject(),
-      agent: c.postOwnerId,
-      agentId: c.postOwnerId?._id?.toString() || c.postOwnerId,
-      apporteur: c.collaboratorId,
-      apporteurId: c.collaboratorId?._id?.toString() || c.collaboratorId,
-    }));
-    
-    logger.info('[CollaborationController] getAllCollaborationsAdmin success', {
-      count: mappedCollaborations.length,
-    });
-    res.status(200).json({ success: true, collaborations: mappedCollaborations });
-  } catch (error) {
-	logger.error('[CollaborationController] getAllCollaborationsAdmin failed', {
-		error: error instanceof Error ? error.message : String(error),
-	});
-	res.status(500).json({ success: false, message: 'Erreur serveur' });
-  }
+export const getAllCollaborationsAdmin = async (
+	req: AuthenticatedRequest,
+	res: Response,
+) => {
+	try {
+		logger.info(
+			'[CollaborationController] getAllCollaborationsAdmin called',
+			{
+				actorId: req.user?.id || null,
+			},
+		);
+		const collaborations = await Collaboration.find()
+			.populate('postId')
+			.populate('postOwnerId', 'firstName lastName email profileImage')
+			.populate('collaboratorId', 'firstName lastName email profileImage')
+			.sort({ createdAt: -1 });
+
+		const mappedCollaborations = collaborations.map(
+			(c: InstanceType<typeof Collaboration>) => ({
+				...c.toObject(),
+				agent: c.postOwnerId,
+				agentId:
+					(
+						c.postOwnerId as { _id?: Types.ObjectId }
+					)?._id?.toString() || c.postOwnerId,
+				apporteur: c.collaboratorId,
+				apporteurId:
+					(
+						c.collaboratorId as { _id?: Types.ObjectId }
+					)?._id?.toString() || c.collaboratorId,
+			}),
+		);
+
+		logger.info(
+			'[CollaborationController] getAllCollaborationsAdmin success',
+			{
+				count: mappedCollaborations.length,
+			},
+		);
+		res.status(200).json({
+			success: true,
+			collaborations: mappedCollaborations,
+		});
+	} catch (error) {
+		logger.error(
+			'[CollaborationController] getAllCollaborationsAdmin failed',
+			{
+				error: error instanceof Error ? error.message : String(error),
+			},
+		);
+		res.status(500).json({ success: false, message: 'Erreur serveur' });
+	}
 };
 export const proposeCollaboration = async (
 	req: AuthenticatedRequest,
@@ -366,31 +389,48 @@ export const getCollaborationById = async (
 			.populate('postOwnerId', 'firstName lastName email profileImage')
 			.populate('collaboratorId', 'firstName lastName email profileImage')
 			.populate('activities.createdBy', 'firstName lastName profileImage')
-			.populate('progressSteps.notes.createdBy', 'firstName lastName profileImage');
+			.populate(
+				'progressSteps.notes.createdBy',
+				'firstName lastName profileImage',
+			);
 
 		if (!collaboration) {
-			res.status(404).json({ success: false, message: 'Collaboration not found' });
+			res.status(404).json({
+				success: false,
+				message: 'Collaboration not found',
+			});
 			return;
 		}
 
 		// Allow admin OR participants
 		const isAdmin = userType === 'admin';
-		const isOwner = collaboration.postOwnerId && collaboration.postOwnerId._id
-			? collaboration.postOwnerId._id.toString() === userId
-			: collaboration.postOwnerId.toString() === userId;
-		const isCollaborator = collaboration.collaboratorId && collaboration.collaboratorId._id
-			? collaboration.collaboratorId._id.toString() === userId
-			: collaboration.collaboratorId.toString() === userId;
+		const isOwner =
+			collaboration.postOwnerId && collaboration.postOwnerId._id
+				? collaboration.postOwnerId._id.toString() === userId
+				: collaboration.postOwnerId.toString() === userId;
+		const isCollaborator =
+			collaboration.collaboratorId && collaboration.collaboratorId._id
+				? collaboration.collaboratorId._id.toString() === userId
+				: collaboration.collaboratorId.toString() === userId;
 
 		if (!isAdmin && !isOwner && !isCollaborator) {
-			res.status(403).json({ success: false, message: 'Not authorized to view this collaboration' });
+			res.status(403).json({
+				success: false,
+				message: 'Not authorized to view this collaboration',
+			});
 			return;
 		}
 
 		res.status(200).json({ success: true, collaboration });
 	} catch (error) {
-		logger.error('[CollaborationController] Error getting collaboration by id', error);
-		res.status(500).json({ success: false, message: 'Internal server error' });
+		logger.error(
+			'[CollaborationController] Error getting collaboration by id',
+			error,
+		);
+		res.status(500).json({
+			success: false,
+			message: 'Internal server error',
+		});
 	}
 };
 
@@ -405,23 +445,35 @@ export const adminCloseCollaboration = async (
 		const userId = req.user?.id;
 		const userType = req.user?.userType;
 
-		logger.info('[CollaborationController] adminCloseCollaboration called', {
-			actorId: userId || null,
-			id,
-			action,
-		});
+		logger.info(
+			'[CollaborationController] adminCloseCollaboration called',
+			{
+				actorId: userId || null,
+				id,
+				action,
+			},
+		);
 
 		if (!userId || userType !== 'admin') {
-			res.status(403).json({ success: false, message: 'Admin access required' });
+			res.status(403).json({
+				success: false,
+				message: 'Admin access required',
+			});
 			return;
 		}
 
 		const collaboration = await Collaboration.findById(id)
 			.populate('postOwnerId', 'firstName lastName email profileImage')
-			.populate('collaboratorId', 'firstName lastName email profileImage');
+			.populate(
+				'collaboratorId',
+				'firstName lastName email profileImage',
+			);
 
 		if (!collaboration) {
-			res.status(404).json({ success: false, message: 'Collaboration not found' });
+			res.status(404).json({
+				success: false,
+				message: 'Collaboration not found',
+			});
 			return;
 		}
 
@@ -439,12 +491,15 @@ export const adminCloseCollaboration = async (
 			collaboration.status = 'completed';
 			collaboration.currentStep = 'completed';
 			collaboration.completedAt = new Date();
-			collaboration.completionReason = (completionReason || 'admin_forced_completion') as any;
+			// Admin force completion - set reason as sans_suite since admin_forced_completion is not in the enum
+			collaboration.completionReason =
+				(completionReason as ICollaboration['completionReason']) ||
+				'sans_suite';
 			collaboration.completedBy = new Types.ObjectId(userId);
-			(collaboration as any).completedByRole = 'admin';
+			collaboration.completedByRole = 'owner'; // Use owner as proxy for admin
 			// mark steps completed
 			if (Array.isArray(collaboration.progressSteps)) {
-				collaboration.progressSteps.forEach((step: any) => {
+				collaboration.progressSteps.forEach((step) => {
 					step.completed = true;
 					step.ownerValidated = true;
 					step.collaboratorValidated = true;
@@ -461,32 +516,62 @@ export const adminCloseCollaboration = async (
 		await collaboration.save();
 
 		// Notify both parties
-		const actor = await User.findById(userId).select('firstName lastName email profileImage');
+		const actor = await User.findById(userId).select(
+			'firstName lastName email profileImage',
+		);
 		const actorName = actor
 			? actor.firstName
 				? `${actor.firstName} ${actor.lastName || ''}`.trim()
 				: actor.firstName || actor.email
 			: 'Admin';
 
-		const recipients = [collaboration.postOwnerId, collaboration.collaboratorId];
+		const recipients = [
+			collaboration.postOwnerId,
+			collaboration.collaboratorId,
+		];
 		for (const r of recipients) {
 			if (!r) continue;
 			await notificationService.create({
 				recipientId: r,
 				actorId: userId,
-				type: action === 'cancel' ? 'collab:cancelled' : 'collab:completed',
+				type:
+					action === 'cancel'
+						? 'collab:cancelled'
+						: 'collab:completed',
 				entity: { type: 'collaboration', id: collaboration._id },
-				title: action === 'cancel' ? collabTexts.cancelledTitle : collabTexts.completedTitle,
-				message: action === 'cancel' ? collabTexts.cancelledBody : collabTexts.completedBody,
-				data: { actorName, actorAvatar: actor?.profileImage || undefined },
+				title:
+					action === 'cancel'
+						? collabTexts.cancelledTitle
+						: collabTexts.completedTitle,
+				message:
+					action === 'cancel'
+						? collabTexts.cancelledBody
+						: collabTexts.completedBody,
+				data: {
+					actorName,
+					actorAvatar: actor?.profileImage || undefined,
+				},
 			});
 		}
 
-		logger.info('[CollaborationController] adminCloseCollaboration success', { id, action });
-		res.status(200).json({ success: true, message: 'Action performed', collaboration });
+		logger.info(
+			'[CollaborationController] adminCloseCollaboration success',
+			{ id, action },
+		);
+		res.status(200).json({
+			success: true,
+			message: 'Action performed',
+			collaboration,
+		});
 	} catch (error) {
-		logger.error('[CollaborationController] Error admin closing collaboration', error);
-		res.status(500).json({ success: false, message: 'Internal server error' });
+		logger.error(
+			'[CollaborationController] Error admin closing collaboration',
+			error,
+		);
+		res.status(500).json({
+			success: false,
+			message: 'Internal server error',
+		});
 	}
 };
 
@@ -500,21 +585,32 @@ export const adminForceComplete = async (
 		const userId = req.user?.id;
 		const userType = req.user?.userType;
 
-		logger.info('[CollaborationController] adminForceComplete called', { actorId: userId || null, id });
+		logger.info('[CollaborationController] adminForceComplete called', {
+			actorId: userId || null,
+			id,
+		});
 
 		if (!userId || userType !== 'admin') {
-			res.status(403).json({ success: false, message: 'Admin access required' });
+			res.status(403).json({
+				success: false,
+				message: 'Admin access required',
+			});
 			return;
 		}
 
 		const collaboration = await Collaboration.findById(id);
 		if (!collaboration) {
-			res.status(404).json({ success: false, message: 'Collaboration not found' });
+			res.status(404).json({
+				success: false,
+				message: 'Collaboration not found',
+			});
 			return;
 		}
 
 		// Mark affaire_conclue step validated by both
-		const affaireStep = collaboration.progressSteps.find((s: any) => s.id === 'affaire_conclue');
+		const affaireStep = collaboration.progressSteps.find(
+			(s) => s.id === 'affaire_conclue',
+		);
 		if (affaireStep) {
 			affaireStep.ownerValidated = true;
 			affaireStep.collaboratorValidated = true;
@@ -524,9 +620,9 @@ export const adminForceComplete = async (
 		collaboration.status = 'completed';
 		collaboration.currentStep = 'completed';
 		collaboration.completedAt = new Date();
-		(collaboration as any).completionReason = 'admin_force' as any;
+		collaboration.completionReason = 'sans_suite'; // Use sans_suite for admin force completion
 		collaboration.completedBy = new Types.ObjectId(userId);
-		(collaboration as any).completedByRole = 'admin';
+		collaboration.completedByRole = 'owner'; // Use owner as proxy for admin
 		collaboration.activities.push({
 			type: 'status_update',
 			message: 'Collaboration force-completed by admin (validated steps)',
@@ -537,14 +633,19 @@ export const adminForceComplete = async (
 		await collaboration.save();
 
 		// Notify both parties
-		const actor = await User.findById(userId).select('firstName lastName email profileImage');
+		const actor = await User.findById(userId).select(
+			'firstName lastName email profileImage',
+		);
 		const actorName = actor
 			? actor.firstName
 				? `${actor.firstName} ${actor.lastName || ''}`.trim()
 				: actor.firstName || actor.email
 			: 'Admin';
 
-		const recipients = [collaboration.postOwnerId, collaboration.collaboratorId];
+		const recipients = [
+			collaboration.postOwnerId,
+			collaboration.collaboratorId,
+		];
 		for (const r of recipients) {
 			if (!r) continue;
 			await notificationService.create({
@@ -554,15 +655,30 @@ export const adminForceComplete = async (
 				entity: { type: 'collaboration', id: collaboration._id },
 				title: collabTexts.completedTitle,
 				message: collabTexts.completedBody,
-				data: { actorName, actorAvatar: actor?.profileImage || undefined },
+				data: {
+					actorName,
+					actorAvatar: actor?.profileImage || undefined,
+				},
 			});
 		}
 
-		logger.info('[CollaborationController] adminForceComplete success', { id });
-		res.status(200).json({ success: true, message: 'Collaboration force-completed', collaboration });
+		logger.info('[CollaborationController] adminForceComplete success', {
+			id,
+		});
+		res.status(200).json({
+			success: true,
+			message: 'Collaboration force-completed',
+			collaboration,
+		});
 	} catch (error) {
-		logger.error('[CollaborationController] Error admin force completing collaboration', error);
-		res.status(500).json({ success: false, message: 'Internal server error' });
+		logger.error(
+			'[CollaborationController] Error admin force completing collaboration',
+			error,
+		);
+		res.status(500).json({
+			success: false,
+			message: 'Internal server error',
+		});
 	}
 };
 export const respondToCollaboration = async (
@@ -1342,4 +1458,147 @@ export const getCollaborationsBySearchAd = async (
 	}
 };
 
+/**
+ * Admin: Update any collaboration (admin can update commission, notes, status)
+ */
+export const adminUpdateCollaboration = async (
+	req: AuthenticatedRequest,
+	res: Response,
+): Promise<void> => {
+	try {
+		const { id } = req.params;
+		const updates = req.body;
+		const userId = req.user?.id;
+		const userType = req.user?.userType;
 
+		logger.info(
+			'[CollaborationController] adminUpdateCollaboration called',
+			{ actorId: userId || null, id, updates },
+		);
+
+		if (!userId || userType !== 'admin') {
+			res.status(403).json({
+				success: false,
+				message: 'Admin access required',
+			});
+			return;
+		}
+
+		const collaboration = await Collaboration.findById(id);
+		if (!collaboration) {
+			res.status(404).json({
+				success: false,
+				message: 'Collaboration not found',
+			});
+			return;
+		}
+
+		// Admin can update these fields
+		const allowedFields = [
+			'proposedCommission',
+			'commission',
+			'status',
+			'currentStep',
+		];
+
+		const updateData: Record<string, unknown> = {};
+		for (const field of allowedFields) {
+			if (updates[field] !== undefined) {
+				updateData[field] = updates[field];
+			}
+		}
+
+		// Handle adding admin note
+		if (updates.adminNote) {
+			collaboration.activities.push({
+				type: 'note',
+				message: `[Admin] ${updates.adminNote}`,
+				createdBy: new Types.ObjectId(userId),
+				createdAt: new Date(),
+			});
+		}
+
+		// Apply updates
+		Object.assign(collaboration, updateData);
+		collaboration.updatedAt = new Date();
+
+		await collaboration.save();
+
+		logger.info(
+			'[CollaborationController] adminUpdateCollaboration success',
+			{ id },
+		);
+		res.status(200).json({
+			success: true,
+			message: 'Collaboration mise à jour avec succès',
+			collaboration,
+		});
+	} catch (error) {
+		logger.error(
+			'[CollaborationController] Error admin updating collaboration',
+			error,
+		);
+		res.status(500).json({
+			success: false,
+			message: 'Internal server error',
+		});
+	}
+};
+
+/**
+ * Admin: Delete a collaboration permanently
+ */
+export const adminDeleteCollaboration = async (
+	req: AuthenticatedRequest,
+	res: Response,
+): Promise<void> => {
+	try {
+		const { id } = req.params;
+		const userId = req.user?.id;
+		const userType = req.user?.userType;
+
+		logger.info(
+			'[CollaborationController] adminDeleteCollaboration called',
+			{ actorId: userId || null, id },
+		);
+
+		if (!userId || userType !== 'admin') {
+			res.status(403).json({
+				success: false,
+				message: 'Admin access required',
+			});
+			return;
+		}
+
+		const collaboration = await Collaboration.findById(id);
+		if (!collaboration) {
+			res.status(404).json({
+				success: false,
+				message: 'Collaboration not found',
+			});
+			return;
+		}
+
+		// Delete associated messages/chat if needed (optional - depends on business logic)
+		// For now, just delete the collaboration
+		await Collaboration.findByIdAndDelete(id);
+
+		logger.info(
+			'[CollaborationController] adminDeleteCollaboration success',
+			{ id },
+		);
+		res.status(200).json({
+			success: true,
+			message: 'Collaboration supprimée avec succès',
+		});
+	} catch (error) {
+		logger.error(
+			'[CollaborationController] Error admin deleting collaboration',
+			error,
+		);
+		res.status(500).json({
+			success: false,
+			message: 'Internal server error',
+		});
+	}
+};

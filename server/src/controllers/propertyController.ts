@@ -465,12 +465,12 @@ export const getProperties = async (
 
 // Get all properties for admin with filtering and pagination
 export const getAdminProperties = async (
-	req: Request,
+	req: AuthenticatedRequest,
 	res: Response,
 ): Promise<void> => {
 	try {
 		logger.info('[PropertyController] getAdminProperties called', {
-			actorId: (req as any).user?.id || null,
+			actorId: req.user?.id || null,
 			query: req.query,
 		});
 		const {
@@ -500,7 +500,9 @@ export const getAdminProperties = async (
 
 		if (propertyType) {
 			// sanitizeInput returns unknown — coerce to string after sanitization
-			const sanitizedType = String(sanitizeInput(propertyType as string)).trim();
+			const sanitizedType = String(
+				sanitizeInput(propertyType as string),
+			).trim();
 
 			// The Property model stores propertyType using French labels
 			// Accept both French and English query values for convenience.
@@ -604,10 +606,13 @@ export const getAdminProperties = async (
 			},
 		});
 	} catch (error) {
-		logger.error('[PropertyController] Error fetching admin properties', error);
+		logger.error(
+			'[PropertyController] Error fetching admin properties',
+			error,
+		);
 		res.status(500).json({
 			success: false,
-			message: 'Erreur lors de la récupération des biens pour l\'admin',
+			message: "Erreur lors de la récupération des biens pour l'admin",
 		});
 	}
 };
@@ -1378,12 +1383,15 @@ export const getPropertyStats = async (
 
 // Delete a property (admin only)
 export const deleteAdminProperty = async (
-	req: Request,
+	req: AuthenticatedRequest,
 	res: Response,
 ): Promise<void> => {
 	try {
 		const { id } = req.params;
-		logger.info('[PropertyController] deleteAdminProperty called', { actorId: (req as any).user?.id || null, id });
+		logger.info('[PropertyController] deleteAdminProperty called', {
+			actorId: req.user?.id || null,
+			id,
+		});
 
 		// Validate ObjectId format
 		if (!isValidObjectId(id)) {
@@ -1413,7 +1421,7 @@ export const deleteAdminProperty = async (
 
 		// Add gallery images
 		if (property.galleryImages && property.galleryImages.length > 0) {
-			property.galleryImages.forEach((img: any) => {
+			property.galleryImages.forEach((img: { key?: string }) => {
 				if (img.key) {
 					imagesToDelete.push(img.key);
 				}
@@ -1452,3 +1460,102 @@ export const deleteAdminProperty = async (
 	}
 };
 
+/**
+ * Admin: Update any property (admin can update any field without ownership check)
+ */
+export const updateAdminProperty = async (
+	req: AuthenticatedRequest,
+	res: Response,
+): Promise<void> => {
+	try {
+		const { id } = req.params;
+		const updates = req.body;
+		logger.info('[PropertyController] updateAdminProperty called', {
+			actorId: req.user?.id || null,
+			id,
+			updates,
+		});
+
+		if (!isValidObjectId(id)) {
+			res.status(400).json({
+				success: false,
+				message: "Format d'identifiant de propriété invalide",
+			});
+			return;
+		}
+
+		const property = await Property.findById(id);
+		if (!property) {
+			res.status(404).json({
+				success: false,
+				message: 'Propriété non trouvée',
+			});
+			return;
+		}
+
+		// Admin can update these fields
+		const allowedFields = [
+			'title',
+			'description',
+			'price',
+			'surface',
+			'rooms',
+			'bedrooms',
+			'bathrooms',
+			'propertyType',
+			'transactionType',
+			'status',
+			'address',
+			'city',
+			'postalCode',
+			'country',
+			'latitude',
+			'longitude',
+			'features',
+			'energyClass',
+			'gasEmission',
+			'yearBuilt',
+			'floor',
+			'totalFloors',
+			'parking',
+			'commission',
+			'fees',
+			'availableFrom',
+			'isFurnished',
+			'hasBalcony',
+			'hasGarden',
+			'hasPool',
+			'hasElevator',
+			'hasGarage',
+			'hasCellar',
+			'collaborationEnabled',
+			'isActive',
+		];
+
+		const updateData: Record<string, unknown> = {};
+		for (const field of allowedFields) {
+			if (updates[field] !== undefined) {
+				updateData[field] = updates[field];
+			}
+		}
+
+		const updatedProperty = await Property.findByIdAndUpdate(
+			id,
+			{ $set: updateData },
+			{ new: true, runValidators: true },
+		);
+
+		logger.info('[PropertyController] updateAdminProperty success', { id });
+		res.status(200).json({
+			success: true,
+			message: 'Propriété mise à jour avec succès',
+			property: updatedProperty,
+		});
+	} catch (error) {
+		logger.error('[PropertyController] Error updating property', error);
+		res.status(500).json({
+			success: false,
+			message: 'Erreur lors de la mise à jour de la propriété',
+		});
+	}
+};
