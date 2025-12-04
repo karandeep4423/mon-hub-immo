@@ -22,6 +22,11 @@ interface UserProfile {
   professionalInfo?: {
     network?: string;
     identityCard?: { url?: string; key?: string; uploadedAt?: string } | null;
+    agentType?: string;
+    siren?: string;
+    rsac?: string;
+    tCard?: string;
+    authorizationCertificate?: string;
   } | null;
   propertiesCount?: number;
   collaborationsActive?: number;
@@ -184,6 +189,17 @@ export function UserProfileModern({ user, onValidate, onBlock, onDelete }: UserP
               <InfoRow icon={<Briefcase size={16} />} label="Réseau" value={user.professionalInfo?.network} />
 
               <hr className="border-gray-200" />
+
+              {user.userType === 'agent' && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-gray-800">Informations professionnelles (Agent immobilier)</h3>
+                  <InfoRow label="Type d'agent immobilier" value={user.professionalInfo?.agentType} />
+                  <InfoRow label="Numéro SIREN" value={user.professionalInfo?.siren} />
+                  <InfoRow label="Numéro RSAC" value={user.professionalInfo?.rsac} />
+                  <InfoRow label="Carte professionnelle (T card)" value={user.professionalInfo?.tCard} />
+                  <InfoRow label="Certificat d'autorisation" value={user.professionalInfo?.authorizationCertificate} />
+                </div>
+              )}
 
               <div className="space-y-3">
                 <h3 className="font-semibold text-gray-800">Actions Administrateur</h3>

@@ -91,9 +91,15 @@ export default function AdminChatPage() {
 							const initials = (userInfo && ((userInfo.firstName || '').charAt(0) + (userInfo.lastName || '').charAt(0)).toUpperCase().trim()) || (fullName.charAt(0) || '?').toUpperCase();
 							return (
 								<li key={m._id} className="flex items-start gap-3">
-									<div className="w-9 h-9 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xs font-semibold" title={fullName} aria-label={fullName}>
-										{initials}
-									</div>
+									{userInfo?.avatarUrl ? (
+											<div className="relative w-9 h-9 rounded-full overflow-hidden" title={fullName} aria-label={fullName}>
+												<Image src={userInfo.avatarUrl} alt={fullName} fill className="object-cover" unoptimized />
+											</div>
+										) : (
+											<div className="w-9 h-9 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xs font-semibold" title={fullName} aria-label={fullName}>
+												{initials}
+											</div>
+										)}
 									<div className="flex-1 min-w-0">
 										<p className="text-[11px] text-gray-500 mb-0.5">{new Date(m.createdAt).toLocaleString('fr-FR')}</p>
 										<p className="text-xs font-semibold text-gray-700 mb-1">{fullName}</p>
