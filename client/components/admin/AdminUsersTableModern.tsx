@@ -7,7 +7,7 @@ import CreateUserModal from './CreateUserModal';
 import ImportUsersModal from './ImportUsersModal';
 import Link from 'next/link';
 import { useAdminUsers } from '@/hooks/useAdminUsers';
-import { adminService } from '@/lib/api/adminApi'; // Import the new admin service
+import { adminService } from '@/lib/api/adminApi';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { DataTable } from '@/components/ui/DataTable';
@@ -30,12 +30,6 @@ import {
 	X,
 	Globe,
 } from 'lucide-react';
-
-// Use env-configured API root so production builds call the correct backend
-const API_ROOT = (() => {
-	const raw = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-	return raw.replace(/\/+$/, '').replace(/\/api$/i, '');
-})();
 
 export interface AdminUser {
 	_id: string;
@@ -961,6 +955,7 @@ interface AdminUserUpdatePayload {
 	profileCompleted?: boolean;
 	isValidated?: boolean;
 	isBlocked?: boolean;
+	[key: string]: unknown;
 }
 
 const EditUserModal: React.FC<{
@@ -988,23 +983,17 @@ const EditUserModal: React.FC<{
 		e.preventDefault();
 		setBusy(true);
 		try {
-			const calls: Promise<Response>[] = [];
+			const calls: Promise<unknown>[] = [];
 			if (form.isValidated !== user.isValidated) {
 				calls.push(
-					fetch(`${API_ROOT}/api/admin/users/${user._id}/validate`, {
-						method: 'PUT',
-						credentials: 'include',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ value: !!form.isValidated }),
-					}),
+					adminService.validateUser(user._id, !!form.isValidated),
 				);
 			}
 			if (form.isBlocked !== user.isBlocked) {
 				calls.push(
-					fetch(
-						`${API_ROOT}/api/admin/users/${user._id}/${form.isBlocked ? 'block' : 'unblock'}`,
-						{ method: 'POST', credentials: 'include' },
-					),
+					form.isBlocked
+						? adminService.blockUser(user._id)
+						: adminService.unblockUser(user._id),
 				);
 			}
 			const cleaned: AdminUserUpdatePayload = {
@@ -1023,23 +1012,11 @@ const EditUserModal: React.FC<{
 					? { isBlocked: form.isBlocked }
 					: {}),
 			};
-			calls.push(
-				fetch(`${API_ROOT}/api/admin/users/${user._id}`, {
-					method: 'PUT',
-					credentials: 'include',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify(cleaned),
-				}),
-			);
+			calls.push(adminService.updateUser(user._id, cleaned));
 
-			const results = await Promise.all(calls);
-			if (results.every((r) => r.ok)) {
-				toast.success('Modifications enregistrées');
-				onSave();
-			} else {
-				console.error('admin update failed', results);
-				toast.error('Échec de la mise à jour');
-			}
+			await Promise.all(calls);
+			toast.success('Modifications enregistrées');
+			onSave();
 		} catch (err) {
 			console.error(err);
 			toast.error('Erreur lors de la mise à jour');
@@ -1086,14 +1063,9 @@ const EditUserModal: React.FC<{
 			onConfirm: async () => {
 				setBusy(true);
 				try {
-					await fetch(
-						`${API_ROOT}/api/admin/users/${user._id}/validate`,
-						{
-							method: 'PUT',
-							credentials: 'include',
-							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify({ value: !user.isValidated }),
-						},
+					await adminService.validateUser(
+						user._id,
+						!user.isValidated,
 					);
 					toast.success(
 						user.isValidated

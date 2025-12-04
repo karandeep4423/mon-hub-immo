@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
+import { adminService } from '@/lib/api/adminApi';
 
 // Adapte cette interface à la structure Collaboration de ton backend (exemple simplifié)
 export interface Collaboration {
 	_id: string;
-	postId?: Record<string, any>;
+	postId?: Record<string, unknown>;
 	postType?: string;
 	agent?: { _id: string; firstName?: string; lastName?: string };
 	agentId?: string;
@@ -12,7 +13,6 @@ export interface Collaboration {
 	status: 'pending' | 'active' | 'completed' | 'cancelled';
 	createdAt: string;
 	updatedAt?: string;
-	// Ajoute d'autres champs si besoin
 }
 
 export function useAdminCollaborations() {
@@ -21,24 +21,19 @@ export function useAdminCollaborations() {
 
 	useEffect(() => {
 		setLoading(true);
-		const API_ROOT = (() => {
-			const raw =
-				process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-			return raw.replace(/\/+$/, '').replace(/\/api$/i, '');
-		})();
 
-		fetch(`${API_ROOT}/api/collaboration/all`, {
-			credentials: 'include',
-		})
-			.then((res) => res.json())
-			.then((data) => {
-				console.log('[adminCollab] Réponse API complète:', data);
+		adminService
+			.getAllCollaborations()
+			.then((res) => {
+				console.log('[adminCollab] Réponse API complète:', res.data);
 				// Sort by createdAt descending (newest first)
-				const sorted = [...(data.collaborations || [])].sort((a, b) => {
-					const dateA = new Date(a.createdAt || 0).getTime();
-					const dateB = new Date(b.createdAt || 0).getTime();
-					return dateB - dateA;
-				});
+				const sorted = [...(res.data.collaborations || [])].sort(
+					(a: Collaboration, b: Collaboration) => {
+						const dateA = new Date(a.createdAt || 0).getTime();
+						const dateB = new Date(b.createdAt || 0).getTime();
+						return dateB - dateA;
+					},
+				);
 				setCollaborations(sorted);
 			})
 			.catch(console.error)

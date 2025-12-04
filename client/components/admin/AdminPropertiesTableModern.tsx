@@ -10,6 +10,7 @@ import { Features } from '@/lib/constants';
 import Link from 'next/link';
 import { DataTable } from '@/components/ui/DataTable';
 import { useAdminProperties } from '@/hooks/useAdminProperties';
+import { adminService } from '@/lib/api/adminApi';
 import {
 	Home,
 	CheckCircle,
@@ -116,28 +117,10 @@ export function AdminPropertiesTableModern({
 		if (!selectedPropertyId) return;
 		setDeleteLoading(true);
 		try {
-			const raw =
-				process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-			const API_ROOT = raw.replace(/\/+$/, '').replace(/\/api$/i, '');
-			const res = await fetch(
-				`${API_ROOT}/api/admin/properties/${selectedPropertyId}`,
-				{
-					method: 'DELETE',
-					credentials: 'include',
-				},
-			);
-			if (res.ok) {
-				// optional: show toast instead of alert
-				// alert('Annonce supprimée avec succès');
-				refetch?.();
-				closeDeleteModal();
-			} else {
-				// handle error response
-				// alert('Erreur lors de la suppression');
-				setDeleteLoading(false);
-			}
+			await adminService.deleteProperty(selectedPropertyId);
+			refetch?.();
+			closeDeleteModal();
 		} catch {
-			// alert('Erreur lors de la suppression');
 			setDeleteLoading(false);
 		}
 	};

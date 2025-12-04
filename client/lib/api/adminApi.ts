@@ -2,46 +2,108 @@ import { api } from '@/lib/api';
 
 /**
  * Admin API Service
- * Centralized API operations for admin-related user management.
+ * Centralized API operations for admin-related management.
  */
 export const adminService = {
-  /**
-   * Blocks a user.
-   * @param userId - The ID of the user to block.
-   */
-  blockUser: (userId: string) => {
-    return api.post(`/admin/users/${userId}/block`);
-  },
+	// ==================== Stats ====================
+	/**
+	 * Fetches admin dashboard statistics.
+	 */
+	getStats: () => {
+		return api.get('/admin/stats');
+	},
 
-  /**
-   * Unblocks a user.
-   * @param userId - The ID of the user to unblock.
-   */
-  unblockUser: (userId: string) => {
-    return api.post(`/admin/users/${userId}/unblock`);
-  },
+	// ==================== Users ====================
+	/**
+	 * Blocks a user.
+	 * @param userId - The ID of the user to block.
+	 */
+	blockUser: (userId: string) => {
+		return api.post(`/admin/users/${userId}/block`);
+	},
 
-  /**
-   * Grants manual platform access to a user, overriding payment status.
-   * @param userId - The ID of the user to grant access to.
-   */
-  grantAdminAccess: (userId: string) => {
-    return api.post(`/admin/users/${userId}/grant-access`);
-  },
+	/**
+	 * Unblocks a user.
+	 * @param userId - The ID of the user to unblock.
+	 */
+	unblockUser: (userId: string) => {
+		return api.post(`/admin/users/${userId}/unblock`);
+	},
 
-  /**
-   * Revokes manual platform access from a user.
-   * @param userId - The ID of the user to revoke access from.
-   */
-  revokeAdminAccess: (userId: string) => {
-    return api.post(`/admin/users/${userId}/revoke-access`);
-  },
+	/**
+	 * Validates or invalidates a user.
+	 * @param userId - The ID of the user to validate.
+	 * @param value - Whether to validate (true) or invalidate (false).
+	 */
+	validateUser: (userId: string, value: boolean) => {
+		return api.put(`/admin/users/${userId}/validate`, { value });
+	},
 
-  /**
-   * Sends a payment reminder email to a user.
-   * @param userId - The ID of the user to send a reminder to.
-   */
-  sendPaymentReminder: (userId: string) => {
-    return api.post(`/admin/users/${userId}/send-payment-reminder`);
-  }
+	/**
+	 * Updates a user's information.
+	 * @param userId - The ID of the user to update.
+	 * @param payload - The user data to update.
+	 */
+	updateUser: (userId: string, payload: Record<string, unknown>) => {
+		return api.put(`/admin/users/${userId}`, payload);
+	},
+
+	/**
+	 * Creates a new user (admin only).
+	 * @param payload - The user data to create.
+	 */
+	createUser: (payload: Record<string, unknown>) => {
+		return api.post('/admin/users/create', payload);
+	},
+
+	/**
+	 * Imports users from a CSV file.
+	 * @param formData - FormData containing the CSV file and options.
+	 */
+	importUsers: (formData: FormData) => {
+		return api.post('/admin/users/import', formData, {
+			headers: { 'Content-Type': 'multipart/form-data' },
+		});
+	},
+
+	/**
+	 * Grants manual platform access to a user, overriding payment status.
+	 * @param userId - The ID of the user to grant access to.
+	 */
+	grantAdminAccess: (userId: string) => {
+		return api.post(`/admin/users/${userId}/grant-access`);
+	},
+
+	/**
+	 * Revokes manual platform access from a user.
+	 * @param userId - The ID of the user to revoke access from.
+	 */
+	revokeAdminAccess: (userId: string) => {
+		return api.post(`/admin/users/${userId}/revoke-access`);
+	},
+
+	/**
+	 * Sends a payment reminder email to a user.
+	 * @param userId - The ID of the user to send a reminder to.
+	 */
+	sendPaymentReminder: (userId: string) => {
+		return api.post(`/admin/users/${userId}/send-payment-reminder`);
+	},
+
+	// ==================== Properties ====================
+	/**
+	 * Deletes a property.
+	 * @param propertyId - The ID of the property to delete.
+	 */
+	deleteProperty: (propertyId: string) => {
+		return api.delete(`/admin/properties/${propertyId}`);
+	},
+
+	// ==================== Collaborations ====================
+	/**
+	 * Fetches all collaborations (admin view).
+	 */
+	getAllCollaborations: () => {
+		return api.get('/collaboration/all');
+	},
 };
