@@ -9,8 +9,10 @@ interface Property {
 	price: number;
 	surface: number;
 	propertyType: string;
+	type?: string;
 	status: string;
 	city: string;
+	location?: string;
 	owner?: {
 		_id: string;
 		firstName?: string;

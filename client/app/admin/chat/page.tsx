@@ -52,7 +52,7 @@ const AdminMessageBubble = ({
 		>
 			{/* Avatar - always show */}
 			<div className="flex-shrink-0">
-				<ProfileAvatar user={senderUser} size="sm" />
+				{senderUser && <ProfileAvatar user={senderUser} size="sm" />}
 			</div>
 
 			{/* Message bubble */}
@@ -301,16 +301,20 @@ export default function AdminChatPage() {
 					{/* Participants info */}
 					<div className="flex items-center gap-3 flex-1 min-w-0">
 						<div className="flex -space-x-2">
-							<ProfileAvatar
-								user={ownerUser}
-								size="md"
-								className="ring-2 ring-white"
-							/>
-							<ProfileAvatar
-								user={collaboratorUser}
-								size="md"
-								className="ring-2 ring-white"
-							/>
+							{ownerUser && (
+								<ProfileAvatar
+									user={ownerUser}
+									size="md"
+									className="ring-2 ring-white"
+								/>
+							)}
+							{collaboratorUser && (
+								<ProfileAvatar
+									user={collaboratorUser}
+									size="md"
+									className="ring-2 ring-white"
+								/>
+							)}
 						</div>
 						<div className="min-w-0">
 							<h1 className="text-sm font-semibold text-gray-900 truncate">
@@ -339,7 +343,9 @@ export default function AdminChatPage() {
 				>
 					{loading && <LoadingMessages />}
 
-					{!loading && messages.length === 0 && <EmptyConversation />}
+					{!loading && messages.length === 0 && (
+						<EmptyConversation selectedUser={null} />
+					)}
 
 					{!loading && messages.length > 0 && (
 						<div className="py-4">

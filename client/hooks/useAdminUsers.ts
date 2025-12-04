@@ -11,7 +11,7 @@ interface Filters {
 }
 
 export function useAdminUsers(filters: Filters) {
-	const [users, setUsers] = useState([]);
+	const [users, setUsers] = useState<any[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 

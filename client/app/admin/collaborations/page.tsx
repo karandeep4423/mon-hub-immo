@@ -1,8 +1,8 @@
 'use client';
 
 import AdminLayout from '@/components/admin/AdminLayout';
-import { AdminCollaborationsTableModern } from '@/components/admin/AdminCollaborationsTableModern';
-import type { AdminCollaboration } from '@/components/admin/AdminCollaborationsTableModern';
+import { AdminCollaborationsTableModern } from '@/components/admin/AdminCollaborationsTable';
+import type { AdminCollaboration } from '@/components/admin/AdminCollaborationsTable';
 import {
 	useAdminCollaborations,
 	type Collaboration,

@@ -1,7 +1,7 @@
 'use client';
 
 import AdminLayout from '@/components/admin/AdminLayout';
-import { AdminPropertiesTableModern } from '@/components/admin/AdminPropertiesTableModern';
+import { AdminPropertiesTableModern } from '@/components/admin/AdminPropertiesTable';
 import { useAdminProperties } from '@/hooks/useAdminProperties';
 
 export default function AdminPropertiesPage() {

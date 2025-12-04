@@ -1,6 +1,6 @@
 'use client';
 import React, { ReactNode, useEffect, useState } from 'react';
-import SidebarAdminModern from './SidebarAdminModern';
+import SidebarAdminModern from './SidebarAdmin';
 import AdminMobileNav from './AdminMobileNav';
 import { useAuth } from '@/hooks/useAuth';
 import { usePathname, useRouter } from 'next/navigation';

@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { UserProfileModern } from '@/components/admin/UserProfileModern';
+import { UserProfileModern } from '@/components/admin/UserProfile';
 import { ArrowLeft } from 'lucide-react';
 
 interface UserProfile {
