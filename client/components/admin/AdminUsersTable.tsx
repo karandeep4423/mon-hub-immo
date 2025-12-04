@@ -18,7 +18,7 @@ import { DataTable } from '@/components/ui/DataTable';
 import Pagination from '@/components/ui/Pagination';
 import AdminUserFilters from './AdminUserFilters';
 import { AdminPageHeader, FilterStatCard } from './ui';
-import { EditUserModal, UserActions, getUserTableColumns } from './users';
+import { UserActions, getUserTableColumns } from './users';
 import {
 	getUserStatus,
 	downloadFile,
@@ -52,7 +52,6 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 		network: '',
 		email: '',
 	});
-	const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
 	const [showCreate, setShowCreate] = useState(false);
 	const [showImport, setShowImport] = useState(false);
 	const [tableConfirmAction, setTableConfirmAction] =
@@ -345,7 +344,6 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 					actions={(row: AdminUser) => (
 						<UserActions
 							user={row}
-							onEdit={setEditingUser}
 							onConfirmAction={setTableConfirmAction}
 							refetch={refetch}
 							setActionBusy={setActionBusy}
@@ -369,16 +367,6 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 					onClose={() => setShowImport(false)}
 					onSuccess={() => {
 						setShowImport(false);
-						refetch();
-					}}
-				/>
-			)}
-			{editingUser && (
-				<EditUserModal
-					user={editingUser}
-					onClose={() => setEditingUser(null)}
-					onSave={() => {
-						setEditingUser(null);
 						refetch();
 					}}
 				/>

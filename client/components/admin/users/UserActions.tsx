@@ -2,7 +2,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { toast } from 'react-toastify';
 import {
 	Eye,
 	Edit,
@@ -13,171 +12,119 @@ import {
 	X,
 	Trash2,
 } from 'lucide-react';
-import { adminService } from '@/lib/api/adminApi';
+import { executeAdminAction, AdminActionType } from '@/hooks/useAdminActions';
 import { CONFIRM_MESSAGES } from '@/lib/constants/admin';
 import type { AdminUser, ConfirmActionState } from '@/types/admin';
 
 interface UserActionsProps {
 	user: AdminUser;
-	onEdit: (user: AdminUser) => void;
 	onConfirmAction: (action: ConfirmActionState) => void;
 	refetch: () => Promise<void>;
 	setActionBusy: (busy: boolean) => void;
 }
 
+// Helper to create action handler
+const createActionHandler = (
+	actionType: AdminActionType,
+	confirmType: ConfirmActionState['type'],
+	confirmMessage: string,
+	userId: string,
+	refetch: () => Promise<void>,
+	setActionBusy: (busy: boolean) => void,
+	onConfirmAction: (action: ConfirmActionState) => void,
+) => {
+	onConfirmAction({
+		label: confirmMessage,
+		type: confirmType,
+		onConfirm: async () => {
+			setActionBusy(true);
+			try {
+				await executeAdminAction(actionType, userId);
+				await refetch();
+			} finally {
+				setActionBusy(false);
+			}
+		},
+	});
+};
+
 export const UserActions: React.FC<UserActionsProps> = ({
 	user,
-	onEdit,
 	onConfirmAction,
 	refetch,
 	setActionBusy,
 }) => {
 	const handleBlockUnblock = () => {
-		if (user.isBlocked) {
-			onConfirmAction({
-				label: CONFIRM_MESSAGES.UNBLOCK_USER,
-				type: 'unblock',
-				onConfirm: async () => {
-					setActionBusy(true);
-					try {
-						await adminService.unblockUser(user._id);
-						await refetch();
-						toast.success('Utilisateur débloqué.');
-					} catch (err) {
-						console.error(err);
-						toast.error('Erreur.');
-					} finally {
-						setActionBusy(false);
-					}
-				},
-			});
-		} else {
-			onConfirmAction({
-				label: CONFIRM_MESSAGES.BLOCK_USER,
-				type: 'block',
-				onConfirm: async () => {
-					setActionBusy(true);
-					try {
-						await adminService.blockUser(user._id);
-						await refetch();
-						toast.warn('Utilisateur bloqué.');
-					} catch (err) {
-						console.error(err);
-						toast.error('Erreur.');
-					} finally {
-						setActionBusy(false);
-					}
-				},
-			});
-		}
+		createActionHandler(
+			user.isBlocked ? 'unblock' : 'block',
+			user.isBlocked ? 'unblock' : 'block',
+			user.isBlocked
+				? CONFIRM_MESSAGES.UNBLOCK_USER
+				: CONFIRM_MESSAGES.BLOCK_USER,
+			user._id,
+			refetch,
+			setActionBusy,
+			onConfirmAction,
+		);
 	};
 
 	const handleAccessToggle = () => {
-		if (user.accessGrantedByAdmin) {
-			onConfirmAction({
-				label: CONFIRM_MESSAGES.REVOKE_ACCESS,
-				type: 'revoke_manual',
-				onConfirm: async () => {
-					setActionBusy(true);
-					try {
-						await adminService.revokeAdminAccess(user._id);
-						await refetch();
-						toast.info('Accès manuel révoqué.');
-					} catch (err) {
-						console.error(err);
-						toast.error('Erreur.');
-					} finally {
-						setActionBusy(false);
-					}
-				},
-			});
-		} else {
-			onConfirmAction({
-				label: CONFIRM_MESSAGES.GRANT_ACCESS,
-				type: 'grant_manual',
-				onConfirm: async () => {
-					setActionBusy(true);
-					try {
-						await adminService.grantAdminAccess(user._id);
-						await refetch();
-						toast.success('Accès manuel accordé.');
-					} catch (err) {
-						console.error(err);
-						const msg =
-							(
-								err as {
-									response?: { data?: { error?: string } };
-								}
-							)?.response?.data?.error ||
-							(err as { message?: string })?.message ||
-							'Erreur.';
-						toast.error(msg);
-					} finally {
-						setActionBusy(false);
-					}
-				},
-			});
-		}
+		createActionHandler(
+			user.accessGrantedByAdmin ? 'revoke_access' : 'grant_access',
+			user.accessGrantedByAdmin ? 'revoke_manual' : 'grant_manual',
+			user.accessGrantedByAdmin
+				? CONFIRM_MESSAGES.REVOKE_ACCESS
+				: CONFIRM_MESSAGES.GRANT_ACCESS,
+			user._id,
+			refetch,
+			setActionBusy,
+			onConfirmAction,
+		);
 	};
 
 	const handlePaymentReminder = () => {
-		onConfirmAction({
-			label: CONFIRM_MESSAGES.PAYMENT_REMINDER,
-			type: 'payment_reminder',
-			onConfirm: async () => {
-				setActionBusy(true);
-				try {
-					await adminService.sendPaymentReminder(user._id);
-					toast.success('Rappel de paiement envoyé.');
-				} catch (err) {
-					console.error(err);
-					toast.error("Erreur lors de l'envoi du rappel.");
-				} finally {
-					setActionBusy(false);
-				}
-			},
-		});
+		createActionHandler(
+			'payment_reminder',
+			'payment_reminder',
+			CONFIRM_MESSAGES.PAYMENT_REMINDER,
+			user._id,
+			refetch,
+			setActionBusy,
+			onConfirmAction,
+		);
 	};
 
 	const handleDelete = () => {
-		onConfirmAction({
-			label: CONFIRM_MESSAGES.DELETE_USER,
-			type: 'delete',
-			onConfirm: async () => {
-				setActionBusy(true);
-				try {
-					await adminService.deleteUser(user._id);
-					await refetch();
-					toast.success('Utilisateur supprimé.');
-				} catch (err) {
-					console.error(err);
-					toast.error('Erreur lors de la suppression.');
-				} finally {
-					setActionBusy(false);
-				}
-			},
-		});
+		createActionHandler(
+			'delete',
+			'delete',
+			CONFIRM_MESSAGES.DELETE_USER,
+			user._id,
+			refetch,
+			setActionBusy,
+			onConfirmAction,
+		);
 	};
 
 	return (
 		<div className="flex items-center justify-end gap-1.5">
-			{/* View */}
+			{/* View / Edit - Navigate to profile page */}
 			<Link
 				href={`/admin/users/${user._id}`}
 				className="p-2 hover:bg-blue-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-blue-200 group"
-				title="Voir"
+				title="Voir / Modifier"
 			>
 				<Eye className="w-4 h-4 text-gray-600 group-hover:text-blue-600 transition-colors" />
 			</Link>
 
-			{/* Edit */}
-			<button
-				onClick={() => onEdit(user)}
+			{/* Edit - Also navigate to profile page */}
+			<Link
+				href={`/admin/users/${user._id}`}
 				className="p-2 hover:bg-purple-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-purple-200 group"
 				title="Éditer"
 			>
 				<Edit className="w-4 h-4 text-gray-600 group-hover:text-purple-600 transition-colors" />
-			</button>
+			</Link>
 
 			{/* Block/Unblock - Desktop only */}
 			<div className="hidden lg:flex">

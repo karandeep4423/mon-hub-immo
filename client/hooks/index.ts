@@ -76,3 +76,11 @@ export { useDebouncedSearch } from './useDebouncedSearch';
 // Page/UI state persistence
 export { usePageState } from './usePageState';
 export { useScrollRestoration } from './useScrollRestoration';
+
+// Admin
+export {
+	useAdminActions,
+	executeAdminAction,
+	getActionConfig,
+} from './useAdminActions';
+export type { AdminActionType, AdminActionResult } from './useAdminActions';

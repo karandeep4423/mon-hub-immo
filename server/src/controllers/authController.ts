@@ -776,6 +776,17 @@ export const verifyEmail = async (
 					: undefined,
 		});
 
+		// Debug log to verify agentType transfer
+		logger.debug(
+			'[AuthController] Creating user from pending verification',
+			{
+				email: newUser.email,
+				userType: newUser.userType,
+				pendingAgentType: pendingVerification.agentType,
+				newUserAgentType: newUser.professionalInfo?.agentType,
+			},
+		);
+
 		await newUser.save();
 
 		// Handle identity card move from temp to permanent location
@@ -797,8 +808,18 @@ export const verifyEmail = async (
 				);
 
 				// Update user's professionalInfo with permanent identity card
+				// Spread existing professionalInfo to preserve agentType and other fields
+				const existingProfInfo = newUser.professionalInfo
+					? { ...newUser.professionalInfo }
+					: {};
+
+				logger.debug('[AuthController] Before identity card merge', {
+					existingProfInfo,
+					hasAgentType: !!existingProfInfo.agentType,
+				});
+
 				newUser.professionalInfo = {
-					...newUser.professionalInfo,
+					...existingProfInfo,
 					identityCard: {
 						url: result.url,
 						key: result.key,
@@ -807,7 +828,9 @@ export const verifyEmail = async (
 				};
 				await newUser.save();
 
-				// Delete temp file (cleanup)
+				logger.debug('[AuthController] After identity card save', {
+					agentType: newUser.professionalInfo?.agentType,
+				}); // Delete temp file (cleanup)
 				await s3Service.deleteImage(
 					pendingVerification.identityCardTempKey,
 				);

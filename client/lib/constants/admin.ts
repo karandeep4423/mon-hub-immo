@@ -81,6 +81,7 @@ export const VALIDATION_OPTIONS = [
 ];
 
 export const AGENT_TYPE_OPTIONS = [
+	{ value: '', label: 'Sélectionner un type' },
 	{ value: 'independent', label: 'Agent immobilier indépendant' },
 	{ value: 'commercial', label: 'Agent commercial immobilier' },
 	{ value: 'employee', label: "Négociateur VRP employé d'agence" },

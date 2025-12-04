@@ -20,6 +20,9 @@ export { default as AdminStatsClient } from './AdminStatsClient';
 export { default as AdminPropertiesTableModern } from './AdminPropertiesTable';
 export { default as AdminCollaborationsTableModern } from './AdminCollaborationsTable';
 
+// User Profile
+export { UserProfileEditable } from './UserProfileEditable';
+
 // Admin UI Components
 export * from './ui';
 
