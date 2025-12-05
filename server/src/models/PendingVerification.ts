@@ -9,6 +9,12 @@ export interface IPendingVerification extends Document {
 	phone?: string;
 	userType: 'agent' | 'apporteur';
 	identityCardTempKey?: string;
+	// Agent professional info from signup
+	agentType?: 'independent' | 'commercial' | 'employee';
+	tCard?: string;
+	sirenNumber?: string;
+	rsacNumber?: string;
+	collaboratorCertificate?: string;
 	emailVerificationCode: string;
 	emailVerificationExpires: Date;
 	createdAt: Date;
@@ -54,6 +60,27 @@ const pendingVerificationSchema = new Schema<IPendingVerification>(
 			required: [true, 'Type utilisateur requis'],
 		},
 		identityCardTempKey: {
+			type: String,
+			trim: true,
+		},
+		agentType: {
+			type: String,
+			enum: ['independent', 'commercial', 'employee'],
+			trim: true,
+		},
+		tCard: {
+			type: String,
+			trim: true,
+		},
+		sirenNumber: {
+			type: String,
+			trim: true,
+		},
+		rsacNumber: {
+			type: String,
+			trim: true,
+		},
+		collaboratorCertificate: {
 			type: String,
 			trim: true,
 		},
