@@ -183,13 +183,17 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 					return;
 				}
 
-				// Validate bio length
-				const bioTextContent = data.personalPitch
-					.replace(/<[^>]*>/g, '')
-					.trim();
-				if (bioTextContent.length > 1000) {
+				// Validate bio character count
+				const tempDiv = document.createElement('div');
+				tempDiv.innerHTML = data.personalPitch;
+				const bioTextLength = (
+					tempDiv.textContent ||
+					tempDiv.innerText ||
+					''
+				).length;
+				if (bioTextLength > 650) {
 					authToastError(
-						'La bio ne peut pas dépasser 1000 caractères',
+						'La bio ne peut pas dépasser 650 caractères',
 					);
 					return;
 				}

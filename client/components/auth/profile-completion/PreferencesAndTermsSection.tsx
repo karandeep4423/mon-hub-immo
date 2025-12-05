@@ -14,11 +14,18 @@ interface PreferencesAndTermsSectionProps {
 export const PreferencesAndTermsSection: React.FC<
 	PreferencesAndTermsSectionProps
 > = ({ values, errors, handleChange, setFieldValue }) => {
+	const getPlainTextLength = (html: string): number => {
+		// Create a temporary element to properly extract text content
+		const temp = document.createElement('div');
+		temp.innerHTML = html;
+		return (temp.textContent || temp.innerText || '').length;
+	};
+
 	const handlePitchChange = (value: string) => {
-		const textContent = value.replace(/<[^>]*>/g, '').trim();
-		if (textContent.length > 1000) {
+		const textLength = getPlainTextLength(value);
+		if (textLength > 650) {
 			setFieldValue('personalPitch', value);
-			authToastError('La bio ne peut pas dépasser 1000 caractères');
+			authToastError('La bio ne peut pas dépasser 650 caractères');
 			return;
 		}
 		handleChange({
@@ -36,7 +43,7 @@ export const PreferencesAndTermsSection: React.FC<
 				placeholder={Features.Auth.AUTH_PLACEHOLDERS.BIO}
 				minHeight="120px"
 				showCharCount
-				maxLength={1000}
+				maxLength={650}
 			/>
 
 			{/* Collaboration preferences */}

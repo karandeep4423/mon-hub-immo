@@ -243,10 +243,9 @@ const userSchema = new Schema<IUser>(
 				validate: {
 					validator: function (v: string) {
 						if (!v) return true;
-						return htmlTextLength(v) <= 1000;
+						return htmlTextLength(v) <= 650;
 					},
-					message:
-						'Bio personnelle trop longue (max 1000 caractères de texte)',
+					message: 'Bio personnelle trop longue (max 650 caractères)',
 				},
 			},
 			collaborateWithAgents: {

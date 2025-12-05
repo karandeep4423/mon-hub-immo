@@ -134,7 +134,7 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent }) => {
 						<div className="border-t pt-4">
 							<RichTextDisplay
 								content={agent.professionalInfo.personalPitch}
-								className="text-sm text-gray-600 line-clamp-3"
+								className="text-sm text-gray-600"
 							/>
 						</div>
 					)}

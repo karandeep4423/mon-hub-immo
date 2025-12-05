@@ -23,13 +23,15 @@ export const RichTextDisplay: React.FC<RichTextDisplayProps> = ({
 
 	const decodedContent = decodeHTML(content);
 
-	// Sanitize HTML to prevent XSS attacks
+	// Sanitize HTML to prevent XSS attacks while preserving styling
 	const sanitizedContent = DOMPurify.sanitize(decodedContent, {
 		ALLOWED_TAGS: [
 			'p',
 			'br',
 			'strong',
+			'b',
 			'em',
+			'i',
 			'u',
 			'ul',
 			'ol',
@@ -43,13 +45,29 @@ export const RichTextDisplay: React.FC<RichTextDisplayProps> = ({
 			'h4',
 			'h5',
 			'h6',
+			'font',
+			'sub',
+			'sup',
+			'strike',
+			's',
 		],
-		ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
+		ALLOWED_ATTR: [
+			'href',
+			'target',
+			'rel',
+			'class',
+			'style',
+			'color',
+			'size',
+		],
 	});
 
 	return (
 		<div
-			className={`prose prose-sm max-w-none ${className}`}
+			className={`rich-text-display ${className}`}
+			style={{
+				lineHeight: '1.6',
+			}}
 			dangerouslySetInnerHTML={{ __html: sanitizedContent }}
 		/>
 	);

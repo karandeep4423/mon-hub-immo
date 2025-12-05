@@ -70,6 +70,19 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 		currentUser?._id,
 	);
 
+	// Determine if user can view client name (only owner or active collaborator)
+	const canViewClientName = useMemo(() => {
+		if (isOwner) return true;
+		if (!currentUser) return false;
+		// Check if user has an active collaboration
+		return collaborations.some(
+			(c) =>
+				c.status === 'active' &&
+				(c.collaboratorId._id === currentUser._id ||
+					c.postOwnerId._id === currentUser._id),
+		);
+	}, [isOwner, currentUser, collaborations]);
+
 	const handleContact = () => {
 		if (!currentUser) {
 			router.push(Features.Auth.AUTH_ROUTES.LOGIN);
@@ -146,13 +159,21 @@ export const SearchAdDetails: React.FC<SearchAdDetailsProps> = ({
 													<span className="font-semibold text-gray-600 block mb-1 text-xs uppercase tracking-wide">
 														Nom du client
 													</span>
-													<p className="text-gray-900 font-medium text-sm">
-														{
-															searchAd.clientInfo
-																.qualificationInfo
-																.clientName
-														}
-													</p>
+													{canViewClientName ? (
+														<p className="text-gray-900 font-medium text-sm">
+															{
+																searchAd
+																	.clientInfo
+																	.qualificationInfo
+																	.clientName
+															}
+														</p>
+													) : (
+														<p className="text-gray-400 italic text-sm">
+															🔒 Visible après
+															collaboration
+														</p>
+													)}
 												</div>
 											)}
 											{searchAd.clientInfo
