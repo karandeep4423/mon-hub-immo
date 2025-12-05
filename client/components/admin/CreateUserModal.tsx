@@ -368,11 +368,16 @@ const CreateUserModal: React.FC<Props> = ({ onClose, onCreated }) => {
 						Valider ce compte (son e-mail sera envoyé si validé)
 					</label>
 				</div>
-				<div className="flex gap-3 justify-end pt-2">
-					<Button variant="secondary" type="button" onClick={onClose}>
+				<div className="flex justify-end gap-3 pt-2">
+					<Button
+						variant="outline"
+						type="button"
+						onClick={onClose}
+						disabled={loading}
+					>
 						Annuler
 					</Button>
-					<Button type="submit" variant="primary" disabled={loading}>
+					<Button type="submit" variant="primary" loading={loading}>
 						Créer
 					</Button>
 				</div>

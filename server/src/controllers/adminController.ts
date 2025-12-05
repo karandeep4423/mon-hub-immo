@@ -15,7 +15,6 @@ import {
 	sendAccountValidated,
 	sendPaymentReminderEmail,
 	sendEmail,
-	sendInviteToSetPassword,
 } from '../utils/emailService';
 import { getAdminCreatedAccountTemplate } from '../utils/email/templates/adminCreatedAccount';
 
@@ -1051,22 +1050,65 @@ export const importUsersFromCSV = async (req: Request, res: Response) => {
 					existing.passwordResetExpires = new Date(
 						Date.now() + 24 * 60 * 60 * 1000,
 					); // 24 hours
+					// Email NOT verified - user must verify first (same as manual user creation)
+					(
+						existing as { isEmailVerified?: boolean }
+					).isEmailVerified = false;
 					await existing.save();
-					// Send invite email with secure link to set-password page
+
+					// Send comprehensive email with verification + invite link (same flow as manual user creation)
 					try {
-						const inviteUrl = `${process.env.CLIENT_URL || process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/set-password?email=${encodeURIComponent(existing.email)}&token=${encodeURIComponent(String(existing.passwordResetCode))}`;
-						await sendInviteToSetPassword({
+						// Generate verification code and store in PendingVerification
+						const verificationCode = generateVerificationCode();
+						const verificationExpires = new Date(
+							Date.now() + 24 * 60 * 60 * 1000,
+						); // 24 hours
+
+						await PendingVerification.findOneAndUpdate(
+							{ email: existing.email },
+							{
+								email: existing.email,
+								firstName: existing.firstName,
+								lastName: existing.lastName,
+								password: 'admin_created_placeholder',
+								userType: existing.userType as
+									| 'agent'
+									| 'apporteur',
+								emailVerificationCode: verificationCode,
+								emailVerificationExpires: verificationExpires,
+							},
+							{ upsert: true, new: true },
+						);
+
+						const baseUrl =
+							process.env.CLIENT_URL ||
+							process.env.FRONTEND_URL ||
+							'http://localhost:3000';
+						const verifyUrl = `${baseUrl}/auth/verify-email?email=${encodeURIComponent(existing.email)}`;
+						const inviteUrl = `${baseUrl}/auth/set-password?email=${encodeURIComponent(existing.email)}&token=${encodeURIComponent(String(existing.passwordResetCode))}`;
+
+						await sendEmail({
 							to: existing.email,
-							name: `${existing.firstName} ${existing.lastName}`,
-							inviteUrl,
+							subject: `Bienvenue sur MonHubImmo - Activez votre compte`,
+							html: getAdminCreatedAccountTemplate({
+								name: `${existing.firstName} ${existing.lastName}`,
+								verificationCode,
+								verifyUrl,
+								flow: 'invite',
+								inviteUrl,
+							}),
 						});
+
 						await logSecurityEvent({
 							userId: (
 								existing._id as unknown as string
 							).toString(),
-							eventType: 'invite_sent',
+							eventType: 'verification_code_sent',
 							req,
-							metadata: { method: 'invite_link' },
+							metadata: {
+								method: 'csv_import_update',
+								flow: 'invite',
+							},
 						});
 					} catch (err) {
 						errors.push(
@@ -1091,6 +1133,8 @@ export const importUsersFromCSV = async (req: Request, res: Response) => {
 				u.passwordResetExpires = new Date(
 					Date.now() + 24 * 60 * 60 * 1000,
 				); // 24 hours
+				// Email NOT verified - user must verify first before setting password (same as manual user creation)
+				(u as { isEmailVerified?: boolean }).isEmailVerified = false;
 			}
 
 			// If row explicitly sets isvalidated = true, mark validated (admin explicit validation)
@@ -1101,20 +1145,54 @@ export const importUsersFromCSV = async (req: Request, res: Response) => {
 				await u.save();
 				created.push({ id: u._id, email: u.email });
 
-				// Send invite if configured
-				if (sendInvite) {
+				// Send comprehensive email with verification code + invite link (same flow as manual user creation)
+				if (sendInvite && !row.password) {
 					try {
-						const inviteUrl = `${process.env.CLIENT_URL || process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/set-password?email=${encodeURIComponent(u.email)}&token=${encodeURIComponent(String(u.passwordResetCode))}`;
-						await sendInviteToSetPassword({
+						// Generate verification code and store in PendingVerification (like manual user creation)
+						const verificationCode = generateVerificationCode();
+						const verificationExpires = new Date(
+							Date.now() + 24 * 60 * 60 * 1000,
+						); // 24 hours
+
+						await PendingVerification.findOneAndUpdate(
+							{ email: u.email },
+							{
+								email: u.email,
+								firstName: u.firstName,
+								lastName: u.lastName,
+								password: 'admin_created_placeholder', // Not used for admin-created users
+								userType: u.userType as 'agent' | 'apporteur',
+								emailVerificationCode: verificationCode,
+								emailVerificationExpires: verificationExpires,
+							},
+							{ upsert: true, new: true },
+						);
+
+						const baseUrl =
+							process.env.CLIENT_URL ||
+							process.env.FRONTEND_URL ||
+							'http://localhost:3000';
+						const verifyUrl = `${baseUrl}/auth/verify-email?email=${encodeURIComponent(u.email)}`;
+						const inviteUrl = `${baseUrl}/auth/set-password?email=${encodeURIComponent(u.email)}&token=${encodeURIComponent(String(u.passwordResetCode))}`;
+
+						// Send comprehensive email with verification + invite link (same as manual user creation)
+						await sendEmail({
 							to: u.email,
-							name: `${u.firstName} ${u.lastName}`,
-							inviteUrl,
+							subject: `Bienvenue sur MonHubImmo - Activez votre compte`,
+							html: getAdminCreatedAccountTemplate({
+								name: `${u.firstName} ${u.lastName}`,
+								verificationCode,
+								verifyUrl,
+								flow: 'invite',
+								inviteUrl,
+							}),
 						});
+
 						await logSecurityEvent({
 							userId: (u._id as unknown as string).toString(),
-							eventType: 'invite_sent',
+							eventType: 'verification_code_sent',
 							req,
-							metadata: { method: 'invite_link' },
+							metadata: { method: 'csv_import', flow: 'invite' },
 						});
 					} catch (err) {
 						errors.push(
