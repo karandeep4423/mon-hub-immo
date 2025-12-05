@@ -1,21 +1,36 @@
-import csrf from 'csurf';
+import { doubleCsrf } from 'csrf-csrf';
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
 
 /**
  * CSRF Protection Middleware
  * Protects against Cross-Site Request Forgery attacks
+ * Uses csrf-csrf package with double-submit cookie pattern
  */
 
-// Create CSRF protection middleware
-export const csrfProtection = csrf({
-	cookie: {
+const CSRF_SECRET =
+	process.env.CSRF_SECRET || 'csrf-secret-change-in-production';
+
+const {
+	generateCsrfToken: generateToken,
+	doubleCsrfProtection,
+	invalidCsrfTokenError,
+} = doubleCsrf({
+	getSecret: () => CSRF_SECRET,
+	getSessionIdentifier: (req) => req.ip || 'anonymous',
+	cookieName: '_csrf',
+	cookieOptions: {
 		httpOnly: true,
 		secure: process.env.NODE_ENV === 'production',
 		sameSite: 'strict',
 		maxAge: 3600000, // 1 hour
 	},
+	getCsrfTokenFromRequest: (req: Request) =>
+		req.headers['x-csrf-token'] as string,
 });
+
+// Create CSRF protection middleware
+export const csrfProtection = doubleCsrfProtection;
 
 /**
  * CSRF Token Generation Endpoint
@@ -23,9 +38,7 @@ export const csrfProtection = csrf({
  */
 export const generateCsrfToken = (req: Request, res: Response) => {
 	try {
-		const token = (
-			req as Request & { csrfToken: () => string }
-		).csrfToken();
+		const token = generateToken(req, res);
 		res.json({
 			success: true,
 			csrfToken: token,
@@ -49,7 +62,7 @@ export const csrfErrorHandler = (
 	res: Response,
 	next: NextFunction,
 ) => {
-	if (err.message === 'invalid csrf token') {
+	if (err === invalidCsrfTokenError) {
 		logger.warn('[CSRF] Invalid CSRF token', {
 			method: req.method,
 			path: req.path,
