@@ -23,6 +23,10 @@ interface Property {
 	createdAt: string;
 	views?: number;
 	transactionType?: string;
+	mainImage?: {
+		url: string;
+		key: string;
+	};
 }
 
 interface SearchAdItem {
@@ -50,6 +54,10 @@ interface RawProperty {
 	createdAt?: string;
 	views?: number;
 	transactionType?: string;
+	mainImage?: {
+		url: string;
+		key: string;
+	};
 }
 
 interface Filters {
@@ -143,6 +151,7 @@ async function fetchAdminProperties(filters: Filters): Promise<{
 			views: p.views,
 			type: 'property',
 			transactionType: p.transactionType ?? '',
+			mainImage: p.mainImage,
 		}));
 
 		// Combine and sort by createdAt (newest first)
@@ -241,6 +250,7 @@ async function fetchAdminProperties(filters: Filters): Promise<{
 			views: p.views,
 			type: 'property',
 			transactionType: p.transactionType ?? '',
+			mainImage: p.mainImage,
 		}))
 		.sort(
 			(a, b) =>

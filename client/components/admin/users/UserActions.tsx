@@ -4,21 +4,26 @@ import React from 'react';
 import Link from 'next/link';
 import {
 	Eye,
-	Edit,
 	Unlock,
 	UserX,
 	Key,
 	CreditCard,
 	X,
 	Trash2,
+	ShieldCheck,
+	ShieldX,
 } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { executeAdminAction, AdminActionType } from '@/hooks/useAdminActions';
-import { CONFIRM_MESSAGES } from '@/lib/constants/admin';
+import {
+	CONFIRM_MESSAGES,
+	ACTION_SUCCESS_MESSAGES,
+} from '@/lib/constants/admin';
 import type { AdminUser, ConfirmActionState } from '@/types/admin';
 
 interface UserActionsProps {
 	user: AdminUser;
-	onConfirmAction: (action: ConfirmActionState) => void;
+	onConfirmAction: (action: ConfirmActionState | null) => void;
 	refetch: () => Promise<void>;
 	setActionBusy: (busy: boolean) => void;
 }
@@ -31,7 +36,7 @@ const createActionHandler = (
 	userId: string,
 	refetch: () => Promise<void>,
 	setActionBusy: (busy: boolean) => void,
-	onConfirmAction: (action: ConfirmActionState) => void,
+	onConfirmAction: (action: ConfirmActionState | null) => void,
 ) => {
 	onConfirmAction({
 		label: confirmMessage,
@@ -39,10 +44,18 @@ const createActionHandler = (
 		onConfirm: async () => {
 			setActionBusy(true);
 			try {
-				await executeAdminAction(actionType, userId);
+				const result = await executeAdminAction(actionType, userId);
+				if (result.success) {
+					toast.success(ACTION_SUCCESS_MESSAGES[actionType]);
+				} else {
+					toast.error(result.error || "Erreur lors de l'action");
+				}
 				await refetch();
+			} catch {
+				toast.error("Erreur lors de l'action");
 			} finally {
 				setActionBusy(false);
+				onConfirmAction(null);
 			}
 		},
 	});
@@ -106,6 +119,20 @@ export const UserActions: React.FC<UserActionsProps> = ({
 		);
 	};
 
+	const handleValidateToggle = () => {
+		createActionHandler(
+			user.isValidated ? 'invalidate' : 'validate',
+			user.isValidated ? 'invalidate' : 'validate',
+			user.isValidated
+				? CONFIRM_MESSAGES.INVALIDATE_USER
+				: CONFIRM_MESSAGES.VALIDATE_USER,
+			user._id,
+			refetch,
+			setActionBusy,
+			onConfirmAction,
+		);
+	};
+
 	return (
 		<div className="flex items-center justify-end gap-1.5">
 			{/* View / Edit - Navigate to profile page */}
@@ -117,14 +144,24 @@ export const UserActions: React.FC<UserActionsProps> = ({
 				<Eye className="w-4 h-4 text-gray-600 group-hover:text-blue-600 transition-colors" />
 			</Link>
 
-			{/* Edit - Also navigate to profile page */}
-			<Link
-				href={`/admin/users/${user._id}`}
-				className="p-2 hover:bg-purple-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-purple-200 group"
-				title="Éditer"
-			>
-				<Edit className="w-4 h-4 text-gray-600 group-hover:text-purple-600 transition-colors" />
-			</Link>
+			{/* Validate/Invalidate User */}
+			{user.isValidated ? (
+				<button
+					title="Retirer la validation"
+					onClick={handleValidateToggle}
+					className="p-2 hover:bg-orange-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-orange-200 group"
+				>
+					<ShieldX className="w-4 h-4 text-gray-600 group-hover:text-orange-600 transition-colors" />
+				</button>
+			) : (
+				<button
+					title="Valider l'utilisateur"
+					onClick={handleValidateToggle}
+					className="p-2 hover:bg-emerald-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-emerald-200 group"
+				>
+					<ShieldCheck className="w-4 h-4 text-gray-600 group-hover:text-emerald-600 transition-colors" />
+				</button>
+			)}
 
 			{/* Block/Unblock - Desktop only */}
 			<div className="hidden lg:flex">

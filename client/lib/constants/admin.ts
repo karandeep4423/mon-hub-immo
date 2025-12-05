@@ -142,6 +142,8 @@ export const PROPERTY_TYPE_LABELS: Record<string, string> = {
 	land: 'Terrain',
 	commercial: 'Commercial',
 	studio: 'Studio',
+	search: 'Recherche',
+	property: 'Annonce',
 };
 
 // ==================== Color Mappings ====================
@@ -185,3 +187,16 @@ export const CONFIRM_MESSAGES = {
 	CANCEL_COLLABORATION: 'Annuler cette collaboration ?',
 	COMPLETE_COLLABORATION: 'Forcer la complétion de cette collaboration ?',
 } as const;
+
+// ==================== Action Success Messages ====================
+
+export const ACTION_SUCCESS_MESSAGES: Record<string, string> = {
+	validate: 'Utilisateur validé avec succès',
+	invalidate: 'Validation retirée',
+	block: 'Utilisateur bloqué',
+	unblock: 'Utilisateur débloqué',
+	grant_access: 'Accès manuel accordé',
+	revoke_access: 'Accès manuel révoqué',
+	delete: 'Utilisateur supprimé',
+	payment_reminder: 'Rappel de paiement envoyé',
+};

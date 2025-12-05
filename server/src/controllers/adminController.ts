@@ -1,6 +1,8 @@
 import { User } from '../models/User';
 import { Property } from '../models/Property'; // ou ton modèle d'annonces
 import { Collaboration } from '../models/Collaboration'; // idem pour collaborations
+import Message from '../models/Chat';
+import { SearchAd } from '../models/SearchAd';
 import { Request, Response } from 'express';
 import { AuthRequest } from '../types/auth';
 import mongoose from 'mongoose';
@@ -468,7 +470,7 @@ export const getAdminUserProfile = async (req: Request, res: Response) => {
 	}
 };
 
-// Per-user detailed stats (properties count, collaborations active/closed)
+// Per-user detailed stats (properties count, collaborations active/closed, search ads, messages, etc.)
 export const getAdminUserStats = async (req: Request, res: Response) => {
 	const userId = req.params.id;
 	if (!userId) return res.status(400).json({ error: 'Missing user id' });
@@ -482,11 +484,27 @@ export const getAdminUserStats = async (req: Request, res: Response) => {
 			userId,
 		});
 		const uid = new mongoose.Types.ObjectId(userId);
-		// Properties: count documents owned by this user
-		const propertiesCount = await Property.countDocuments({ owner: uid });
 
-		// Collaborations: count both as post owner and as collaborator, by status
-		const [ownerAgg, collabAgg] = await Promise.all([
+		// Get user for additional info (last login, created at)
+		const user = await User.findById(uid).select(
+			'lastLogin createdAt loginCount',
+		);
+
+		// Run all counts in parallel for better performance
+		const [
+			propertiesCount,
+			searchAdsCount,
+			messagesCount,
+			ownerAgg,
+			collabAgg,
+		] = await Promise.all([
+			// Properties: count documents owned by this user
+			Property.countDocuments({ owner: uid }),
+			// Search Ads: count documents authored by this user
+			SearchAd.countDocuments({ authorId: uid }),
+			// Messages: count messages sent by this user
+			Message.countDocuments({ senderId: uid }),
+			// Collaborations as post owner
 			Collaboration.aggregate([
 				{ $match: { postOwnerId: uid } },
 				{
@@ -497,6 +515,11 @@ export const getAdminUserStats = async (req: Request, res: Response) => {
 								$cond: [{ $eq: ['$status', 'active'] }, 1, 0],
 							},
 						},
+						pending: {
+							$sum: {
+								$cond: [{ $eq: ['$status', 'pending'] }, 1, 0],
+							},
+						},
 						closed: {
 							$sum: {
 								$cond: [
@@ -506,9 +529,19 @@ export const getAdminUserStats = async (req: Request, res: Response) => {
 								],
 							},
 						},
+						cancelled: {
+							$sum: {
+								$cond: [
+									{ $eq: ['$status', 'cancelled'] },
+									1,
+									0,
+								],
+							},
+						},
 					},
 				},
 			]),
+			// Collaborations as collaborator
 			Collaboration.aggregate([
 				{ $match: { collaboratorId: uid } },
 				{
@@ -519,10 +552,24 @@ export const getAdminUserStats = async (req: Request, res: Response) => {
 								$cond: [{ $eq: ['$status', 'active'] }, 1, 0],
 							},
 						},
+						pending: {
+							$sum: {
+								$cond: [{ $eq: ['$status', 'pending'] }, 1, 0],
+							},
+						},
 						closed: {
 							$sum: {
 								$cond: [
 									{ $eq: ['$status', 'completed'] },
+									1,
+									0,
+								],
+							},
+						},
+						cancelled: {
+							$sum: {
+								$cond: [
+									{ $eq: ['$status', 'cancelled'] },
 									1,
 									0,
 								],
@@ -533,19 +580,39 @@ export const getAdminUserStats = async (req: Request, res: Response) => {
 			]),
 		]);
 
-		const active = (ownerAgg[0]?.active || 0) + (collabAgg[0]?.active || 0);
-		const closed = (ownerAgg[0]?.closed || 0) + (collabAgg[0]?.closed || 0);
+		const collaborationsActive =
+			(ownerAgg[0]?.active || 0) + (collabAgg[0]?.active || 0);
+		const collaborationsPending =
+			(ownerAgg[0]?.pending || 0) + (collabAgg[0]?.pending || 0);
+		const collaborationsClosed =
+			(ownerAgg[0]?.closed || 0) + (collabAgg[0]?.closed || 0);
+		const collaborationsCancelled =
+			(ownerAgg[0]?.cancelled || 0) + (collabAgg[0]?.cancelled || 0);
+		const collaborationsTotal =
+			collaborationsActive +
+			collaborationsPending +
+			collaborationsClosed +
+			collaborationsCancelled;
 
 		logger.info('[AdminController] getAdminUserStats success', {
 			userId,
 			propertiesCount,
-			collaborationsActive: active,
-			collaborationsClosed: closed,
+			searchAdsCount,
+			messagesCount,
+			collaborationsActive,
+			collaborationsClosed,
 		});
+
 		res.json({
 			propertiesCount,
-			collaborationsActive: active,
-			collaborationsClosed: closed,
+			searchAdsCount,
+			messagesCount,
+			collaborationsActive,
+			collaborationsPending,
+			collaborationsClosed,
+			collaborationsCancelled,
+			collaborationsTotal,
+			memberSince: user?.createdAt || null,
 		});
 	} catch (err) {
 		logger.error('[AdminController] getAdminUserStats failed', {

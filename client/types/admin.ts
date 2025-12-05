@@ -90,6 +90,11 @@ export interface AdminProperty {
 		network?: string;
 	};
 	surface?: number;
+	mainImage?: {
+		url: string;
+		key: string;
+	};
+	inCollaboration?: boolean;
 }
 
 export interface AdminPropertyFilters {
@@ -105,6 +110,10 @@ export interface CollaborationPostRef {
 	_id?: string;
 	title?: string;
 	address?: string;
+	mainImage?: {
+		url: string;
+		key: string;
+	};
 }
 
 export interface CollaborationParticipant {
@@ -112,6 +121,7 @@ export interface CollaborationParticipant {
 	firstName?: string;
 	lastName?: string;
 	userType?: string;
+	profileImage?: string;
 }
 
 export interface AdminCollaboration {

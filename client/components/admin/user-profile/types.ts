@@ -39,8 +39,14 @@ export interface UserProfile {
 	profileCompleted?: boolean;
 	professionalInfo?: ProfessionalInfo | null;
 	propertiesCount?: number;
+	searchAdsCount?: number;
+	messagesCount?: number;
 	collaborationsActive?: number;
+	collaborationsPending?: number;
 	collaborationsClosed?: number;
+	collaborationsCancelled?: number;
+	collaborationsTotal?: number;
+	memberSince?: string | Date | null;
 	stripeCustomerId?: string;
 	stripeSubscriptionId?: string;
 	subscriptionStatus?: string;

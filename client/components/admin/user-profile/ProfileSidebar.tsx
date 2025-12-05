@@ -11,6 +11,7 @@ import {
 	Trash2,
 	XCircle,
 	LucideIcon,
+	Calendar,
 } from 'lucide-react';
 import { UserProfile, KnownUserType, ConfirmAction } from './types';
 
@@ -88,7 +89,7 @@ export function ProfileSidebar({
 		<div className="lg:col-span-4 xl:col-span-3">
 			<Card className="overflow-hidden shadow-xl border-0 bg-white rounded-xl sm:rounded-2xl">
 				{/* Header gradient with pattern */}
-				<div className="relative h-20 sm:h-24 md:h-28 bg-gradient-to-br from-primary-500 via-primary-600 to-cyan-600">
+				<div className="relative h-20 sm:h-24 md:h-28 bg-cyan-300">
 					<div className="absolute inset-0 bg-[url('/patterns/grid.svg')] opacity-10" />
 					<div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
 				</div>
@@ -159,7 +160,10 @@ export function ProfileSidebar({
 
 				{/* Stats Section */}
 				<div className="px-3 sm:px-4 pb-3 sm:pb-4">
-					<div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+					<h3 className="text-[10px] sm:text-[11px] font-bold text-gray-400 uppercase tracking-wider px-0.5 sm:px-1 mb-2">
+						Statistiques
+					</h3>
+					<div className="grid grid-cols-1 gap-1.5 sm:gap-2">
 						<StatBox
 							value={user.propertiesCount ?? 0}
 							label="Annonces"
@@ -168,19 +172,74 @@ export function ProfileSidebar({
 							labelColor="text-blue-600/70"
 						/>
 						<StatBox
-							value={user.collaborationsActive ?? 0}
-							label="Actives"
-							gradient="bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-100/50"
-							textColor="text-emerald-600"
-							labelColor="text-emerald-600/70"
+							value={user.searchAdsCount ?? 0}
+							label="Recherches"
+							gradient="bg-gradient-to-br from-purple-50 to-violet-50 border-purple-100/50"
+							textColor="text-purple-600"
+							labelColor="text-purple-600/70"
 						/>
 						<StatBox
-							value={user.collaborationsClosed ?? 0}
-							label="Clôturées"
-							gradient="bg-gradient-to-br from-gray-50 to-slate-50 border-gray-200/50"
-							textColor="text-gray-600"
-							labelColor="text-gray-500"
+							value={user.collaborationsTotal ?? 0}
+							label="Collaborations"
+							gradient="bg-gradient-to-br from-cyan-50 to-sky-50 border-cyan-100/50"
+							textColor="text-cyan-600"
+							labelColor="text-cyan-600/70"
 						/>
+						<StatBox
+							value={user.messagesCount ?? 0}
+							label="Messages"
+							gradient="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-100/50"
+							textColor="text-amber-600"
+							labelColor="text-amber-600/70"
+						/>
+					</div>
+
+					{/* Collaboration breakdown */}
+					<div className="mt-2 grid grid-cols-3 gap-1 sm:gap-1.5">
+						<div className="bg-emerald-50 rounded-lg p-1.5 sm:p-2 text-center border border-emerald-100/50">
+							<div className="text-sm sm:text-base font-bold text-emerald-600">
+								{user.collaborationsActive ?? 0}
+							</div>
+							<div className="text-[7px] sm:text-[8px] text-emerald-600/70 uppercase font-semibold">
+								Actives
+							</div>
+						</div>
+						<div className="bg-amber-50 rounded-lg p-1.5 sm:p-2 text-center border border-amber-100/50">
+							<div className="text-sm sm:text-base font-bold text-amber-600">
+								{user.collaborationsPending ?? 0}
+							</div>
+							<div className="text-[7px] sm:text-[8px] text-amber-600/70 uppercase font-semibold">
+								En attente
+							</div>
+						</div>
+						<div className="bg-gray-50 rounded-lg p-1.5 sm:p-2 text-center border border-gray-200/50">
+							<div className="text-sm sm:text-base font-bold text-gray-600">
+								{user.collaborationsClosed ?? 0}
+							</div>
+							<div className="text-[7px] sm:text-[8px] text-gray-500 uppercase font-semibold">
+								Clôturées
+							</div>
+						</div>
+					</div>
+
+					{/* Activity info */}
+					<div className="mt-3">
+						<div className="flex items-center gap-2 text-xs text-gray-500">
+							<Calendar size={12} className="text-gray-400" />
+							<span>
+								Membre depuis{' '}
+								{user.memberSince || user.createdAt
+									? new Date(
+											(user.memberSince ||
+												user.createdAt) as string,
+										).toLocaleDateString('fr-FR', {
+											day: '2-digit',
+											month: 'short',
+											year: 'numeric',
+										})
+									: '-'}
+							</span>
+						</div>
 					</div>
 				</div>
 

@@ -28,26 +28,24 @@ export const getAllCollaborationsAdmin = async (
 			},
 		);
 		const collaborations = await Collaboration.find()
-			.populate('postId')
+			.populate('postId', 'title address mainImage')
 			.populate('postOwnerId', 'firstName lastName email profileImage')
 			.populate('collaboratorId', 'firstName lastName email profileImage')
-			.sort({ createdAt: -1 });
+			.sort({ createdAt: -1 })
+			.lean();
 
-		const mappedCollaborations = collaborations.map(
-			(c: InstanceType<typeof Collaboration>) => ({
-				...c.toObject(),
-				agent: c.postOwnerId,
-				agentId:
-					(
-						c.postOwnerId as { _id?: Types.ObjectId }
-					)?._id?.toString() || c.postOwnerId,
-				apporteur: c.collaboratorId,
-				apporteurId:
-					(
-						c.collaboratorId as { _id?: Types.ObjectId }
-					)?._id?.toString() || c.collaboratorId,
-			}),
-		);
+		const mappedCollaborations = collaborations.map((c) => ({
+			...c,
+			agent: c.postOwnerId,
+			agentId:
+				(c.postOwnerId as { _id?: Types.ObjectId })?._id?.toString() ||
+				c.postOwnerId?.toString(),
+			apporteur: c.collaboratorId,
+			apporteurId:
+				(
+					c.collaboratorId as { _id?: Types.ObjectId }
+				)?._id?.toString() || c.collaboratorId?.toString(),
+		}));
 
 		logger.info(
 			'[CollaborationController] getAllCollaborationsAdmin success',

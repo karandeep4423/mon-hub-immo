@@ -1,6 +1,6 @@
 import React from 'react';
 import { Badge } from '@/components/ui/Badge';
-import { BarChart2 } from 'lucide-react';
+import { Home } from 'lucide-react';
 import type { AdminProperty } from '@/types/admin';
 import {
 	getPropertyTypeLabel,
@@ -18,15 +18,28 @@ export const getPropertyTableColumns = (): ColumnDef[] => [
 	{
 		header: 'Annonce',
 		accessor: 'title',
-		width: '30%',
+		width: '35%',
 		render: (_: unknown, row: AdminProperty) => (
-			<div className="min-w-0">
-				<p className="font-semibold text-gray-900 text-sm truncate">
-					{row.title}
-				</p>
-				<p className="text-xs text-gray-500 truncate mt-0.5">
-					{row.location || row.city}
-				</p>
+			<div className="flex items-center gap-3 min-w-0">
+				{row.mainImage?.url ? (
+					<img
+						src={row.mainImage.url}
+						alt={row.title}
+						className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover flex-shrink-0 shadow-sm border border-gray-100"
+					/>
+				) : (
+					<div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0 flex items-center justify-center shadow-sm border border-gray-100">
+						<Home className="w-5 h-5 text-gray-400" />
+					</div>
+				)}
+				<div className="min-w-0">
+					<p className="font-semibold text-gray-900 text-sm truncate">
+						{row.title}
+					</p>
+					<p className="text-xs text-gray-500 truncate mt-0.5">
+						{row.location || row.city}
+					</p>
+				</div>
 			</div>
 		),
 	},
@@ -45,7 +58,7 @@ export const getPropertyTableColumns = (): ColumnDef[] => [
 	{
 		header: 'Prix',
 		accessor: 'price',
-		width: '12%',
+		width: '15%',
 		render: (value: unknown) => (
 			<div className="flex items-center gap-1.5">
 				<div className="px-2 py-1 rounded-lg bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200/50">
@@ -57,22 +70,9 @@ export const getPropertyTableColumns = (): ColumnDef[] => [
 		),
 	},
 	{
-		header: 'Vues',
-		accessor: 'views',
-		width: '10%',
-		render: (value: unknown) => (
-			<div className="flex items-center justify-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200/50 w-fit">
-				<BarChart2 className="w-3.5 h-3.5 text-purple-600" />
-				<span className="text-xs font-semibold text-purple-700">
-					{Number(value) || 0}
-				</span>
-			</div>
-		),
-	},
-	{
 		header: 'Statut',
 		accessor: 'status',
-		width: '13%',
+		width: '15%',
 		render: (value: unknown) => {
 			const status = String(value || '');
 			return (
@@ -91,7 +91,7 @@ export const getPropertyTableColumns = (): ColumnDef[] => [
 	{
 		header: 'Créée',
 		accessor: 'createdAt',
-		width: '13%',
+		width: '15%',
 		render: (value: unknown) => (
 			<span className="text-xs text-gray-600 hidden sm:inline">
 				{new Date(String(value)).toLocaleDateString('fr-FR')}

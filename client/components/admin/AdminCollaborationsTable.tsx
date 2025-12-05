@@ -8,19 +8,10 @@ import Pagination from '@/components/ui/Pagination';
 import { ConfirmDialog } from '@/components/ui';
 import { adminService } from '@/lib/api/adminApi';
 import { toast } from 'react-toastify';
-import {
-	BarChart2,
-	CheckCircle,
-	Check,
-	DollarSign,
-	Handshake,
-} from 'lucide-react';
+import { BarChart2, CheckCircle, Check, Clock, Handshake } from 'lucide-react';
 import type { AdminCollaboration, ConfirmDialogState } from '@/types/admin';
 import { COLLABORATION_STATUS_OPTIONS } from '@/lib/constants/admin';
-import {
-	getCollaborationType,
-	formatCommissionShort,
-} from '@/lib/utils/adminUtils';
+import { getCollaborationType } from '@/lib/utils/adminUtils';
 import { FilterStatCard } from './ui';
 import {
 	EditCollaborationModal,
@@ -144,10 +135,9 @@ export const AdminCollaborationsTableModern: React.FC<
 			completed: filteredCollaborations.filter(
 				(c) => c.status === 'completed',
 			).length,
-			totalCommission: filteredCollaborations.reduce(
-				(sum, c) => sum + (c.commission || c.proposedCommission || 0),
-				0,
-			),
+			pending: filteredCollaborations.filter(
+				(c) => c.status === 'pending',
+			).length,
 		}),
 		[filteredCollaborations],
 	);
@@ -255,11 +245,11 @@ export const AdminCollaborationsTableModern: React.FC<
 				/>
 				<FilterStatCard
 					icon={
-						<DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-rose-600" />
+						<Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
 					}
-					label="Commissions"
-					value={formatCommissionShort(stats.totalCommission)}
-					color="rose"
+					label="En attente"
+					value={stats.pending}
+					color="yellow"
 				/>
 			</div>
 

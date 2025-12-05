@@ -2,14 +2,13 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Handshake, Home, Calendar, RefreshCw } from 'lucide-react';
+import { Home, Calendar, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import {
 	getStatusBadgeVariant,
 	getStatusLabel,
 	getParticipantName,
 	formatDate,
-	formatPrice,
 } from '@/lib/utils/adminUtils';
 import type { AdminCollaboration } from '@/types/admin';
 
@@ -25,6 +24,10 @@ export const getCollaborationTableColumns = () => [
 				typeof row.agent === 'object' && row.agent
 					? row.agent._id
 					: row.agentId;
+			const agentImage =
+				typeof row.agent === 'object' && row.agent
+					? row.agent.profileImage
+					: undefined;
 			const apporteurName =
 				row.apporteurName ||
 				getParticipantName(row.apporteur) ||
@@ -33,13 +36,25 @@ export const getCollaborationTableColumns = () => [
 				typeof row.apporteur === 'object' && row.apporteur
 					? row.apporteur._id
 					: row.apporteurId;
+			const apporteurImage =
+				typeof row.apporteur === 'object' && row.apporteur
+					? row.apporteur.profileImage
+					: undefined;
 
 			return (
 				<div className="space-y-2 text-xs sm:text-sm">
 					<div className="flex items-center gap-2 min-w-0">
-						<div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-100 flex-shrink-0 flex items-center justify-center text-blue-600 font-bold text-xs">
-							{agentName.charAt(0)}
-						</div>
+						{agentImage ? (
+							<img
+								src={agentImage}
+								alt={agentName}
+								className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover flex-shrink-0 border border-gray-100"
+							/>
+						) : (
+							<div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs">
+								{agentName.charAt(0).toUpperCase()}
+							</div>
+						)}
 						{agentId ? (
 							<Link
 								href={`/admin/users/${agentId}`}
@@ -54,9 +69,17 @@ export const getCollaborationTableColumns = () => [
 						)}
 					</div>
 					<div className="flex items-center gap-2 ml-0 sm:ml-1 min-w-0">
-						<div className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 flex items-center justify-center">
-							<Handshake className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
-						</div>
+						{apporteurImage ? (
+							<img
+								src={apporteurImage}
+								alt={apporteurName}
+								className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover flex-shrink-0 border border-gray-100"
+							/>
+						) : (
+							<div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex-shrink-0 flex items-center justify-center text-white font-bold text-[10px]">
+								{apporteurName.charAt(0).toUpperCase()}
+							</div>
+						)}
 						{apporteurId ? (
 							<Link
 								href={`/admin/users/${apporteurId}`}
@@ -77,30 +100,43 @@ export const getCollaborationTableColumns = () => [
 	{
 		header: 'Annonce',
 		accessor: 'property',
-		width: '20%',
+		width: '22%',
 		render: (value: unknown, row: AdminCollaboration) => {
 			const propertyTitle =
 				(typeof value === 'string' ? value : null) ||
-				row.postId?.address ||
 				row.postId?.title ||
+				row.postId?.address ||
 				'Unknown';
+			const propertyImage = row.postId?.mainImage?.url;
 			const isProperty = row.postType === 'Property';
 
 			return (
 				<div className="flex items-center gap-2 min-w-0 text-xs sm:text-sm">
-					<Home className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
-					{isProperty && row.postId?._id ? (
-						<Link
-							href={`/property/${row.postId._id}`}
-							className="font-medium text-gray-900 hover:underline truncate"
-						>
-							{propertyTitle}
-						</Link>
+					{propertyImage ? (
+						<img
+							src={propertyImage}
+							alt={propertyTitle}
+							className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg object-cover flex-shrink-0 shadow-sm border border-gray-100"
+						/>
 					) : (
-						<span className="font-medium text-gray-900 truncate">
-							{propertyTitle}
-						</span>
+						<div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0 flex items-center justify-center shadow-sm border border-gray-100">
+							<Home className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
+						</div>
 					)}
+					<div className="min-w-0">
+						{isProperty && row.postId?._id ? (
+							<Link
+								href={`/property/${row.postId._id}`}
+								className="font-medium text-gray-900 hover:underline truncate block text-xs sm:text-sm"
+							>
+								{propertyTitle}
+							</Link>
+						) : (
+							<span className="font-medium text-gray-900 truncate block text-xs sm:text-sm">
+								{propertyTitle}
+							</span>
+						)}
+					</div>
 				</div>
 			);
 		},
@@ -108,7 +144,7 @@ export const getCollaborationTableColumns = () => [
 	{
 		header: 'Commission',
 		accessor: 'commission',
-		width: '15%',
+		width: '13%',
 		render: (value: unknown, row: AdminCollaboration) => {
 			const commission =
 				(typeof value === 'number' ? value : null) ??
@@ -118,7 +154,7 @@ export const getCollaborationTableColumns = () => [
 				<div className="flex justify-center">
 					<div className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200/50 shadow-sm">
 						<span className="font-bold text-sm bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
-							{formatPrice(commission)}
+							{commission}%
 						</span>
 					</div>
 				</div>

@@ -20,9 +20,19 @@ export const getUserTableColumns = () => [
 		width: '25%',
 		render: (_: unknown, row: AdminUser) => (
 			<div className="flex items-center gap-2 min-w-0">
-				<div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs sm:text-sm shadow-md">
-					{row.firstName?.charAt(0) || row.email?.charAt(0) || 'U'}
-				</div>
+				{row.profileImage ? (
+					<img
+						src={row.profileImage}
+						alt={`${row.firstName || ''} ${row.lastName || ''}`}
+						className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex-shrink-0 object-cover shadow-md"
+					/>
+				) : (
+					<div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs sm:text-sm shadow-md">
+						{row.firstName?.charAt(0) ||
+							row.email?.charAt(0) ||
+							'U'}
+					</div>
+				)}
 				<div className="min-w-0">
 					<p className="font-semibold text-gray-900 text-xs sm:text-sm truncate">
 						{row.firstName} {row.lastName}

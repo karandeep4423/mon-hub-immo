@@ -12,10 +12,11 @@ import { adminService } from '@/lib/api/adminApi';
 import {
 	Home,
 	CheckCircle,
-	BarChart2,
+	Search,
 	DollarSign,
 	LayoutGrid,
 	List,
+	BarChart2,
 } from 'lucide-react';
 import Pagination from '@/components/ui/Pagination';
 import type { AdminProperty } from '@/types/admin';
@@ -87,8 +88,12 @@ export function AdminPropertiesTableModern({
 	const stats = useMemo(
 		() => ({
 			total: totalItems ?? properties.length,
+			propertiesCount: properties.filter(
+				(p) => p.type === 'property' || !p.type,
+			).length,
+			searchAdsCount: properties.filter((p) => p.type === 'search')
+				.length,
 			active: properties.filter((p) => p.status === 'active').length,
-			views: properties.reduce((sum, p) => sum + (p.views || 0), 0),
 			value: properties.reduce((sum, p) => sum + (p.price || 0), 0),
 		}),
 		[properties, totalItems],
@@ -277,9 +282,17 @@ export function AdminPropertiesTableModern({
 					icon={
 						<Home className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
 					}
-					label="Total"
-					value={stats.total}
+					label="Annonces"
+					value={stats.propertiesCount}
 					color="blue"
+				/>
+				<FilterStatCard
+					icon={
+						<Search className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
+					}
+					label="Recherches"
+					value={stats.searchAdsCount}
+					color="purple"
 				/>
 				<FilterStatCard
 					icon={
@@ -288,14 +301,6 @@ export function AdminPropertiesTableModern({
 					label="Actives"
 					value={stats.active}
 					color="green"
-				/>
-				<FilterStatCard
-					icon={
-						<BarChart2 className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
-					}
-					label="Vues"
-					value={stats.views}
-					color="purple"
 				/>
 				<FilterStatCard
 					icon={

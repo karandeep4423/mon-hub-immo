@@ -3,11 +3,12 @@
 import React, { useState, useMemo } from 'react';
 import {
 	Users,
-	CheckCircle,
-	Clock,
 	Download,
 	Upload,
 	Plus,
+	Banknote,
+	AlertCircle,
+	ShieldOff,
 } from 'lucide-react';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import CreateUserModal from './CreateUserModal';
@@ -223,10 +224,15 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 		if (!tableConfirmAction?.type) return 'primary';
 		if (
 			tableConfirmAction.type === 'block' ||
-			tableConfirmAction.type === 'delete'
+			tableConfirmAction.type === 'delete' ||
+			tableConfirmAction.type === 'invalidate'
 		)
 			return 'danger';
-		if (tableConfirmAction.type === 'unblock') return 'primary';
+		if (
+			tableConfirmAction.type === 'unblock' ||
+			tableConfirmAction.type === 'validate'
+		)
+			return 'primary';
 		if (tableConfirmAction.type?.includes('manual')) return 'warning';
 		return 'primary';
 	};
@@ -301,7 +307,7 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 			)}
 
 			{/* Stats Cards */}
-			<div className="grid grid-cols-3 gap-1.5 sm:gap-2 lg:gap-4">
+			<div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 lg:gap-4">
 				<FilterStatCard
 					icon={
 						<Users className="w-4 h-4 sm:w-5 sm:h-5 lg:w-7 lg:h-7" />
@@ -312,25 +318,38 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 				/>
 				<FilterStatCard
 					icon={
-						<CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 lg:w-7 lg:h-7" />
+						<Banknote className="w-4 h-4 sm:w-5 sm:h-5 lg:w-7 lg:h-7" />
 					}
-					label="Actifs"
+					label="Payé"
 					value={
-						filteredUsers.filter((u) => u.status === 'active')
-							.length
+						filteredUsers.filter(
+							(u) => u.isPaid || u.accessGrantedByAdmin,
+						).length
 					}
 					color="green"
 				/>
 				<FilterStatCard
 					icon={
-						<Clock className="w-4 h-4 sm:w-5 sm:h-5 lg:w-7 lg:h-7" />
+						<AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 lg:w-7 lg:h-7" />
 					}
-					label="Attente"
+					label="Non payé"
 					value={
-						filteredUsers.filter((u) => u.status === 'pending')
-							.length
+						filteredUsers.filter(
+							(u) =>
+								u.type === 'agent' &&
+								!u.isPaid &&
+								!u.accessGrantedByAdmin,
+						).length
 					}
 					color="yellow"
+				/>
+				<FilterStatCard
+					icon={
+						<ShieldOff className="w-4 h-4 sm:w-5 sm:h-5 lg:w-7 lg:h-7" />
+					}
+					label="Bloqué"
+					value={filteredUsers.filter((u) => u.isBlocked).length}
+					color="rose"
 				/>
 			</div>
 
@@ -358,7 +377,7 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 					totalItems={filteredUsers.length}
 					pageSize={limit}
 					onPageChange={setPage}
-					className="w-full"
+					className="w-full my-4"
 				/>
 			</div>
 
