@@ -129,8 +129,18 @@ async function fetchAdminProperties(filters: Filters): Promise<{
 		// Map properties
 		const rawProperties: RawProperty[] =
 			propertiesResult.data.data?.properties || [];
-		const mappedProperties = rawProperties.map((p) => ({
-			...p,
+		const mappedProperties: Property[] = rawProperties.map((p) => ({
+			_id: p._id,
+			title: p.title || '',
+			price: p.price || 0,
+			surface: p.surface || 0,
+			propertyType: p.propertyType || '',
+			status: p.status || 'active',
+			city: p.city || '',
+			location: p.location,
+			owner: p.owner,
+			createdAt: p.createdAt || new Date().toISOString(),
+			views: p.views,
 			type: 'property',
 			transactionType: p.transactionType ?? '',
 		}));
@@ -216,16 +226,26 @@ async function fetchAdminProperties(filters: Filters): Promise<{
 	const data = response.data;
 	// Sort by createdAt descending (newest first)
 	const rawProps: RawProperty[] = data.data?.properties || [];
-	const sortedProperties = rawProps
+	const sortedProperties: Property[] = rawProps
 		.map((p) => ({
+			_id: p._id,
+			title: p.title || '',
+			price: p.price || 0,
+			surface: p.surface || 0,
+			propertyType: p.propertyType || '',
+			status: p.status || 'active',
+			city: p.city || '',
+			location: p.location,
+			owner: p.owner,
+			createdAt: p.createdAt || new Date().toISOString(),
+			views: p.views,
 			type: 'property',
 			transactionType: p.transactionType ?? '',
-			...p,
 		}))
 		.sort(
 			(a, b) =>
-				new Date(b.createdAt || '0').getTime() -
-				new Date(a.createdAt || '0').getTime(),
+				new Date(b.createdAt).getTime() -
+				new Date(a.createdAt).getTime(),
 		);
 
 	const pagination = data.data?.pagination;
