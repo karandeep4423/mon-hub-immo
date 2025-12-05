@@ -345,7 +345,9 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 						<UserActions
 							user={row}
 							onConfirmAction={setTableConfirmAction}
-							refetch={refetch}
+							refetch={async () => {
+								await refetch();
+							}}
 							setActionBusy={setActionBusy}
 						/>
 					)}

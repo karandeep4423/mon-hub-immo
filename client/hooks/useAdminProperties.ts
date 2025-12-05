@@ -25,6 +25,33 @@ interface Property {
 	transactionType?: string;
 }
 
+interface SearchAdItem {
+	_id: string;
+	title?: string;
+	location?: { cities?: string[] };
+	city?: string;
+	maxBudget?: number;
+	minBudget?: number;
+	status?: string;
+	author?: Property['owner'];
+	createdAt?: string;
+}
+
+interface RawProperty {
+	_id: string;
+	title?: string;
+	price?: number;
+	surface?: number;
+	propertyType?: string;
+	status?: string;
+	city?: string;
+	location?: string;
+	owner?: Property['owner'];
+	createdAt?: string;
+	views?: number;
+	transactionType?: string;
+}
+
 interface Filters {
 	search?: string;
 	status?: string;
@@ -78,28 +105,31 @@ async function fetchAdminProperties(filters: Filters): Promise<{
 		]);
 
 		// Map search ads
-		const mappedSearchAds = searchAdsResult.map((ad: any) => {
-			const title = ad.title || 'Recherche';
-			const city = ad.location?.cities?.join(', ') || ad.city || '';
-			const price = ad.maxBudget || ad.minBudget || 0;
-			return {
-				_id: ad._id,
-				title,
-				price,
-				surface: 0,
-				propertyType: 'Recherche',
-				type: 'search',
-				status: ad.status || 'active',
-				city,
-				owner: ad.author || undefined,
-				createdAt: ad.createdAt || new Date().toISOString(),
-				views: 0,
-			} as Property;
-		});
+		const mappedSearchAds = (searchAdsResult as SearchAdItem[]).map(
+			(ad) => {
+				const title = ad.title || 'Recherche';
+				const city = ad.location?.cities?.join(', ') || ad.city || '';
+				const price = ad.maxBudget || ad.minBudget || 0;
+				return {
+					_id: ad._id,
+					title,
+					price,
+					surface: 0,
+					propertyType: 'Recherche',
+					type: 'search',
+					status: ad.status || 'active',
+					city,
+					owner: ad.author || undefined,
+					createdAt: ad.createdAt || new Date().toISOString(),
+					views: 0,
+				} as Property;
+			},
+		);
 
 		// Map properties
-		const rawProperties = propertiesResult.data.data?.properties || [];
-		const mappedProperties = rawProperties.map((p: any) => ({
+		const rawProperties: RawProperty[] =
+			propertiesResult.data.data?.properties || [];
+		const mappedProperties = rawProperties.map((p) => ({
 			...p,
 			type: 'property',
 			transactionType: p.transactionType ?? '',
@@ -131,18 +161,20 @@ async function fetchAdminProperties(filters: Filters): Promise<{
 			search: filters.search,
 			propertyType: filters.propertyType,
 		};
-		const allSearchAds = await SearchAdApi.getAllSearchAds(searchFilters);
+		const allSearchAds = (await SearchAdApi.getAllSearchAds(
+			searchFilters,
+		)) as SearchAdItem[];
 		// Sort by createdAt descending (newest first)
 		const sortedAds = [...allSearchAds].sort(
-			(a: any, b: any) =>
-				new Date(b.createdAt || 0).getTime() -
-				new Date(a.createdAt || 0).getTime(),
+			(a, b) =>
+				new Date(b.createdAt || '0').getTime() -
+				new Date(a.createdAt || '0').getTime(),
 		);
 		const total = sortedAds.length;
 		const totalPagesCalc = Math.max(1, Math.ceil(total / limit));
 		const startIdx = (page - 1) * limit;
 		const pageSlice = sortedAds.slice(startIdx, startIdx + limit);
-		const mapped = pageSlice.map((ad: any) => {
+		const mapped = pageSlice.map((ad) => {
 			const title = ad.title || 'Recherche';
 			const city = ad.location?.cities?.join(', ') || ad.city || '';
 			const price = ad.maxBudget || ad.minBudget || 0;
@@ -183,16 +215,17 @@ async function fetchAdminProperties(filters: Filters): Promise<{
 	const response = await api.get(`/admin/properties?${params.toString()}`);
 	const data = response.data;
 	// Sort by createdAt descending (newest first)
-	const sortedProperties = [...(data.data?.properties || [])]
-		.map((p: any) => ({
+	const rawProps: RawProperty[] = data.data?.properties || [];
+	const sortedProperties = rawProps
+		.map((p) => ({
 			type: 'property',
 			transactionType: p.transactionType ?? '',
 			...p,
 		}))
 		.sort(
-			(a: any, b: any) =>
-				new Date(b.createdAt || 0).getTime() -
-				new Date(a.createdAt || 0).getTime(),
+			(a, b) =>
+				new Date(b.createdAt || '0').getTime() -
+				new Date(a.createdAt || '0').getTime(),
 		);
 
 	const pagination = data.data?.pagination;
@@ -207,16 +240,12 @@ async function fetchAdminProperties(filters: Filters): Promise<{
 export function useAdminProperties(
 	initialFilters: Filters,
 ): UseAdminPropertiesResult {
+	const filtersKey = JSON.stringify(initialFilters);
 	const swrKey = useMemo(
-		() => swrKeys.admin.properties(initialFilters),
-		[
-			initialFilters.postType,
-			initialFilters.search,
-			initialFilters.status,
-			initialFilters.propertyType,
-			initialFilters.page,
-			initialFilters.limit,
-		],
+		() =>
+			swrKeys.admin.properties(initialFilters as Record<string, unknown>),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[filtersKey],
 	);
 
 	const {

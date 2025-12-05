@@ -9,6 +9,12 @@ export interface AuthResponse {
 	requiresProfileCompletion?: boolean; // Add this
 	requiresAdminValidation?: boolean; // True when account is created/verified but awaiting admin validation
 	errors?: ValidationError[];
+	// Admin-created user flow fields
+	adminCreatedFlow?: boolean;
+	nextStep?: 'set-password' | 'login';
+	inviteToken?: string;
+	mustChangePassword?: boolean;
+	email?: string;
 }
 
 // Update User interface

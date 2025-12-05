@@ -10,33 +10,42 @@ interface Filters {
 	isBlocked?: string;
 }
 
+interface AdminUser {
+	_id: string;
+	createdAt?: string;
+	registeredAt?: string;
+	[key: string]: unknown;
+}
+
 export function useAdminUsers(filters: Filters) {
 	const {
 		data: users,
 		isLoading: loading,
 		error,
 		mutate,
-	} = useSWR<any[]>(
-		swrKeys.admin.users(filters),
+	} = useSWR<AdminUser[]>(
+		swrKeys.admin.users(filters as Record<string, unknown>),
 		async () => {
 			const params = new URLSearchParams();
 			Object.entries(filters || {}).forEach(([key, value]) => {
 				if (value) params.append(key, value as string);
 			});
 			const res = await api.get(`/admin/users?${params.toString()}`);
-			const data = res.data;
+			const data = res.data as
+				| AdminUser[]
+				| { users?: AdminUser[]; usersList?: AdminUser[] };
 
 			// API may return either an array or an object { users: [...] }
-			const payload = Array.isArray(data)
+			const payload: AdminUser[] = Array.isArray(data)
 				? data
-				: data?.users || data?.usersList || data || [];
+				: data?.users || data?.usersList || [];
 			// Sort by createdAt descending (newest first)
-			return [...payload].sort((a: any, b: any) => {
+			return [...payload].sort((a, b) => {
 				const dateA = new Date(
-					a.createdAt || a.registeredAt || 0,
+					a.createdAt || a.registeredAt || '0',
 				).getTime();
 				const dateB = new Date(
-					b.createdAt || b.registeredAt || 0,
+					b.createdAt || b.registeredAt || '0',
 				).getTime();
 				return dateB - dateA;
 			});

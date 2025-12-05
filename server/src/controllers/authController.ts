@@ -714,7 +714,9 @@ export const verifyEmail = async (
 		}
 
 		// Check if user already exists (shouldn't happen, but safety check)
-		const existingUser = await User.findOne({ email });
+		const existingUser = await User.findOne({ email }).select(
+			'+passwordResetCode +passwordResetExpires +password',
+		);
 		if (existingUser) {
 			// If user exists and is NOT yet verified, this is from admin-created flow
 			// Just mark their email as verified and clean up pending verification
@@ -733,10 +735,38 @@ export const verifyEmail = async (
 					metadata: { email, flow: 'admin_invite' },
 				});
 
+				// Determine next step for admin-created user
+				// Check if user has a password set and if they need to set one via invite link
+				const hasInviteToken =
+					existingUser.passwordResetCode &&
+					existingUser.passwordResetExpires &&
+					existingUser.passwordResetExpires > new Date();
+				const hasPassword = !!existingUser.password;
+				const mustChangePassword = !!(
+					existingUser as { mustChangePassword?: boolean }
+				).mustChangePassword;
+
+				// Flow 1: Invite link flow - user needs to set password
+				// Flow 2: Temp password flow - user can login but must change password
+				let nextStep: 'set-password' | 'login' = 'login';
+				let inviteToken: string | undefined;
+
+				if (hasInviteToken && !hasPassword) {
+					// Invite link flow - redirect to set password page
+					nextStep = 'set-password';
+					inviteToken = existingUser.passwordResetCode;
+				}
+
 				res.json({
 					success: true,
 					message: 'Email vérifié avec succès',
 					requiresAdminValidation: !existingUser.isValidated,
+					// New fields for admin-created user flow
+					adminCreatedFlow: true,
+					nextStep,
+					inviteToken,
+					mustChangePassword,
+					email: existingUser.email,
 				});
 				return;
 			}
@@ -924,6 +954,18 @@ export const setPasswordFromInvite = async (
 			res.status(400).json({
 				success: false,
 				message: 'Token invalide ou expiré',
+			});
+			return;
+		}
+
+		// Check if email is verified first (required for admin-created users)
+		if (!user.isEmailVerified) {
+			res.status(400).json({
+				success: false,
+				message:
+					"Veuillez d'abord vérifier votre email avant de définir votre mot de passe.",
+				requiresEmailVerification: true,
+				email: user.email,
 			});
 			return;
 		}

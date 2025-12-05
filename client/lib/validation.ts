@@ -138,6 +138,16 @@ export const forgotPasswordSchema = z.object({
 		.email('Veuillez entrer une adresse email valide'),
 });
 
+// Strong password validation matching server requirements
+const strongPassword = z
+	.string()
+	.min(12, 'Le mot de passe doit contenir au moins 12 caractères')
+	.max(128, 'Le mot de passe ne doit pas dépasser 128 caractères')
+	.regex(
+		/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&_\-+=]).*$/,
+		'Le mot de passe doit contenir majuscule, minuscule, chiffre et caractère spécial (@$!%*?&_-+=)',
+	);
+
 export const resetPasswordSchema = z.object({
 	email: z
 		.string()
@@ -150,25 +160,16 @@ export const resetPasswordSchema = z.object({
 			/^[0-9A-Z]+$/,
 			'Le code doit contenir uniquement des chiffres et lettres majuscules',
 		),
-	newPassword: z
-		.string()
-		.min(8, 'Le mot de passe doit contenir au moins 8 caractères')
-		.regex(
-			/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-			'Le mot de passe doit contenir majuscule, minuscule et chiffre',
-		),
+	newPassword: strongPassword,
 });
 
 export const setPasswordSchema = z.object({
 	email: z
- 		.string()
- 		.min(1, 'Email requis')
- 		.email('Veuillez entrer une adresse email valide'),
+		.string()
+		.min(1, 'Email requis')
+		.email('Veuillez entrer une adresse email valide'),
 	token: z.string().min(6, 'Token invalide'),
-	newPassword: z
- 		.string()
- 		.min(8, 'Le mot de passe doit contenir au moins 8 caractères')
- 		.regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Le mot de passe doit contenir majuscule, minuscule et chiffre'),
+	newPassword: strongPassword,
 });
 
 export type SetPasswordFormData = z.infer<typeof setPasswordSchema>;

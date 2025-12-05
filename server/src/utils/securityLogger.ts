@@ -16,9 +16,10 @@ export type SecurityEventType =
 	| 'email_verified'
 	| 'invite_sent'
 	| 'temp_password_sent'
+	| 'verification_code_sent'
 	| 'account_access_granted'
 	| 'account_access_revoked'
-    | 'account_validated'
+	| 'account_validated'
 	| 'account_deleted'
 	| 'email_send_failed'
 	| 'failed_verification_attempt';

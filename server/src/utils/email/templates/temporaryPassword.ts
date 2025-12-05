@@ -16,6 +16,7 @@ export const getTemporaryPasswordTemplate = (
 			.header { background: linear-gradient(135deg, #6AD1E3, #3BA8BB); color: white; padding: 20px; text-align: center; }
 			.content { padding: 20px; }
 			.password { font-family: monospace; background: #eef; padding: 10px; border-radius: 6px; display: inline-block; }
+			.important { background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 12px; margin: 15px 0; }
 			.footer { font-size: 12px; color: #666; padding: 20px; background: #f8f9fa; text-align: center; }
 			${getResponsiveStyles()}
 		</style>
@@ -31,7 +32,11 @@ export const getTemporaryPasswordTemplate = (
 						</div>
 						<div class="content">
 							<p>Bonjour ${name},</p>
-							<p>Un administrateur a créé un compte pour vous sur MonHubImmo. Pour vous connecter, utilisez le mot de passe temporaire ci‑dessous :</p>
+							<p>Un administrateur a créé un compte pour vous sur MonHubImmo.</p>
+							<div class="important">
+								<strong>ℹ️ Étape 1 :</strong> Vérifiez d'abord votre email en utilisant le code de vérification envoyé dans un autre email.
+							</div>
+							<p><strong>Étape 2 :</strong> Après vérification, connectez-vous avec le mot de passe temporaire ci‑dessous :</p>
 							<p class="password">${tempPassword}</p>
 							<p>Pour votre sécurité, vous serez invité(e) à définir un nouveau mot de passe lors de votre première connexion.</p>
 						</div>
