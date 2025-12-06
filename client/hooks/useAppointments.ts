@@ -13,6 +13,8 @@ import { toast } from 'react-toastify';
 import { handleApiError } from '@/lib/utils/errorHandler';
 import { logger } from '@/lib/utils/logger';
 import { Features } from '@/lib/constants';
+import { useAuthStore } from '@/store/authStore';
+import { canAccessProtectedResources } from '@/lib/utils/authUtils';
 import type {
 	CreateAppointmentData,
 	AgentAvailability,
@@ -28,8 +30,14 @@ export function useAppointments(
 	userId?: string,
 	options: { enabled?: boolean } = { enabled: true },
 ) {
+	// Check if user can access protected resources
+	const user = useAuthStore((state) => state.user);
+	const canAccess = canAccessProtectedResources(user);
+
 	return useSWR(
-		options.enabled ? swrKeys.appointments.myAppointments(userId) : null,
+		options.enabled && canAccess
+			? swrKeys.appointments.myAppointments(userId)
+			: null,
 		() => appointmentApi.getMyAppointments(),
 		{
 			revalidateOnFocus: true, // Refetch on tab focus for appointments

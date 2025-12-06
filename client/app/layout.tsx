@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { AuthInitializer } from '@/components/auth/AuthInitializer';
+import { ProfileGuard } from '@/components/auth/ProfileGuard';
 import { ToastContainer } from 'react-toastify';
 import { SocketWrapper } from '@/components/chat/SocketWrapper';
 import Header from '@/components/header/Header';
@@ -34,29 +35,31 @@ export default function RootLayout({
 				<ErrorBoundary>
 					<SWRConfig value={swrConfig}>
 						<AuthInitializer>
-							<CookieConsentProvider>
-								<SocketWrapper>
-									<RealtimeSyncProvider>
-										<Header />
-										{children}
-										<CookieConsentBanner />
-										<CookiePreferencesModal />
-										<GoogleAnalytics />
-									</RealtimeSyncProvider>
-								</SocketWrapper>
-								<ToastContainer
-									position="top-right"
-									autoClose={5000}
-									hideProgressBar={false}
-									newestOnTop={false}
-									closeOnClick
-									rtl={false}
-									pauseOnFocusLoss
-									draggable
-									pauseOnHover
-									theme="light"
-								/>
-							</CookieConsentProvider>
+							<ProfileGuard>
+								<CookieConsentProvider>
+									<SocketWrapper>
+										<RealtimeSyncProvider>
+											<Header />
+											{children}
+											<CookieConsentBanner />
+											<CookiePreferencesModal />
+											<GoogleAnalytics />
+										</RealtimeSyncProvider>
+									</SocketWrapper>
+									<ToastContainer
+										position="top-right"
+										autoClose={5000}
+										hideProgressBar={false}
+										newestOnTop={false}
+										closeOnClick
+										rtl={false}
+										pauseOnFocusLoss
+										draggable
+										pauseOnHover
+										theme="light"
+									/>
+								</CookieConsentProvider>
+							</ProfileGuard>
 						</AuthInitializer>
 					</SWRConfig>
 				</ErrorBoundary>

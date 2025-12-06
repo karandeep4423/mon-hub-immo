@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { AgentProfileCard } from './AgentProfileCard';
 import { PropertyManager } from '../property/PropertyManager';
@@ -24,6 +25,7 @@ import { usePageState } from '@/hooks/usePageState';
 import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 
 export const DashboardContent: React.FC = () => {
+	const router = useRouter();
 	const { user, loading, refreshUser } = useRequireAuth();
 	const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
 	const hasRefreshed = useRef(false);
@@ -96,6 +98,28 @@ export const DashboardContent: React.FC = () => {
 		}
 	}, [user, loading, refreshUser]);
 
+	// Check if user needs to complete profile
+	const showProfilePrompt =
+		user?.userType === 'agent' && !user?.profileCompleted;
+
+	// Check if agent needs to pay (only for agents, not admins)
+	const needsSubscription =
+		user?.userType === 'agent' &&
+		user?.profileCompleted &&
+		!user?.isPaid &&
+		!user?.accessGrantedByAdmin;
+
+	// Redirect unpaid agents to payment page when trying to access features
+	useEffect(() => {
+		if (
+			needsSubscription &&
+			activeTab !== 'overview' &&
+			activeTab !== 'appointments'
+		) {
+			router.push('/payment');
+		}
+	}, [needsSubscription, activeTab, router]);
+
 	if (loading) {
 		return <PageLoader message="Chargement..." />;
 	}
@@ -103,10 +127,6 @@ export const DashboardContent: React.FC = () => {
 	if (!user) {
 		return null;
 	}
-
-	// Check if user needs to complete profile
-	const showProfilePrompt =
-		user?.userType === 'agent' && !user?.profileCompleted;
 
 	return (
 		<div className="min-h-screen bg-gray-50">
@@ -137,6 +157,27 @@ export const DashboardContent: React.FC = () => {
 				<div className="animate-fade-in">
 					{activeTab === 'overview' && (
 						<>
+							{/* Payment Required Banner for Agents */}
+							{needsSubscription && (
+								<div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-xl p-6">
+									<h3 className="text-lg font-semibold text-yellow-800 mb-2">
+										Abonnement requis
+									</h3>
+									<p className="text-yellow-700 mb-4">
+										Pour accéder à toutes les
+										fonctionnalités (biens, collaborations,
+										recherches), veuillez activer votre
+										abonnement.
+									</p>
+									<a
+										href="/payment"
+										className="inline-flex items-center gap-2 bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors"
+									>
+										Activer mon abonnement - 19€/mois
+									</a>
+								</div>
+							)}
+
 							{/* Stats Cards */}
 							<DashboardStats
 								kpis={kpis}
@@ -149,15 +190,17 @@ export const DashboardContent: React.FC = () => {
 								<AgentProfileCard user={user} />
 							)}
 
-							{/* Quick Actions */}
-							<DashboardQuickActions
-								onCreateProperty={() =>
-									setActiveTab('properties')
-								}
-								onViewProperties={() =>
-									setActiveTab('properties')
-								}
-							/>
+							{/* Quick Actions (only show if paid) */}
+							{!needsSubscription && (
+								<DashboardQuickActions
+									onCreateProperty={() =>
+										setActiveTab('properties')
+									}
+									onViewProperties={() =>
+										setActiveTab('properties')
+									}
+								/>
+							)}
 						</>
 					)}
 

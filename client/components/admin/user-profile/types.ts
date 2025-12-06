@@ -47,9 +47,20 @@ export interface UserProfile {
 	collaborationsCancelled?: number;
 	collaborationsTotal?: number;
 	memberSince?: string | Date | null;
+	// Stripe subscription fields
 	stripeCustomerId?: string;
 	stripeSubscriptionId?: string;
 	subscriptionStatus?: string;
+	subscriptionPlan?: 'monthly' | null;
+	subscriptionStartDate?: string | Date;
+	subscriptionEndDate?: string | Date;
+	lastPaymentDate?: string | Date;
+	lastPaymentAmount?: number;
+	lastInvoiceId?: string;
+	failedPaymentCount?: number;
+	lastFailedPaymentDate?: string | Date;
+	canceledAt?: string | Date;
+	cancellationReason?: string;
 	createdAt?: string | Date;
 }
 

@@ -2,9 +2,10 @@ import { Request } from 'express';
 
 export interface AuthRequest extends Request {
 	userId?: string;
+	userType?: 'agent' | 'apporteur' | 'admin' | 'guest';
 	user?: {
 		id: string;
-		 userType: 'agent' | 'apporteur' | 'admin' | 'guest';
+		userType: 'agent' | 'apporteur' | 'admin' | 'guest';
 	};
 	clientIP?: string;
 	file?: Express.Multer.File;

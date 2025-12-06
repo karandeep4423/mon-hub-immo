@@ -6,6 +6,7 @@
 // Authentication
 export { useAuth, useProtectedRoute } from './useAuth';
 export { useRequireAuth } from './useRequireAuth';
+export { useRequireSubscription } from './useRequireSubscription';
 
 // Socket listeners (NEW - reusable patterns)
 export {

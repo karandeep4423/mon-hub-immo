@@ -5,6 +5,7 @@ import { logger } from '@/lib/utils/logger';
 import { useFavoritesStore } from './favoritesStore';
 import { Features } from '@/lib/constants';
 import { usePageStateStore } from './pageStateStore';
+import { showToastOnce } from '@/lib/utils/toastUtils';
 import { toast } from 'react-toastify';
 
 interface AuthState {
@@ -83,16 +84,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 					response.user.userType === 'agent' &&
 					!response.user.profileCompleted
 				) {
-					try {
-						toast.info('Veuillez compléter votre profil pour accéder à la plateforme');
-						if (typeof window !== 'undefined') {
-							const currentPath = window.location.pathname || '';
-							if (!currentPath.startsWith('/auth/complete-profile')) {
-								window.location.replace('/auth/complete-profile');
-							}
+					if (typeof window !== 'undefined') {
+						const currentPath = window.location.pathname || '';
+						// List of pages that incomplete profile users can access
+						const allowedPaths = [
+							'/auth/complete-profile',
+							'/auth/login',
+							'/auth/signup',
+							'/auth/logout',
+							'/auth/verify-email',
+						];
+						const isAllowedPath = allowedPaths.some((path) =>
+							currentPath.startsWith(path),
+						);
+
+						if (!isAllowedPath) {
+							showToastOnce(
+								'Veuillez compléter votre profil pour accéder à la plateforme',
+								'info',
+							);
+							window.location.replace('/auth/complete-profile');
+							return; // Stop execution to prevent further state updates
 						}
-					} catch (e) {
-						// ignore redirect errors during SSR
 					}
 				}
 			} else {

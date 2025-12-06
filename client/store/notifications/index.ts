@@ -5,6 +5,7 @@ import { useNotification } from '@/hooks/useNotification';
 import { useAuth } from '@/hooks/useAuth';
 import type { User } from '@/types/auth';
 import { logger } from '@/lib/utils/logger';
+import { canAccessProtectedResources } from '@/lib/utils/authUtils';
 
 const OS_NOTIFY_COOLDOWN_MS = 3000;
 
@@ -83,6 +84,14 @@ export const useNotifications = () => {
 	// Initial fetch with stable dependency (userIdKey) to avoid cancellations
 	useEffect(() => {
 		if (authLoading || !userIdKey) return; // wait for authenticated user
+
+		// Skip notifications fetch if user cannot access protected resources
+		if (!canAccessProtectedResources(user)) {
+			logger.debug(
+				'[Notifications] Skipping fetch - user cannot access protected resources',
+			);
+			return;
+		}
 
 		// Re-bootstrap when user changes. Do not mark bootstrapped until state is applied.
 		lastUserIdRef.current = userIdKey;

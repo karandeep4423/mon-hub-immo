@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { FavoritesService } from '@/lib/api/favoritesApi';
 import { logger } from '@/lib/utils/logger';
+import { useAuthStore } from './authStore';
 
 interface FavoritesState {
 	// Backward-compatible property favorites set
@@ -40,6 +41,26 @@ export const useFavoritesStore = create<FavoritesState>((set, get) => ({
 
 		if (isInitialized || isLoading) {
 			return;
+		}
+
+		// Check if user can access favorites (must be paid agent or apporteur or admin)
+		const user = useAuthStore.getState().user;
+		if (!user) {
+			return;
+		}
+
+		// Skip favorites fetch for agents with incomplete profile or no subscription
+		if (user.userType === 'agent') {
+			if (
+				!user.profileCompleted ||
+				(!user.isPaid && !user.accessGrantedByAdmin)
+			) {
+				logger.debug(
+					'[FavoritesStore] Skipping favorites - agent profile incomplete or not paid',
+				);
+				set({ isInitialized: true });
+				return;
+			}
 		}
 
 		set({ isLoading: true });

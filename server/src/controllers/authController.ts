@@ -1449,15 +1449,18 @@ export const getProfile = async (
 				professionalInfo: user.professionalInfo,
 				profileCompleted: user.profileCompleted || false, // Add this field
 				// Billing / activation info
-				isPaid: Boolean(user.isPaid),
+				isPaid: Boolean(user.isPaid || user.accessGrantedByAdmin),
+				accessGrantedByAdmin: Boolean(user.accessGrantedByAdmin),
 				subscriptionStatus: user.subscriptionStatus || null,
+				subscriptionEndDate: user.subscriptionEndDate || null,
 				// Derived account status for frontend display
 				accountStatus:
 					user.userType === 'agent' &&
 					user.profileCompleted &&
-					!user.isPaid
+					!user.isPaid &&
+					!user.accessGrantedByAdmin
 						? "profil en attente d'activation"
-						: user.isPaid
+						: user.isPaid || user.accessGrantedByAdmin
 							? 'active'
 							: 'incomplete',
 			},
@@ -1791,9 +1794,10 @@ export const completeProfile = async (
 
 		// When profile is completed but user hasn't paid yet, mark subscriptionStatus
 		if (user.profileCompleted) {
-			user.subscriptionStatus = user.isPaid
-				? 'active'
-				: 'pending_activation';
+			user.subscriptionStatus =
+				user.isPaid || user.accessGrantedByAdmin
+					? 'active'
+					: 'pending_activation';
 		}
 
 		await user.save();
@@ -1813,7 +1817,8 @@ export const completeProfile = async (
 				professionalInfo: user.professionalInfo,
 				profileCompleted: user.profileCompleted,
 				// Billing fields - client can use these to decide redirect to payment
-				isPaid: Boolean(user.isPaid),
+				isPaid: Boolean(user.isPaid || user.accessGrantedByAdmin),
+				accessGrantedByAdmin: Boolean(user.accessGrantedByAdmin),
 				subscriptionStatus: user.subscriptionStatus || null,
 			},
 		});

@@ -246,20 +246,10 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 						authToastSuccess('✅ Profil mis à jour avec succès');
 						router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
 					} else {
-						const respUser = response.user as unknown as Record<
-							string,
-							unknown
-						>;
-						const isPaidVal = respUser['isPaid'] as
-							| boolean
-							| undefined;
-						if (isPaidVal === false || isPaidVal === undefined) {
-							showProfileCompletionSuccess();
-							router.push('/payment');
-							return;
-						}
+						// After profile completion, always redirect to payment
+						// The ProfileGuard will handle access control based on payment status
 						showProfileCompletionSuccess();
-						router.push(Features.Auth.AUTH_ROUTES.WELCOME);
+						router.push('/payment');
 					}
 				} else {
 					interface ErrorResponse {
@@ -373,7 +363,12 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 		}
 
 		if (!editMode && user.profileCompleted) {
-			router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
+			// Profile is complete - redirect based on payment status
+			if (!user.isPaid && !user.accessGrantedByAdmin) {
+				router.push('/payment');
+			} else {
+				router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
+			}
 			return;
 		}
 	}, [user, isSubmitting, router, editMode]);

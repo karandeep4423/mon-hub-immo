@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '../ui/Button';
+import { api } from '@/lib/api';
+import { logger } from '@/lib/utils/logger';
+import { handleApiError } from '@/lib/utils/errorHandler';
+import { toast } from 'react-toastify';
 
 interface DashboardQuickActionsProps {
 	onCreateProperty: () => void;
@@ -11,6 +15,29 @@ export const DashboardQuickActions: React.FC<DashboardQuickActionsProps> = ({
 	onCreateProperty,
 	onViewProperties,
 }) => {
+	const [portalLoading, setPortalLoading] = useState(false);
+
+	const handleManageSubscription = async () => {
+		setPortalLoading(true);
+		try {
+			const response = await api.post('/payment/create-portal-session');
+			const { url } = response.data;
+			if (url) {
+				window.location.href = url;
+			}
+		} catch (error) {
+			const apiError = handleApiError(
+				error,
+				'DashboardQuickActions',
+				"Erreur lors de l'ouverture du portail",
+			);
+			logger.error('[DashboardQuickActions] Portal error:', apiError);
+			toast.error(apiError.message);
+		} finally {
+			setPortalLoading(false);
+		}
+	};
+
 	return (
 		<div className="bg-white rounded-xl shadow-sm p-6 mb-8">
 			<h3 className="text-lg font-semibold text-gray-900 mb-6">
@@ -129,6 +156,33 @@ export const DashboardQuickActions: React.FC<DashboardQuickActionsProps> = ({
 						Contact Support
 					</Button>
 				</a>
+
+				<Button
+					onClick={handleManageSubscription}
+					disabled={portalLoading}
+					variant="outline"
+					className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
+					size="md"
+				>
+					{portalLoading ? (
+						<span className="w-4 h-4 mr-2 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+					) : (
+						<svg
+							className="w-4 h-4 mr-2"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								strokeWidth="2"
+								d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+							/>
+						</svg>
+					)}
+					Gérer abonnement
+				</Button>
 			</div>
 		</div>
 	);

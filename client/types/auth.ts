@@ -30,6 +30,11 @@ export interface User {
 	isValidated?: boolean;
 	profileImage?: string;
 	profileCompleted: boolean; // Make sure this is included
+	// Subscription fields
+	isPaid?: boolean;
+	accessGrantedByAdmin?: boolean;
+	subscriptionStatus?: 'active' | 'past_due' | 'canceled' | 'expired' | null;
+	subscriptionEndDate?: string;
 
 	professionalInfo?: {
 		agentType?: 'independent' | 'commercial' | 'employee';

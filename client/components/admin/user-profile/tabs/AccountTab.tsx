@@ -10,10 +10,77 @@ import {
 	XCircle,
 	ShieldX,
 	CreditCard,
+	Calendar,
+	AlertTriangle,
+	Ban,
+	RefreshCw,
+	Euro,
 } from 'lucide-react';
 import { UserProfile, ConfirmAction } from '../types';
 import { formatDate } from '../constants';
 import { TabSectionHeader, InfoCard, StatusIndicator } from '../FormComponents';
+
+/**
+ * Get subscription status badge styling
+ */
+function getSubscriptionStatusStyle(status?: string) {
+	switch (status) {
+		case 'active':
+			return {
+				bg: 'bg-green-50',
+				text: 'text-green-700',
+				border: 'border-green-200',
+				label: 'Actif',
+				icon: CheckCircle2,
+				iconColor: 'text-green-500',
+			};
+		case 'pending_cancellation':
+			return {
+				bg: 'bg-orange-50',
+				text: 'text-orange-700',
+				border: 'border-orange-200',
+				label: 'Annulation programmée',
+				icon: AlertTriangle,
+				iconColor: 'text-orange-500',
+			};
+		case 'past_due':
+			return {
+				bg: 'bg-amber-50',
+				text: 'text-amber-700',
+				border: 'border-amber-200',
+				label: 'Paiement en retard',
+				icon: AlertTriangle,
+				iconColor: 'text-amber-500',
+			};
+		case 'canceled':
+			return {
+				bg: 'bg-red-50',
+				text: 'text-red-700',
+				border: 'border-red-200',
+				label: 'Annulé',
+				icon: Ban,
+				iconColor: 'text-red-500',
+			};
+		case 'expired':
+			return {
+				bg: 'bg-gray-50',
+				text: 'text-gray-700',
+				border: 'border-gray-200',
+				label: 'Expiré',
+				icon: XCircle,
+				iconColor: 'text-gray-500',
+			};
+		default:
+			return {
+				bg: 'bg-gray-50',
+				text: 'text-gray-600',
+				border: 'border-gray-200',
+				label: status || 'N/A',
+				icon: XCircle,
+				iconColor: 'text-gray-400',
+			};
+	}
+}
 
 interface AccountTabProps {
 	form: UserProfile;
@@ -125,7 +192,8 @@ export function AccountTab({
 							Informations d&apos;abonnement
 						</h3>
 
-						<div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+						{/* Payment & Subscription Status */}
+						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
 							<div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
 								<p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
 									Statut paiement
@@ -149,15 +217,159 @@ export function AccountTab({
 								</p>
 							</div>
 
-							<div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+							<div
+								className={`p-4 rounded-lg border ${getSubscriptionStatusStyle(form.subscriptionStatus).bg} ${getSubscriptionStatusStyle(form.subscriptionStatus).border}`}
+							>
 								<p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
 									Statut abonnement
 								</p>
-								<p className="font-semibold text-gray-900">
-									{form.subscriptionStatus || 'N/A'}
+								<p
+									className={`font-semibold flex items-center gap-2 ${getSubscriptionStatusStyle(form.subscriptionStatus).text}`}
+								>
+									{React.createElement(
+										getSubscriptionStatusStyle(
+											form.subscriptionStatus,
+										).icon,
+										{
+											className: `w-4 h-4 ${getSubscriptionStatusStyle(form.subscriptionStatus).iconColor}`,
+										},
+									)}
+									{
+										getSubscriptionStatusStyle(
+											form.subscriptionStatus,
+										).label
+									}
 								</p>
 							</div>
 
+							<div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
+								<p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+									Plan
+								</p>
+								<p className="font-semibold text-blue-700">
+									{form.subscriptionPlan === 'monthly'
+										? 'Mensuel (19€/mois)'
+										: 'Aucun plan'}
+								</p>
+							</div>
+						</div>
+
+						{/* Subscription Dates */}
+						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+							{form.subscriptionStartDate && (
+								<div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+									<p className="text-xs text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+										<Calendar className="w-3 h-3" />
+										Date de début
+									</p>
+									<p className="font-semibold text-gray-900">
+										{formatDate(form.subscriptionStartDate)}
+									</p>
+								</div>
+							)}
+
+							{form.subscriptionEndDate && (
+								<div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100">
+									<p className="text-xs text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+										<RefreshCw className="w-3 h-3" />
+										Date de renouvellement
+									</p>
+									<p className="font-semibold text-emerald-700">
+										{formatDate(form.subscriptionEndDate)}
+									</p>
+								</div>
+							)}
+
+							{form.canceledAt && (
+								<div className="p-4 bg-red-50 rounded-lg border border-red-100">
+									<p className="text-xs text-gray-500 uppercase tracking-wider mb-1 flex items-center gap-1">
+										<Ban className="w-3 h-3" />
+										Annulé le
+									</p>
+									<p className="font-semibold text-red-700">
+										{formatDate(form.canceledAt)}
+									</p>
+									{form.cancellationReason && (
+										<p className="text-xs text-red-600 mt-1">
+											Raison: {form.cancellationReason}
+										</p>
+									)}
+								</div>
+							)}
+						</div>
+
+						{/* Payment History */}
+						{(form.lastPaymentDate || form.lastPaymentAmount) && (
+							<div className="mb-6">
+								<h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+									<Euro className="w-4 h-4 text-gray-500" />
+									Dernier paiement
+								</h4>
+								<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+									{form.lastPaymentDate && (
+										<div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+											<p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+												Date
+											</p>
+											<p className="font-medium text-gray-900 text-sm">
+												{formatDate(
+													form.lastPaymentDate,
+												)}
+											</p>
+										</div>
+									)}
+									{form.lastPaymentAmount !== undefined &&
+										form.lastPaymentAmount !== null && (
+											<div className="p-3 bg-green-50 rounded-lg border border-green-100">
+												<p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+													Montant
+												</p>
+												<p className="font-medium text-green-700 text-sm">
+													{form.lastPaymentAmount} €
+												</p>
+											</div>
+										)}
+									{form.lastInvoiceId && (
+										<div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+											<p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+												Facture ID
+											</p>
+											<p className="font-mono text-xs text-gray-600 truncate">
+												{form.lastInvoiceId}
+											</p>
+										</div>
+									)}
+								</div>
+							</div>
+						)}
+
+						{/* Failed Payments Warning */}
+						{form.failedPaymentCount !== undefined &&
+							form.failedPaymentCount !== null &&
+							form.failedPaymentCount > 0 && (
+								<div className="mb-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
+									<div className="flex items-start gap-3">
+										<AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+										<div>
+											<p className="font-medium text-amber-800">
+												Paiements échoués:{' '}
+												{form.failedPaymentCount}
+											</p>
+											{form.lastFailedPaymentDate && (
+												<p className="text-sm text-amber-700 mt-1">
+													Dernier échec:{' '}
+													{formatDate(
+														form.lastFailedPaymentDate,
+													)}
+												</p>
+											)}
+										</div>
+									</div>
+								</div>
+							)}
+
+						{/* Stripe IDs */}
+						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
 							{form.stripeCustomerId && (
 								<div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
 									<p className="text-xs text-gray-500 uppercase tracking-wider mb-1">

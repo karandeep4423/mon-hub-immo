@@ -124,6 +124,11 @@ export const authenticateToken = async (
 
 		// Attach user data to request
 		req.userId = (user._id as mongoose.Types.ObjectId).toString();
+		req.userType = user.userType as
+			| 'agent'
+			| 'apporteur'
+			| 'admin'
+			| 'guest';
 		req.user = {
 			id: (user._id as mongoose.Types.ObjectId).toString(),
 			userType: user.userType as 'agent' | 'apporteur' | 'admin',

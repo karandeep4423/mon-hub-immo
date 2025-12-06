@@ -5,55 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { UserProfileEditable } from '@/components/admin/UserProfileEditable';
-
-interface ProfessionalInfo {
-	network?: string;
-	tCard?: string;
-	sirenNumber?: string;
-	rsacNumber?: string;
-	collaboratorCertificate?: string;
-	agentType?: 'independent' | 'commercial' | 'employee';
-	identityCard?: { url?: string; key?: string; uploadedAt?: string } | null;
-	// Location fields
-	city?: string;
-	postalCode?: string;
-	interventionRadius?: number;
-	coveredCities?: string[];
-	// Professional details
-	siretNumber?: string;
-	mandateTypes?: ('simple' | 'exclusif' | 'co-mandat')[];
-	yearsExperience?: number;
-	personalPitch?: string;
-	// Preferences
-	collaborateWithAgents?: boolean;
-	shareCommission?: boolean;
-	independentAgent?: boolean;
-	alertsEnabled?: boolean;
-	alertFrequency?: 'quotidien' | 'hebdomadaire';
-}
-
-interface UserProfile {
-	_id: string;
-	firstName?: string;
-	lastName?: string;
-	email?: string;
-	phone?: string | null;
-	userType?: string;
-	type?: string;
-	profileImage?: string | null;
-	isValidated?: boolean;
-	isBlocked?: boolean;
-	isPaid?: boolean;
-	accessGrantedByAdmin?: boolean;
-	profileCompleted?: boolean;
-	professionalInfo?: ProfessionalInfo | null;
-	propertiesCount?: number;
-	collaborationsActive?: number;
-	collaborationsClosed?: number;
-	stripeCustomerId?: string;
-	stripeSubscriptionId?: string;
-	subscriptionStatus?: string;
-}
+import type { UserProfile } from '@/components/admin/user-profile/types';
 
 export default function AdminUserProfilePage() {
 	const API_ROOT = (() => {

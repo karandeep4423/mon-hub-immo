@@ -150,7 +150,7 @@ export const getUserTableColumns = () => [
 	{
 		header: 'Paiement',
 		accessor: 'isPaid',
-		width: '12%',
+		width: '15%',
 		render: (_value: unknown, row: AdminUser) => {
 			if (row.type !== 'agent') {
 				return (
@@ -159,28 +159,113 @@ export const getUserTableColumns = () => [
 					</span>
 				);
 			}
+
+			// Format renewal date if available
+			const renewalDate = row.subscriptionEndDate
+				? new Date(row.subscriptionEndDate).toLocaleDateString(
+						'fr-FR',
+						{
+							day: '2-digit',
+							month: '2-digit',
+							year: '2-digit',
+						},
+					)
+				: null;
+
 			if (row.accessGrantedByAdmin) {
 				return (
-					<Badge
-						variant="info"
-						size="sm"
-						className="shadow-sm hidden md:inline-flex"
-					>
-						Accès manuel
-					</Badge>
+					<div className="hidden md:flex flex-col items-center gap-0.5">
+						<Badge variant="info" size="sm" className="shadow-sm">
+							Accès manuel
+						</Badge>
+					</div>
 				);
 			}
+
+			if (row.subscriptionStatus === 'canceled') {
+				return (
+					<div className="hidden md:flex flex-col items-center gap-0.5">
+						<Badge variant="error" size="sm" className="shadow-sm">
+							Annulé
+						</Badge>
+						{row.canceledAt && (
+							<span className="text-[10px] text-gray-500">
+								{new Date(row.canceledAt).toLocaleDateString(
+									'fr-FR',
+								)}
+							</span>
+						)}
+					</div>
+				);
+			}
+
+			if (row.subscriptionStatus === 'pending_cancellation') {
+				return (
+					<div className="hidden md:flex flex-col items-center gap-0.5">
+						<Badge
+							variant="warning"
+							size="sm"
+							className="shadow-sm"
+						>
+							Annulation
+						</Badge>
+						{row.subscriptionEndDate && (
+							<span className="text-[10px] text-orange-600">
+								fin{' '}
+								{new Date(
+									row.subscriptionEndDate,
+								).toLocaleDateString('fr-FR', {
+									day: '2-digit',
+									month: '2-digit',
+								})}
+							</span>
+						)}
+					</div>
+				);
+			}
+
+			if (row.subscriptionStatus === 'past_due') {
+				return (
+					<div className="hidden md:flex flex-col items-center gap-0.5">
+						<Badge
+							variant="warning"
+							size="sm"
+							className="shadow-sm"
+						>
+							Retard
+						</Badge>
+						{row.failedPaymentCount &&
+							row.failedPaymentCount > 0 && (
+								<span className="text-[10px] text-amber-600">
+									{row.failedPaymentCount} échec(s)
+								</span>
+							)}
+					</div>
+				);
+			}
+
 			if (row.isPaid) {
 				return (
-					<Badge
-						variant="success"
-						size="sm"
-						className="shadow-sm hidden md:inline-flex"
-					>
-						Payé
-					</Badge>
+					<div className="hidden md:flex flex-col items-center gap-0.5">
+						<Badge
+							variant="success"
+							size="sm"
+							className="shadow-sm"
+						>
+							Payé
+						</Badge>
+						{renewalDate && (
+							<span
+								className="text-[10px] text-gray-500"
+								title="Date de renouvellement"
+							>
+								↻ {renewalDate}
+							</span>
+						)}
+					</div>
 				);
 			}
+
 			if (row.profileCompleted) {
 				return (
 					<Badge

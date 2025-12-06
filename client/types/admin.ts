@@ -25,9 +25,18 @@ export interface AdminUser {
 	userType?: string;
 	isPaid?: boolean;
 	professionalInfo?: ProfessionalInfo;
+	// Stripe subscription fields
 	stripeCustomerId?: string;
 	stripeSubscriptionId?: string;
 	subscriptionStatus?: string;
+	subscriptionPlan?: 'monthly' | null;
+	subscriptionStartDate?: string;
+	subscriptionEndDate?: string;
+	lastPaymentDate?: string;
+	lastPaymentAmount?: number;
+	failedPaymentCount?: number;
+	canceledAt?: string;
+	cancellationReason?: string;
 	profileCompleted?: boolean;
 	accessGrantedByAdmin?: boolean;
 }

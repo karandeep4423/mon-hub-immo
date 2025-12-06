@@ -3,8 +3,6 @@ import { useState, useMemo, useCallback } from 'react';
 import useSWR from 'swr';
 import { collaborationApi } from '@/lib/api/collaborationApi';
 import { swrKeys } from '@/lib/swrKeys';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { Collaboration } from '@/types/collaboration';
 import {
 	ProgressStepData,
 	ProgressStep,
