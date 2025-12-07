@@ -216,12 +216,31 @@ export const signupSchema = z
 			.or(z.literal('').transform(() => undefined)),
 		userType: z.enum(['agent', 'apporteur']),
 		confirmPassword: z.string().optional(),
-		// Agent professional info fields
-		agentType: z.enum(['independent', 'commercial', 'employee']).optional(),
-		tCard: z.string().trim().optional(),
-		sirenNumber: z.string().trim().optional(),
-		rsacNumber: z.string().trim().optional(),
-		collaboratorCertificate: z.string().trim().optional(),
+		// Agent professional info fields - transform empty strings to undefined
+		agentType: z
+			.enum(['independent', 'commercial', 'employee'])
+			.optional()
+			.or(z.literal('').transform(() => undefined)),
+		tCard: z
+			.string()
+			.trim()
+			.optional()
+			.or(z.literal('').transform(() => undefined)),
+		sirenNumber: z
+			.string()
+			.trim()
+			.optional()
+			.or(z.literal('').transform(() => undefined)),
+		rsacNumber: z
+			.string()
+			.trim()
+			.optional()
+			.or(z.literal('').transform(() => undefined)),
+		collaboratorCertificate: z
+			.string()
+			.trim()
+			.optional()
+			.or(z.literal('').transform(() => undefined)),
 	})
 	.refine(
 		(data) =>
