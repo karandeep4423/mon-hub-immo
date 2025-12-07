@@ -207,6 +207,8 @@ api.interceptors.response.use(
 			originalRequest._csrfRetry = true;
 
 			try {
+				// Reset cached token before fetching new one
+				csrfToken = null;
 				// Fetch new CSRF token
 				await fetchCsrfToken();
 
