@@ -10,6 +10,7 @@ export interface ProfileCompletionFormData extends Record<string, unknown> {
 	coveredCities: string;
 	network: string;
 	siretNumber: string;
+	sirenNumber: string;
 	agentType: string;
 	tCard: string;
 	rsacNumber: string;

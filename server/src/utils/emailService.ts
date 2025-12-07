@@ -77,10 +77,15 @@ export const sendAccountValidated = async (opts: {
 }): Promise<void> => {
 	const { to, name, email } = opts;
 	logger.info('[EmailService] sendAccountValidated');
+	const baseUrl =
+		process.env.CLIENT_URL ||
+		process.env.FRONTEND_URL ||
+		'http://localhost:3000';
+	const loginUrl = `${baseUrl}/auth/login`;
 	await sendEmail({
 		to,
 		subject: 'Votre compte a été validé - MonHubImmo',
-		html: getAccountValidatedTemplate(name, email),
+		html: getAccountValidatedTemplate(name, email, loginUrl),
 	});
 };
 

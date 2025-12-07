@@ -3,6 +3,7 @@ import { getResponsiveStyles } from '../styles';
 export const getAccountValidatedTemplate = (
 	name: string,
 	email: string,
+	loginUrl: string,
 ): string => `
 	<!DOCTYPE html>
 	<html lang="fr">
@@ -160,11 +161,9 @@ export const getAccountValidatedTemplate = (
 								<div class="email-value">${email}</div>
 							</div>
 
-							<div class="cta-container">
-								<a href="${process.env.CLIENT_URL || 'http://localhost:3000'}/auth/login" class="cta-button">Se connecter maintenant</a>
-							</div>
-
-							<div class="features-box">
+				<div class="cta-container">
+					<a href="${loginUrl}" class="cta-button">Se connecter maintenant</a>
+				</div>							<div class="features-box">
 								<div class="features-title">🚀 Ce que vous pouvez faire maintenant :</div>
 								<div class="feature-item">
 									<span class="feature-icon">📊</span>

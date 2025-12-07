@@ -283,7 +283,7 @@ const EditableProfessionalFields: React.FC<{
 					label="Numéro SIREN *"
 					type="text"
 					name="sirenNumber"
-					value={values.siretNumber}
+					value={values.sirenNumber}
 					onChange={handleChange}
 					error={errors.sirenNumber}
 					placeholder={Features.Auth.AUTH_PLACEHOLDERS.SIREN}

@@ -42,6 +42,7 @@ const buildProfessionalInfoPayload = (data: ProfileCompletionFormData) => ({
 		: [],
 	network: data.network,
 	siretNumber: data.siretNumber,
+	sirenNumber: data.sirenNumber,
 	agentType: data.agentType as
 		| 'independent'
 		| 'commercial'
@@ -149,7 +150,8 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 				user?.professionalInfo?.coveredCities?.join(', ') || '',
 			network: user?.professionalInfo?.network || '',
 			siretNumber: user?.professionalInfo?.siretNumber || '',
-			agentType: user?.professionalInfo?.agentType || '',
+			sirenNumber: user?.professionalInfo?.sirenNumber || '',
+			agentType: user?.professionalInfo?.agentType || '',,
 			tCard: user?.professionalInfo?.tCard || '',
 			rsacNumber: user?.professionalInfo?.rsacNumber || '',
 			collaboratorCertificate:
@@ -329,6 +331,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 					user.professionalInfo?.coveredCities?.join(', ') || '',
 				network: user.professionalInfo?.network || '',
 				siretNumber: user.professionalInfo?.siretNumber || '',
+				sirenNumber: user.professionalInfo?.sirenNumber || '',
 				agentType: user.professionalInfo?.agentType || '',
 				tCard: user.professionalInfo?.tCard || '',
 				rsacNumber: user.professionalInfo?.rsacNumber || '',
