@@ -14,6 +14,8 @@ import { toast } from 'react-toastify';
 import { handleApiError } from '@/lib/utils/errorHandler';
 import { logger } from '@/lib/utils/logger';
 import { Features } from '@/lib/constants';
+import { useAuthStore } from '@/store/authStore';
+import { canAccessProtectedResources } from '@/lib/utils/authUtils';
 
 // ============ QUERIES ============
 
@@ -57,8 +59,12 @@ export function useMyProperties(
 	limit: number = 10,
 	status?: string,
 ) {
+	// Check if user can access protected resources
+	const user = useAuthStore((state) => state.user);
+	const canAccess = canAccessProtectedResources(user);
+
 	const key =
-		userId && page && limit
+		canAccess && userId && page && limit
 			? swrKeys.properties.myProperties(userId, { page, limit, status })
 			: null;
 

@@ -10,6 +10,10 @@ import { getPasswordResetTemplate } from './email/templates/passwordReset';
 import { getPasswordResetConfirmationTemplate } from './email/templates/passwordResetConfirmation';
 import { getAccountLockedTemplate } from './email/templates/accountLocked';
 import { getPaymentReminderTemplate } from './email/templates/paymentReminder';
+import { getPaymentSuccessTemplate } from './email/templates/paymentSuccess';
+import { getPaymentFailedTemplate } from './email/templates/paymentFailed';
+import { getSubscriptionCanceledTemplate } from './email/templates/subscriptionCanceled';
+import { getSubscriptionExpiringSoonTemplate } from './email/templates/subscriptionExpiringSoon';
 
 // Re-export templates for backward compatibility with existing imports
 export { getSignupAcknowledgementTemplate } from './email/templates/signupAcknowledgement';
@@ -171,6 +175,89 @@ export const sendPaymentReminderEmail = async (opts: {
 	logger.info('[EmailService] sendPaymentReminderEmail');
 	const html = getPaymentReminderTemplate(name, billingUrl);
 	await sendEmail({ to, subject: 'Rappel de paiement - MonHubImmo', html });
+};
+
+// ============================================
+// PAYMENT & SUBSCRIPTION EMAIL FUNCTIONS
+// ============================================
+
+export const sendPaymentSuccessEmail = async (opts: {
+	to: string;
+	name: string;
+	amount: string;
+	invoiceUrl?: string;
+}): Promise<void> => {
+	const { to, name, amount, invoiceUrl } = opts;
+	logger.info('[EmailService] sendPaymentSuccessEmail');
+	const html = getPaymentSuccessTemplate(name, amount, invoiceUrl);
+	await sendEmail({
+		to,
+		subject: '✓ Paiement confirmé - MonHubImmo',
+		html,
+	});
+};
+
+export const sendPaymentFailedEmail = async (opts: {
+	to: string;
+	name: string;
+	amount: string;
+	attemptNumber: number;
+	billingUrl: string;
+}): Promise<void> => {
+	const { to, name, amount, attemptNumber, billingUrl } = opts;
+	logger.info(
+		`[EmailService] sendPaymentFailedEmail (attempt ${attemptNumber})`,
+	);
+	const html = getPaymentFailedTemplate(
+		name,
+		amount,
+		attemptNumber,
+		billingUrl,
+	);
+	const subject =
+		attemptNumber >= 3
+			? '⚠️ Action urgente - Échec de paiement'
+			: 'Échec de paiement - MonHubImmo';
+	await sendEmail({ to, subject, html });
+};
+
+export const sendSubscriptionCanceledEmail = async (opts: {
+	to: string;
+	name: string;
+	endDate: string;
+}): Promise<void> => {
+	const { to, name, endDate } = opts;
+	logger.info('[EmailService] sendSubscriptionCanceledEmail');
+	const html = getSubscriptionCanceledTemplate(name, endDate);
+	await sendEmail({
+		to,
+		subject: "Confirmation d'annulation - MonHubImmo",
+		html,
+	});
+};
+
+export const sendSubscriptionExpiringSoonEmail = async (opts: {
+	to: string;
+	name: string;
+	daysRemaining: number;
+	endDate: string;
+	billingUrl: string;
+}): Promise<void> => {
+	const { to, name, daysRemaining, endDate, billingUrl } = opts;
+	logger.info(
+		`[EmailService] sendSubscriptionExpiringSoonEmail (${daysRemaining} days)`,
+	);
+	const html = getSubscriptionExpiringSoonTemplate(
+		name,
+		daysRemaining,
+		endDate,
+		billingUrl,
+	);
+	await sendEmail({
+		to,
+		subject: `⏰ Plus que ${daysRemaining} jours - MonHubImmo`,
+		html,
+	});
 };
 
 const createBrevoClient = (): brevo.TransactionalEmailsApi => {

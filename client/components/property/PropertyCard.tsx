@@ -8,6 +8,7 @@ import { Features } from '@/lib/constants';
 import { collaborationApi } from '@/lib/api/collaborationApi';
 import { useAuth } from '@/hooks/useAuth';
 import { formatDateShort } from '@/lib/utils/date';
+import { canAccessProtectedResources } from '@/lib/utils/authUtils';
 
 interface PropertyCardProps {
 	property: Property;
@@ -33,8 +34,8 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 	};
 
 	useEffect(() => {
-		// Only check collaboration status if user is authenticated
-		if (!user) return;
+		// Only check collaboration status if user can access protected resources
+		if (!user || !canAccessProtectedResources(user)) return;
 
 		const checkCollaboration = async () => {
 			try {

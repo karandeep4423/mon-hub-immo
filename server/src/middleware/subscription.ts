@@ -5,68 +5,88 @@ import { logger } from '../utils/logger';
 
 /**
  * Middleware to require an active subscription for agents.
- * Allows admins and non-agent users to pass. Also allows agents who are not yet validated
- * or who have incomplete profiles to continue (those flows should be handled separately).
- * Allows agents who have been manually granted access by an admin.
+ * - Apporteurs and admins pass through without subscription check
+ * - Agents must have isPaid=true OR accessGrantedByAdmin=true
+ * - Returns 403 with SUBSCRIPTION_REQUIRED code if not paid
  */
-export const requireActiveSubscription = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-): Promise<Response | void> => {
-  try {
-    if (!req.userId) {
-      // Not authenticated - let authenticateToken handle this normally
-      res.status(401).json({ success: false, message: 'Authentification requise' });
-      return;
-    }
+export const requireSubscription = async (
+	req: AuthRequest,
+	res: Response,
+	next: NextFunction,
+): Promise<void> => {
+	try {
+		const userId = req.userId;
+		const userType = req.userType;
 
-    const user = await User.findById(req.userId).select('+isPaid +isValidated +profileCompleted +accessGrantedByAdmin');
-    if (!user) {
-      res.status(401).json({ success: false, message: 'Utilisateur non trouvé' });
-      return;
-    }
+		// Only agents need subscription
+		if (userType !== 'agent') {
+			return next();
+		}
 
-    // Allow admins full access
-    if (user.userType === 'admin') {
-      return next();
-    }
+		const user = await User.findById(userId).select(
+			'isPaid accessGrantedByAdmin subscriptionStatus subscriptionEndDate',
+		);
 
-    // Enforce profile completion: agents must complete their profile before navigating the platform
-    if (user.userType === 'agent' && !user.profileCompleted) {
-      logger.info(`[Subscription] Blocking access for agent with incomplete profile ${user.email}`);
-      res.status(403).json({
-        success: false,
-        code: 'PROFILE_INCOMPLETE',
-        message: 'Veuillez compléter votre profil avant d\'accéder à cette fonctionnalité.',
-        profileUrl: '/auth/complete-profile',
-      });
-      return;
-    }
+		if (!user) {
+			res.status(401).json({
+				success: false,
+				message: 'Utilisateur non trouvé',
+			});
+			return;
+		}
 
-    // Enforce subscription/payment requirement for agents who completed their profile
-    // Once an agent has completed their profile they must pay to access protected areas
-    if (user.userType === 'agent' && user.profileCompleted) {
-      // Block if user has not paid AND has not been granted manual access by an admin
-      if (!user.isPaid && !user.accessGrantedByAdmin) {
-        logger.info(`[Subscription] Blocking access for unpaid user ${user.email} with no admin access grant.`);
-        res.status(402).json({
-          success: false,
-          code: 'PAYMENT_REQUIRED',
-          message: "Votre compte nécessite un paiement pour accéder à cette fonctionnalité. Rendez-vous sur /payment pour finaliser.",
-          paymentUrl: '/payment',
-        });
-        return;
-      }
-    }
+		// Admin granted free access bypasses payment
+		if (user.accessGrantedByAdmin) {
+			return next();
+		}
 
-    // Otherwise allow
-    return next();
-  } catch (error) {
-    logger.error('[Subscription] Error in requireActiveSubscription', error);
-    res.status(500).json({ success: false, message: 'Erreur serveur' });
-    return;
-  }
+		// Check if paid
+		if (user.isPaid) {
+			// Double-check subscription hasn't expired
+			if (
+				user.subscriptionEndDate &&
+				user.subscriptionEndDate < new Date()
+			) {
+				// Subscription expired, update status
+				await User.findByIdAndUpdate(userId, {
+					isPaid: false,
+					subscriptionStatus: 'expired',
+				});
+
+				logger.info(
+					`[Subscription] Subscription expired for user ${userId}`,
+				);
+
+				res.status(403).json({
+					success: false,
+					code: 'SUBSCRIPTION_EXPIRED',
+					message: 'Votre abonnement a expiré',
+					redirectTo: '/payment',
+				});
+				return;
+			}
+
+			return next();
+		}
+
+		// Not paid - return subscription required error
+		logger.info(`[Subscription] Access denied for unpaid agent ${userId}`);
+
+		res.status(403).json({
+			success: false,
+			code: 'SUBSCRIPTION_REQUIRED',
+			message:
+				'Un abonnement est requis pour accéder à cette fonctionnalité',
+			redirectTo: '/payment',
+		});
+	} catch (error) {
+		logger.error('[Subscription] Middleware error:', error);
+		res.status(500).json({
+			success: false,
+			message: "Erreur lors de la vérification de l'abonnement",
+		});
+	}
 };
 
-export default requireActiveSubscription;
+// Alias for backward compatibility with existing route imports
+export const requireActiveSubscription = requireSubscription;

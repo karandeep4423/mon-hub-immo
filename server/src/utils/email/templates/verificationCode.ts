@@ -3,6 +3,7 @@ import { getResponsiveStyles } from '../styles';
 export const getVerificationCodeTemplate = (
 	name: string,
 	code: string,
+	verifyUrl?: string,
 ): string => `
 	<!DOCTYPE html>
 	<html lang="fr">
@@ -63,6 +64,20 @@ export const getVerificationCodeTemplate = (
 				padding: 15px;
 				margin: 20px 0;
 			}
+			.cta-button {
+				display: inline-block;
+				background: #00BCE4;
+				color: white !important;
+				padding: 14px 28px;
+				border-radius: 6px;
+				text-decoration: none;
+				font-weight: bold;
+				margin: 15px 0;
+			}
+			.cta-container {
+				text-align: center;
+				margin: 20px 0;
+			}
 			.footer { 
 				text-align: center; 
 				padding: 20px; 
@@ -102,6 +117,17 @@ export const getVerificationCodeTemplate = (
 							<div class="code-container">
 								<div class="code">${code}</div>
 							</div>
+							
+							${
+								verifyUrl
+									? `
+							<div class="cta-container">
+								<p>Ou cliquez sur le bouton ci-dessous pour vérifier votre email :</p>
+								<a href="${verifyUrl}" class="cta-button">Vérifier mon email</a>
+							</div>
+							`
+									: ''
+							}
 							
 							<div class="instructions">
 								<strong>📋 Instructions :</strong>

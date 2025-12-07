@@ -1,64 +1,269 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import Image from 'next/image';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { ChatApi } from '@/lib/api/chatApi';
-import { useEffect, useState } from 'react';
-import type { ChatMessage } from '@/types/chat';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import type { ChatMessage, ChatUser } from '@/types/chat';
+import { ArrowLeft, Eye } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
+
+// Import chat UI components
+import {
+	DateSeparator,
+	EmptyConversation,
+	LoadingMessages,
+} from '@/components/chat/ui';
+import { groupMessagesByDate } from '@/components/chat/utils/dateUtils';
+import { formatTimeOnly } from '@/components/chat/utils/messageUtils';
+import { ImageLightbox } from '@/components/ui';
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
+
+// Get full name from user
+const getFullName = (user?: ChatUser | null) => {
+	if (!user) return 'Inconnu';
+	return (
+		`${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+		user.email ||
+		'Inconnu'
+	);
+};
+
+// Admin-specific message bubble with avatar and no delete option
+const AdminMessageBubble = ({
+	message,
+	isOwnerMessage,
+	senderUser,
+	onImageClick,
+}: {
+	message: ChatMessage;
+	isOwnerMessage: boolean;
+	senderUser: ChatUser | null;
+	onImageClick?: (url: string) => void;
+}) => {
+	const hasAttachments =
+		Array.isArray(message.attachments) && message.attachments.length > 0;
+	const senderName = getFullName(senderUser);
+
+	return (
+		<div
+			className={`flex items-end gap-2 mb-4 px-4 ${isOwnerMessage ? 'flex-row-reverse' : ''}`}
+		>
+			{/* Avatar - always show */}
+			<div className="flex-shrink-0">
+				{senderUser && <ProfileAvatar user={senderUser} size="sm" />}
+			</div>
+
+			{/* Message bubble */}
+			<div
+				className={`max-w-[70%] sm:max-w-[75%] rounded-lg px-4 py-2 shadow-sm ${
+					isOwnerMessage
+						? 'bg-brand text-white rounded-br-sm'
+						: 'bg-white text-gray-800 border border-gray-200 rounded-bl-sm'
+				}`}
+			>
+				{/* Sender name */}
+				<div
+					className={`text-xs font-semibold mb-1 ${
+						isOwnerMessage ? 'text-white/80' : 'text-gray-600'
+					}`}
+				>
+					{senderName}
+				</div>
+
+				{/* Message text */}
+				{message.text && (
+					<p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
+						{message.text}
+					</p>
+				)}
+
+				{/* Legacy image */}
+				{message.image && (
+					<div className="mt-2">
+						<Image
+							src={message.image}
+							alt="Image"
+							width={300}
+							height={200}
+							className="rounded cursor-pointer hover:opacity-90 transition-opacity"
+							onClick={() => onImageClick?.(message.image!)}
+							unoptimized
+						/>
+					</div>
+				)}
+
+				{/* Attachments */}
+				{hasAttachments && (
+					<div className="mt-2 space-y-2">
+						{message.attachments!.map((att, idx) => {
+							const isImage =
+								att.type === 'image' ||
+								att.mime?.startsWith('image/');
+							if (isImage) {
+								return (
+									<Image
+										key={idx}
+										src={att.thumbnailUrl || att.url}
+										alt={att.name}
+										width={300}
+										height={200}
+										className="rounded cursor-pointer hover:opacity-90 transition-opacity"
+										onClick={() => onImageClick?.(att.url)}
+										unoptimized
+									/>
+								);
+							}
+							// Document attachment
+							return (
+								<a
+									key={idx}
+									href={att.url}
+									target="_blank"
+									rel="noopener noreferrer"
+									className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${
+										isOwnerMessage
+											? 'bg-white/20 hover:bg-white/30'
+											: 'bg-gray-100 hover:bg-gray-200'
+									}`}
+								>
+									<div
+										className={`w-10 h-10 rounded flex items-center justify-center text-xs font-bold ${
+											att.type === 'pdf'
+												? 'bg-red-500 text-white'
+												: 'bg-blue-500 text-white'
+										}`}
+									>
+										{att.type === 'pdf' ? 'PDF' : 'DOC'}
+									</div>
+									<div className="min-w-0 flex-1">
+										<p className="text-xs font-medium truncate">
+											{att.name}
+										</p>
+										<p
+											className={`text-[10px] ${
+												isOwnerMessage
+													? 'text-white/70'
+													: 'text-gray-500'
+											}`}
+										>
+											{(att.size / 1024).toFixed(1)} Ko
+										</p>
+									</div>
+								</a>
+							);
+						})}
+					</div>
+				)}
+
+				{/* Time */}
+				<div
+					className={`flex items-center justify-end mt-1 gap-1 ${
+						isOwnerMessage ? 'text-white/70' : 'text-gray-400'
+					}`}
+				>
+					<span className="text-[10px]">
+						{formatTimeOnly(message.createdAt)}
+					</span>
+				</div>
+			</div>
+		</div>
+	);
+};
 
 export default function AdminChatPage() {
 	const params = useSearchParams();
 	const collaborationId = params.get('collaborationId') || '';
 	const [messages, setMessages] = useState<ChatMessage[]>([]);
 	const [loading, setLoading] = useState<boolean>(false);
-	const [userMap, setUserMap] = useState<Record<string, { firstName?: string; lastName?: string; avatarUrl?: string }>>({});
+	const [ownerUser, setOwnerUser] = useState<ChatUser | null>(null);
+	const [collaboratorUser, setCollaboratorUser] = useState<ChatUser | null>(
+		null,
+	);
+	const [ownerId, setOwnerId] = useState<string>('');
+	const messagesEndRef = useRef<HTMLDivElement>(null);
+	const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+	// Lightbox state for viewing images full-size (same as real chat)
+	const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+	const [lightboxImages, setLightboxImages] = useState<
+		Array<{ url: string; alt?: string }>
+	>([]);
+	const [lightboxIndex, setLightboxIndex] = useState(0);
+
+	// Handle image click from MessageBubble (same as real chat)
+	const handleImageClick = useCallback(
+		(imageUrl: string) => {
+			// Collect all images from messages
+			const allImages: Array<{ url: string; alt?: string }> = [];
+			messages.forEach((msg) => {
+				if (msg.image) {
+					allImages.push({ url: msg.image, alt: 'Image' });
+				}
+				if (msg.attachments) {
+					msg.attachments.forEach((att) => {
+						if (
+							att.type === 'image' ||
+							att.mime?.startsWith('image/')
+						) {
+							allImages.push({ url: att.url, alt: att.name });
+						}
+					});
+				}
+			});
+
+			const clickedIndex = allImages.findIndex(
+				(img) => img.url === imageUrl,
+			);
+			setLightboxImages(allImages);
+			setLightboxIndex(clickedIndex >= 0 ? clickedIndex : 0);
+			setIsLightboxOpen(true);
+		},
+		[messages],
+	);
 
 	useEffect(() => {
 		const load = async () => {
 			if (!collaborationId) return;
 			setLoading(true);
 			try {
-				const conv = await ChatApi.getConversationByCollaboration(collaborationId);
-				if (conv?.conversation?.ownerId && conv.conversation.collaboratorId) {
-					const ownerId = conv.conversation.ownerId;
-					const collaboratorId = conv.conversation.collaboratorId;
-					// Fetch messages
-					const msgs = await ChatApi.getMessagesBetween(ownerId, collaboratorId, 100);
+				const conv =
+					await ChatApi.getConversationByCollaboration(
+						collaborationId,
+					);
+				if (
+					conv?.conversation?.ownerId &&
+					conv.conversation.collaboratorId
+				) {
+					const owner = conv.conversation.ownerId;
+					const collaborator = conv.conversation.collaboratorId;
+					setOwnerId(owner);
+
+					// Fetch messages (admin endpoint - doesn't mark as read)
+					const msgs = await ChatApi.getMessagesBetween(
+						owner,
+						collaborator,
+						200,
+					);
 					const allMessages = msgs.messages || [];
 					setMessages(allMessages);
-					// Collect unique sender IDs (include owner & collaborator explicitly)
-					const uniqueIds = Array.from(new Set([
-						ownerId,
-						collaboratorId,
-						...allMessages.map(m => m.senderId),
-					]));
-					// Fetch user details for every unique id (parallel)
+
+					// Fetch user details for owner and collaborator
 					try {
-						const users = await Promise.all(uniqueIds.map(id => ChatApi.getUserById(id)));
-						setUserMap(prev => {
-							const next = { ...prev };
-							users.forEach((u, idx) => {
-								const id = uniqueIds[idx];
-								if (!next[id]) {
-									next[id] = {
-										firstName: u.firstName,
-										lastName: u.lastName,
-										avatarUrl: u.avatarUrl,
-									};
-								} else {
-									next[id] = {
-										...next[id],
-										firstName: next[id].firstName || u.firstName,
-										lastName: next[id].lastName || u.lastName,
-										avatarUrl: next[id].avatarUrl || u.avatarUrl,
-									};
-								}
-							});
-							return next;
-						});
+						const [ownerData, collaboratorData] = await Promise.all(
+							[
+								ChatApi.getUserById(owner),
+								ChatApi.getUserById(collaborator),
+							],
+						);
+						setOwnerUser(ownerData);
+						setCollaboratorUser(collaboratorData);
 					} catch (userErr) {
-						console.warn('[AdminChatPage] user fetch error', userErr);
+						console.warn(
+							'[AdminChatPage] user fetch error',
+							userErr,
+						);
 					}
 				}
 			} catch (e) {
@@ -70,68 +275,128 @@ export default function AdminChatPage() {
 		load();
 	}, [collaborationId]);
 
+	// Scroll to bottom when messages load
+	useEffect(() => {
+		if (!loading && messages.length > 0) {
+			messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+		}
+	}, [loading, messages.length]);
+
+	// Group messages by date using the actual chat utility
+	const groupedMessages = groupMessagesByDate(messages);
+
 	return (
 		<AdminLayout>
-			<div className="space-y-4 sm:space-y-6">
-				<div className="flex items-center justify-between">
-					<h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Historique des échanges</h1>
-					<p className="text-xs sm:text-sm text-gray-600">Collaboration: {collaborationId || '-'}</p>
+			<div className="flex flex-col h-[calc(100vh-10rem)] min-h-[500px]">
+				{/* Header - same style as real chat */}
+				<div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-4 shadow-sm rounded-t-xl">
+					<Link
+						href="/admin/collaborations"
+						className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+						title="Retour aux collaborations"
+					>
+						<ArrowLeft className="w-5 h-5 text-gray-600" />
+					</Link>
+
+					{/* Participants info */}
+					<div className="flex items-center gap-3 flex-1 min-w-0">
+						<div className="flex -space-x-2">
+							{ownerUser && (
+								<ProfileAvatar
+									user={ownerUser}
+									size="md"
+									className="ring-2 ring-white"
+								/>
+							)}
+							{collaboratorUser && (
+								<ProfileAvatar
+									user={collaboratorUser}
+									size="md"
+									className="ring-2 ring-white"
+								/>
+							)}
+						</div>
+						<div className="min-w-0">
+							<h1 className="text-sm font-semibold text-gray-900 truncate">
+								{getFullName(ownerUser)} ↔{' '}
+								{getFullName(collaboratorUser)}
+							</h1>
+							<p className="text-xs text-gray-500 truncate">
+								{messages.length} message
+								{messages.length !== 1 ? 's' : ''} •
+								Collaboration #{collaborationId.slice(-8)}
+							</p>
+						</div>
+					</div>
+
+					{/* Read-only indicator */}
+					<div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-200">
+						<Eye className="w-3.5 h-3.5" />
+						<span className="hidden sm:inline">Lecture seule</span>
+					</div>
 				</div>
 
-				<div className="bg-white rounded-lg border p-3 sm:p-4">
-					{loading && <p className="text-sm text-gray-600">Chargement…</p>}
+				{/* Messages area - same style as real chat */}
+				<div
+					ref={messagesContainerRef}
+					className="flex-1 overflow-y-auto bg-gray-50"
+				>
+					{loading && <LoadingMessages />}
+
 					{!loading && messages.length === 0 && (
-						<p className="text-sm text-gray-600">Aucun message pour cette collaboration.</p>
+						<EmptyConversation selectedUser={null} />
 					)}
-					<ul className="space-y-3">
-						{messages.map(m => {
-							const hasAttachments = Array.isArray(m.attachments) && m.attachments.length > 0;
-							const userInfo = userMap[m.senderId];
-							const fullName = userInfo ? (`${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() || 'Inconnu') : 'Inconnu';
-							const initials = (userInfo && ((userInfo.firstName || '').charAt(0) + (userInfo.lastName || '').charAt(0)).toUpperCase().trim()) || (fullName.charAt(0) || '?').toUpperCase();
-							return (
-								<li key={m._id} className="flex items-start gap-3">
-									<div className="w-9 h-9 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white text-xs font-semibold" title={fullName} aria-label={fullName}>
-										{initials}
-									</div>
-									<div className="flex-1 min-w-0">
-										<p className="text-[11px] text-gray-500 mb-0.5">{new Date(m.createdAt).toLocaleString('fr-FR')}</p>
-										<p className="text-xs font-semibold text-gray-700 mb-1">{fullName}</p>
-										{m.text && <p className="text-sm text-gray-900 whitespace-pre-line mb-1">{m.text}</p>}
-										{hasAttachments && (
-											<div className="flex flex-col gap-2">
-												{m.attachments!.map(att => {
-													const isImage = att.type === 'image' || att.mime.startsWith('image/');
-													return (
-														<div key={att.url} className="group border rounded-md p-2 bg-gray-50 hover:bg-gray-100 transition-colors">
-															<div className="flex items-start gap-3">
-																{isImage ? (
-																	<a href={att.url} target="_blank" rel="noopener noreferrer" className="block w-24 h-24 overflow-hidden rounded-md bg-white shadow-sm relative">
-																		<Image src={att.thumbnailUrl || att.url} alt={att.name} fill className="object-cover" unoptimized />
-																	</a>
-																) : (
-																	<div className="w-10 h-10 flex items-center justify-center rounded bg-gradient-to-br from-slate-200 to-slate-300 text-slate-600 text-xs font-medium">
-																		{att.type === 'pdf' ? 'PDF' : att.type === 'doc' || att.type === 'docx' ? 'DOC' : 'FILE'}
-																	</div>
-																)}
-																<div className="flex-1 min-w-0">
-																	<p className="text-xs font-medium text-gray-800 truncate" title={att.name}>{att.name}</p>
-																	<p className="text-[11px] text-gray-500">{(att.size / 1024).toFixed(1)} Ko · {att.mime}</p>
-																	<a href={att.url} target="_blank" rel="noopener noreferrer" className="inline-block mt-1 text-[11px] text-blue-600 hover:text-blue-700 hover:underline">Ouvrir</a>
-																</div>
-															</div>
-														</div>
-													);
-												})}
-										</div>
-									)}
+
+					{!loading && messages.length > 0 && (
+						<div className="py-4">
+							{groupedMessages.map((group) => (
+								<div key={group.dateKey}>
+									{/* Date separator */}
+									<DateSeparator dateText={group.dateKey} />
+
+									{/* Messages with avatars and no delete option */}
+									{group.messages.map((msg) => {
+										const isOwnerMessage =
+											msg.senderId === ownerId;
+										const senderUser = isOwnerMessage
+											? ownerUser
+											: collaboratorUser;
+										return (
+											<AdminMessageBubble
+												key={msg._id}
+												message={msg}
+												isOwnerMessage={isOwnerMessage}
+												senderUser={senderUser}
+												onImageClick={handleImageClick}
+											/>
+										);
+									})}
 								</div>
-							</li>
-						);
-					})}
-					</ul>
+							))}
+							<div ref={messagesEndRef} />
+						</div>
+					)}
+				</div>
+
+				{/* Footer - read-only notice instead of input */}
+				<div className="bg-white border-t border-gray-200 px-4 py-4 rounded-b-xl">
+					<div className="flex items-center justify-center gap-3 text-gray-400">
+						<Eye className="w-5 h-5" />
+						<p className="text-sm">
+							Historique en lecture seule • Les messages ne sont
+							pas marqués comme lus
+						</p>
+					</div>
 				</div>
 			</div>
+
+			{/* Image Lightbox - same as real chat */}
+			<ImageLightbox
+				images={lightboxImages}
+				initialIndex={lightboxIndex}
+				isOpen={isLightboxOpen}
+				onClose={() => setIsLightboxOpen(false)}
+			/>
 		</AdminLayout>
 	);
 }

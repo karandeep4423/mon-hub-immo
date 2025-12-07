@@ -6,6 +6,7 @@
 // Authentication
 export { useAuth, useProtectedRoute } from './useAuth';
 export { useRequireAuth } from './useRequireAuth';
+export { useRequireSubscription } from './useRequireSubscription';
 
 // Socket listeners (NEW - reusable patterns)
 export {
@@ -76,3 +77,11 @@ export { useDebouncedSearch } from './useDebouncedSearch';
 // Page/UI state persistence
 export { usePageState } from './usePageState';
 export { useScrollRestoration } from './useScrollRestoration';
+
+// Admin
+export {
+	useAdminActions,
+	executeAdminAction,
+	getActionConfig,
+} from './useAdminActions';
+export type { AdminActionType, AdminActionResult } from './useAdminActions';

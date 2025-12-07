@@ -82,6 +82,17 @@ export interface IUser extends Document {
 	stripeCustomerId?: string;
 	stripeSubscriptionId?: string;
 	subscriptionStatus?: string;
+	subscriptionPlan?: 'monthly';
+	subscriptionStartDate?: Date;
+	subscriptionEndDate?: Date;
+	// Payment tracking
+	lastPaymentDate?: Date;
+	lastPaymentAmount?: number;
+	lastInvoiceId?: string;
+	failedPaymentCount?: number;
+	lastFailedPaymentDate?: Date;
+	canceledAt?: Date;
+	cancellationReason?: string;
 	isValidated: boolean; // Ajout admin
 	validatedAt?: Date;
 	validatedBy?: mongoose.Types.ObjectId;
@@ -243,10 +254,9 @@ const userSchema = new Schema<IUser>(
 				validate: {
 					validator: function (v: string) {
 						if (!v) return true;
-						return htmlTextLength(v) <= 1000;
+						return htmlTextLength(v) <= 650;
 					},
-					message:
-						'Bio personnelle trop longue (max 1000 caractères de texte)',
+					message: 'Bio personnelle trop longue (max 650 caractères)',
 				},
 			},
 			collaborateWithAgents: {
@@ -399,6 +409,57 @@ const userSchema = new Schema<IUser>(
 			default: null,
 		},
 		subscriptionStatus: {
+			type: String,
+			enum: [
+				'active',
+				'past_due',
+				'canceled',
+				'expired',
+				'pending_activation',
+				'pending_cancellation',
+				null,
+			],
+			default: null,
+		},
+		subscriptionPlan: {
+			type: String,
+			enum: ['monthly', null],
+			default: null,
+		},
+		subscriptionStartDate: {
+			type: Date,
+			default: null,
+		},
+		subscriptionEndDate: {
+			type: Date,
+			default: null,
+		},
+		// Payment tracking
+		lastPaymentDate: {
+			type: Date,
+			default: null,
+		},
+		lastPaymentAmount: {
+			type: Number,
+			default: null,
+		},
+		lastInvoiceId: {
+			type: String,
+			default: null,
+		},
+		failedPaymentCount: {
+			type: Number,
+			default: 0,
+		},
+		lastFailedPaymentDate: {
+			type: Date,
+			default: null,
+		},
+		canceledAt: {
+			type: Date,
+			default: null,
+		},
+		cancellationReason: {
 			type: String,
 			default: null,
 		},

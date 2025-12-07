@@ -93,10 +93,49 @@ export const VerifyEmailForm: React.FC = () => {
 					success: response.success,
 					requiresAdminValidation: response.requiresAdminValidation,
 					hasUser: !!response.user,
+					adminCreatedFlow: response.adminCreatedFlow,
+					nextStep: response.nextStep,
 				});
 
+				// Handle admin-created user flow (invite link or temp password)
+				if (response.success && response.adminCreatedFlow) {
+					logger.success(
+						'[VerifyEmailForm] Admin-created user verified',
+					);
+					showVerificationSuccess();
+
+					if (
+						response.nextStep === 'set-password' &&
+						response.inviteToken
+					) {
+						// Redirect to set password page with token
+						logger.debug(
+							'[VerifyEmailForm] Redirecting to set-password',
+						);
+						setTimeout(() => {
+							router.push(
+								`/auth/set-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(response.inviteToken!)}`,
+							);
+						}, 1200);
+					} else {
+						// Temp password flow - redirect to login
+						logger.debug(
+							'[VerifyEmailForm] Redirecting to login (temp password flow)',
+						);
+						authToastSuccess(
+							'Email vérifié ! Connectez-vous avec votre mot de passe temporaire.',
+						);
+						setTimeout(() => {
+							router.push(Features.Auth.AUTH_ROUTES.LOGIN);
+						}, 1500);
+					}
+					return;
+				}
+
 				if (response.success && response.requiresAdminValidation) {
-					logger.success('[VerifyEmailForm] Email verified, awaiting admin validation');
+					logger.success(
+						'[VerifyEmailForm] Email verified, awaiting admin validation',
+					);
 					setShowValidationModal(true);
 					return;
 				}
@@ -298,7 +337,9 @@ export const VerifyEmailForm: React.FC = () => {
 			</div>
 
 			{/* Validation Modal */}
-			{showValidationModal && <AccountValidationModal isOpen={showValidationModal} />}
+			{showValidationModal && (
+				<AccountValidationModal isOpen={showValidationModal} />
+			)}
 		</div>
 	);
 };

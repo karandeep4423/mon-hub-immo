@@ -10,12 +10,17 @@ import type {
 import { toast } from 'react-toastify';
 import { handleApiError } from '@/lib/utils/errorHandler';
 import { logger } from '@/lib/utils/logger';
+import { useAuthStore } from '@/store/authStore';
+import { canAccessProtectedResources } from '@/lib/utils/authUtils';
 
 // ============ QUERY HOOKS ============
 
-
 export function useMyCollaborations(userId?: string) {
-	const key = swrKeys.collaborations.list(userId);
+	// Check if user can access protected resources
+	const user = useAuthStore((state) => state.user);
+	const canAccess = canAccessProtectedResources(user);
+
+	const key = canAccess ? swrKeys.collaborations.list(userId) : null;
 	const { data, error, isLoading, mutate } = useSWR(
 		key,
 		async () => {
@@ -35,9 +40,14 @@ export function useMyCollaborations(userId?: string) {
 }
 
 export function useCollaborationsByProperty(propertyId?: string) {
-	const key = propertyId
-		? swrKeys.collaborations.byProperty(propertyId)
-		: null;
+	// Check if user can access protected resources
+	const user = useAuthStore((state) => state.user);
+	const canAccess = canAccessProtectedResources(user);
+
+	const key =
+		canAccess && propertyId
+			? swrKeys.collaborations.byProperty(propertyId)
+			: null;
 	const { data, error, isLoading, mutate } = useSWR(
 		key,
 		async () => {
@@ -55,8 +65,12 @@ export function useCollaborationsBySearchAd(
 	searchAdId?: string,
 	opts?: { skip?: boolean },
 ) {
+	// Check if user can access protected resources
+	const user = useAuthStore((state) => state.user);
+	const canAccess = canAccessProtectedResources(user);
+
 	const key =
-		!opts?.skip && searchAdId
+		canAccess && !opts?.skip && searchAdId
 			? swrKeys.collaborations.bySearchAd(searchAdId)
 			: null;
 	const { data, error, isLoading, mutate } = useSWR(

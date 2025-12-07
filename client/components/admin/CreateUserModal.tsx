@@ -1,215 +1,389 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { Select } from '@/components/ui/CustomSelect';
-import { useMutation } from "@/hooks/useMutation";
-import { authToastSuccess } from "@/lib/utils/authToast";
-import { logger } from "@/lib/utils/logger";
+import { Modal } from '@/components/ui/Modal';
+import { useMutation } from '@/hooks/useMutation';
+import { authToastSuccess } from '@/lib/utils/authToast';
+import { logger } from '@/lib/utils/logger';
+import { adminService } from '@/lib/api/adminApi';
 
 interface Props {
-  onClose: () => void;
-  onCreated: () => void;
+	onClose: () => void;
+	onCreated: () => void;
 }
 
 const CreateUserModal: React.FC<Props> = ({ onClose, onCreated }) => {
-  const API_ROOT = (() => {
-    const raw = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-    return raw.replace(/\/+$/, '').replace(/\/api$/i, '');
-  })();
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [userType, setUserType] = useState("apporteur");
-  const [networkName, setNetworkName] = useState("");
-  const [isValidated, setIsValidated] = useState(false);
-  const [sendInvite, setSendInvite] = useState(true);
-  const [sendRandomPassword, setSendRandomPassword] = useState(false);
-  // Agent professional fields
-  const [agentType, setAgentType] = useState('independent');
-  const [tCard, setTCard] = useState('');
-  const [sirenNumber, setSirenNumber] = useState('');
-  const [rsacNumber, setRsacNumber] = useState('');
-  const [collaboratorCertificate, setCollaboratorCertificate] = useState('');
-  // identity file left out of payload (requires multipart/upload flow)
-  const [identityCardFile, setIdentityCardFile] = useState<File | null>(null);
+	const [firstName, setFirstName] = useState('');
+	const [lastName, setLastName] = useState('');
+	const [email, setEmail] = useState('');
+	const [phone, setPhone] = useState('');
+	const [userType, setUserType] = useState('apporteur');
+	const [networkName, setNetworkName] = useState('');
+	const [isValidated, setIsValidated] = useState(false);
+	const [sendInvite, setSendInvite] = useState(true);
+	const [sendRandomPassword, setSendRandomPassword] = useState(false);
+	// Agent professional fields
+	const [agentType, setAgentType] = useState('independent');
+	const [tCard, setTCard] = useState('');
+	const [sirenNumber, setSirenNumber] = useState('');
+	const [rsacNumber, setRsacNumber] = useState('');
+	const [collaboratorCertificate, setCollaboratorCertificate] = useState('');
+	// identity file left out of payload (requires multipart/upload flow)
+	const [identityCardFile, setIdentityCardFile] = useState<File | null>(null);
 
-  const { mutate, loading } = useMutation(async (payload: Record<string, unknown>) => {
-    // Use generic POST to admin create user
-    const res = await fetch(`${API_ROOT}/api/admin/users/create`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
-  }, { 
-    onSuccess: () => {
-      authToastSuccess('Utilisateur créé avec succès');
-      onCreated();
-      onClose();
-    },
-    onError: (err: unknown) => {
-      logger.error('[CreateUserModal] Error creating user', err);
-      // Prefer API-specific message when available — safely traverse unknown shape
-      const getNestedString = (obj: unknown, path: string[]) => {
-        let cur: unknown = obj;
-        for (const k of path) {
-          if (cur && typeof cur === 'object' && k in (cur as Record<string, unknown>)) {
-            cur = (cur as Record<string, unknown>)[k];
-          } else {
-            return undefined;
-          }
-        }
-        return typeof cur === 'string' ? cur : undefined;
-      };
+	const [errors, setErrors] = useState<Record<string, string>>({});
 
-      const msg =
-        (typeof err === 'string' && err) ||
-        (err instanceof Error && err.message) ||
-        getNestedString(err, ['message']) ||
-        getNestedString(err, ['originalError', 'response', 'data', 'message']) ||
-        getNestedString(err, ['originalError', 'response', 'data', 'error']) ||
-        'Erreur lors de la création de l\'utilisateur';
+	// Phone validation regex (French format)
+	const PHONE_REGEX = /^(?:(?:\+33|0)[1-9])(?:[0-9]{8})$/;
 
-      alert(msg);
-    }
-  });
+	const validateForm = (): boolean => {
+		const newErrors: Record<string, string> = {};
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !firstName || !lastName) {
-      alert('Prénom / Nom / Email requis');
-      return;
-    }
-    // Password field removed: allow creation without password; sendInvite/sendRandomPassword remain optional
+		if (!firstName.trim()) newErrors.firstName = 'Prénom requis';
+		if (!lastName.trim()) newErrors.lastName = 'Nom requis';
+		if (!email.trim()) newErrors.email = 'Email requis';
 
-    const payload: Record<string, unknown> = {
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      email: email.trim(),
-      phone: phone.trim() || undefined,
-      userType,
-      isValidated,
-      networkName: networkName.trim() || undefined,
-      sendInvite: sendInvite,
-      sendRandomPassword: sendRandomPassword,
-    };
+		// Phone validation (optional but must be valid if provided)
+		if (phone.trim() && !PHONE_REGEX.test(phone.replace(/\s/g, ''))) {
+			newErrors.phone = 'Téléphone invalide (format français)';
+		}
 
-    // If creating an agent, attach professionalInfo
-    if (userType === 'agent') {
-      payload.professionalInfo = {
-        agentType,
-        tCard: tCard || undefined,
-        sirenNumber: sirenNumber || undefined,
-        rsacNumber: rsacNumber || undefined,
-        collaboratorCertificate: collaboratorCertificate || undefined,
-        // identityCard: file upload requires separate flow (not handled here)
-      };
-    }
+		// Agent-specific validation
+		if (userType === 'agent') {
+			if (agentType === 'independent' && !tCard.trim()) {
+				newErrors.tCard = 'Carte professionnelle (T card) requise';
+			}
+			if (agentType === 'commercial' && !sirenNumber.trim()) {
+				newErrors.sirenNumber = 'Numéro SIREN requis';
+			}
+			if (agentType === 'employee' && !collaboratorCertificate.trim()) {
+				newErrors.collaboratorCertificate =
+					"Certificat d'autorisation requis";
+			}
+		}
 
-    await mutate(payload);
-  };
+		setErrors(newErrors);
+		return Object.keys(newErrors).length === 0;
+	};
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6">
-        <div className="flex items-center justify-between mb-4 sticky top-0 bg-white">
-          <h3 className="text-lg font-semibold">Nouveau utilisateur</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
-        </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <Input label="Prénom" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-            <Input label="Nom" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <Input label="Téléphone" value={phone} onChange={(e) => setPhone(e.target.value)} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block">
-              <div className="text-sm font-medium text-gray-700 mb-1">Rôle</div>
-              <select value={userType} onChange={(e) => setUserType(e.target.value)} className="w-full px-3 py-2 border rounded">
-                <option value="agent">Agent</option>
-                <option value="apporteur">Apporteur</option>
-                <option value="admin">Admin</option>
-              </select>
-            </label>
-            <Input label="Nom du réseau (optionnel)" value={networkName} onChange={(e) => setNetworkName(e.target.value)} />
-          </div>
+	const { mutate, loading } = useMutation(
+		async (payload: Record<string, unknown>) => {
+			return adminService.createUser(payload);
+		},
+		{
+			onSuccess: (response) => {
+				// Build feedback message about sent emails
+				const emailsSent =
+					(response as { data?: { emailsSent?: string[] } })?.data
+						?.emailsSent || [];
+				const emailMessages: string[] = [];
+				if (emailsSent.includes('invite')) {
+					emailMessages.push("lien d'invitation");
+				}
+				if (emailsSent.includes('tempPassword')) {
+					emailMessages.push('mot de passe temporaire');
+				}
+				if (emailsSent.includes('validation')) {
+					emailMessages.push('confirmation de validation');
+				}
 
-          {userType === 'agent' && (
-            <div className="p-4 bg-gray-50 rounded border">
-              <div className="mb-3">
-                <div className="text-sm font-medium text-gray-700 mb-1">Type d&apos;agent immobilier *</div>
-                <Select
-                  label=""
-                  name="agentType"
-                  value={agentType}
-                  onChange={(v: string) => setAgentType(v)}
-                  options={[
-                    { value: 'independent', label: 'Agent immobilier indépendant' },
-                    { value: 'commercial', label: 'Agent commercial immobilier' },
-                    { value: 'employee', label: "Négociateur VRP employé d&apos;agence" },
-                  ]}
-                />
-              </div>
+				let successMsg = 'Utilisateur créé avec succès';
+				if (emailMessages.length > 0) {
+					successMsg += `. Email(s) envoyé(s): ${emailMessages.join(', ')}`;
+				}
+				authToastSuccess(successMsg);
+				onCreated();
+				onClose();
+			},
+			onError: (err: unknown) => {
+				logger.error('[CreateUserModal] Error creating user', err);
+				// Prefer API-specific message when available — safely traverse unknown shape
+				const getNestedString = (obj: unknown, path: string[]) => {
+					let cur: unknown = obj;
+					for (const k of path) {
+						if (
+							cur &&
+							typeof cur === 'object' &&
+							k in (cur as Record<string, unknown>)
+						) {
+							cur = (cur as Record<string, unknown>)[k];
+						} else {
+							return undefined;
+						}
+					}
+					return typeof cur === 'string' ? cur : undefined;
+				};
 
-              {agentType === 'independent' && (
-                <div className="space-y-3">
-                  <Input label="Carte professionnelle (T card) *" value={tCard} onChange={(e) => setTCard(e.target.value)} />
-                  <FileUpload label="Carte d'identité" onChange={(f) => setIdentityCardFile(f)} value={identityCardFile || undefined} />
-                </div>
-              )}
+				const msg =
+					(typeof err === 'string' && err) ||
+					(err instanceof Error && err.message) ||
+					getNestedString(err, ['message']) ||
+					getNestedString(err, [
+						'originalError',
+						'response',
+						'data',
+						'message',
+					]) ||
+					getNestedString(err, [
+						'originalError',
+						'response',
+						'data',
+						'error',
+					]) ||
+					"Erreur lors de la création de l'utilisateur";
 
-              {agentType === 'commercial' && (
-                <div className="space-y-3">
-                  <Input label="Numéro SIREN *" value={sirenNumber} onChange={(e) => setSirenNumber(e.target.value)} />
-                  <Input label="Numéro RSAC" value={rsacNumber} onChange={(e) => setRsacNumber(e.target.value)} />
-                  <FileUpload label="Carte d'identité" onChange={(f) => setIdentityCardFile(f)} value={identityCardFile || undefined} />
-                </div>
-              )}
+				alert(msg);
+			},
+		},
+	);
 
-              {agentType === 'employee' && (
-                <div className="space-y-3">
-                  <Input label="Certificat d'autorisation *" value={collaboratorCertificate} onChange={(e) => setCollaboratorCertificate(e.target.value)} />
-                  <FileUpload label="Carte d'identité" onChange={(f) => setIdentityCardFile(f)} value={identityCardFile || undefined} />
-                </div>
-              )}
-            </div>
-          )}
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!validateForm()) {
+			return;
+		}
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <label className="flex items-center gap-2">
-                <input type="checkbox" checked={sendInvite} onChange={(e) => { setSendInvite(e.target.checked); if (e.target.checked) setSendRandomPassword(false); }} />
-                <span className="text-sm text-gray-600">Envoyer un lien d&apos;invitation pour définir le mot de passe</span>
-              </label>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" checked={sendRandomPassword} onChange={(e) => { setSendRandomPassword(e.target.checked); if (e.target.checked) setSendInvite(false); }} />
-                <span className="text-sm text-gray-600">Générer un mot de passe temporaire et l&apos;envoyer par email</span>
-              </label>
-            </div>
-          </div>
+		const payload: Record<string, unknown> = {
+			firstName: firstName.trim(),
+			lastName: lastName.trim(),
+			email: email.trim(),
+			phone: phone.trim().replace(/\s/g, '') || undefined,
+			userType,
+			isValidated,
+			networkName: networkName.trim() || undefined,
+			sendInvite: sendInvite,
+			sendRandomPassword: sendRandomPassword,
+		};
 
-          <div className="flex items-center gap-3">
-            <input id="validated" type="checkbox" checked={isValidated} onChange={(e) => setIsValidated(e.target.checked)} />
-            <label htmlFor="validated" className="text-sm text-gray-600">Valider ce compte (son e-mail sera envoyé si validé)</label>
-          </div>
+		// If creating an agent, attach professionalInfo
+		if (userType === 'agent') {
+			payload.professionalInfo = {
+				agentType,
+				tCard: tCard || undefined,
+				sirenNumber: sirenNumber || undefined,
+				rsacNumber: rsacNumber || undefined,
+				collaboratorCertificate: collaboratorCertificate || undefined,
+				// identityCard: file upload requires separate flow (not handled here)
+			};
+		}
 
-          <div className="flex gap-3 justify-end pt-2">
-            <Button variant="secondary" type="button" onClick={onClose}>Annuler</Button>
-            <Button type="submit" variant="primary" disabled={loading}>Créer</Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
+		await mutate(payload);
+	};
+
+	return (
+		<Modal
+			isOpen={true}
+			onClose={onClose}
+			title="Nouveau utilisateur"
+			size="xl"
+		>
+			<form onSubmit={handleSubmit} className="space-y-4">
+				<div className="grid grid-cols-2 gap-3">
+					<Input
+						label="Prénom"
+						value={firstName}
+						onChange={(e) => setFirstName(e.target.value)}
+						error={errors.firstName}
+					/>
+					<Input
+						label="Nom"
+						value={lastName}
+						onChange={(e) => setLastName(e.target.value)}
+						error={errors.lastName}
+					/>
+				</div>
+				<div className="grid grid-cols-2 gap-3">
+					<Input
+						label="Email"
+						type="email"
+						value={email}
+						onChange={(e) => setEmail(e.target.value)}
+						error={errors.email}
+					/>
+					<Input
+						label="Téléphone"
+						value={phone}
+						onChange={(e) => setPhone(e.target.value)}
+						error={errors.phone}
+					/>
+				</div>
+				<div className="grid grid-cols-2 gap-3">
+					<div>
+						<Select
+							label="Rôle"
+							name="userType"
+							value={userType}
+							onChange={(v: string) => setUserType(v)}
+							options={[
+								{ value: 'agent', label: 'Agent' },
+								{ value: 'apporteur', label: 'Apporteur' },
+								{ value: 'admin', label: 'Admin' },
+							]}
+						/>
+					</div>
+					<Input
+						label="Nom du réseau (optionnel)"
+						value={networkName}
+						onChange={(e) => setNetworkName(e.target.value)}
+					/>
+				</div>{' '}
+				{userType === 'agent' && (
+					<div className="p-4 bg-gray-50 rounded border">
+						<div className="mb-3">
+							<div className="text-sm font-medium text-gray-700 mb-1">
+								Type d&apos;agent immobilier *
+							</div>
+							<Select
+								label=""
+								name="agentType"
+								value={agentType}
+								onChange={(v: string) => setAgentType(v)}
+								options={[
+									{
+										value: 'independent',
+										label: 'Agent immobilier indépendant',
+									},
+									{
+										value: 'commercial',
+										label: 'Agent commercial immobilier',
+									},
+									{
+										value: 'employee',
+										label: 'Négociateur VRP employé d&apos;agence',
+									},
+								]}
+							/>
+						</div>
+
+						{agentType === 'independent' && (
+							<div className="space-y-3">
+								<Input
+									label="Carte professionnelle (T card) *"
+									value={tCard}
+									onChange={(e) => setTCard(e.target.value)}
+									error={errors.tCard}
+								/>
+								<FileUpload
+									label="Carte d'identité"
+									onChange={(f) => setIdentityCardFile(f)}
+									value={identityCardFile || undefined}
+								/>
+							</div>
+						)}
+
+						{agentType === 'commercial' && (
+							<div className="space-y-3">
+								<Input
+									label="Numéro SIREN *"
+									value={sirenNumber}
+									onChange={(e) =>
+										setSirenNumber(e.target.value)
+									}
+									error={errors.sirenNumber}
+								/>
+								<Input
+									label="Numéro RSAC"
+									value={rsacNumber}
+									onChange={(e) =>
+										setRsacNumber(e.target.value)
+									}
+								/>
+								<FileUpload
+									label="Carte d'identité"
+									onChange={(f) => setIdentityCardFile(f)}
+									value={identityCardFile || undefined}
+								/>
+							</div>
+						)}
+
+						{agentType === 'employee' && (
+							<div className="space-y-3">
+								<Input
+									label="Certificat d'autorisation *"
+									value={collaboratorCertificate}
+									onChange={(e) =>
+										setCollaboratorCertificate(
+											e.target.value,
+										)
+									}
+									error={errors.collaboratorCertificate}
+								/>
+								<FileUpload
+									label="Carte d'identité"
+									onChange={(f) => setIdentityCardFile(f)}
+									value={identityCardFile || undefined}
+								/>
+							</div>
+						)}
+					</div>
+				)}
+				<div className="grid grid-cols-2 gap-3">
+					<div className="space-y-2">
+						<label className="flex items-center gap-2">
+							<input
+								type="checkbox"
+								checked={sendInvite}
+								onChange={(e) => {
+									setSendInvite(e.target.checked);
+									if (e.target.checked)
+										setSendRandomPassword(false);
+								}}
+							/>
+							<span className="text-sm text-gray-600">
+								Envoyer un lien d&apos;invitation pour définir
+								le mot de passe
+							</span>
+						</label>
+						<label className="flex items-center gap-2">
+							<input
+								type="checkbox"
+								checked={sendRandomPassword}
+								onChange={(e) => {
+									setSendRandomPassword(e.target.checked);
+									if (e.target.checked) setSendInvite(false);
+								}}
+							/>
+							<span className="text-sm text-gray-600">
+								Générer un mot de passe temporaire et
+								l&apos;envoyer par email
+							</span>
+						</label>
+					</div>
+				</div>
+				<div className="flex items-center gap-3">
+					<input
+						id="validated"
+						type="checkbox"
+						checked={isValidated}
+						onChange={(e) => setIsValidated(e.target.checked)}
+					/>
+					<label
+						htmlFor="validated"
+						className="text-sm text-gray-600"
+					>
+						Valider ce compte (son e-mail sera envoyé si validé)
+					</label>
+				</div>
+				<div className="flex justify-end gap-3 pt-2">
+					<Button
+						variant="outline"
+						type="button"
+						onClick={onClose}
+						disabled={loading}
+					>
+						Annuler
+					</Button>
+					<Button type="submit" variant="primary" loading={loading}>
+						Créer
+					</Button>
+				</div>
+			</form>
+		</Modal>
+	);
 };
 
 export default CreateUserModal;

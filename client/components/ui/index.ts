@@ -50,3 +50,5 @@ export { RichTextEditor } from './RichTextEditor';
 export { RichTextDisplay } from './RichTextDisplay';
 export { DataTable } from './DataTable';
 export { StatCard } from './StatCard';
+export { Checkbox } from './Checkbox';
+export { ReadOnlyField } from './ReadOnlyField';

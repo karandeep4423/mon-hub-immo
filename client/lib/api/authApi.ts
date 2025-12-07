@@ -173,12 +173,20 @@ export class AuthApi {
 	/**
 	 * Set password from invite token (email + token + newPassword)
 	 */
-	static async setPasswordFromInvite(data: { email: string; token: string; newPassword: string; }): Promise<AuthResponse> {
+	static async setPasswordFromInvite(data: {
+		email: string;
+		token: string;
+		newPassword: string;
+	}): Promise<AuthResponse> {
 		try {
 			const response = await api.post(AUTH_ENDPOINTS.SET_PASSWORD, data);
 			return response.data;
 		} catch (error) {
-			throw handleApiError(error, 'AuthApi.setPasswordFromInvite', 'Impossible de définir le mot de passe');
+			throw handleApiError(
+				error,
+				'AuthApi.setPasswordFromInvite',
+				'Impossible de définir le mot de passe',
+			);
 		}
 	}
 
@@ -278,6 +286,10 @@ export class AuthApi {
 			independentAgent?: boolean;
 			alertsEnabled?: boolean;
 			alertFrequency?: 'quotidien' | 'hebdomadaire';
+			agentType?: 'independent' | 'commercial' | 'employee';
+			tCard?: string;
+			rsacNumber?: string;
+			collaboratorCertificate?: string;
 		};
 		profileImage?: string;
 		identityCard?: {

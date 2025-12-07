@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import ChatPage from '../../components/chat/ChatPage';
 import { useChat } from '../../hooks/useChat';
 import { useAuth } from '@/hooks/useAuth';
+import { canAccessProtectedResources } from '@/lib/utils/authUtils';
 import { api } from '@/lib/api';
 import type { Property } from '@/lib/api/propertyApi';
 import { SearchAd } from '@/types/searchAd';
@@ -45,10 +46,15 @@ export const ChatPageContent = () => {
 		}
 	}, [user, authLoading, router]);
 
+	// Check if user can access protected resources before making API calls
+	const canAccess = canAccessProtectedResources(user);
+
 	useEffect(() => {
-		// Initialize users list
-		getUsers();
-	}, [getUsers]);
+		// Initialize users list only if user can access
+		if (canAccess) {
+			getUsers();
+		}
+	}, [getUsers, canAccess]);
 
 	useEffect(() => {
 		// Auto-select user if userId is provided in URL

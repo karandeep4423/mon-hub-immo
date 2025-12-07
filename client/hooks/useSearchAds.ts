@@ -12,6 +12,8 @@ import { toast } from 'react-toastify';
 import { handleApiError } from '@/lib/utils/errorHandler';
 import { logger } from '@/lib/utils/logger';
 import { Features } from '@/lib/constants';
+import { useAuthStore } from '@/store/authStore';
+import { canAccessProtectedResources } from '@/lib/utils/authUtils';
 
 // ============ QUERIES ============
 
@@ -50,8 +52,12 @@ export function useSearchAd(id?: string) {
  * Used in: MySearches component, Dashboard
  */
 export function useMySearchAds(userId?: string) {
+	// Check if user can access protected resources
+	const user = useAuthStore((state) => state.user);
+	const canAccess = canAccessProtectedResources(user);
+
 	return useSWR(
-		userId ? swrKeys.searchAds.myAds(userId) : null,
+		canAccess && userId ? swrKeys.searchAds.myAds(userId) : null,
 		() => SearchAdApi.getMySearchAds(),
 		{
 			revalidateOnFocus: true,

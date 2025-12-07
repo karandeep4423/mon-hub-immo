@@ -273,6 +273,30 @@ export const getAuthErrorMessage = (
 };
 
 /**
+ * Check if user can access protected resources
+ * For agents: must have completed profile AND (isPaid OR accessGrantedByAdmin)
+ * For apporteurs/admin: only needs to be logged in
+ * @param user - Current user object
+ * @returns true if user can access protected resources
+ */
+export const canAccessProtectedResources = (
+	user: User | null | undefined,
+): boolean => {
+	if (!user) return false;
+
+	// Agents must have completed profile and paid subscription (or admin-granted access)
+	if (user.userType === 'agent') {
+		return !!(
+			user.profileCompleted &&
+			(user.isPaid || user.accessGrantedByAdmin)
+		);
+	}
+
+	// Apporteurs and admins only need to be logged in
+	return true;
+};
+
+/**
  * Check multiple authorization conditions
  * Returns first failed condition or null if all pass
  * @param checks - Array of authorization checks

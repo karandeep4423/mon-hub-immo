@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { useChat } from '../../hooks/useChat';
 import { useSocket } from '../../context/SocketContext';
+import { useAuth } from '@/hooks/useAuth';
+import { canAccessProtectedResources } from '@/lib/utils/authUtils';
 import { getUserDisplayName, formatLastSeen } from './utils/userUtils';
 import { formatMessageTime, truncateMessage } from './utils/messageUtils';
 import { LoadingUsers, UnreadBadge } from './ui';
@@ -26,11 +28,17 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({ onClose }) => {
 		userStatuses,
 	} = useChat();
 	const { onlineUsers } = useSocket();
+	const { user } = useAuth();
 	const [searchQuery, setSearchQuery] = useState('');
 
+	// Only fetch users if user can access protected resources
+	const canAccess = canAccessProtectedResources(user);
+
 	useEffect(() => {
-		getUsers();
-	}, [getUsers]);
+		if (canAccess) {
+			getUsers();
+		}
+	}, [getUsers, canAccess]);
 
 	const handleUserSelect = (user: ChatUser) => {
 		setSelectedUser(user);

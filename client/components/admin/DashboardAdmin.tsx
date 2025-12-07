@@ -2,13 +2,15 @@
 import React from 'react';
 import { StatCard } from '@/components/ui/StatCard';
 import { AdminStats } from '@/hooks/useAdminStats';
-import { Users, FileText, Home, Handshake, DollarSign, Globe, MapPin } from 'lucide-react';
+import { Users, FileText, Home, Handshake, Globe, MapPin } from 'lucide-react';
 
 interface DashboardAdminModernProps {
 	stats: AdminStats;
 }
 
-export const DashboardAdminModern: React.FC<DashboardAdminModernProps> = ({ stats }) => {
+export const DashboardAdminModern: React.FC<DashboardAdminModernProps> = ({
+	stats,
+}) => {
 	const statCards = [
 		{
 			icon: <Users className="w-7 h-7 text-[#00BCE4]" />,
@@ -16,9 +18,21 @@ export const DashboardAdminModern: React.FC<DashboardAdminModernProps> = ({ stat
 			value: stats.agentsTotal,
 			gradient: 'blue' as const,
 			details: [
-				{ label: 'Actifs', value: stats.agentsActive, color: '#10B981' },
-				{ label: 'En attente', value: stats.agentsPending, color: '#F59E0B' },
-				{ label: 'Désabonnés', value: stats.agentsUnsubscribed, color: '#EF4444' },
+				{
+					label: 'Actifs',
+					value: stats.agentsActive,
+					color: '#10B981',
+				},
+				{
+					label: 'En attente',
+					value: stats.agentsPending,
+					color: '#F59E0B',
+				},
+				{
+					label: 'Désabonnés',
+					value: stats.agentsUnsubscribed,
+					color: '#EF4444',
+				},
 			],
 		},
 		{
@@ -27,8 +41,16 @@ export const DashboardAdminModern: React.FC<DashboardAdminModernProps> = ({ stat
 			value: stats.apporteursTotal,
 			gradient: 'emerald' as const,
 			details: [
-				{ label: 'Actifs', value: stats.apporteursActive, color: '#10B981' },
-				{ label: 'En attente', value: stats.apporteursPending, color: '#F59E0B' },
+				{
+					label: 'Actifs',
+					value: stats.apporteursActive,
+					color: '#10B981',
+				},
+				{
+					label: 'En attente',
+					value: stats.apporteursPending,
+					color: '#F59E0B',
+				},
 			],
 		},
 		{
@@ -37,8 +59,16 @@ export const DashboardAdminModern: React.FC<DashboardAdminModernProps> = ({ stat
 			value: stats.propertiesActive,
 			gradient: 'purple' as const,
 			details: [
-				{ label: 'Archivées', value: stats.propertiesArchived, color: '#9CA3AF' },
-				{ label: 'Collaboration', value: stats.propertiesInCollab, color: '#3B82F6' },
+				{
+					label: 'Archivées',
+					value: stats.propertiesArchived,
+					color: '#9CA3AF',
+				},
+				{
+					label: 'Collaboration',
+					value: stats.propertiesInCollab,
+					color: '#3B82F6',
+				},
 			],
 		},
 		{
@@ -47,16 +77,12 @@ export const DashboardAdminModern: React.FC<DashboardAdminModernProps> = ({ stat
 			value: stats.collabOpen,
 			gradient: 'emerald' as const,
 			details: [
-				{ label: 'Clôturées', value: stats.collabClosed, color: '#8B5CF6' },
+				{
+					label: 'Clôturées',
+					value: stats.collabClosed,
+					color: '#8B5CF6',
+				},
 			],
-		},
-		{
-			icon: <DollarSign className="w-7 h-7 text-[#E11D48]" />,
-			title: 'Frais d&apos;Agence',
-			value: typeof stats.feesTotal === 'number'
-				? `€${stats.feesTotal.toLocaleString('fr-FR')}`
-				: stats.feesTotal,
-			gradient: 'rose' as const,
 		},
 	];
 
@@ -65,16 +91,23 @@ export const DashboardAdminModern: React.FC<DashboardAdminModernProps> = ({ stat
 			{/* Header - Optimized for all screen sizes */}
 			<div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
 				<div>
-				<h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
-					Tableau de Bord
-				</h1>
-				<p className="text-sm text-gray-500 mt-1">Vue d&apos;ensemble de votre plateforme</p>
- 				</div>
+					<h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
+						Tableau de Bord
+					</h1>
+					<p className="text-sm text-gray-500 mt-1">
+						Vue d&apos;ensemble de votre plateforme
+					</p>
+				</div>
 				<div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-sm border border-gray-200">
 					<div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
 					<div className="text-xs sm:text-sm">
 						<p className="text-gray-500">Mis à jour</p>
-						<p className="font-semibold text-gray-900">{new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</p>
+						<p className="font-semibold text-gray-900">
+							{new Date().toLocaleTimeString('fr-FR', {
+								hour: '2-digit',
+								minute: '2-digit',
+							})}
+						</p>
 					</div>
 				</div>
 			</div>
@@ -111,12 +144,17 @@ export const DashboardAdminModern: React.FC<DashboardAdminModernProps> = ({ stat
 					<div className="space-y-2.5">
 						{(stats.topNetworks || []).length > 0 ? (
 							(stats.topNetworks || []).map((network, idx) => (
-								<div key={idx} className="group flex items-center justify-between p-3 bg-gradient-to-r from-blue-50/50 to-cyan-50/50 hover:from-blue-50 hover:to-cyan-50 rounded-xl border border-blue-100/50 hover:border-blue-200 transition-all cursor-pointer">
+								<div
+									key={idx}
+									className="group flex items-center justify-between p-3 bg-gradient-to-r from-blue-50/50 to-cyan-50/50 hover:from-blue-50 hover:to-cyan-50 rounded-xl border border-blue-100/50 hover:border-blue-200 transition-all cursor-pointer"
+								>
 									<div className="flex items-center gap-3 min-w-0 flex-1">
 										<div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-sm shadow-md">
 											{idx + 1}
 										</div>
-										<span className="font-semibold text-gray-800 text-sm truncate group-hover:text-blue-700 transition-colors">{network.name}</span>
+										<span className="font-semibold text-gray-800 text-sm truncate group-hover:text-blue-700 transition-colors">
+											{network.name}
+										</span>
 									</div>
 									<span className="font-bold text-blue-700 bg-blue-100 px-3 py-1.5 rounded-full text-sm flex-shrink-0 ml-2 shadow-sm">
 										{network.count}
@@ -126,7 +164,9 @@ export const DashboardAdminModern: React.FC<DashboardAdminModernProps> = ({ stat
 						) : (
 							<div className="text-center py-8 text-gray-400">
 								<Globe className="w-12 h-12 mx-auto mb-2 opacity-50" />
-								<p className="text-sm">Aucun réseau pour le moment</p>
+								<p className="text-sm">
+									Aucun réseau pour le moment
+								</p>
 							</div>
 						)}
 					</div>
@@ -148,12 +188,17 @@ export const DashboardAdminModern: React.FC<DashboardAdminModernProps> = ({ stat
 					<div className="space-y-2.5">
 						{(stats.topRegions || []).length > 0 ? (
 							(stats.topRegions || []).map((region, idx) => (
-								<div key={idx} className="group flex items-center justify-between p-3 bg-gradient-to-r from-purple-50/50 to-indigo-50/50 hover:from-purple-50 hover:to-indigo-50 rounded-xl border border-purple-100/50 hover:border-purple-200 transition-all cursor-pointer">
+								<div
+									key={idx}
+									className="group flex items-center justify-between p-3 bg-gradient-to-r from-purple-50/50 to-indigo-50/50 hover:from-purple-50 hover:to-indigo-50 rounded-xl border border-purple-100/50 hover:border-purple-200 transition-all cursor-pointer"
+								>
 									<div className="flex items-center gap-3 min-w-0 flex-1">
 										<div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-sm shadow-md">
 											{idx + 1}
 										</div>
-										<span className="font-semibold text-gray-800 text-sm truncate group-hover:text-purple-700 transition-colors">{region.name}</span>
+										<span className="font-semibold text-gray-800 text-sm truncate group-hover:text-purple-700 transition-colors">
+											{region.name}
+										</span>
 									</div>
 									<span className="font-bold text-purple-700 bg-purple-100 px-3 py-1.5 rounded-full text-sm flex-shrink-0 ml-2 shadow-sm">
 										{region.count}
@@ -163,7 +208,9 @@ export const DashboardAdminModern: React.FC<DashboardAdminModernProps> = ({ stat
 						) : (
 							<div className="text-center py-8 text-gray-400">
 								<MapPin className="w-12 h-12 mx-auto mb-2 opacity-50" />
-								<p className="text-sm">Aucune région pour le moment</p>
+								<p className="text-sm">
+									Aucune région pour le moment
+								</p>
 							</div>
 						)}
 					</div>
@@ -171,7 +218,6 @@ export const DashboardAdminModern: React.FC<DashboardAdminModernProps> = ({ stat
 			</div>
 
 			{/* Quick Actions - Mobile optimized */}
-			 
 		</div>
 	);
 };

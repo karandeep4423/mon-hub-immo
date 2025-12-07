@@ -714,7 +714,9 @@ export const verifyEmail = async (
 		}
 
 		// Check if user already exists (shouldn't happen, but safety check)
-		const existingUser = await User.findOne({ email });
+		const existingUser = await User.findOne({ email }).select(
+			'+passwordResetCode +passwordResetExpires +password',
+		);
 		if (existingUser) {
 			// If user exists and is NOT yet verified, this is from admin-created flow
 			// Just mark their email as verified and clean up pending verification
@@ -733,10 +735,38 @@ export const verifyEmail = async (
 					metadata: { email, flow: 'admin_invite' },
 				});
 
+				// Determine next step for admin-created user
+				// Check if user has a password set and if they need to set one via invite link
+				const hasInviteToken =
+					existingUser.passwordResetCode &&
+					existingUser.passwordResetExpires &&
+					existingUser.passwordResetExpires > new Date();
+				const hasPassword = !!existingUser.password;
+				const mustChangePassword = !!(
+					existingUser as { mustChangePassword?: boolean }
+				).mustChangePassword;
+
+				// Flow 1: Invite link flow - user needs to set password
+				// Flow 2: Temp password flow - user can login but must change password
+				let nextStep: 'set-password' | 'login' = 'login';
+				let inviteToken: string | undefined;
+
+				if (hasInviteToken && !hasPassword) {
+					// Invite link flow - redirect to set password page
+					nextStep = 'set-password';
+					inviteToken = existingUser.passwordResetCode;
+				}
+
 				res.json({
 					success: true,
 					message: 'Email vérifié avec succès',
 					requiresAdminValidation: !existingUser.isValidated,
+					// New fields for admin-created user flow
+					adminCreatedFlow: true,
+					nextStep,
+					inviteToken,
+					mustChangePassword,
+					email: existingUser.email,
 				});
 				return;
 			}
@@ -776,6 +806,17 @@ export const verifyEmail = async (
 					: undefined,
 		});
 
+		// Debug log to verify agentType transfer
+		logger.debug(
+			'[AuthController] Creating user from pending verification',
+			{
+				email: newUser.email,
+				userType: newUser.userType,
+				pendingAgentType: pendingVerification.agentType,
+				newUserAgentType: newUser.professionalInfo?.agentType,
+			},
+		);
+
 		await newUser.save();
 
 		// Handle identity card move from temp to permanent location
@@ -797,8 +838,18 @@ export const verifyEmail = async (
 				);
 
 				// Update user's professionalInfo with permanent identity card
+				// Spread existing professionalInfo to preserve agentType and other fields
+				const existingProfInfo = newUser.professionalInfo
+					? { ...newUser.professionalInfo }
+					: {};
+
+				logger.debug('[AuthController] Before identity card merge', {
+					existingProfInfo,
+					hasAgentType: !!existingProfInfo.agentType,
+				});
+
 				newUser.professionalInfo = {
-					...newUser.professionalInfo,
+					...existingProfInfo,
 					identityCard: {
 						url: result.url,
 						key: result.key,
@@ -807,7 +858,9 @@ export const verifyEmail = async (
 				};
 				await newUser.save();
 
-				// Delete temp file (cleanup)
+				logger.debug('[AuthController] After identity card save', {
+					agentType: newUser.professionalInfo?.agentType,
+				}); // Delete temp file (cleanup)
 				await s3Service.deleteImage(
 					pendingVerification.identityCardTempKey,
 				);
@@ -901,6 +954,18 @@ export const setPasswordFromInvite = async (
 			res.status(400).json({
 				success: false,
 				message: 'Token invalide ou expiré',
+			});
+			return;
+		}
+
+		// Check if email is verified first (required for admin-created users)
+		if (!user.isEmailVerified) {
+			res.status(400).json({
+				success: false,
+				message:
+					"Veuillez d'abord vérifier votre email avant de définir votre mot de passe.",
+				requiresEmailVerification: true,
+				email: user.email,
 			});
 			return;
 		}
@@ -1384,15 +1449,18 @@ export const getProfile = async (
 				professionalInfo: user.professionalInfo,
 				profileCompleted: user.profileCompleted || false, // Add this field
 				// Billing / activation info
-				isPaid: Boolean(user.isPaid),
+				isPaid: Boolean(user.isPaid || user.accessGrantedByAdmin),
+				accessGrantedByAdmin: Boolean(user.accessGrantedByAdmin),
 				subscriptionStatus: user.subscriptionStatus || null,
+				subscriptionEndDate: user.subscriptionEndDate || null,
 				// Derived account status for frontend display
 				accountStatus:
 					user.userType === 'agent' &&
 					user.profileCompleted &&
-					!user.isPaid
+					!user.isPaid &&
+					!user.accessGrantedByAdmin
 						? "profil en attente d'activation"
-						: user.isPaid
+						: user.isPaid || user.accessGrantedByAdmin
 							? 'active'
 							: 'incomplete',
 			},
@@ -1726,9 +1794,10 @@ export const completeProfile = async (
 
 		// When profile is completed but user hasn't paid yet, mark subscriptionStatus
 		if (user.profileCompleted) {
-			user.subscriptionStatus = user.isPaid
-				? 'active'
-				: 'pending_activation';
+			user.subscriptionStatus =
+				user.isPaid || user.accessGrantedByAdmin
+					? 'active'
+					: 'pending_activation';
 		}
 
 		await user.save();
@@ -1748,7 +1817,8 @@ export const completeProfile = async (
 				professionalInfo: user.professionalInfo,
 				profileCompleted: user.profileCompleted,
 				// Billing fields - client can use these to decide redirect to payment
-				isPaid: Boolean(user.isPaid),
+				isPaid: Boolean(user.isPaid || user.accessGrantedByAdmin),
+				accessGrantedByAdmin: Boolean(user.accessGrantedByAdmin),
 				subscriptionStatus: user.subscriptionStatus || null,
 			},
 		});

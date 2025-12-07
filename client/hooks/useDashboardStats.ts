@@ -11,6 +11,8 @@ import searchAdApi from '@/lib/api/searchAdApi';
 import { Collaboration } from '@/types/collaboration';
 import { SearchAd } from '@/types/searchAd';
 import { swrKeys } from '@/lib/swrKeys';
+import { useAuthStore } from '@/store/authStore';
+import { canAccessProtectedResources } from '@/lib/utils/authUtils';
 
 export interface DashboardKpis {
 	propertiesTotal: number;
@@ -23,24 +25,28 @@ export interface DashboardKpis {
 }
 
 export const useDashboardStats = (currentUserId?: string) => {
-	// Fetch property stats using SWR
+	// Check if user can access protected resources
+	const user = useAuthStore((state) => state.user);
+	const canAccess = canAccessProtectedResources(user);
+
+	// Fetch property stats using SWR - only if user can access
 	const {
 		data: stats,
 		isLoading: loadingStats,
 		error: statsError,
 	} = useSWR<MyPropertyStatsResponse['data']>(
-		swrKeys.properties.stats(currentUserId),
+		canAccess ? swrKeys.properties.stats(currentUserId) : null,
 		() => PropertyService.getMyPropertyStats(),
 		{
 			revalidateOnFocus: false,
 		},
 	);
 
-	// Fetch collaborations using SWR
+	// Fetch collaborations using SWR - only if user can access
 	const { data: collabsRes, isLoading: loadingCollabs } = useSWR<{
 		collaborations: Collaboration[];
 	}>(
-		swrKeys.collaborations.list(currentUserId),
+		canAccess ? swrKeys.collaborations.list(currentUserId) : null,
 		() => collaborationApi.getUserCollaborations(),
 		{
 			fallbackData: { collaborations: [] },
@@ -48,9 +54,9 @@ export const useDashboardStats = (currentUserId?: string) => {
 		},
 	);
 
-	// Fetch search ads using SWR
+	// Fetch search ads using SWR - only if user can access
 	const { data: searchAds, isLoading: loadingAds } = useSWR<SearchAd[]>(
-		swrKeys.searchAds.myAds(currentUserId),
+		canAccess ? swrKeys.searchAds.myAds(currentUserId) : null,
 		() => searchAdApi.getMySearchAds().catch(() => []),
 		{
 			fallbackData: [],

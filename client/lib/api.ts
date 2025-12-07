@@ -2,8 +2,8 @@
 import axios from 'axios';
 import { logger } from './utils/logger';
 import { Features } from './constants';
-import { toast } from 'react-toastify';
 import { AUTH_ENDPOINTS } from './constants/api/endpoints';
+import { showToastOnce } from './utils/toastUtils';
 
 // Normalize NEXT_PUBLIC_API_URL so it always ends with a single '/api' segment
 const _rawApi = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
@@ -86,17 +86,58 @@ api.interceptors.request.use(
 api.interceptors.response.use(
 	(response) => response,
 	async (error) => {
+		const currentPath =
+			typeof window !== 'undefined' ? window.location.pathname || '' : '';
+
+		// Helper to check if user profile is incomplete (agent without completed profile)
+		// This is used to suppress payment redirects when profile isn't done yet
+		const isProfileIncomplete = (): boolean => {
+			try {
+				// Dynamic import to avoid circular dependency
+				// eslint-disable-next-line @typescript-eslint/no-require-imports
+				const { useAuthStore } = require('@/store/authStore');
+				const state = useAuthStore.getState();
+				const user = state.user;
+
+				// If user is loaded and is an agent without completed profile
+				if (
+					user?.userType === 'agent' &&
+					user?.profileCompleted === false
+				) {
+					return true;
+				}
+
+				// If user is not loaded yet but we're not on auth pages,
+				// we should wait for auth to complete before showing payment errors
+				// This prevents race conditions
+				if (!user && !state.isInitialized) {
+					return true; // Suppress until we know user state
+				}
+
+				return false;
+			} catch {
+				return false;
+			}
+		};
+
 		// Handle payment required (402) - redirect user to payment page
+		// BUT only if profile is complete - profile completion takes priority
 		if (error.response?.status === 402) {
 			try {
 				const code = error.response?.data?.code;
 				if (code === 'PAYMENT_REQUIRED') {
-					toast.info(
+					// Skip payment redirect if profile is incomplete
+					// Let authStore handle the profile redirect instead
+					if (isProfileIncomplete()) {
+						return Promise.reject(error);
+					}
+
+					showToastOnce(
 						'Votre compte nécessite un paiement pour accéder à cette fonctionnalité.',
+						'info',
 					);
 					if (typeof window !== 'undefined') {
 						// Avoid redirect loop: don't redirect if we're already on the payment page
-						const currentPath = window.location.pathname || '';
 						if (!currentPath.startsWith('/payment')) {
 							// Use replace to avoid polluting history
 							window.location.replace('/payment');
@@ -114,18 +155,46 @@ api.interceptors.response.use(
 		if (error.response?.status === 403) {
 			try {
 				const code = error.response?.data?.code;
+
 				if (code === 'PROFILE_INCOMPLETE') {
-					if (typeof window !== 'undefined') {
-						const currentPath = window.location.pathname || '';
-						if (!currentPath.startsWith('/auth/complete-profile')) {
-							window.location.replace('/auth/complete-profile');
-						}
+					// Don't redirect if already on complete-profile or payment pages
+					if (
+						!currentPath.startsWith('/auth/complete-profile') &&
+						!currentPath.startsWith('/payment')
+					) {
+						window.location.replace('/auth/complete-profile');
 					}
+					return Promise.reject(error);
+				}
+				// Handle subscription required - redirect to payment
+				// BUT only if profile is complete - profile completion takes priority
+				if (
+					code === 'SUBSCRIPTION_REQUIRED' ||
+					code === 'SUBSCRIPTION_EXPIRED'
+				) {
+					// Skip payment redirect if profile is incomplete
+					// Let authStore handle the profile redirect instead
+					if (isProfileIncomplete()) {
+						return Promise.reject(error);
+					}
+
+					// Don't redirect if already on payment or complete-profile pages
+					if (
+						!currentPath.startsWith('/payment') &&
+						!currentPath.startsWith('/auth/complete-profile')
+					) {
+						showToastOnce(
+							error.response?.data?.message ||
+								'Un abonnement est requis pour accéder à cette fonctionnalité.',
+							'info',
+						);
+						window.location.replace('/payment');
+					}
+					return Promise.reject(error);
 				}
 			} catch {
 				// ignore
 			}
-			return Promise.reject(error);
 		}
 		const originalRequest = error.config;
 
@@ -223,8 +292,9 @@ api.interceptors.response.use(
 					window.location.pathname.startsWith('/auth');
 
 				if (!isOnAuthPage && !is400Error) {
-					toast.error(
+					showToastOnce(
 						Features.Auth.AUTH_TOAST_MESSAGES.SESSION_EXPIRED,
+						'error',
 					);
 					window.location.href = Features.Auth.AUTH_ROUTES.LOGIN;
 				}
@@ -264,7 +334,10 @@ api.interceptors.response.use(
 					window.location.pathname === '/search-ads');
 
 			if (!isOnPublicPage) {
-				toast.error('🔒 Veuillez vous connecter pour continuer');
+				showToastOnce(
+					'🔒 Veuillez vous connecter pour continuer',
+					'error',
+				);
 			}
 
 			return Promise.reject(transformedError);
@@ -285,7 +358,10 @@ api.interceptors.response.use(
 					window.location.pathname === '/search-ads');
 
 			if (!isOnPublicPage) {
-				toast.error('🔒 Veuillez vous connecter pour continuer');
+				showToastOnce(
+					'🔒 Veuillez vous connecter pour continuer',
+					'error',
+				);
 			}
 		}
 

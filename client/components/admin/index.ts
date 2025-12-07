@@ -10,16 +10,26 @@ export { Button } from '@/components/ui/Button';
 // Layout
 export { default as AdminLayout } from './AdminLayout';
 export { default as HeaderAdmin } from './HeaderAdmin';
-export { default as SidebarAdminModern } from './SidebarAdminModern';
+export { default as SidebarAdminModern } from './SidebarAdmin';
 
 // Dashboard
-export { default as DashboardAdminModern } from './DashboardAdminModern';
+export { default as DashboardAdminModern } from './DashboardAdmin';
 export { default as AdminStatsClient } from './AdminStatsClient';
 
 // Tables
-export { default as AdminUsersTableModern } from './AdminUsersTableModern';
-export { default as AdminPropertiesTableModern } from './AdminPropertiesTableModern';
-export { default as AdminCollaborationsTableModern } from './AdminCollaborationsTableModern';
+export { default as AdminPropertiesTableModern } from './AdminPropertiesTable';
+export { default as AdminCollaborationsTableModern } from './AdminCollaborationsTable';
+
+// User Profile
+export { UserProfileEditable } from './UserProfileEditable';
+
+// Admin UI Components
+export * from './ui';
+
+// Admin Sub-Components
+export * from './users';
+export * from './collaborations';
+export * from './properties';
 
 // Design System
 export { designTokens } from '@/lib/constants/designTokens';

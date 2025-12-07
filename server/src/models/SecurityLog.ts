@@ -3,23 +3,24 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface ISecurityLog extends Document {
 	userId: mongoose.Types.ObjectId;
 	eventType:
-			| 'login_success'
+		| 'login_success'
 		| 'login_failure'
 		| 'password_reset_request'
 		| 'password_reset_success'
 		| 'password_change'
 		| 'account_locked'
-			| 'account_blocked'
-			| 'account_unblocked'
+		| 'account_blocked'
+		| 'account_unblocked'
 		| 'account_unlocked'
 		| 'logout'
 		| 'email_verified'
-			| 'invite_sent'
-			| 'temp_password_sent'
-			| 'account_access_granted'
-			| 'account_access_revoked'
-			| 'account_validated'
-			| 'email_send_failed'
+		| 'invite_sent'
+		| 'temp_password_sent'
+		| 'verification_code_sent'
+		| 'account_access_granted'
+		| 'account_access_revoked'
+		| 'account_validated'
+		| 'email_send_failed'
 		| 'failed_verification_attempt'
 		| 'account_deleted';
 	ipAddress?: string;
@@ -59,6 +60,7 @@ const securityLogSchema = new Schema<ISecurityLog>(
 				'email_verified',
 				'invite_sent',
 				'temp_password_sent',
+				'verification_code_sent',
 				'account_access_granted',
 				'account_access_revoked',
 				'account_validated',

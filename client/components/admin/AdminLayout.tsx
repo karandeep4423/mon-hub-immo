@@ -1,6 +1,6 @@
 'use client';
 import React, { ReactNode, useEffect, useState } from 'react';
-import SidebarAdminModern from './SidebarAdminModern';
+import SidebarAdminModern from './SidebarAdmin';
 import AdminMobileNav from './AdminMobileNav';
 import { useAuth } from '@/hooks/useAuth';
 import { usePathname, useRouter } from 'next/navigation';
@@ -38,12 +38,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 	}, [loading, user, pathname, router]);
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50">
+		<div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 overflow-x-hidden">
 			{/* Modern Sticky Header */}
- 	 
 
 			{/* Sidebar */}
-			<SidebarAdminModern isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+			<SidebarAdminModern
+				isOpen={menuOpen}
+				onClose={() => setMenuOpen(false)}
+			/>
 
 			{/* Overlay for mobile */}
 			{menuOpen && (
@@ -54,10 +56,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 			)}
 
 			{/* Main content */}
-			<div className="lg:ml-72 pt-16">
-				<main className="p-4 sm:p-6 lg:p-8 pb-20 lg:pb-8 max-w-[1600px] mx-auto">
+			<div className="lg:ml-72 min-w-0">
+				<main className="p-3 sm:p-4 md:p-6 lg:p-8 pb-24 lg:pb-8 max-w-[1600px] mx-auto overflow-x-hidden">
 					{/* Prevent rendering protected content briefly for non-admins */}
-					{loading ? children : (user && isAdminUser(user as User) ? children : null)}
+					{loading
+						? children
+						: user && isAdminUser(user as User)
+							? children
+							: null}
 				</main>
 			</div>
 

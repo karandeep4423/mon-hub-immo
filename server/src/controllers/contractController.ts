@@ -431,7 +431,9 @@ export const getContract = async (
 					userType: string;
 					phone?: string;
 					professionalInfo?: {
-						siretNumber?: string;
+						tCard?: string;
+						sirenNumber?: string;
+						rsacNumber?: string;
 						city?: string;
 						postalCode?: string;
 					};
@@ -441,11 +443,31 @@ export const getContract = async (
 					userType: string;
 					phone?: string;
 					professionalInfo?: {
-						siretNumber?: string;
+						tCard?: string;
+						sirenNumber?: string;
+						rsacNumber?: string;
 						city?: string;
 						postalCode?: string;
 					};
 				};
+
+			// Helper function to get professional number with label
+			const getProfessionalNumber = (professionalInfo?: {
+				tCard?: string;
+				sirenNumber?: string;
+				rsacNumber?: string;
+			}): string => {
+				if (professionalInfo?.tCard) {
+					return `Carte T : ${professionalInfo.tCard}`;
+				}
+				if (professionalInfo?.sirenNumber) {
+					return `SIREN : ${professionalInfo.sirenNumber}`;
+				}
+				if (professionalInfo?.rsacNumber) {
+					return `RSAC : ${professionalInfo.rsacNumber}`;
+				}
+				return '........................................................................';
+			};
 
 			const ownerName = `${owner.firstName} ${owner.lastName}`;
 			const collaboratorName = `${collaborator.firstName} ${collaborator.lastName}`;
@@ -559,7 +581,7 @@ Conditions préalables obligatoires
 Le contrat est valide à condition que :
 • Les cases vierges soient remplies :
   - Identité complète du Délégant / Délégué
-  - Numéro de carte professionnelle (obligatoire)
+  - Numéro d'identification professionnelle (Carte T, SIREN ou RSAC)
   - Modalités de rémunération
   - Pouvoirs confiés (visite / publicité / communication)
 • Le partage d’honoraires soit exprimé clairement Exemples :
@@ -579,7 +601,7 @@ Nom / Dénomination : ${ownerName}
 Adresse : ${ownerAddress}
 Téléphone : ${owner.phone || '.............................................................................................................'}
 Email : ${owner.email}
-Numéro de carte professionnelle : ${owner.professionalInfo?.siretNumber || '........................................................................'}
+N° d'identification professionnelle : ${getProfessionalNumber(owner.professionalInfo)}
 (ci-après « Le Délégant »)
 
 Et
@@ -589,7 +611,7 @@ Nom / Dénomination : ${collaboratorName}
 Adresse : ${collaboratorAddress}
 Téléphone : ${collaborator.phone || '.............................................................................................................'}
 Email : ${collaborator.email}
-Numéro de carte professionnelle : ${collaborator.professionalInfo?.siretNumber || '........................................................................'}
+N° d'identification professionnelle : ${getProfessionalNumber(collaborator.professionalInfo)}
 (ci-après « Le Délégué »)
 
 Les deux parties conviennent ce qui suit :

@@ -1,10 +1,13 @@
 import { User } from '../models/User';
 import { Property } from '../models/Property'; // ou ton modèle d'annonces
 import { Collaboration } from '../models/Collaboration'; // idem pour collaborations
+import Message from '../models/Chat';
+import { SearchAd } from '../models/SearchAd';
 import { Request, Response } from 'express';
 import { AuthRequest } from '../types/auth';
 import mongoose from 'mongoose';
 import { SecurityLog } from '../models/SecurityLog';
+import { PendingVerification } from '../models/PendingVerification';
 import crypto from 'crypto';
 import { logSecurityEvent } from '../utils/securityLogger';
 import { logger } from '../utils/logger';
@@ -12,16 +15,17 @@ import { createSafeRegex } from '../utils/sanitize';
 import {
 	generateVerificationCode,
 	sendAccountValidated,
-	sendTemporaryPassword,
-	sendInviteToSetPassword,
 	sendPaymentReminderEmail,
+	sendEmail,
 } from '../utils/emailService';
+import { getAdminCreatedAccountTemplate } from '../utils/email/templates/adminCreatedAccount';
 
 // Controller exports are declared inline with each function below
 
 export const getAdminUsers = async (req: Request, res: Response) => {
 	try {
-		const actorId = (req as any).userId || (req as any).user?.id || null;
+		const authReq = req as AuthRequest;
+		const actorId = authReq.userId || authReq.user?.id || null;
 		// Lecture des filtres via req.query
 		const { name, userType, network, isValidated, isBlocked } = req.query;
 		logger.info('[AdminController] getAdminUsers called', {
@@ -29,7 +33,7 @@ export const getAdminUsers = async (req: Request, res: Response) => {
 			filters: { name, userType, network, isValidated, isBlocked },
 		});
 		// Construction dynamique des filtres
-		let filter: any = {};
+		const filter: Record<string, unknown> = {};
 		if (typeof name === 'string' && name.trim() !== '') {
 			const safeNameRegex = createSafeRegex(name.trim());
 			filter.$or = [
@@ -127,20 +131,26 @@ export const getAdminUsers = async (req: Request, res: Response) => {
 		}
 
 		const usersWithStats = users.map((u) => {
-			const uid = String((u as any)._id);
+			const user = u as unknown as {
+				_id: mongoose.Types.ObjectId;
+				lastSeen?: Date;
+				isBlocked?: boolean;
+				isValidated?: boolean;
+			};
+			const uid = String(user._id);
 			return {
 				...u,
 				propertiesCount: propsMap[uid] || 0,
 				collaborationsActive: collabMapActive[uid] || 0,
 				collaborationsClosed: collabMapClosed[uid] || 0,
 				connectionsCount: connMap[uid] || 0,
-				lastActive: (u as any).lastSeen
-					? new Date((u as any).lastSeen).toISOString()
+				lastActive: user.lastSeen
+					? new Date(user.lastSeen).toISOString()
 					: undefined,
 				// derive status for admin UI
-				status: (u as any).isBlocked
+				status: user.isBlocked
 					? 'blocked'
-					: (u as any).isValidated
+					: user.isValidated
 						? 'active'
 						: 'pending',
 			};
@@ -429,7 +439,10 @@ export const getAdminUserProfile = async (req: Request, res: Response) => {
 		const userId = req.params.id;
 		if (!userId) return res.status(400).json({ error: 'Missing user id' });
 		logger.info('[AdminController] getAdminUserProfile called', {
-			actorId: (req as any).userId || (req as any).user?.id || null,
+			actorId:
+				(req as AuthRequest).userId ||
+				(req as AuthRequest).user?.id ||
+				null,
 			userId,
 		});
 
@@ -457,22 +470,41 @@ export const getAdminUserProfile = async (req: Request, res: Response) => {
 	}
 };
 
-// Per-user detailed stats (properties count, collaborations active/closed)
+// Per-user detailed stats (properties count, collaborations active/closed, search ads, messages, etc.)
 export const getAdminUserStats = async (req: Request, res: Response) => {
 	const userId = req.params.id;
 	if (!userId) return res.status(400).json({ error: 'Missing user id' });
 
 	try {
 		logger.info('[AdminController] getAdminUserStats called', {
-			actorId: (req as any).userId || (req as any).user?.id || null,
+			actorId:
+				(req as AuthRequest).userId ||
+				(req as AuthRequest).user?.id ||
+				null,
 			userId,
 		});
 		const uid = new mongoose.Types.ObjectId(userId);
-		// Properties: count documents owned by this user
-		const propertiesCount = await Property.countDocuments({ owner: uid });
 
-		// Collaborations: count both as post owner and as collaborator, by status
-		const [ownerAgg, collabAgg] = await Promise.all([
+		// Get user for additional info (last login, created at)
+		const user = await User.findById(uid).select(
+			'lastLogin createdAt loginCount',
+		);
+
+		// Run all counts in parallel for better performance
+		const [
+			propertiesCount,
+			searchAdsCount,
+			messagesCount,
+			ownerAgg,
+			collabAgg,
+		] = await Promise.all([
+			// Properties: count documents owned by this user
+			Property.countDocuments({ owner: uid }),
+			// Search Ads: count documents authored by this user
+			SearchAd.countDocuments({ authorId: uid }),
+			// Messages: count messages sent by this user
+			Message.countDocuments({ senderId: uid }),
+			// Collaborations as post owner
 			Collaboration.aggregate([
 				{ $match: { postOwnerId: uid } },
 				{
@@ -483,6 +515,11 @@ export const getAdminUserStats = async (req: Request, res: Response) => {
 								$cond: [{ $eq: ['$status', 'active'] }, 1, 0],
 							},
 						},
+						pending: {
+							$sum: {
+								$cond: [{ $eq: ['$status', 'pending'] }, 1, 0],
+							},
+						},
 						closed: {
 							$sum: {
 								$cond: [
@@ -492,9 +529,19 @@ export const getAdminUserStats = async (req: Request, res: Response) => {
 								],
 							},
 						},
+						cancelled: {
+							$sum: {
+								$cond: [
+									{ $eq: ['$status', 'cancelled'] },
+									1,
+									0,
+								],
+							},
+						},
 					},
 				},
 			]),
+			// Collaborations as collaborator
 			Collaboration.aggregate([
 				{ $match: { collaboratorId: uid } },
 				{
@@ -505,10 +552,24 @@ export const getAdminUserStats = async (req: Request, res: Response) => {
 								$cond: [{ $eq: ['$status', 'active'] }, 1, 0],
 							},
 						},
+						pending: {
+							$sum: {
+								$cond: [{ $eq: ['$status', 'pending'] }, 1, 0],
+							},
+						},
 						closed: {
 							$sum: {
 								$cond: [
 									{ $eq: ['$status', 'completed'] },
+									1,
+									0,
+								],
+							},
+						},
+						cancelled: {
+							$sum: {
+								$cond: [
+									{ $eq: ['$status', 'cancelled'] },
 									1,
 									0,
 								],
@@ -519,19 +580,39 @@ export const getAdminUserStats = async (req: Request, res: Response) => {
 			]),
 		]);
 
-		const active = (ownerAgg[0]?.active || 0) + (collabAgg[0]?.active || 0);
-		const closed = (ownerAgg[0]?.closed || 0) + (collabAgg[0]?.closed || 0);
+		const collaborationsActive =
+			(ownerAgg[0]?.active || 0) + (collabAgg[0]?.active || 0);
+		const collaborationsPending =
+			(ownerAgg[0]?.pending || 0) + (collabAgg[0]?.pending || 0);
+		const collaborationsClosed =
+			(ownerAgg[0]?.closed || 0) + (collabAgg[0]?.closed || 0);
+		const collaborationsCancelled =
+			(ownerAgg[0]?.cancelled || 0) + (collabAgg[0]?.cancelled || 0);
+		const collaborationsTotal =
+			collaborationsActive +
+			collaborationsPending +
+			collaborationsClosed +
+			collaborationsCancelled;
 
 		logger.info('[AdminController] getAdminUserStats success', {
 			userId,
 			propertiesCount,
-			collaborationsActive: active,
-			collaborationsClosed: closed,
+			searchAdsCount,
+			messagesCount,
+			collaborationsActive,
+			collaborationsClosed,
 		});
+
 		res.json({
 			propertiesCount,
-			collaborationsActive: active,
-			collaborationsClosed: closed,
+			searchAdsCount,
+			messagesCount,
+			collaborationsActive,
+			collaborationsPending,
+			collaborationsClosed,
+			collaborationsCancelled,
+			collaborationsTotal,
+			memberSince: user?.createdAt || null,
 		});
 	} catch (err) {
 		logger.error('[AdminController] getAdminUserStats failed', {
@@ -602,8 +683,11 @@ export const createAdminUser = async (req: AuthRequest, res: Response) => {
 			for (let i = 0; i < 12; i++)
 				pwd += chars[Math.floor(Math.random() * chars.length)];
 			generatedTempPassword = pwd;
-			(newUser as any).password = generatedTempPassword;
-			(newUser as any).mustChangePassword = true;
+			(newUser as { password?: string }).password = generatedTempPassword;
+			(newUser as { mustChangePassword?: boolean }).mustChangePassword =
+				true;
+			// Email NOT verified - user must verify first before using temp password
+			(newUser as { isEmailVerified?: boolean }).isEmailVerified = false;
 		}
 		// Determine invite behavior
 		const sendInvite =
@@ -618,57 +702,104 @@ export const createAdminUser = async (req: AuthRequest, res: Response) => {
 			newUser.passwordResetExpires = new Date(
 				Date.now() + 24 * 60 * 60 * 1000,
 			);
+			// Email NOT verified - user must verify first before setting password
+			(newUser as { isEmailVerified?: boolean }).isEmailVerified = false;
 		}
 
 		await newUser.save();
 
-		// If we created an invite token, send invite email to set password (first-time setup)
-		if (sendInvite && !payload.password) {
-			try {
-				const inviteUrl = `${process.env.CLIENT_URL || process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/set-password?email=${encodeURIComponent(newUser.email)}&token=${encodeURIComponent(String(newUser.passwordResetCode))}`;
-				await sendInviteToSetPassword({
-					to: newUser.email,
-					name: `${newUser.firstName} ${newUser.lastName}`,
-					inviteUrl,
-				});
-				await logSecurityEvent({
-					userId: (newUser._id as unknown as string).toString(),
-					eventType: 'invite_sent',
-					req,
-					metadata: { method: 'invite_link' },
-				});
-			} catch (err) {
-				await logSecurityEvent({
-					userId: (newUser._id as unknown as string).toString(),
-					eventType: 'invite_sent',
-					req,
-					metadata: { error: String(err), method: 'invite_link' },
-				});
-			}
-		}
+		// Track which emails were sent
+		const emailsSent: string[] = [];
 
-		// If admin requested a random password, send an email with the temporary password
-		if (generatedTempPassword) {
-			try {
-				await sendTemporaryPassword({
+		// Generate verification code and store in PendingVerification
+		const verificationCode = generateVerificationCode();
+		const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+		await PendingVerification.findOneAndUpdate(
+			{ email: newUser.email },
+			{
+				email: newUser.email,
+				firstName: newUser.firstName,
+				lastName: newUser.lastName,
+				password: 'admin_created_placeholder', // Not used for admin-created users
+				userType: newUser.userType as 'agent' | 'apporteur',
+				emailVerificationCode: verificationCode,
+				emailVerificationExpires: verificationExpires,
+			},
+			{ upsert: true, new: true },
+		);
+
+		// Build URLs
+		const baseUrl =
+			process.env.CLIENT_URL ||
+			process.env.FRONTEND_URL ||
+			'http://localhost:3000';
+		const verifyUrl = `${baseUrl}/auth/verify-email?email=${encodeURIComponent(newUser.email)}`;
+
+		// Send ONE comprehensive email with all information
+		// This provides better UX than multiple fragmented emails
+		try {
+			if (sendInvite && !payload.password) {
+				// Invite link flow - send comprehensive email with verification + invite link
+				const inviteUrl = `${baseUrl}/auth/set-password?email=${encodeURIComponent(newUser.email)}&token=${encodeURIComponent(String(newUser.passwordResetCode))}`;
+				await sendEmail({
 					to: newUser.email,
-					name: `${newUser.firstName} ${newUser.lastName}`,
-					tempPassword: generatedTempPassword,
+					subject: `Bienvenue sur MonHubImmo - Activez votre compte`,
+					html: getAdminCreatedAccountTemplate({
+						name: `${newUser.firstName} ${newUser.lastName}`,
+						verificationCode,
+						verifyUrl,
+						flow: 'invite',
+						inviteUrl,
+					}),
 				});
+				emailsSent.push(
+					'adminCreatedAccount',
+					'verificationCode',
+					'invite',
+				);
 				await logSecurityEvent({
 					userId: (newUser._id as unknown as string).toString(),
-					eventType: 'temp_password_sent',
+					eventType: 'verification_code_sent',
 					req,
-					metadata: {},
+					metadata: { method: 'admin_create', flow: 'invite' },
 				});
-			} catch (err) {
+			} else if (generatedTempPassword) {
+				// Temp password flow - send comprehensive email with verification + temp password
+				await sendEmail({
+					to: newUser.email,
+					subject: `Bienvenue sur MonHubImmo - Activez votre compte`,
+					html: getAdminCreatedAccountTemplate({
+						name: `${newUser.firstName} ${newUser.lastName}`,
+						verificationCode,
+						verifyUrl,
+						flow: 'tempPassword',
+						tempPassword: generatedTempPassword,
+					}),
+				});
+				emailsSent.push(
+					'adminCreatedAccount',
+					'verificationCode',
+					'tempPassword',
+				);
 				await logSecurityEvent({
 					userId: (newUser._id as unknown as string).toString(),
-					eventType: 'temp_password_sent',
+					eventType: 'verification_code_sent',
 					req,
-					metadata: { error: String(err) },
+					metadata: { method: 'admin_create', flow: 'tempPassword' },
 				});
 			}
+		} catch (err) {
+			logger.error(
+				'[AdminController] Failed to send admin created account email',
+				err,
+			);
+			await logSecurityEvent({
+				userId: (newUser._id as unknown as string).toString(),
+				eventType: 'verification_code_sent',
+				req,
+				metadata: { error: String(err), method: 'admin_create' },
+			});
 		}
 
 		const adminId = req.userId;
@@ -681,6 +812,7 @@ export const createAdminUser = async (req: AuthRequest, res: Response) => {
 					name: `${newUser.firstName} ${newUser.lastName}`,
 					email: newUser.email,
 				});
+				emailsSent.push('validation');
 			} catch (emailError) {
 				// log the issue but continue
 				await logSecurityEvent({
@@ -703,8 +835,9 @@ export const createAdminUser = async (req: AuthRequest, res: Response) => {
 			adminId,
 			userId: (newUser._id as unknown as string).toString(),
 			email: newUser.email,
+			emailsSent,
 		});
-		res.status(201).json({ success: true, user: newUser });
+		res.status(201).json({ success: true, user: newUser, emailsSent });
 	} catch (err) {
 		logger.error('[AdminController] createAdminUser failed', {
 			error: err instanceof Error ? err.message : String(err),
@@ -724,7 +857,10 @@ export const updateAdminUser = async (req: Request, res: Response) => {
 
 	try {
 		logger.info('[AdminController] updateAdminUser called', {
-			actorId: (req as any).userId || (req as any).user?.id || null,
+			actorId:
+				(req as AuthRequest).userId ||
+				(req as AuthRequest).user?.id ||
+				null,
 			userId,
 		});
 		const user = await User.findById(userId);
@@ -753,7 +889,10 @@ export const deleteAdminUser = async (req: Request, res: Response) => {
 	if (!userId) return res.status(400).json({ error: 'Missing user id' });
 
 	try {
-		const actorId = (req as any).userId || (req as any).user?.id || null;
+		const actorId =
+			(req as AuthRequest).userId ||
+			(req as AuthRequest).user?.id ||
+			null;
 		logger.info('[AdminController] deleteAdminUser called', {
 			actorId,
 			userId,
@@ -811,7 +950,7 @@ export const deleteAdminUser = async (req: Request, res: Response) => {
 
 		// Log security event
 		await logSecurityEvent({
-			userId: actorId,
+			userId: actorId || undefined,
 			eventType: 'account_deleted',
 			req,
 			metadata: {
@@ -856,13 +995,15 @@ export const deleteAdminUser = async (req: Request, res: Response) => {
 // Import users from CSV (expects middleware to provide `req.file.buffer`)
 export const importUsersFromCSV = async (req: Request, res: Response) => {
 	try {
-		// @ts-ignore - multer file
-		const file = (req as any).file;
+		const file = (req as { file?: { buffer?: Buffer } }).file;
 		if (!file || !file.buffer)
 			return res.status(400).json({ error: 'No CSV file uploaded' });
 
 		logger.info('[AdminController] importUsersFromCSV called', {
-			actorId: (req as any).userId || (req as any).user?.id || null,
+			actorId:
+				(req as AuthRequest).userId ||
+				(req as AuthRequest).user?.id ||
+				null,
 			fileSize: file.buffer?.length || 0,
 		});
 
@@ -893,12 +1034,11 @@ export const importUsersFromCSV = async (req: Request, res: Response) => {
 		const header = lines[0]
 			.split(',')
 			.map((h: string) => h.trim().toLowerCase());
-		// accept common headers; optional ones included
-		const required = ['email', 'firstname', 'lastname'];
+		// accept common headers; optional ones included (email, firstname, lastname are expected)
 
 		// Result bookkeeping
-		const created: any[] = [];
-		const updated: any[] = [];
+		const created: Array<{ email: string; id: unknown }> = [];
+		const updated: Array<{ email: string; id: unknown }> = [];
 		const skipped: Array<{ line: number; reason: string }> = [];
 		const errors: string[] = [];
 
@@ -909,7 +1049,7 @@ export const importUsersFromCSV = async (req: Request, res: Response) => {
 		for (let i = 1; i < lines.length; i++) {
 			const cols = lines[i].split(',').map((c: string) => c.trim());
 			if (cols.length === 0) continue;
-			const row: any = {};
+			const row: Record<string, string> = {};
 			header.forEach((h: string, idx: number) => {
 				row[h] = cols[idx] ?? '';
 			});
@@ -925,14 +1065,23 @@ export const importUsersFromCSV = async (req: Request, res: Response) => {
 			}
 
 			// Check for existing user
-			let existing = await User.findOne({ email });
+			const existing = await User.findOne({ email });
 			if (existing && !updateIfExists) {
 				skipped.push({ line: i + 1, reason: 'User already exists' });
 				continue;
 			}
 
 			// Build user object
-			const userPayload: any = {
+			const userPayload: {
+				firstName: string;
+				lastName: string;
+				email: string;
+				userType: string;
+				phone?: string;
+				professionalInfo?: { network: string };
+				isValidated: boolean;
+				password?: string;
+			} = {
 				firstName: row.firstname || '',
 				lastName: row.lastname || '',
 				email,
@@ -968,22 +1117,65 @@ export const importUsersFromCSV = async (req: Request, res: Response) => {
 					existing.passwordResetExpires = new Date(
 						Date.now() + 24 * 60 * 60 * 1000,
 					); // 24 hours
+					// Email NOT verified - user must verify first (same as manual user creation)
+					(
+						existing as { isEmailVerified?: boolean }
+					).isEmailVerified = false;
 					await existing.save();
-					// Send invite email with secure link to set-password page
+
+					// Send comprehensive email with verification + invite link (same flow as manual user creation)
 					try {
-						const inviteUrl = `${process.env.CLIENT_URL || process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/set-password?email=${encodeURIComponent(existing.email)}&token=${encodeURIComponent(String(existing.passwordResetCode))}`;
-						await sendInviteToSetPassword({
+						// Generate verification code and store in PendingVerification
+						const verificationCode = generateVerificationCode();
+						const verificationExpires = new Date(
+							Date.now() + 24 * 60 * 60 * 1000,
+						); // 24 hours
+
+						await PendingVerification.findOneAndUpdate(
+							{ email: existing.email },
+							{
+								email: existing.email,
+								firstName: existing.firstName,
+								lastName: existing.lastName,
+								password: 'admin_created_placeholder',
+								userType: existing.userType as
+									| 'agent'
+									| 'apporteur',
+								emailVerificationCode: verificationCode,
+								emailVerificationExpires: verificationExpires,
+							},
+							{ upsert: true, new: true },
+						);
+
+						const baseUrl =
+							process.env.CLIENT_URL ||
+							process.env.FRONTEND_URL ||
+							'http://localhost:3000';
+						const verifyUrl = `${baseUrl}/auth/verify-email?email=${encodeURIComponent(existing.email)}`;
+						const inviteUrl = `${baseUrl}/auth/set-password?email=${encodeURIComponent(existing.email)}&token=${encodeURIComponent(String(existing.passwordResetCode))}`;
+
+						await sendEmail({
 							to: existing.email,
-							name: `${existing.firstName} ${existing.lastName}`,
-							inviteUrl,
+							subject: `Bienvenue sur MonHubImmo - Activez votre compte`,
+							html: getAdminCreatedAccountTemplate({
+								name: `${existing.firstName} ${existing.lastName}`,
+								verificationCode,
+								verifyUrl,
+								flow: 'invite',
+								inviteUrl,
+							}),
 						});
+
 						await logSecurityEvent({
 							userId: (
 								existing._id as unknown as string
 							).toString(),
-							eventType: 'invite_sent',
+							eventType: 'verification_code_sent',
 							req,
-							metadata: { method: 'invite_link' },
+							metadata: {
+								method: 'csv_import_update',
+								flow: 'invite',
+							},
 						});
 					} catch (err) {
 						errors.push(
@@ -1008,6 +1200,8 @@ export const importUsersFromCSV = async (req: Request, res: Response) => {
 				u.passwordResetExpires = new Date(
 					Date.now() + 24 * 60 * 60 * 1000,
 				); // 24 hours
+				// Email NOT verified - user must verify first before setting password (same as manual user creation)
+				(u as { isEmailVerified?: boolean }).isEmailVerified = false;
 			}
 
 			// If row explicitly sets isvalidated = true, mark validated (admin explicit validation)
@@ -1018,20 +1212,54 @@ export const importUsersFromCSV = async (req: Request, res: Response) => {
 				await u.save();
 				created.push({ id: u._id, email: u.email });
 
-				// Send invite if configured
-				if (sendInvite) {
+				// Send comprehensive email with verification code + invite link (same flow as manual user creation)
+				if (sendInvite && !row.password) {
 					try {
-						const inviteUrl = `${process.env.CLIENT_URL || process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/set-password?email=${encodeURIComponent(u.email)}&token=${encodeURIComponent(String(u.passwordResetCode))}`;
-						await sendInviteToSetPassword({
+						// Generate verification code and store in PendingVerification (like manual user creation)
+						const verificationCode = generateVerificationCode();
+						const verificationExpires = new Date(
+							Date.now() + 24 * 60 * 60 * 1000,
+						); // 24 hours
+
+						await PendingVerification.findOneAndUpdate(
+							{ email: u.email },
+							{
+								email: u.email,
+								firstName: u.firstName,
+								lastName: u.lastName,
+								password: 'admin_created_placeholder', // Not used for admin-created users
+								userType: u.userType as 'agent' | 'apporteur',
+								emailVerificationCode: verificationCode,
+								emailVerificationExpires: verificationExpires,
+							},
+							{ upsert: true, new: true },
+						);
+
+						const baseUrl =
+							process.env.CLIENT_URL ||
+							process.env.FRONTEND_URL ||
+							'http://localhost:3000';
+						const verifyUrl = `${baseUrl}/auth/verify-email?email=${encodeURIComponent(u.email)}`;
+						const inviteUrl = `${baseUrl}/auth/set-password?email=${encodeURIComponent(u.email)}&token=${encodeURIComponent(String(u.passwordResetCode))}`;
+
+						// Send comprehensive email with verification + invite link (same as manual user creation)
+						await sendEmail({
 							to: u.email,
-							name: `${u.firstName} ${u.lastName}`,
-							inviteUrl,
+							subject: `Bienvenue sur MonHubImmo - Activez votre compte`,
+							html: getAdminCreatedAccountTemplate({
+								name: `${u.firstName} ${u.lastName}`,
+								verificationCode,
+								verifyUrl,
+								flow: 'invite',
+								inviteUrl,
+							}),
 						});
+
 						await logSecurityEvent({
 							userId: (u._id as unknown as string).toString(),
-							eventType: 'invite_sent',
+							eventType: 'verification_code_sent',
 							req,
-							metadata: { method: 'invite_link' },
+							metadata: { method: 'csv_import', flow: 'invite' },
 						});
 					} catch (err) {
 						errors.push(
@@ -1079,7 +1307,7 @@ export const getAdminStats = async (req: Request, res: Response) => {
 		logger.info('[getAdminStats] called', {
 			method: req.method,
 			url: req.originalUrl,
-			user: (req as any).user || null,
+			user: (req as AuthRequest).user || null,
 			cookieKeys: Object.keys(req.cookies || {}),
 			headers: {
 				authorization: req.headers.authorization
@@ -1218,7 +1446,10 @@ export const getAdminStats = async (req: Request, res: Response) => {
 		};
 
 		logger.info('[AdminController] getAdminStats success', {
-			actorId: (req as any).userId || (req as any).user?.id || null,
+			actorId:
+				(req as AuthRequest).userId ||
+				(req as AuthRequest).user?.id ||
+				null,
 		});
 		res.json(stats);
 	} catch (err) {
@@ -1283,41 +1514,40 @@ export const sendPaymentReminder = async (req: AuthRequest, res: Response) => {
 
 // Admin delete collaboration (no ownership check)
 export const deleteAdminCollaboration = async (
-  req: AuthRequest,
-  res: Response,
+	req: AuthRequest,
+	res: Response,
 ): Promise<void> => {
-  try {
-    const { id } = req.params;
-    const collaboration = await Collaboration.findById(id);
+	try {
+		const { id } = req.params;
+		const collaboration = await Collaboration.findById(id);
 
-    if (!collaboration) {
-      res.status(404).json({
-        success: false,
-        message: 'Collaboration introuvable',
-      });
-      return;
-    }
+		if (!collaboration) {
+			res.status(404).json({
+				success: false,
+				message: 'Collaboration introuvable',
+			});
+			return;
+		}
 
-    await collaboration.deleteOne();
-    logger.info('[Admin] Collaboration deleted', {
-      adminId: req.userId,
-      collaborationId: id,
-    });
+		await collaboration.deleteOne();
+		logger.info('[Admin] Collaboration deleted', {
+			adminId: req.userId,
+			collaborationId: id,
+		});
 
-    res.status(200).json({
-      success: true,
-      message: 'Collaboration supprimée',
-    });
-  } catch (error) {
-    logger.error('[Admin] Failed to delete collaboration', {
-      error: (error as Error).message,
-      collaborationId: req.params.id,
-    });
-    res.status(500).json({
-      success: false,
-      message: 'Échec de la suppression de la collaboration',
-      error: (error as Error).message,
-    });
-  }
+		res.status(200).json({
+			success: true,
+			message: 'Collaboration supprimée',
+		});
+	} catch (error) {
+		logger.error('[Admin] Failed to delete collaboration', {
+			error: (error as Error).message,
+			collaborationId: req.params.id,
+		});
+		res.status(500).json({
+			success: false,
+			message: 'Échec de la suppression de la collaboration',
+			error: (error as Error).message,
+		});
+	}
 };
-

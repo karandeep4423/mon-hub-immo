@@ -118,8 +118,8 @@ export const updateProfileSchema = z.object({
 			yearsExperience: z.number().int().min(0).max(50).optional(),
 			personalPitch: z
 				.string()
-				.refine((val) => htmlTextLength(val) <= 1000, {
-					message: 'La bio ne peut pas dépasser 1000 caractères',
+				.refine((val) => htmlTextLength(val) <= 650, {
+					message: 'La bio ne peut pas dépasser 650 caractères',
 				})
 				.optional(),
 			mandateTypes: z
@@ -181,8 +181,8 @@ export const completeProfileSchema = z.object({
 			.optional(),
 		personalPitch: z
 			.string()
-			.refine((val) => htmlTextLength(val) <= 1000, {
-				message: 'La bio ne peut pas dépasser 1000 caractères',
+			.refine((val) => htmlTextLength(val) <= 650, {
+				message: 'La bio ne peut pas dépasser 650 caractères',
 			})
 			.optional(),
 		mandateTypes: z

@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useChat } from '@/hooks/useChat';
 import { useSocket } from '@/context/SocketContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { canAccessProtectedResources } from '@/lib/utils/authUtils';
 // SWR hooks
 import { useCollaborationData } from '@/hooks/useCollaborationData';
 import { useCollaborationMutations } from '@/hooks/useCollaborations';
@@ -125,12 +126,15 @@ export default function CollaborationPage() {
 		useChat();
 	const { onlineUsers } = useSocket();
 
-	// Initialize chat users when component mounts
+	// Check if user can access protected resources
+	const canAccess = canAccessProtectedResources(user);
+
+	// Initialize chat users when component mounts - only if user can access
 	useEffect(() => {
-		if (user && !loading) {
+		if (user && !loading && canAccess) {
 			getUsers();
 		}
-	}, [user, loading, getUsers]);
+	}, [user, loading, getUsers, canAccess]);
 
 	// Chat peer resolution based on current user and collaboration
 	const resolvePeerId = useCallback((): string | null => {
@@ -562,55 +566,80 @@ export default function CollaborationPage() {
 										{/* Activities Section */}
 										<ActivityManager
 											collaborationId={collaboration._id}
-											activities={(Array.isArray(collaboration.activities)
-												? (collaboration.activities as RawCollabActivity[]).slice()
-												: [])
-												.sort((a: RawCollabActivity, b: RawCollabActivity) =>
-													new Date(b.createdAt || '').getTime() -
-													new Date(a.createdAt || '').getTime(),
+											activities={(Array.isArray(
+												collaboration.activities,
+											)
+												? (
+														collaboration.activities as RawCollabActivity[]
+													).slice()
+												: []
+											)
+												.sort(
+													(
+														a: RawCollabActivity,
+														b: RawCollabActivity,
+													) =>
+														new Date(
+															b.createdAt || '',
+														).getTime() -
+														new Date(
+															a.createdAt || '',
+														).getTime(),
 												)
-												.map((activity: RawCollabActivity, index: number) => {
-													// Resolve user data from collaboration participants
-													const isOwnerAction =
-														activity.createdBy ===
-														collaboration
-															.postOwnerId?._id;
-													const userInfo =
-														isOwnerAction
-															? collaboration.postOwnerId
-															: collaboration.collaboratorId;
-													return {
-														id: `activity-${index}`,
-														type:
-															activity.type ===
-															'note'
-																? 'note'
-																: 'status_update',
-														title:
-															activity.type === 'note'
-																? 'Note ajoutée'
-																: (activity.message || 'Mise à jour du statut'),
-														content:
-															activity.type === 'note'
-																? (activity.message || '')
-																: '', // Don't duplicate message for status updates
-														author: {
-															id:
-																activity.createdBy ||
-																'unknown',
-															name: userInfo
-																? `${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() ||
-																	'Utilisateur'
-																: 'Utilisateur',
-															role: isOwnerAction
-																? ('agent' as const)
-																: ('apporteur' as const),
-															profileImage:
-																userInfo?.profileImage,
-														},
-														createdAt: activity.createdAt || new Date().toISOString(),
-													};
-												})}
+												.map(
+													(
+														activity: RawCollabActivity,
+														index: number,
+													) => {
+														// Resolve user data from collaboration participants
+														const isOwnerAction =
+															activity.createdBy ===
+															collaboration
+																.postOwnerId
+																?._id;
+														const userInfo =
+															isOwnerAction
+																? collaboration.postOwnerId
+																: collaboration.collaboratorId;
+														return {
+															id: `activity-${index}`,
+															type:
+																activity.type ===
+																'note'
+																	? 'note'
+																	: 'status_update',
+															title:
+																activity.type ===
+																'note'
+																	? 'Note ajoutée'
+																	: activity.message ||
+																		'Mise à jour du statut',
+															content:
+																activity.type ===
+																'note'
+																	? activity.message ||
+																		''
+																	: '', // Don't duplicate message for status updates
+															author: {
+																id:
+																	activity.createdBy ||
+																	'unknown',
+																name: userInfo
+																	? `${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() ||
+																		'Utilisateur'
+																	: 'Utilisateur',
+																role: isOwnerAction
+																	? ('agent' as const)
+																	: ('apporteur' as const),
+																profileImage:
+																	userInfo?.profileImage,
+															},
+															createdAt:
+																activity.createdAt ||
+																new Date().toISOString(),
+														};
+													},
+												)}
 											canAddActivity={
 												canUpdate && isActive
 											}
