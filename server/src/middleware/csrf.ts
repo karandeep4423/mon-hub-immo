@@ -13,7 +13,6 @@ const CSRF_SECRET =
 
 // In production, set cookie domain for cross-subdomain support (api.monhubimmo.fr <-> monhubimmo.fr)
 const isProduction = process.env.NODE_ENV === 'production';
-const cookieDomain = isProduction ? '.monhubimmo.fr' : undefined;
 
 const {
 	generateCsrfToken: generateToken,
@@ -29,11 +28,14 @@ const {
 	cookieOptions: {
 		httpOnly: true,
 		secure: isProduction,
-		// Use 'lax' instead of 'strict' for cross-subdomain support
-		sameSite: 'lax',
+		// Use 'none' for cross-origin cookie support (api.monhubimmo.fr -> www.monhubimmo.fr)
+		// This is safe because we also have secure: true in production
+		sameSite: isProduction ? 'none' : 'lax',
 		maxAge: 3600000, // 1 hour
 		// Set domain for cross-subdomain cookie sharing in production
-		...(cookieDomain && { domain: cookieDomain }),
+		domain: isProduction ? '.monhubimmo.fr' : undefined,
+		// Ensure path is set to root
+		path: '/',
 	},
 	getCsrfTokenFromRequest: (req: Request) =>
 		req.headers['x-csrf-token'] as string,
@@ -49,6 +51,16 @@ export const csrfProtection = doubleCsrfProtection;
 export const generateCsrfToken = (req: Request, res: Response) => {
 	try {
 		const token = generateToken(req, res);
+		// Prevent caching of CSRF token responses
+		res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+		res.setHeader('Pragma', 'no-cache');
+		res.setHeader('Vary', 'Cookie');
+
+		logger.debug('[CSRF] Token generated', {
+			hasCsrfCookie: !!req.cookies?._csrf,
+			origin: req.get('origin'),
+		});
+
 		res.json({
 			success: true,
 			csrfToken: token,
@@ -77,6 +89,10 @@ export const csrfErrorHandler = (
 			method: req.method,
 			path: req.path,
 			ip: req.ip,
+			hasCsrfCookie: !!req.cookies?._csrf,
+			hasCsrfHeader: !!req.headers['x-csrf-token'],
+			origin: req.get('origin'),
+			cookies: Object.keys(req.cookies || {}),
 		});
 
 		res.status(403).json({
