@@ -645,8 +645,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 				userType: user.userType,
 				isEmailVerified: user.isEmailVerified,
 				profileImage: user.profileImage,
-				profileCompleted: user.profileCompleted || false, // Add this field
-				professionalInfo: user.professionalInfo, // Add this field
+				profileCompleted: user.profileCompleted || false,
+				professionalInfo: user.professionalInfo,
+				// Billing / activation info - must match getProfile to prevent payment redirect
+				isPaid: Boolean(user.isPaid || user.accessGrantedByAdmin),
+				accessGrantedByAdmin: Boolean(user.accessGrantedByAdmin),
+				subscriptionStatus: user.subscriptionStatus || null,
+				subscriptionEndDate: user.subscriptionEndDate || null,
 			},
 			token,
 			refreshToken, // Send refresh token
@@ -1404,6 +1409,13 @@ export const resetPassword = async (
 				userType: user.userType,
 				isEmailVerified: user.isEmailVerified,
 				profileImage: user.profileImage,
+				profileCompleted: user.profileCompleted || false,
+				professionalInfo: user.professionalInfo,
+				// Billing / activation info - must match getProfile to prevent payment redirect
+				isPaid: Boolean(user.isPaid || user.accessGrantedByAdmin),
+				accessGrantedByAdmin: Boolean(user.accessGrantedByAdmin),
+				subscriptionStatus: user.subscriptionStatus || null,
+				subscriptionEndDate: user.subscriptionEndDate || null,
 			},
 			token: loginToken,
 			refreshToken: loginRefreshToken,
