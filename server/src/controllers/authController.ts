@@ -338,7 +338,65 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 			'+password +failedLoginAttempts +accountLockedUntil',
 		);
 		if (!user) {
-			// Log failed login attempt (user not found)
+			// Check if user is in PendingVerification (signed up but not verified email)
+			const pendingUser = await PendingVerification.findOne({ email });
+			if (pendingUser) {
+				// Verify password before sending verification code
+				const bcrypt = await import('bcryptjs');
+				const isPasswordValid = await bcrypt.compare(
+					password,
+					pendingUser.password,
+				);
+
+				if (isPasswordValid) {
+					// Password matches - generate and send new verification code
+					const verificationCode = generateVerificationCode();
+					const verificationExpires = new Date(
+						Date.now() + 24 * 60 * 60 * 1000,
+					);
+
+					pendingUser.emailVerificationCode = verificationCode;
+					pendingUser.emailVerificationExpires = verificationExpires;
+					await pendingUser.save();
+
+					// Send verification email
+					try {
+						const emailTemplate = getVerificationCodeTemplate(
+							`${pendingUser.firstName} ${pendingUser.lastName}`,
+							verificationCode,
+						);
+
+						await sendEmail({
+							to: email,
+							subject: `${verificationCode} est votre code de vérification - MonHubImmo`,
+							html: emailTemplate,
+						});
+
+						logger.info(
+							'[AuthController] Sent verification code to pending user',
+							{ email },
+						);
+					} catch (emailError) {
+						logger.error(
+							'[AuthController] Failed to send verification email to pending user',
+							emailError,
+						);
+					}
+
+					res.status(401).json({
+						success: false,
+						message:
+							'Veuillez vérifier votre email avant de vous connecter. Un code de vérification a été envoyé à votre adresse email.',
+						requiresVerification: true,
+						email: email,
+						codeSent: true,
+					});
+					return;
+				}
+				// Password doesn't match - return generic error (don't reveal email exists)
+			}
+
+			// Log failed login attempt (user not found or wrong password for pending user)
 			logger.warn('[AuthController] Failed login - user not found', {
 				email,
 			});
