@@ -8,5 +8,6 @@ export { WelcomeContent } from './WelcomeContent';
 export { AuthLayout } from './AuthLayout';
 export { ProtectedRoute } from './ProtectedRoute';
 export { MultiStepProgress } from './MultiStepProgress';
+export { PricingBanner } from './PricingBanner';
 export { ProfileGuard } from './ProfileGuard';
 export { AuthInitializer } from './AuthInitializer';

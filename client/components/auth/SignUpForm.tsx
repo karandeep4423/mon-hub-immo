@@ -4,6 +4,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/Button';
 import { MultiStepProgress } from '@/components/auth/MultiStepProgress';
+import { PricingBanner } from '@/components/auth/PricingBanner';
 import { useSignUpForm } from '@/hooks/useSignUpForm';
 import { Features } from '@/lib/constants';
 import {
@@ -178,6 +179,9 @@ export const SignUpForm: React.FC = () => {
 						</div>
 					</div>
 
+					{/* Pricing Banner */}
+					<PricingBanner />
+
 					{/* Stats */}
 					<div className="grid grid-cols-3 gap-6 pt-8 border-t border-white/20">
 						<div>
@@ -229,6 +233,11 @@ export const SignUpForm: React.FC = () => {
 					<p className="text-sm text-brand-100">
 						Créez votre compte professionnel
 					</p>
+
+					{/* Mobile Pricing Banner */}
+					<div className="mt-6">
+						<PricingBanner />
+					</div>
 				</div>
 
 				{/* Step Indicator */}
