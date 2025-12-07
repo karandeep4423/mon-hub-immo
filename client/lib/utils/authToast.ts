@@ -295,12 +295,32 @@ export const handleAuthError = (error: unknown): void => {
 				authToastError(Features.Auth.AUTH_TOAST_MESSAGES.UNAUTHORIZED);
 				return;
 			case 403:
-					// Distinguish a blocked account vs admin validation pending
-					if (message.includes('non valid') || message.includes("non validé") || message.includes('non validé par')) {
-						authToastError('Votre compte est en attente de validation par l\'équipe MonHubImmo.');
-					} else {
-						authToastError(Features.Auth.AUTH_TOAST_MESSAGES.ACCOUNT_LOCKED);
+				// Distinguish a blocked account vs admin validation pending
+				if (
+					message.includes('non valid') ||
+					message.includes('non validé') ||
+					message.includes('non validé par')
+				) {
+					authToastError(
+						"Votre compte est en attente de validation par l'équipe MonHubImmo.",
+					);
+				} else if (
+					message.includes('blocked') ||
+					message.includes('bloqué') ||
+					message.includes('block')
+				) {
+					// Blocked account - redirect to explanation page
+					authToastError(
+						'Votre compte a été bloqué par un administrateur.',
+					);
+					if (typeof window !== 'undefined') {
+						window.location.href = '/auth/blocked';
 					}
+				} else {
+					authToastError(
+						Features.Auth.AUTH_TOAST_MESSAGES.ACCOUNT_LOCKED,
+					);
+				}
 				return;
 			case 404:
 				// Check if it's a user not found error

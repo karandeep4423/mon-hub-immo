@@ -143,13 +143,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
 			if (isBlockedUser) {
 				logger.warn('[AuthStore] Account is blocked by admin');
-				set({ user: null, loading: false });
-				// Clear cookies via logout API before redirecting
+				// Force logout to clear cookies and prevent middleware redirect loop
 				try {
 					await authService.logout();
-				} catch {
-					// Continue even if logout fails
+				} catch (e) {
+					logger.error(
+						'[AuthStore] Failed to logout blocked user',
+						e,
+					);
 				}
+
+				set({ user: null, loading: false });
 				// Redirect to blocked page
 				if (typeof window !== 'undefined') {
 					window.location.replace('/auth/blocked');
