@@ -347,6 +347,7 @@ router.post(
 
 /**
  * Verify checkout session (called after successful payment)
+ * Also updates user's payment status as fallback if webhook didn't fire
  */
 router.get(
 	'/verify-session',
@@ -354,6 +355,7 @@ router.get(
 	async (req: AuthRequest, res: Response) => {
 		try {
 			const { session_id } = req.query;
+			const userId = req.userId;
 
 			if (!session_id || typeof session_id !== 'string') {
 				return res.status(400).json({ error: 'session_id requis' });
@@ -362,6 +364,71 @@ router.get(
 			const session = await stripe.checkout.sessions.retrieve(session_id);
 
 			if (session.payment_status === 'paid') {
+				// Fallback: Update user if webhook hasn't done so yet
+				// This ensures user gets access even if webhook is delayed or fails
+				if (userId && session.subscription) {
+					const subscriptionId = session.subscription as string;
+					const customerId = session.customer as string;
+
+					try {
+						// Fetch subscription details from Stripe
+						const subscription =
+							(await stripe.subscriptions.retrieve(
+								subscriptionId,
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							)) as any;
+
+						// Check if user needs updating
+						const user = await User.findById(userId);
+						if (user && !user.isPaid) {
+							// Determine isPaid based on subscription status
+							// Active or trialing subscriptions grant access
+							const isActive = ['active', 'trialing'].includes(
+								subscription.status,
+							);
+
+							// Calculate dates safely
+							const startDate = subscription.current_period_start
+								? new Date(
+										subscription.current_period_start *
+											1000,
+									)
+								: undefined;
+							const endDate = subscription.current_period_end
+								? new Date(
+										subscription.current_period_end * 1000,
+									)
+								: undefined;
+
+							// eslint-disable-next-line @typescript-eslint/no-explicit-any
+							const updateData: any = {
+								stripeCustomerId: customerId,
+								stripeSubscriptionId: subscriptionId,
+								subscriptionStatus: subscription.status,
+								subscriptionPlan: 'monthly',
+								isPaid: isActive,
+							};
+
+							if (startDate)
+								updateData.subscriptionStartDate = startDate;
+							if (endDate)
+								updateData.subscriptionEndDate = endDate;
+
+							await User.findByIdAndUpdate(userId, updateData);
+
+							logger.info(
+								`[Payment] User ${userId} updated via verify-session fallback: isPaid=${isActive}, status=${subscription.status}`,
+							);
+						}
+					} catch (subError) {
+						// Log but don't fail - session verification was still successful
+						logger.warn(
+							`[Payment] Could not update user ${userId} during verify-session:`,
+							subError,
+						);
+					}
+				}
+
 				res.json({
 					success: true,
 					status: session.payment_status,

@@ -15,6 +15,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
 
+// Log webhook secret status at import time (helps debug configuration issues)
+logger.info(
+	`[Stripe Webhook] Initializing - webhookSecret configured: ${Boolean(webhookSecret)}, length: ${webhookSecret?.length || 0}`,
+);
+
 // Grace period: Number of days to keep access after failed payment
 const FAILED_PAYMENT_GRACE_DAYS = 7;
 
@@ -36,25 +41,47 @@ function safeDate(timestamp: number | undefined | null): Date | undefined {
 const stripeWebhookHandler = async (req: Request, res: Response) => {
 	const sig = req.headers['stripe-signature'] as string;
 
+	// Log incoming webhook request details
+	logger.info(
+		`[Stripe Webhook] Incoming request - Content-Type: ${req.headers['content-type']}, Body type: ${typeof req.body}, Body length: ${req.body?.length || 'N/A'}`,
+	);
+
 	if (!sig) {
-		logger.error('[Stripe Webhook] Missing stripe-signature header');
+		logger.error(
+			'[Stripe Webhook] Missing stripe-signature header. Headers received:',
+			JSON.stringify(Object.keys(req.headers)),
+		);
 		return res.status(400).send('Missing stripe-signature header');
+	}
+
+	if (!webhookSecret) {
+		logger.error(
+			'[Stripe Webhook] STRIPE_WEBHOOK_SECRET is not configured in environment variables!',
+		);
+		return res.status(500).send('Webhook secret not configured');
 	}
 
 	let event: Stripe.Event;
 
 	try {
 		event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+		logger.info(
+			`[Stripe Webhook] ✅ Signature verified successfully for event: ${event.type} (ID: ${event.id})`,
+		);
 	} catch (err: unknown) {
 		const message = err instanceof Error ? err.message : 'Unknown error';
 		logger.error(
-			'[Stripe Webhook] Signature verification failed:',
-			message,
+			`[Stripe Webhook] ❌ Signature verification failed: ${message}`,
+		);
+		logger.error(
+			`[Stripe Webhook] Debug info - sig length: ${sig?.length}, body type: ${typeof req.body}, is Buffer: ${Buffer.isBuffer(req.body)}`,
 		);
 		return res.status(400).send(`Webhook Error: ${message}`);
 	}
 
-	logger.info(`[Stripe Webhook] Received event: ${event.type}`);
+	logger.info(
+		`[Stripe Webhook] Processing event: ${event.type} (ID: ${event.id}, Created: ${new Date(event.created * 1000).toISOString()})`,
+	);
 
 	try {
 		switch (event.type) {
@@ -93,9 +120,15 @@ const stripeWebhookHandler = async (req: Request, res: Response) => {
 				);
 		}
 
+		logger.info(
+			`[Stripe Webhook] ✅ Successfully processed event: ${event.type}`,
+		);
 		res.json({ received: true });
 	} catch (error) {
-		logger.error('[Stripe Webhook] Error processing event:', error);
+		logger.error(
+			`[Stripe Webhook] ❌ Error processing event ${event.type}:`,
+			error,
+		);
 		res.status(500).json({ error: 'Webhook handler failed' });
 	}
 };
@@ -108,15 +141,51 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 	const customerId = session.customer as string;
 	const subscriptionId = session.subscription as string;
 
+	logger.info(
+		`[Stripe Webhook] handleCheckoutCompleted - Session ID: ${session.id}, Payment Status: ${session.payment_status}`,
+	);
+	logger.info(
+		`[Stripe Webhook] handleCheckoutCompleted - userId: ${userId}, customerId: ${customerId}, subscriptionId: ${subscriptionId}`,
+	);
+	logger.info(
+		`[Stripe Webhook] handleCheckoutCompleted - Full metadata: ${JSON.stringify(session.metadata)}`,
+	);
+
 	if (!userId) {
-		logger.error('[Stripe Webhook] No userId in checkout session metadata');
+		logger.error(
+			'[Stripe Webhook] ❌ No userId in checkout session metadata! Cannot update user.',
+		);
 		return;
 	}
 
-	logger.info(`[Stripe Webhook] Checkout completed for user ${userId}`);
+	// Check if user exists before proceeding
+	const existingUser = await User.findById(userId);
+	if (!existingUser) {
+		logger.error(
+			`[Stripe Webhook] ❌ User not found with ID: ${userId}. Cannot update subscription status.`,
+		);
+		return;
+	}
+
+	logger.info(
+		`[Stripe Webhook] Found user: ${existingUser.email}, current isPaid: ${existingUser.isPaid}, subscriptionStatus: ${existingUser.subscriptionStatus}`,
+	);
 
 	// Fetch subscription details
-	const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+	let subscription;
+	try {
+		subscription = await stripe.subscriptions.retrieve(subscriptionId);
+		logger.info(
+			`[Stripe Webhook] Subscription retrieved: status=${subscription.status}`,
+		);
+	} catch (subErr) {
+		logger.error(
+			`[Stripe Webhook] ❌ Failed to retrieve subscription ${subscriptionId}:`,
+			subErr,
+		);
+		return;
+	}
+
 	// Cast to any to access period properties (Stripe types may be incomplete for this API version)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const sub = subscription as any;
@@ -124,21 +193,44 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 	const startDate = safeDate(sub.current_period_start);
 	const endDate = safeDate(sub.current_period_end);
 
+	// Accept both 'active' and 'trialing' as valid paid statuses
+	const isActive = ['active', 'trialing'].includes(sub.status);
+
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const updateData: any = {
 		stripeCustomerId: customerId,
 		stripeSubscriptionId: subscriptionId,
 		subscriptionStatus: sub.status,
 		subscriptionPlan: 'monthly',
-		isPaid: sub.status === 'active',
+		isPaid: isActive,
 	};
 
 	if (startDate) updateData.subscriptionStartDate = startDate;
 	if (endDate) updateData.subscriptionEndDate = endDate;
 
-	await User.findByIdAndUpdate(userId, updateData);
+	logger.info(
+		`[Stripe Webhook] Preparing to update user ${userId} with: ${JSON.stringify(updateData)}`,
+	);
 
-	logger.info(`[Stripe Webhook] User ${userId} subscription activated`);
+	try {
+		const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+			new: true,
+		});
+		if (updatedUser) {
+			logger.info(
+				`[Stripe Webhook] ✅ User ${userId} (${updatedUser.email}) subscription ACTIVATED - isPaid: ${updatedUser.isPaid}, status: ${updatedUser.subscriptionStatus}`,
+			);
+		} else {
+			logger.error(
+				`[Stripe Webhook] ❌ User.findByIdAndUpdate returned null for userId: ${userId}`,
+			);
+		}
+	} catch (updateErr) {
+		logger.error(
+			`[Stripe Webhook] ❌ Failed to update user ${userId}:`,
+			updateErr,
+		);
+	}
 }
 
 /**
