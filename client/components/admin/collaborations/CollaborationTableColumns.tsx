@@ -58,6 +58,8 @@ export const getCollaborationTableColumns = () => [
 						{agentId ? (
 							<Link
 								href={`/admin/users/${agentId}`}
+								target="_blank"
+								rel="noopener noreferrer"
 								className="text-xs sm:text-sm font-medium text-gray-900 hover:underline truncate"
 							>
 								{agentName}
@@ -83,6 +85,8 @@ export const getCollaborationTableColumns = () => [
 						{apporteurId ? (
 							<Link
 								href={`/admin/users/${apporteurId}`}
+								target="_blank"
+								rel="noopener noreferrer"
 								className="text-xs text-gray-500 hover:underline truncate"
 							>
 								{apporteurName}

@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { usePageState } from '@/hooks/usePageState';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/CustomSelect';
 import { Button } from '@/components/ui/Button';
@@ -65,6 +67,60 @@ export function AdminPropertiesTableModern({
 		null,
 	);
 
+	// Page state: persist filters, pagination and scroll restoration
+	const {
+		key: pageKey,
+		savedState,
+		save,
+	} = usePageState({
+		hasPagination: true,
+		hasFilters: true,
+		getCurrentState: () => ({
+			currentPage: page,
+			filters: {
+				...filters,
+				viewType,
+			} as unknown as Record<string, unknown>,
+		}),
+	});
+
+	// Restore saved state on mount
+	useEffect(() => {
+		if (
+			savedState?.currentPage &&
+			typeof savedState.currentPage === 'number'
+		) {
+			setPage(savedState.currentPage);
+		}
+		if (savedState?.filters) {
+			const savedFilters = savedState.filters as Record<string, unknown>;
+			setFilters({
+				type: (savedFilters.type as string) || '',
+				status: (savedFilters.status as string) || '',
+				search: (savedFilters.search as string) || '',
+				postType: (savedFilters.postType as string) || '',
+			});
+			if (
+				savedFilters.viewType &&
+				typeof savedFilters.viewType === 'string'
+			) {
+				setViewType(savedFilters.viewType as 'table' | 'grid');
+			}
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	// Save state on changes
+	useEffect(() => {
+		save({
+			currentPage: page,
+			filters: {
+				...filters,
+				viewType,
+			} as unknown as Record<string, unknown>,
+		});
+	}, [page, filters, viewType, save]);
+
 	const {
 		properties: fetchedProperties,
 		loading,
@@ -78,6 +134,12 @@ export function AdminPropertiesTableModern({
 		postType: filters.postType,
 		page,
 		limit,
+	});
+
+	// Scroll restoration (window scroll)
+	useScrollRestoration({
+		key: pageKey,
+		ready: !loading,
 	});
 
 	const properties = useMemo(

@@ -56,6 +56,8 @@ export const CollaborationActions: React.FC<CollaborationActionsProps> = ({
 			{/* Chat History */}
 			<Link
 				href={`/admin/chat?collaborationId=${_id}`}
+				target="_blank"
+				rel="noopener noreferrer"
 				className="p-1.5 hover:bg-purple-50 rounded-lg transition-all border border-transparent hover:border-purple-200 group"
 				title="Historique"
 			>

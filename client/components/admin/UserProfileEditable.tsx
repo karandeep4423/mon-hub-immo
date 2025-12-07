@@ -74,6 +74,13 @@ export function UserProfileEditable({
 		account: Settings,
 	};
 
+	// Filter tabs based on user type - apporteurs don't have professional/documents info
+	const visibleTabs = isAgent
+		? TABS
+		: TABS.filter(
+				(tab) => tab.id !== 'professional' && tab.id !== 'documents',
+			);
+
 	return (
 		<div className="min-h-screen bg-gray-50/50 pb-12">
 			{/* Fixed Header */}
@@ -100,7 +107,7 @@ export function UserProfileEditable({
 					<div className="lg:col-span-8 xl:col-span-9 space-y-6">
 						{/* Tabs Navigation */}
 						<div className="bg-gray-100/80 backdrop-blur-sm p-1.5 rounded-xl flex overflow-x-auto no-scrollbar sticky top-[88px] z-40 shadow-inner gap-1">
-							{TABS.map((tab) => {
+							{visibleTabs.map((tab) => {
 								const TabIcon = tabIcons[tab.id];
 								return (
 									<button
@@ -136,7 +143,7 @@ export function UserProfileEditable({
 								/>
 							)}
 
-							{activeTab === 'professional' && (
+							{activeTab === 'professional' && isAgent && (
 								<ProfessionalTab
 									form={form}
 									handleProfessionalChange={
@@ -145,7 +152,7 @@ export function UserProfileEditable({
 								/>
 							)}
 
-							{activeTab === 'documents' && (
+							{activeTab === 'documents' && isAgent && (
 								<DocumentsTab form={form} />
 							)}
 

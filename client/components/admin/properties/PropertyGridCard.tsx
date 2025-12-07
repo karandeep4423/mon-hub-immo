@@ -55,12 +55,16 @@ export const PropertyGridCard: React.FC<PropertyGridCardProps> = ({
 				<div className="flex gap-2">
 					<Link
 						href={`${basePath}/${property._id}`}
+						target="_blank"
+						rel="noopener noreferrer"
 						className="flex-1 px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded transition-colors text-sm font-medium text-center"
 					>
 						Voir
 					</Link>
 					<Link
 						href={`${basePath}/edit/${property._id}?returnPath=/admin/properties`}
+						target="_blank"
+						rel="noopener noreferrer"
 						className="flex-1 px-3 py-2 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded transition-colors text-sm font-medium text-center"
 					>
 						Modifier

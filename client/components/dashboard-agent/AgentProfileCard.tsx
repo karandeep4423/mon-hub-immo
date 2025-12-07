@@ -87,16 +87,18 @@ const InfoItem = ({
 
 	return (
 		<div
-			className={`flex items-center space-x-3 p-4 rounded-xl border ${colors.border} ${colors.bg} hover:shadow-md transition-all duration-200`}
+			className={`flex items-center space-x-2 sm:space-x-3 p-3 sm:p-4 rounded-xl border ${colors.border} ${colors.bg} hover:shadow-md transition-all duration-200`}
 		>
 			<div
-				className={`${colors.bg} p-2.5 rounded-full border ${colors.border}`}
+				className={`${colors.bg} p-2 sm:p-2.5 rounded-full border ${colors.border} flex-shrink-0`}
 			>
-				<div className={`w-5 h-5 ${colors.icon}`}>{icon}</div>
+				<div className={`w-4 h-4 sm:w-5 sm:h-5 ${colors.icon}`}>
+					{icon}
+				</div>
 			</div>
 			<div className="flex-1 min-w-0">
-				<p className="text-xs text-gray-500">{label}</p>
-				<p className="text-sm font-semibold text-gray-800 truncate">
+				<p className="text-[10px] sm:text-xs text-gray-500">{label}</p>
+				<p className="text-xs sm:text-sm font-semibold text-gray-800 truncate">
 					{value}
 				</p>
 			</div>
@@ -122,9 +124,13 @@ const StatCard = ({
 	};
 
 	return (
-		<div className="text-center p-5 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-100 hover:shadow-md transition-all duration-200">
-			<p className={`text-2xl font-bold ${colorMap[color]}`}>{value}</p>
-			<p className="text-sm text-gray-600 mt-1">{label}</p>
+		<div className="text-center p-3 sm:p-5 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-100 hover:shadow-md transition-all duration-200">
+			<p className={`text-lg sm:text-2xl font-bold ${colorMap[color]}`}>
+				{value}
+			</p>
+			<p className="text-[10px] sm:text-sm text-gray-600 mt-0.5 sm:mt-1">
+				{label}
+			</p>
 		</div>
 	);
 };
@@ -239,22 +245,23 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 
 	return (
 		<>
-			<div className="bg-white rounded-xl shadow-sm p-6 mb-8">
-				<div className="flex items-center justify-between mb-6">
-					<h3 className="text-lg font-semibold text-gray-900">
+			<div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-6 sm:mb-8">
+				{/* Header - Responsive */}
+				<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
+					<h3 className="text-base sm:text-lg font-semibold text-gray-900">
 						Profil Agent
 					</h3>
-					<div className="flex gap-3">
+					<div className="flex gap-2 sm:gap-3">
 						{!user.profileCompleted && (
 							<Button
 								onClick={() =>
 									router.push('/auth/complete-profile')
 								}
-								className="bg-brand hover:bg-brand-600 text-white"
+								className="bg-brand hover:bg-brand-600 text-white flex-1 sm:flex-none"
 								size="sm"
 							>
 								<svg
-									className="w-4 h-4 mr-2"
+									className="w-4 h-4 mr-1 sm:mr-2"
 									fill="none"
 									stroke="currentColor"
 									viewBox="0 0 24 24"
@@ -266,14 +273,17 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 										d="M12 6v6m0 0v6m0-6h6m-6 0H6"
 									/>
 								</svg>
-								Compléter
+								<span className="hidden xs:inline">
+									Compléter
+								</span>
+								<span className="xs:hidden">+</span>
 							</Button>
 						)}
 						<Button
 							variant="outline"
 							size="sm"
 							onClick={() => setShowUpdateModal(true)}
-							className="flex items-center space-x-2"
+							className="flex items-center justify-center space-x-1 sm:space-x-2 flex-1 sm:flex-none"
 						>
 							<svg
 								className="w-4 h-4"
@@ -293,17 +303,19 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 					</div>
 				</div>
 
-				{/* Basic Profile Info */}
-				<div className="flex items-center space-x-6 mb-6">
+				{/* Basic Profile Info - Responsive */}
+				<div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:space-x-6 mb-4 sm:mb-6">
 					<ProfileAvatar user={user} size="2xl" clickable={false} />
-					<div>
-						<h4 className="text-xl font-semibold text-gray-900">
+					<div className="min-w-0 flex-1">
+						<h4 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
 							{user.firstName} {user.lastName}
 						</h4>
-						<p className="text-gray-600">Agent Immobilier</p>
-						<div className="flex items-center mt-2">
+						<p className="text-sm sm:text-base text-gray-600">
+							Agent Immobilier
+						</p>
+						<div className="flex items-center justify-center sm:justify-start mt-2">
 							<span
-								className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
+								className={`inline-flex px-2.5 sm:px-3 py-1 text-xs font-semibold rounded-full ${
 									user.profileCompleted
 										? 'bg-green-100 text-green-800'
 										: 'bg-yellow-100 text-yellow-800'
@@ -318,7 +330,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 				</div>
 
 				{/* Basic Information - Modern Cards */}
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
 					<InfoItem
 						icon={
 							<svg
@@ -362,85 +374,107 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 				{/* Subscription Section */}
 				{subscription && subscription.status !== 'none' && (
 					<>
-						<div className="border-t border-gray-100 my-6" />
-						<div className="flex items-center justify-between mb-4">
-							<div className="flex items-center gap-2">
-								<div className="p-2 bg-brand-50 rounded-lg">
-									<FiCreditCard className="w-5 h-5 text-brand" />
-								</div>
-								<h4 className="text-md font-semibold text-gray-900">
-									Mon abonnement
-								</h4>
+						<div className="border-t border-gray-100 my-4 sm:my-6" />
+						<div className="flex items-center gap-2 mb-3 sm:mb-4">
+							<div className="p-1.5 sm:p-2 bg-brand-50 rounded-lg">
+								<FiCreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-brand" />
 							</div>
-							{getStatusBadge()}
+							<h4 className="text-sm sm:text-md font-semibold text-gray-900">
+								Mon abonnement
+							</h4>
 						</div>
-						<div className="space-y-3">
-							<div className="flex items-center justify-between py-2">
-								<span className="text-gray-600">Formule</span>
-								<span className="font-medium text-gray-900">
-									{subscription.plan === 'free_admin_granted'
-										? 'Accès offert'
-										: 'Mensuel - 19€/mois'}
-								</span>
-							</div>
-							{/* Show end date when subscription is canceled but still active */}
-							{subscription.cancelAtPeriodEnd &&
-								subscription.currentPeriodEnd && (
-									<div className="bg-yellow-50 rounded-lg p-3 text-sm">
-										<p className="text-yellow-800">
-											Votre accès reste actif
-											jusqu&apos;au{' '}
-											<span className="font-semibold">
-												{new Date(
-													subscription.currentPeriodEnd,
-												).toLocaleDateString('fr-FR', {
-													day: 'numeric',
-													month: 'long',
-													year: 'numeric',
-												})}
-											</span>
-										</p>
+
+						{/* Desktop: Side by side layout | Mobile: Stacked */}
+						<div className="flex flex-col lg:flex-row lg:items-start lg:gap-6">
+							{/* Left: Subscription Info */}
+							<div className="flex-1 space-y-3">
+								{/* Status + Plan Row */}
+								<div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 sm:p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100">
+									<div className="flex items-center gap-3 flex-1">
+										{getStatusBadge()}
+										<div className="h-6 w-px bg-gray-200 hidden sm:block" />
+										<div className="flex-1">
+											<p className="text-xs text-gray-500">
+												Formule
+											</p>
+											<p className="text-sm sm:text-base font-semibold text-gray-900">
+												{subscription.plan ===
+												'free_admin_granted'
+													? 'Accès offert'
+													: 'Mensuel - 19€/mois'}
+											</p>
+										</div>
 									</div>
-								)}
-							{/* Show next renewal date for active subscriptions */}
-							{subscription.status === 'active' &&
-								!subscription.cancelAtPeriodEnd &&
-								subscription.currentPeriodEnd && (
-									<div className="flex items-center justify-between py-2 text-sm">
-										<span className="text-gray-500">
-											Prochain renouvellement
-										</span>
-										<span className="text-gray-700">
-											{new Date(
-												subscription.currentPeriodEnd,
-											).toLocaleDateString('fr-FR', {
-												day: 'numeric',
-												month: 'long',
-												year: 'numeric',
-											})}
-										</span>
-									</div>
-								)}
-							{subscription.plan !== 'free_admin_granted' && (
-								<button
-									onClick={handleManageSubscription}
-									disabled={portalLoading}
-									className="w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
-								>
-									{portalLoading ? (
-										<span className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-									) : (
-										<>
-											<FiExternalLink className="w-4 h-4" />
-											Gérer mon abonnement
-										</>
+									{/* Next renewal on same row for desktop */}
+									{subscription.status === 'active' &&
+										!subscription.cancelAtPeriodEnd &&
+										subscription.currentPeriodEnd && (
+											<div className="sm:text-right pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
+												<p className="text-xs text-gray-500">
+													Prochain renouvellement
+												</p>
+												<p className="text-sm sm:text-base font-medium text-gray-700">
+													{new Date(
+														subscription.currentPeriodEnd,
+													).toLocaleDateString(
+														'fr-FR',
+														{
+															day: 'numeric',
+															month: 'long',
+															year: 'numeric',
+														},
+													)}
+												</p>
+											</div>
+										)}
+								</div>
+
+								{/* Show end date when subscription is canceled but still active */}
+								{subscription.cancelAtPeriodEnd &&
+									subscription.currentPeriodEnd && (
+										<div className="bg-yellow-50 rounded-xl p-3 sm:p-4 border border-yellow-100">
+											<p className="text-sm text-yellow-800">
+												Votre accès reste actif
+												jusqu&apos;au{' '}
+												<span className="font-semibold">
+													{new Date(
+														subscription.currentPeriodEnd,
+													).toLocaleDateString(
+														'fr-FR',
+														{
+															day: 'numeric',
+															month: 'long',
+															year: 'numeric',
+														},
+													)}
+												</span>
+											</p>
+										</div>
 									)}
-								</button>
+							</div>
+
+							{/* Right: Action Button */}
+							{subscription.plan !== 'free_admin_granted' && (
+								<div className="mt-4 lg:mt-0 lg:w-auto flex flex-col items-center lg:items-end">
+									<button
+										onClick={handleManageSubscription}
+										disabled={portalLoading}
+										className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl hover:bg-brand-dark transition-colors disabled:opacity-50 text-sm sm:text-base font-medium shadow-sm hover:shadow-md"
+									>
+										{portalLoading ? (
+											<span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+										) : (
+											<>
+												<FiExternalLink className="w-4 h-4" />
+												Gérer mon abonnement
+											</>
+										)}
+									</button>
+									<p className="text-[10px] sm:text-xs text-gray-500 mt-2 text-center lg:text-right">
+										Paiement, factures ou annulation
+									</p>
+								</div>
 							)}
-							<p className="text-xs text-gray-500 text-center">
-								Modifier le moyen de paiement, consulter les
-								factures ou annuler
-							</p>
 						</div>
 					</>
 				)}
@@ -448,23 +482,23 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 				{/* No subscription - show subscribe button */}
 				{subscription && subscription.status === 'none' && (
 					<>
-						<div className="border-t border-gray-100 my-6" />
-						<div className="flex items-center justify-between mb-4">
+						<div className="border-t border-gray-100 my-4 sm:my-6" />
+						<div className="flex flex-col xs:flex-row xs:items-center justify-between gap-2 xs:gap-0 mb-3 sm:mb-4">
 							<div className="flex items-center gap-2">
-								<div className="p-2 bg-gray-100 rounded-lg">
-									<FiCreditCard className="w-5 h-5 text-gray-500" />
+								<div className="p-1.5 sm:p-2 bg-gray-100 rounded-lg">
+									<FiCreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
 								</div>
-								<h4 className="text-md font-semibold text-gray-900">
+								<h4 className="text-sm sm:text-md font-semibold text-gray-900">
 									Mon abonnement
 								</h4>
 							</div>
-							<span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+							<span className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
 								Inactif
 							</span>
 						</div>
 						<a
 							href="/payment"
-							className="w-full flex items-center justify-center gap-2 bg-brand text-white px-4 py-3 rounded-lg hover:bg-brand-dark transition-colors shadow-brand"
+							className="w-full flex items-center justify-center gap-2 bg-brand text-white px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg hover:bg-brand-dark transition-colors shadow-brand text-sm sm:text-base"
 						>
 							<FiCreditCard className="w-4 h-4" />
 							Activer mon abonnement - 19€/mois
@@ -475,16 +509,16 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 				{/* Professional Information - Collapsible when profile is completed */}
 				{user.profileCompleted && user.professionalInfo && (
 					<>
-						<div className="border-t border-gray-100 my-6" />
+						<div className="border-t border-gray-100 my-4 sm:my-6" />
 						<button
 							onClick={toggleInfo}
 							className="w-full flex items-center justify-between text-left group"
 							aria-expanded={isInfoOpen}
 						>
 							<div className="flex items-center gap-2">
-								<div className="p-2 bg-brand-50 rounded-lg">
+								<div className="p-1.5 sm:p-2 bg-brand-50 rounded-lg">
 									<svg
-										className="w-5 h-5 text-brand"
+										className="w-4 h-4 sm:w-5 sm:h-5 text-brand"
 										fill="none"
 										stroke="currentColor"
 										viewBox="0 0 24 24"
@@ -497,13 +531,13 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 										/>
 									</svg>
 								</div>
-								<h4 className="text-md font-semibold text-gray-900">
+								<h4 className="text-sm sm:text-md font-semibold text-gray-900">
 									Informations professionnelles
 								</h4>
 							</div>
-							<div className="p-2 rounded-full bg-gray-100 group-hover:bg-gray-200 transition-colors">
+							<div className="p-1.5 sm:p-2 rounded-full bg-gray-100 group-hover:bg-gray-200 transition-colors">
 								<svg
-									className={`w-4 h-4 text-gray-600 transition-transform duration-300 ${isInfoOpen ? 'rotate-180' : ''}`}
+									className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600 transition-transform duration-300 ${isInfoOpen ? 'rotate-180' : ''}`}
 									fill="none"
 									stroke="currentColor"
 									viewBox="0 0 24 24"
@@ -520,11 +554,13 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 
 						<div
 							className={`overflow-hidden transition-all duration-500 ${
-								isInfoOpen ? 'max-h-[2000px] mt-6' : 'max-h-0'
+								isInfoOpen
+									? 'max-h-[2000px] mt-4 sm:mt-6'
+									: 'max-h-0'
 							}`}
 						>
 							{/* Stats Cards */}
-							<div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+							<div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
 								<StatCard
 									value={`${user.professionalInfo?.interventionRadius || 20}km`}
 									label="Rayon d'intervention"
@@ -548,7 +584,7 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 							</div>
 
 							{/* Professional Details Grid */}
-							<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+							<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
 								<InfoItem
 									icon={
 										<svg
@@ -835,11 +871,11 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 							{user.professionalInfo?.coveredCities &&
 								user.professionalInfo.coveredCities.length >
 									0 && (
-									<div className="mb-6">
-										<div className="flex items-center gap-2 mb-3">
-											<div className="p-2 bg-brand-50 rounded-lg">
+									<div className="mb-4 sm:mb-6">
+										<div className="flex items-center gap-2 mb-2 sm:mb-3">
+											<div className="p-1.5 sm:p-2 bg-brand-50 rounded-lg">
 												<svg
-													className="w-4 h-4 text-brand"
+													className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand"
 													fill="none"
 													stroke="currentColor"
 													viewBox="0 0 24 24"
@@ -852,19 +888,19 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 													/>
 												</svg>
 											</div>
-											<p className="text-sm font-semibold text-gray-700">
+											<p className="text-xs sm:text-sm font-semibold text-gray-700">
 												Communes couvertes
 											</p>
 										</div>
-										<div className="flex flex-wrap gap-2">
+										<div className="flex flex-wrap gap-1.5 sm:gap-2">
 											{user.professionalInfo.coveredCities.map(
 												(city, index) => (
 													<span
 														key={index}
-														className="inline-flex items-center px-3 py-1.5 text-sm bg-gradient-to-r from-brand-50 to-blue-50 text-brand-700 rounded-full border border-brand-100 hover:shadow-sm transition-shadow"
+														className="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm bg-gradient-to-r from-brand-50 to-blue-50 text-brand-700 rounded-full border border-brand-100 hover:shadow-sm transition-shadow"
 													>
 														<svg
-															className="w-3 h-3 mr-1.5 text-brand"
+															className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1 sm:mr-1.5 text-brand"
 															fill="currentColor"
 															viewBox="0 0 20 20"
 														>
@@ -885,10 +921,10 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 							{/* Personal Bio */}
 							{user.professionalInfo?.personalPitch && (
 								<div>
-									<div className="flex items-center gap-2 mb-3">
-										<div className="p-2 bg-purple-50 rounded-lg">
+									<div className="flex items-center gap-2 mb-2 sm:mb-3">
+										<div className="p-1.5 sm:p-2 bg-purple-50 rounded-lg">
 											<svg
-												className="w-4 h-4 text-purple-600"
+												className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-600"
 												fill="none"
 												stroke="currentColor"
 												viewBox="0 0 24 24"
@@ -901,17 +937,17 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 												/>
 											</svg>
 										</div>
-										<p className="text-sm font-semibold text-gray-700">
+										<p className="text-xs sm:text-sm font-semibold text-gray-700">
 											Bio personnelle
 										</p>
 									</div>
-									<div className="p-4 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-100">
+									<div className="p-3 sm:p-4 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-100">
 										<RichTextDisplay
 											content={
 												user.professionalInfo
 													.personalPitch
 											}
-											className="text-sm text-gray-700 leading-relaxed"
+											className="text-xs sm:text-sm text-gray-700 leading-relaxed"
 										/>
 									</div>
 								</div>

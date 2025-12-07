@@ -138,6 +138,8 @@ export const UserActions: React.FC<UserActionsProps> = ({
 			{/* View / Edit - Navigate to profile page */}
 			<Link
 				href={`/admin/users/${user._id}`}
+				target="_blank"
+				rel="noopener noreferrer"
 				className="p-2 hover:bg-blue-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-blue-200 group"
 				title="Voir / Modifier"
 			>

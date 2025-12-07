@@ -19,6 +19,8 @@ export const PropertyActions: React.FC<PropertyActionsProps> = ({
 		<div className="flex items-center justify-end gap-1.5">
 			<Link
 				href={`${basePath}/${property._id}`}
+				target="_blank"
+				rel="noopener noreferrer"
 				className="p-2 hover:bg-blue-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-blue-200 group"
 				title="Voir"
 			>
@@ -26,6 +28,8 @@ export const PropertyActions: React.FC<PropertyActionsProps> = ({
 			</Link>
 			<Link
 				href={`${basePath}/edit/${property._id}?returnPath=/admin/properties`}
+				target="_blank"
+				rel="noopener noreferrer"
 				className="p-2 hover:bg-amber-50 rounded-lg transition-all hover:shadow-md border border-transparent hover:border-amber-200 group"
 				title="Modifier"
 			>

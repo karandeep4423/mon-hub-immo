@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { Globe } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import {
@@ -19,7 +20,12 @@ export const getUserTableColumns = () => [
 		accessor: 'firstName',
 		width: '25%',
 		render: (_: unknown, row: AdminUser) => (
-			<div className="flex items-center gap-2 min-w-0">
+			<Link
+				href={`/admin/users/${row._id}`}
+				target="_blank"
+				rel="noopener noreferrer"
+				className="flex items-center gap-2 min-w-0 hover:opacity-80 transition-opacity cursor-pointer"
+			>
 				{row.profileImage ? (
 					<img
 						src={row.profileImage}
@@ -34,14 +40,14 @@ export const getUserTableColumns = () => [
 					</div>
 				)}
 				<div className="min-w-0">
-					<p className="font-semibold text-gray-900 text-xs sm:text-sm truncate">
+					<p className="font-semibold text-gray-900 text-xs sm:text-sm truncate hover:text-cyan-600 transition-colors">
 						{row.firstName} {row.lastName}
 					</p>
 					<p className="text-xs text-gray-500 truncate hidden sm:block">
 						{row.email}
 					</p>
 				</div>
-			</div>
+			</Link>
 		),
 	},
 	{

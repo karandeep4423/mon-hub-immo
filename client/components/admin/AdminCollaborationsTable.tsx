@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { usePageState } from '@/hooks/usePageState';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/CustomSelect';
 import { DataTable } from '@/components/ui/DataTable';
@@ -52,6 +54,53 @@ export const AdminCollaborationsTableModern: React.FC<
 		title: '',
 		message: '',
 		onConfirm: () => {},
+	});
+
+	// Page state: persist filters, pagination and scroll restoration
+	const {
+		key: pageKey,
+		savedState,
+		save,
+	} = usePageState({
+		hasPagination: true,
+		hasFilters: true,
+		getCurrentState: () => ({
+			currentPage: page,
+			filters: filters as unknown as Record<string, unknown>,
+		}),
+	});
+
+	// Restore saved state on mount
+	useEffect(() => {
+		if (
+			savedState?.currentPage &&
+			typeof savedState.currentPage === 'number'
+		) {
+			setPage(savedState.currentPage);
+		}
+		if (savedState?.filters) {
+			const savedFilters = savedState.filters as Record<string, unknown>;
+			setFilters({
+				status: (savedFilters.status as string) || '',
+				search: (savedFilters.search as string) || '',
+				collabType: (savedFilters.collabType as string) || '',
+			});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	// Save state on changes
+	useEffect(() => {
+		save({
+			currentPage: page,
+			filters: filters as unknown as Record<string, unknown>,
+		});
+	}, [page, filters, save]);
+
+	// Scroll restoration (window scroll)
+	useScrollRestoration({
+		key: pageKey,
+		ready: !loading,
 	});
 
 	const handleAction = async (

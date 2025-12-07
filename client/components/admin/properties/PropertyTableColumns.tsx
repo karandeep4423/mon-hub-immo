@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { Badge } from '@/components/ui/Badge';
 import { Home } from 'lucide-react';
 import type { AdminProperty } from '@/types/admin';
@@ -19,29 +20,38 @@ export const getPropertyTableColumns = (): ColumnDef[] => [
 		header: 'Annonce',
 		accessor: 'title',
 		width: '35%',
-		render: (_: unknown, row: AdminProperty) => (
-			<div className="flex items-center gap-3 min-w-0">
-				{row.mainImage?.url ? (
-					<img
-						src={row.mainImage.url}
-						alt={row.title}
-						className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover flex-shrink-0 shadow-sm border border-gray-100"
-					/>
-				) : (
-					<div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0 flex items-center justify-center shadow-sm border border-gray-100">
-						<Home className="w-5 h-5 text-gray-400" />
+		render: (_: unknown, row: AdminProperty) => {
+			const basePath =
+				row.propertyType === 'Recherche' ? '/search-ads' : '/property';
+			return (
+				<Link
+					href={`${basePath}/${row._id}`}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity cursor-pointer"
+				>
+					{row.mainImage?.url ? (
+						<img
+							src={row.mainImage.url}
+							alt={row.title}
+							className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover flex-shrink-0 shadow-sm border border-gray-100"
+						/>
+					) : (
+						<div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0 flex items-center justify-center shadow-sm border border-gray-100">
+							<Home className="w-5 h-5 text-gray-400" />
+						</div>
+					)}
+					<div className="min-w-0">
+						<p className="font-semibold text-gray-900 text-sm truncate hover:text-cyan-600 transition-colors">
+							{row.title}
+						</p>
+						<p className="text-xs text-gray-500 truncate mt-0.5">
+							{row.location || row.city}
+						</p>
 					</div>
-				)}
-				<div className="min-w-0">
-					<p className="font-semibold text-gray-900 text-sm truncate">
-						{row.title}
-					</p>
-					<p className="text-xs text-gray-500 truncate mt-0.5">
-						{row.location || row.city}
-					</p>
-				</div>
-			</div>
-		),
+				</Link>
+			);
+		},
 	},
 	{
 		header: 'Type',

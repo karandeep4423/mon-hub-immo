@@ -121,17 +121,6 @@ export default function AdminUserProfilePage() {
 	return (
 		<div className="bg-gray-50 min-h-screen">
 			<div className="container mx-auto px-4 py-6">
-				{/* Back Navigation */}
-				<div className="mb-6">
-					<Link
-						href="/admin/users"
-						className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors"
-					>
-						<ArrowLeft className="w-4 h-4 mr-2" />
-						Retour à la liste des utilisateurs
-					</Link>
-				</div>
-
 				{/* Editable Profile */}
 				<UserProfileEditable
 					user={user}

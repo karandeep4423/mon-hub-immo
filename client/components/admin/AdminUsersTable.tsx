@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { usePageState } from '@/hooks/usePageState';
+import { useScrollRestoration } from '@/hooks/useScrollRestoration';
 import {
 	Users,
 	Download,
@@ -59,6 +61,49 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 		useState<ConfirmActionState | null>(null);
 	const [actionBusy, setActionBusy] = useState(false);
 
+	// Page state: persist filters, pagination and scroll restoration
+	const {
+		key: pageKey,
+		savedState,
+		save,
+	} = usePageState({
+		hasPagination: true,
+		hasFilters: true,
+		getCurrentState: () => ({
+			currentPage: page,
+			filters: filters as unknown as Record<string, unknown>,
+		}),
+	});
+
+	// Restore saved state on mount
+	useEffect(() => {
+		if (
+			savedState?.currentPage &&
+			typeof savedState.currentPage === 'number'
+		) {
+			setPage(savedState.currentPage);
+		}
+		if (savedState?.filters) {
+			const savedFilters = savedState.filters as Record<string, unknown>;
+			setFilters({
+				type: (savedFilters.type as FilterType['type']) || '',
+				status: (savedFilters.status as FilterType['status']) || '',
+				search: (savedFilters.search as string) || '',
+				network: (savedFilters.network as string) || '',
+				email: (savedFilters.email as string) || '',
+			});
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	// Save state on changes
+	useEffect(() => {
+		save({
+			currentPage: page,
+			filters: filters as unknown as Record<string, unknown>,
+		});
+	}, [page, filters, save]);
+
 	// Build hook filters
 	const hookFilters = useMemo(() => {
 		const hf: Record<string, string | undefined> = {
@@ -78,6 +123,12 @@ export const AdminUsersTableModern: React.FC<AdminUsersTableModernProps> = ({
 	} = useAdminUsers(hookFilters);
 	const users = initialUsers || hookUsers;
 	const loading = initialLoading !== undefined ? initialLoading : hookLoading;
+
+	// Scroll restoration (window scroll)
+	useScrollRestoration({
+		key: pageKey,
+		ready: !loading,
+	});
 
 	// Filter and normalize users
 	const filteredUsers = useMemo<AdminUser[]>(() => {
