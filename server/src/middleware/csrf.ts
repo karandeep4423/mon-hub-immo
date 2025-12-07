@@ -11,19 +11,32 @@ import { logger } from '../utils/logger';
 const CSRF_SECRET =
 	process.env.CSRF_SECRET || 'csrf-secret-change-in-production';
 
+// In production, set cookie domain for cross-subdomain support (api.monhubimmo.fr <-> monhubimmo.fr)
+const isProduction = process.env.NODE_ENV === 'production';
+const cookieDomain = isProduction ? '.monhubimmo.fr' : undefined;
+
 const {
 	generateCsrfToken: generateToken,
 	doubleCsrfProtection,
 	invalidCsrfTokenError,
 } = doubleCsrf({
 	getSecret: () => CSRF_SECRET,
-	getSessionIdentifier: (req) => req.ip || 'anonymous',
+	// Use a stable identifier - the auth cookie or a fallback
+	// Using req.ip is unreliable behind proxies/load balancers
+	getSessionIdentifier: (req) => {
+		// Use the refresh token cookie as session identifier (stable across requests)
+		// Fall back to a constant if no cookie (for initial token fetch)
+		return req.cookies?.refreshToken || 'anonymous-session';
+	},
 	cookieName: '_csrf',
 	cookieOptions: {
 		httpOnly: true,
-		secure: process.env.NODE_ENV === 'production',
-		sameSite: 'strict',
+		secure: isProduction,
+		// Use 'lax' instead of 'strict' for cross-subdomain support
+		sameSite: 'lax',
 		maxAge: 3600000, // 1 hour
+		// Set domain for cross-subdomain cookie sharing in production
+		...(cookieDomain && { domain: cookieDomain }),
 	},
 	getCsrfTokenFromRequest: (req: Request) =>
 		req.headers['x-csrf-token'] as string,
