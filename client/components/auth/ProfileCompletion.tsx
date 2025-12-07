@@ -151,7 +151,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 			network: user?.professionalInfo?.network || '',
 			siretNumber: user?.professionalInfo?.siretNumber || '',
 			sirenNumber: user?.professionalInfo?.sirenNumber || '',
-			agentType: user?.professionalInfo?.agentType || '',,
+			agentType: user?.professionalInfo?.agentType || '',
 			tCard: user?.professionalInfo?.tCard || '',
 			rsacNumber: user?.professionalInfo?.rsacNumber || '',
 			collaboratorCertificate:
