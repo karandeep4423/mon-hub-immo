@@ -287,23 +287,6 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 			// Continue with registration even if email fails
 		}
 
-		// Send acknowledgement that registration has been received and will be checked by admin
-		try {
-			const ackTemplate = getSignupAcknowledgementTemplate(
-				`${sanitizedFirstName} ${sanitizedLastName}`,
-			);
-			await sendEmail({
-				to: sanitizedEmail,
-				subject: `Votre inscription est en cours de vérification - MonHubImmo`,
-				html: ackTemplate,
-			});
-		} catch (ackError) {
-			logger.error(
-				'[AuthController] Failed to send signup acknowledgement',
-				ackError,
-			);
-		}
-
 		res.status(201).json({
 			success: true,
 			message:
@@ -786,7 +769,10 @@ export const verifyEmail = async (
 			return;
 		}
 
-		// Create real User from PendingVerification - but DO NOT validate the account until admin approves
+		// Create real User from PendingVerification
+		// Apporteurs are auto-validated (no admin approval needed)
+		// Agents require admin validation before they can login
+		const isApporteur = pendingVerification.userType === 'apporteur';
 		const newUser = new User({
 			firstName: pendingVerification.firstName,
 			lastName: pendingVerification.lastName,
@@ -795,7 +781,7 @@ export const verifyEmail = async (
 			phone: pendingVerification.phone,
 			userType: pendingVerification.userType,
 			isEmailVerified: true,
-			isValidated: false,
+			isValidated: isApporteur, // Auto-validate apporteurs, agents need admin approval
 			profileCompleted: false,
 			// Transfer agent professional info from signup
 			professionalInfo:
@@ -894,24 +880,39 @@ export const verifyEmail = async (
 			metadata: { email: newUser.email },
 		});
 
-		// Notify user that they are pending admin validation by sending a small acknowledgement
-		try {
-			const ackTemplate = getSignupAcknowledgementTemplate(
-				`${newUser.firstName} ${newUser.lastName}`,
-			);
-			await sendEmail({
-				to: newUser.email,
-				subject: `Inscription reçue - en attente de validation - MonHubImmo`,
-				html: ackTemplate,
-			});
-		} catch (ackError) {
-			logger.error(
-				'[AuthController] Failed to send pending validation email',
-				ackError,
-			);
+		// Only notify agents that they are pending admin validation
+		// Apporteurs are auto-validated and can login immediately
+		if (!isApporteur) {
+			try {
+				const ackTemplate = getSignupAcknowledgementTemplate(
+					`${newUser.firstName} ${newUser.lastName}`,
+				);
+				await sendEmail({
+					to: newUser.email,
+					subject: `Inscription reçue - en attente de validation - MonHubImmo`,
+					html: ackTemplate,
+				});
+			} catch (ackError) {
+				logger.error(
+					'[AuthController] Failed to send pending validation email',
+					ackError,
+				);
+			}
 		}
 
-		// Return success but indicate that admin validation is required - DO NOT LOG IN USER YET
+		// Return success - apporteurs can login, agents need admin validation
+		if (isApporteur) {
+			res.json({
+				success: true,
+				message:
+					'Email vérifié avec succès. Vous pouvez maintenant vous connecter.',
+				requiresAdminValidation: false,
+				user: null,
+			});
+			return;
+		}
+
+		// Agents need admin validation - DO NOT LOG IN USER YET
 		res.json({
 			success: true,
 			message:
