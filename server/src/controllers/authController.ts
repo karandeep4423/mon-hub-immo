@@ -193,9 +193,15 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 
 			// Send verification email
 			try {
+				const baseUrl =
+					process.env.CLIENT_URL ||
+					process.env.FRONTEND_URL ||
+					'http://localhost:3000';
+				const verifyUrl = `${baseUrl}/auth/verify-email?email=${encodeURIComponent(email)}`;
 				const emailTemplate = getVerificationCodeTemplate(
 					`${existingPending.firstName} ${existingPending.lastName}`,
 					verificationCode,
+					verifyUrl,
 				);
 
 				await sendEmail({
@@ -272,9 +278,15 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 
 		// Send verification email with code
 		try {
+			const baseUrl =
+				process.env.CLIENT_URL ||
+				process.env.FRONTEND_URL ||
+				'http://localhost:3000';
+			const verifyUrl = `${baseUrl}/auth/verify-email?email=${encodeURIComponent(sanitizedEmail)}`;
 			const emailTemplate = getVerificationCodeTemplate(
 				`${sanitizedFirstName} ${sanitizedLastName}`,
 				verificationCode,
+				verifyUrl,
 			);
 
 			await sendEmail({
@@ -361,9 +373,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
 					// Send verification email
 					try {
+						const baseUrl =
+							process.env.CLIENT_URL ||
+							process.env.FRONTEND_URL ||
+							'http://localhost:3000';
+						const verifyUrl = `${baseUrl}/auth/verify-email?email=${encodeURIComponent(email)}`;
 						const emailTemplate = getVerificationCodeTemplate(
 							`${pendingUser.firstName} ${pendingUser.lastName}`,
 							verificationCode,
+							verifyUrl,
 						);
 
 						await sendEmail({
@@ -579,9 +597,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 			);
 
 			try {
+				const baseUrl =
+					process.env.CLIENT_URL ||
+					process.env.FRONTEND_URL ||
+					'http://localhost:3000';
+				const verifyUrl = `${baseUrl}/auth/verify-email?email=${encodeURIComponent(email)}`;
 				const emailTemplate = getVerificationCodeTemplate(
 					`${user.firstName} ${user.lastName}`,
 					verificationCode,
+					verifyUrl,
 				);
 
 				await sendEmail({
@@ -1099,12 +1123,18 @@ export const setPasswordFromInvite = async (
 				);
 
 				// Send verification code email
+				const baseUrl =
+					process.env.CLIENT_URL ||
+					process.env.FRONTEND_URL ||
+					'http://localhost:3000';
+				const verifyUrl = `${baseUrl}/auth/verify-email?email=${encodeURIComponent(user.email)}`;
 				await sendEmail({
 					to: user.email,
 					subject: 'Code de vérification - MonHubImmo',
 					html: getVerificationCodeTemplate(
 						`${user.firstName} ${user.lastName}`,
 						verificationCode,
+						verifyUrl,
 					),
 				});
 
@@ -1198,9 +1228,15 @@ export const resendVerificationCode = async (
 
 		// Send verification email
 		try {
+			const baseUrl =
+				process.env.CLIENT_URL ||
+				process.env.FRONTEND_URL ||
+				'http://localhost:3000';
+			const verifyUrl = `${baseUrl}/auth/verify-email?email=${encodeURIComponent(email)}`;
 			const emailTemplate = getVerificationCodeTemplate(
 				`${pendingVerification.firstName} ${pendingVerification.lastName}`,
 				verificationCode,
+				verifyUrl,
 			);
 
 			await sendEmail({

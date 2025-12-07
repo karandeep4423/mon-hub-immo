@@ -116,14 +116,15 @@ export const sendVerificationCodeEmail = async (opts: {
 	to: string;
 	name: string;
 	code?: string;
+	verifyUrl?: string;
 }): Promise<void> => {
-	const { to, name } = opts;
+	const { to, name, verifyUrl } = opts;
 	const code = opts.code ?? generateVerificationCode();
 	logger.info('[EmailService] sendVerificationCodeEmail');
 	await sendEmail({
 		to,
 		subject: 'Code de vérification - MonHubImmo',
-		html: getVerificationCodeTemplate(name, code),
+		html: getVerificationCodeTemplate(name, code, verifyUrl),
 	});
 };
 
