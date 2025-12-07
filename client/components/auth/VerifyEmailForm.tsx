@@ -140,6 +140,25 @@ export const VerifyEmailForm: React.FC = () => {
 					return;
 				}
 
+				// Handle apporteur verification - success, no admin validation needed, redirect to login
+				if (
+					response.success &&
+					!response.requiresAdminValidation &&
+					!response.user
+				) {
+					logger.success(
+						'[VerifyEmailForm] Apporteur email verified, can login now',
+					);
+					authToastSuccess(
+						response.message ||
+							'Email vérifié avec succès. Vous pouvez maintenant vous connecter.',
+					);
+					setTimeout(() => {
+						router.push(Features.Auth.AUTH_ROUTES.LOGIN);
+					}, 1500);
+					return;
+				}
+
 				if (response.success && response.user) {
 					logger.success('[VerifyEmailForm] Login successful');
 					// Tokens are in httpOnly cookies
