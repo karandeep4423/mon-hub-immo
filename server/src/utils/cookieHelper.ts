@@ -34,7 +34,7 @@ export const getSecureCookieOptions = (maxAge: number): CookieOptions => {
 	const isProduction = process.env.NODE_ENV === 'production';
 
 	// Allow configuring cookie behavior per environment/deployment
-		const cookieDomain =
+	const cookieDomain =
 		process.env.COOKIE_DOMAIN ||
 		(isProduction ? '.monhubimmo.fr' : undefined);
 	//const cookieDomain = process.env.COOKIE_DOMAIN;
@@ -136,9 +136,13 @@ export const setAuthCookies = (
 export const clearAccessTokenCookie = (res: Response): void => {
 	try {
 		const isProduction = process.env.NODE_ENV === 'production';
+		const cookieDomain =
+			process.env.COOKIE_DOMAIN ||
+			(isProduction ? '.monhubimmo.fr' : undefined);
+
 		const clearOptions: CookieOptions = { path: '/' };
-		if (isProduction) {
-			clearOptions.domain = '.monhubimmo.fr';
+		if (cookieDomain) {
+			clearOptions.domain = cookieDomain;
 		}
 		res.clearCookie(COOKIE_NAMES.ACCESS_TOKEN, clearOptions);
 		logger.debug('[CookieHelper] Access token cookie cleared');
@@ -156,9 +160,13 @@ export const clearAccessTokenCookie = (res: Response): void => {
 export const clearRefreshTokenCookie = (res: Response): void => {
 	try {
 		const isProduction = process.env.NODE_ENV === 'production';
+		const cookieDomain =
+			process.env.COOKIE_DOMAIN ||
+			(isProduction ? '.monhubimmo.fr' : undefined);
+
 		const clearOptions: CookieOptions = { path: '/' };
-		if (isProduction) {
-			clearOptions.domain = '.monhubimmo.fr';
+		if (cookieDomain) {
+			clearOptions.domain = cookieDomain;
 		}
 		res.clearCookie(COOKIE_NAMES.REFRESH_TOKEN, clearOptions);
 		logger.debug('[CookieHelper] Refresh token cookie cleared');
