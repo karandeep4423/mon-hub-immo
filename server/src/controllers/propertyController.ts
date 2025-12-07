@@ -1,6 +1,10 @@
 import { Request, Response } from 'express';
 import { Property } from '../models/Property';
 import { s3Service } from '../services/s3Service';
+import { Collaboration } from '../models/Collaboration';
+import { UserFavorite } from '../models/UserFavorite';
+import { notificationService } from '../services/notificationService';
+import { User } from '../models/User';
 import mongoose from 'mongoose';
 import {
 	sanitizeInput,
@@ -496,6 +500,9 @@ export const getAdminProperties = async (
 
 		if (status) {
 			filter.status = sanitizeInput(status);
+		} else {
+			// By default, exclude archived properties unless explicitly requested
+			filter.status = { $ne: 'archived' };
 		}
 
 		if (propertyType) {
@@ -653,6 +660,17 @@ export const getPropertyById = async (
 			res.status(404).json({
 				success: false,
 				message: 'Bien non trouvé',
+				deleted: true,
+			});
+			return;
+		}
+
+		// Check if property is archived (soft deleted)
+		if (property.status === 'archived') {
+			res.status(410).json({
+				success: false,
+				message: 'Ce bien a été supprimé ou archivé',
+				deleted: true,
 			});
 			return;
 		}
@@ -1185,6 +1203,67 @@ export const deleteProperty = async (
 			}
 		}
 
+		// Find and delete related collaborations
+		const relatedCollaborations = await Collaboration.find({
+			postId: id,
+			postType: 'Property',
+		});
+
+		// Notify all collaborators before deletion
+		const ownerUser = await User.findById(req.user?.id).select(
+			'firstName lastName',
+		);
+		const ownerName = ownerUser
+			? `${ownerUser.firstName} ${ownerUser.lastName}`
+			: 'Le propriétaire';
+
+		for (const collab of relatedCollaborations) {
+			// Notify both parties
+			const notifyUsers = [
+				collab.postOwnerId.toString(),
+				collab.collaboratorId.toString(),
+			].filter((uid) => uid !== req.user?.id);
+
+			for (const userId of notifyUsers) {
+				try {
+					await notificationService.create({
+						recipientId: userId,
+						actorId: req.user?.id || collab.postOwnerId,
+						type: 'collab:cancelled',
+						entity: { type: 'collaboration', id: collab._id },
+						title: 'Bien supprimé',
+						message: `${ownerName} a supprimé le bien. La collaboration a été annulée.`,
+						data: {
+							actorName: ownerName,
+							propertyTitle: property.title,
+						},
+					});
+				} catch (error) {
+					logger.error(
+						'[PropertyController] Error sending notification',
+						error,
+					);
+				}
+			}
+		}
+
+		// Delete collaborations
+		const deletedCollabs = await Collaboration.deleteMany({
+			postId: id,
+			postType: 'Property',
+		});
+		logger.info(
+			`[PropertyController] Deleted ${deletedCollabs.deletedCount} collaborations for property ${id}`,
+		);
+
+		// Delete favorites
+		const deletedFavorites = await UserFavorite.deleteMany({
+			propertyId: id,
+		});
+		logger.info(
+			`[PropertyController] Deleted ${deletedFavorites.deletedCount} favorites for property ${id}`,
+		);
+
 		await Property.findByIdAndDelete(id);
 		res.status(200).json({
 			success: true,
@@ -1442,6 +1521,68 @@ export const deleteAdminProperty = async (
 				// Continue with property deletion even if S3 deletion fails
 			}
 		}
+
+		// Find and delete related collaborations
+		const relatedCollaborations = await Collaboration.find({
+			postId: id,
+			postType: 'Property',
+		});
+
+		// Notify all collaborators before deletion
+		const adminUser = await User.findById(req.user?.id).select(
+			'firstName lastName',
+		);
+		const adminName = adminUser
+			? `${adminUser.firstName} ${adminUser.lastName}`
+			: 'Un administrateur';
+
+		for (const collab of relatedCollaborations) {
+			// Notify both parties
+			const notifyUsers = [
+				collab.postOwnerId.toString(),
+				collab.collaboratorId.toString(),
+			];
+
+			for (const userId of notifyUsers) {
+				try {
+					await notificationService.create({
+						recipientId: userId,
+						actorId: req.user?.id || 'admin',
+						type: 'collab:cancelled',
+						entity: { type: 'collaboration', id: collab._id },
+						title: 'Bien supprimé par admin',
+						message: `${adminName} a supprimé le bien "${property.title}". La collaboration a été annulée.`,
+						data: {
+							actorName: adminName,
+							propertyTitle: property.title,
+							deletedByAdmin: true,
+						},
+					});
+				} catch (error) {
+					logger.error(
+						'[PropertyController] Error sending notification',
+						error,
+					);
+				}
+			}
+		}
+
+		// Delete collaborations
+		const deletedCollabs = await Collaboration.deleteMany({
+			postId: id,
+			postType: 'Property',
+		});
+		logger.info(
+			`[PropertyController] Admin deleted ${deletedCollabs.deletedCount} collaborations for property ${id}`,
+		);
+
+		// Delete favorites
+		const deletedFavorites = await UserFavorite.deleteMany({
+			propertyId: id,
+		});
+		logger.info(
+			`[PropertyController] Admin deleted ${deletedFavorites.deletedCount} favorites for property ${id}`,
+		);
 
 		// Delete the property from database
 		await Property.findByIdAndDelete(id);

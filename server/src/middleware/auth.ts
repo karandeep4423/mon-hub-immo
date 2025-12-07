@@ -108,6 +108,20 @@ export const authenticateToken = async (
 			return;
 		}
 
+		// Reject if account is soft deleted
+		if (user.isDeleted) {
+			if (authDebug)
+				logger.warn(
+					'[authenticateToken] Attempted access with deleted user account',
+					{ userId: user._id },
+				);
+			res.status(403).json({
+				success: false,
+				message: 'Account has been deleted',
+			});
+			return;
+		}
+
 		// Reject if account is not yet validated by admin (for non-admin users)
 		if (!user.isValidated && user.userType !== 'admin') {
 			if (authDebug)

@@ -1,5 +1,9 @@
 import { Request, Response } from 'express';
 import { SearchAd } from '../models/SearchAd';
+import { Collaboration } from '../models/Collaboration';
+import { UserFavoriteSearchAd } from '../models/UserFavoriteSearchAd';
+import { notificationService } from '../services/notificationService';
+import { User } from '../models/User';
 import { AuthRequest } from '../types/auth';
 import { logger } from '../utils/logger'; // Corrected import
 import { sanitizeHtmlContent, createSafeRegex } from '../utils/sanitize';
@@ -191,9 +195,22 @@ export const getSearchAdById = async (
 			res.status(404).json({
 				success: false,
 				message: 'Annonce de recherche introuvable',
+				deleted: true,
 			});
 			return;
 		}
+
+		// Check if search ad is archived (soft deleted)
+		if (searchAd.status === 'archived') {
+			res.status(410).json({
+				success: false,
+				message:
+					'Cette annonce de recherche a été supprimée ou archivée',
+				deleted: true,
+			});
+			return;
+		}
+
 		res.status(200).json({ success: true, data: searchAd });
 	} catch (error) {
 		res.status(500).json({
@@ -258,6 +275,69 @@ export const deleteSearchAd = async (
 			});
 			return;
 		}
+
+		const searchAdId = searchAd._id.toString();
+
+		// Find and delete related collaborations
+		const relatedCollaborations = await Collaboration.find({
+			postId: searchAdId,
+			postType: 'SearchAd',
+		});
+
+		// Notify all collaborators before deletion
+		const ownerUser = await User.findById(req.user?.id).select(
+			'firstName lastName',
+		);
+		const ownerName = ownerUser
+			? `${ownerUser.firstName} ${ownerUser.lastName}`
+			: 'Le créateur';
+
+		for (const collab of relatedCollaborations) {
+			// Notify both parties
+			const notifyUsers = [
+				collab.postOwnerId.toString(),
+				collab.collaboratorId.toString(),
+			].filter((uid) => uid !== req.user?.id);
+
+			for (const userId of notifyUsers) {
+				try {
+					await notificationService.create({
+						recipientId: userId,
+						actorId: req.user?.id || collab.postOwnerId,
+						type: 'collab:cancelled',
+						entity: { type: 'collaboration', id: collab._id },
+						title: 'Recherche supprimée',
+						message: `${ownerName} a supprimé l'annonce de recherche. La collaboration a été annulée.`,
+						data: {
+							actorName: ownerName,
+							searchAdTitle: searchAd.title,
+						},
+					});
+				} catch (error) {
+					logger.error(
+						'[SearchAdController] Error sending notification',
+						error,
+					);
+				}
+			}
+		}
+
+		// Delete collaborations
+		const deletedCollabs = await Collaboration.deleteMany({
+			postId: searchAdId,
+			postType: 'SearchAd',
+		});
+		logger.info(
+			`[SearchAdController] Deleted ${deletedCollabs.deletedCount} collaborations for search ad ${searchAdId}`,
+		);
+
+		// Delete favorites
+		const deletedFavorites = await UserFavoriteSearchAd.deleteMany({
+			searchAdId: searchAdId,
+		});
+		logger.info(
+			`[SearchAdController] Deleted ${deletedFavorites.deletedCount} favorites for search ad ${searchAdId}`,
+		);
 
 		await searchAd.deleteOne();
 		res.status(200).json({
@@ -328,6 +408,68 @@ export const deleteAdminSearchAd = async (
 			});
 			return;
 		}
+
+		// Find and delete related collaborations
+		const relatedCollaborations = await Collaboration.find({
+			postId: id,
+			postType: 'SearchAd',
+		});
+
+		// Notify all collaborators before deletion
+		const adminUser = await User.findById(req.user?.id).select(
+			'firstName lastName',
+		);
+		const adminName = adminUser
+			? `${adminUser.firstName} ${adminUser.lastName}`
+			: 'Un administrateur';
+
+		for (const collab of relatedCollaborations) {
+			// Notify both parties
+			const notifyUsers = [
+				collab.postOwnerId.toString(),
+				collab.collaboratorId.toString(),
+			];
+
+			for (const userId of notifyUsers) {
+				try {
+					await notificationService.create({
+						recipientId: userId,
+						actorId: req.user?.id || 'admin',
+						type: 'collab:cancelled',
+						entity: { type: 'collaboration', id: collab._id },
+						title: 'Recherche supprimée par admin',
+						message: `${adminName} a supprimé l'annonce de recherche "${searchAd.title}". La collaboration a été annulée.`,
+						data: {
+							actorName: adminName,
+							searchAdTitle: searchAd.title,
+							deletedByAdmin: true,
+						},
+					});
+				} catch (error) {
+					logger.error(
+						'[SearchAdController] Error sending notification',
+						error,
+					);
+				}
+			}
+		}
+
+		// Delete collaborations
+		const deletedCollabs = await Collaboration.deleteMany({
+			postId: id,
+			postType: 'SearchAd',
+		});
+		logger.info(
+			`[SearchAdController] Admin deleted ${deletedCollabs.deletedCount} collaborations for search ad ${id}`,
+		);
+
+		// Delete favorites
+		const deletedFavorites = await UserFavoriteSearchAd.deleteMany({
+			searchAdId: id,
+		});
+		logger.info(
+			`[SearchAdController] Admin deleted ${deletedFavorites.deletedCount} favorites for search ad ${id}`,
+		);
 
 		await searchAd.deleteOne();
 		logger.info('[Admin] Search ad deleted', {

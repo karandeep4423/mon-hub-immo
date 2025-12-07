@@ -3,6 +3,8 @@ import { Property } from '../models/Property'; // ou ton modèle d'annonces
 import { Collaboration } from '../models/Collaboration'; // idem pour collaborations
 import Message from '../models/Chat';
 import { SearchAd } from '../models/SearchAd';
+import { s3Service } from '../services/s3Service';
+import { notificationService } from '../services/notificationService';
 import { Request, Response } from 'express';
 import { AuthRequest } from '../types/auth';
 import mongoose from 'mongoose';
@@ -36,6 +38,10 @@ export const getAdminUsers = async (req: Request, res: Response) => {
 		});
 		// Construction dynamique des filtres
 		const filter: Record<string, unknown> = {};
+
+		// Exclude soft-deleted users by default
+		filter.isDeleted = { $ne: true };
+
 		if (typeof name === 'string' && name.trim() !== '') {
 			const safeNameRegex = createSafeRegex(name.trim());
 			filter.$or = [
@@ -941,7 +947,7 @@ export const updateAdminUser = async (req: Request, res: Response) => {
 	}
 };
 
-// Delete admin user
+// Delete admin user (soft delete to prevent orphaned data)
 export const deleteAdminUser = async (req: Request, res: Response) => {
 	const userId = req.params.id;
 	if (!userId) return res.status(400).json({ error: 'Missing user id' });
@@ -965,46 +971,148 @@ export const deleteAdminUser = async (req: Request, res: Response) => {
 			return res.status(404).json({ error: 'User not found' });
 		}
 
-		// Delete user's properties (annonces)
+		// Check if already soft deleted
+		if (user.isDeleted) {
+			return res.status(400).json({ error: 'User already deleted' });
+		}
+
+		// Collect all S3 image keys to delete
+		const allImageKeys: string[] = [];
+
+		// Get user's properties and collect image keys
 		const { Property } = await import('../models/Property');
-		const deletedProperties = await Property.deleteMany({ owner: userId });
-		logger.info('[AdminController] Deleted user properties', {
-			userId,
-			count: deletedProperties.deletedCount,
-		});
+		const userProperties = await Property.find({ owner: userId });
 
-		// Delete user's search ads
-		const { SearchAd } = await import('../models/SearchAd');
-		const deletedSearchAds = await SearchAd.deleteMany({
-			createdBy: userId,
-		});
-		logger.info('[AdminController] Deleted user search ads', {
-			userId,
-			count: deletedSearchAds.deletedCount,
-		});
+		for (const property of userProperties) {
+			// Add main image
+			if (property.mainImage?.key) {
+				allImageKeys.push(property.mainImage.key);
+			}
+			// Add gallery images
+			if (property.galleryImages && property.galleryImages.length > 0) {
+				property.galleryImages.forEach((img: { key?: string }) => {
+					if (img.key) {
+						allImageKeys.push(img.key);
+					}
+				});
+			}
+		}
 
-		// Delete collaborations where user is involved
+		// Add user's profile image if exists
+		if (user.profileImage && user.profileImage.includes('s3')) {
+			// Extract key from URL if it's an S3 URL
+			const urlParts = user.profileImage.split('/');
+			const key = urlParts[urlParts.length - 1];
+			if (key) {
+				allImageKeys.push(key);
+			}
+		}
+
+		// Add user's identity card if exists
+		if (user.professionalInfo?.identityCard?.key) {
+			allImageKeys.push(user.professionalInfo.identityCard.key);
+		}
+
+		// Delete all S3 images
+		if (allImageKeys.length > 0) {
+			try {
+				await s3Service.deleteMultipleImages(allImageKeys);
+				logger.info(
+					`[AdminController] Deleted ${allImageKeys.length} S3 images for user ${userId}`,
+				);
+			} catch (s3Error) {
+				logger.error(
+					'[AdminController] Error deleting S3 images',
+					s3Error,
+				);
+				// Continue with deletion even if S3 cleanup fails
+			}
+		}
+
+		// Get all collaborations to notify other users
 		const { Collaboration } = await import('../models/Collaboration');
-		const deletedCollaborations = await Collaboration.deleteMany({
-			$or: [{ agent: userId }, { apporteur: userId }],
-		});
-		logger.info('[AdminController] Deleted user collaborations', {
-			userId,
-			count: deletedCollaborations.deletedCount,
+		const userCollaborations = await Collaboration.find({
+			$or: [{ postOwnerId: userId }, { collaboratorId: userId }],
 		});
 
-		// Delete user's messages
-		const Message = (await import('../models/Chat')).default;
-		const deletedMessages = await Message.deleteMany({
-			$or: [{ senderId: userId }, { receiverId: userId }],
-		});
-		logger.info('[AdminController] Deleted user messages', {
+		// Notify other users involved in collaborations
+		const adminUser = await User.findById(actorId);
+		const adminName = adminUser
+			? `${adminUser.firstName} ${adminUser.lastName}`
+			: 'Un administrateur';
+
+		for (const collab of userCollaborations) {
+			const otherUserId =
+				collab.postOwnerId.toString() === userId
+					? collab.collaboratorId.toString()
+					: collab.postOwnerId.toString();
+
+			if (otherUserId !== userId) {
+				try {
+					await notificationService.create({
+						recipientId: otherUserId,
+						actorId: actorId || 'admin',
+						type: 'collab:cancelled',
+						entity: { type: 'collaboration', id: collab._id },
+						title: 'Utilisateur supprimé',
+						message: `${adminName} a supprimé un utilisateur avec qui vous collaboriez. La collaboration a été annulée.`,
+						data: {
+							actorName: adminName,
+							deletedByAdmin: true,
+						},
+					});
+				} catch (error) {
+					logger.error(
+						'[AdminController] Error sending notification',
+						error,
+					);
+				}
+			}
+		}
+
+		// Soft delete user's properties (mark as archived)
+		const updatedProperties = await Property.updateMany(
+			{ owner: userId },
+			{ status: 'archived' },
+		);
+		logger.info('[AdminController] Archived user properties', {
 			userId,
-			count: deletedMessages.deletedCount,
+			count: updatedProperties.modifiedCount,
 		});
 
-		// Delete the user
-		await User.findByIdAndDelete(userId);
+		// Soft delete user's search ads (mark as archived)
+		const { SearchAd } = await import('../models/SearchAd');
+		const updatedSearchAds = await SearchAd.updateMany(
+			{ createdBy: userId },
+			{ status: 'archived' },
+		);
+		logger.info('[AdminController] Archived user search ads', {
+			userId,
+			count: updatedSearchAds.modifiedCount,
+		});
+
+		// Cancel collaborations where user is involved
+		const updatedCollaborations = await Collaboration.updateMany(
+			{
+				$or: [{ postOwnerId: userId }, { collaboratorId: userId }],
+				status: { $nin: ['completed', 'cancelled'] },
+			},
+			{ status: 'cancelled' },
+		);
+		logger.info('[AdminController] Cancelled user collaborations', {
+			userId,
+			count: updatedCollaborations.modifiedCount,
+		});
+
+		// Keep messages for record keeping (don't delete)
+
+		// Soft delete the user
+		user.isDeleted = true;
+		user.deletedAt = new Date();
+		user.deletedBy = actorId
+			? new mongoose.Types.ObjectId(actorId)
+			: undefined;
+		await user.save();
 
 		// Log security event
 		await logSecurityEvent({
@@ -1014,28 +1122,28 @@ export const deleteAdminUser = async (req: Request, res: Response) => {
 			metadata: {
 				deletedUserId: userId,
 				email: user.email,
-				propertiesDeleted: deletedProperties.deletedCount,
-				searchAdsDeleted: deletedSearchAds.deletedCount,
-				collaborationsDeleted: deletedCollaborations.deletedCount,
-				messagesDeleted: deletedMessages.deletedCount,
+				propertiesArchived: updatedProperties.modifiedCount,
+				searchAdsArchived: updatedSearchAds.modifiedCount,
+				collaborationsCancelled: updatedCollaborations.modifiedCount,
+				s3ImagesDeleted: allImageKeys.length,
 			},
 		});
 
-		logger.info('[AdminController] deleteAdminUser success', {
+		logger.info('[AdminController] deleteAdminUser success (soft delete)', {
 			userId,
-			propertiesDeleted: deletedProperties.deletedCount,
-			searchAdsDeleted: deletedSearchAds.deletedCount,
-			collaborationsDeleted: deletedCollaborations.deletedCount,
-			messagesDeleted: deletedMessages.deletedCount,
+			propertiesArchived: updatedProperties.modifiedCount,
+			searchAdsArchived: updatedSearchAds.modifiedCount,
+			collaborationsCancelled: updatedCollaborations.modifiedCount,
+			s3ImagesDeleted: allImageKeys.length,
 		});
 
 		res.json({
 			success: true,
 			deleted: {
-				properties: deletedProperties.deletedCount,
-				searchAds: deletedSearchAds.deletedCount,
-				collaborations: deletedCollaborations.deletedCount,
-				messages: deletedMessages.deletedCount,
+				properties: updatedProperties.modifiedCount,
+				searchAds: updatedSearchAds.modifiedCount,
+				collaborations: updatedCollaborations.modifiedCount,
+				s3Images: allImageKeys.length,
 			},
 		});
 	} catch (err) {
@@ -1377,35 +1485,44 @@ export const getAdminStats = async (req: Request, res: Response) => {
 	}
 
 	try {
-		// Users (agents) stats
-		const agentsTotal = await User.countDocuments({ userType: 'agent' });
+		// Users (agents) stats - exclude soft-deleted users
+		const agentsTotal = await User.countDocuments({
+			userType: 'agent',
+			isDeleted: { $ne: true },
+		});
 		const agentsActive = await User.countDocuments({
 			userType: 'agent',
 			isValidated: true,
 			isBlocked: { $ne: true },
+			isDeleted: { $ne: true },
 		});
 		const agentsPending = await User.countDocuments({
 			userType: 'agent',
 			isValidated: false,
 			isBlocked: { $ne: true },
+			isDeleted: { $ne: true },
 		});
 		const agentsUnsubscribed = await User.countDocuments({
 			userType: 'agent',
 			isBlocked: true,
+			isDeleted: { $ne: true },
 		});
 		// Apporteurs (lead providers)
 		const apporteursTotal = await User.countDocuments({
 			userType: 'apporteur',
+			isDeleted: { $ne: true },
 		});
 		const apporteursActive = await User.countDocuments({
 			userType: 'apporteur',
 			isValidated: true,
 			isBlocked: { $ne: true },
+			isDeleted: { $ne: true },
 		});
 		const apporteursPending = await User.countDocuments({
 			userType: 'apporteur',
 			isValidated: false,
 			isBlocked: { $ne: true },
+			isDeleted: { $ne: true },
 		});
 
 		// Properties
@@ -1452,11 +1569,12 @@ export const getAdminStats = async (req: Request, res: Response) => {
 		]);
 		const feesTotal = feesAgg && feesAgg.length > 0 ? feesAgg[0].total : 0;
 
-		// Top networks: group users by professionalInfo.network
+		// Top networks: group users by professionalInfo.network (exclude soft-deleted)
 		const topNetworksAgg = await User.aggregate([
 			{
 				$match: {
 					'professionalInfo.network': { $exists: true, $ne: '' },
+					isDeleted: { $ne: true },
 				},
 			},
 			{
@@ -1577,7 +1695,9 @@ export const deleteAdminCollaboration = async (
 ): Promise<void> => {
 	try {
 		const { id } = req.params;
-		const collaboration = await Collaboration.findById(id);
+		const collaboration = await Collaboration.findById(id)
+			.populate('postOwnerId', 'firstName lastName email')
+			.populate('collaboratorId', 'firstName lastName email');
 
 		if (!collaboration) {
 			res.status(404).json({
@@ -1585,6 +1705,40 @@ export const deleteAdminCollaboration = async (
 				message: 'Collaboration introuvable',
 			});
 			return;
+		}
+
+		// Notify both parties before deletion
+		const adminUser = await User.findById(req.userId);
+		const adminName = adminUser
+			? `${adminUser.firstName} ${adminUser.lastName}`
+			: 'Un administrateur';
+
+		const recipients = [
+			collaboration.postOwnerId,
+			collaboration.collaboratorId,
+		];
+
+		for (const recipient of recipients) {
+			if (!recipient) continue;
+			try {
+				await notificationService.create({
+					recipientId: recipient._id,
+					actorId: req.userId || 'admin',
+					type: 'collab:cancelled',
+					entity: { type: 'collaboration', id: collaboration._id },
+					title: 'Collaboration supprimée par admin',
+					message: `${adminName} a supprimé votre collaboration.`,
+					data: {
+						actorName: adminName,
+						deletedByAdmin: true,
+					},
+				});
+			} catch (error) {
+				logger.error(
+					'[AdminController] Error sending notification',
+					error,
+				);
+			}
 		}
 
 		await collaboration.deleteOne();

@@ -100,6 +100,12 @@ export interface IUser extends Document {
 	blockedAt?: Date;
 	blockedBy?: mongoose.Types.ObjectId;
 	accessGrantedByAdmin?: boolean; // Admin can override payment status
+
+	// Soft delete fields
+	isDeleted?: boolean;
+	deletedAt?: Date;
+	deletedBy?: mongoose.Types.ObjectId;
+
 	createdAt: Date;
 	updatedAt: Date;
 	comparePassword(candidatePassword: string): Promise<boolean>;
@@ -501,6 +507,21 @@ const userSchema = new Schema<IUser>(
 			type: Boolean,
 			default: false,
 			index: true,
+		},
+		// Soft delete fields
+		isDeleted: {
+			type: Boolean,
+			default: false,
+			index: true,
+		},
+		deletedAt: {
+			type: Date,
+			default: null,
+		},
+		deletedBy: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'User',
+			default: null,
 		},
 	},
 	{

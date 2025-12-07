@@ -27,14 +27,23 @@ export const getAllCollaborationsAdmin = async (
 				actorId: req.user?.id || null,
 			},
 		);
-		const collaborations = await Collaboration.find()
-			.populate('postId', 'title address mainImage')
+		// Only show collaborations where the post still exists (not deleted)
+		const collaborations = await Collaboration.find({
+			postId: { $ne: null },
+		})
+			.populate('postId', 'title address mainImage status')
 			.populate('postOwnerId', 'firstName lastName email profileImage')
 			.populate('collaboratorId', 'firstName lastName email profileImage')
 			.sort({ createdAt: -1 })
 			.lean();
 
-		const mappedCollaborations = collaborations.map((c) => ({
+		// Filter out collaborations where post is archived
+		const activeCollaborations = collaborations.filter((c) => {
+			const post = c.postId as { status?: string } | null;
+			return post && post.status !== 'archived';
+		});
+
+		const mappedCollaborations = activeCollaborations.map((c) => ({
 			...c,
 			agent: c.postOwnerId,
 			agentId:
@@ -383,7 +392,6 @@ export const getCollaborationById = async (
 		}
 
 		const collaboration = await Collaboration.findById(id)
-			.populate('postId')
 			.populate('postOwnerId', 'firstName lastName email profileImage')
 			.populate('collaboratorId', 'firstName lastName email profileImage')
 			.populate('activities.createdBy', 'firstName lastName profileImage')
@@ -395,21 +403,50 @@ export const getCollaborationById = async (
 		if (!collaboration) {
 			res.status(404).json({
 				success: false,
-				message: 'Collaboration not found',
+				message: "Cette collaboration n'existe plus",
+				deleted: true,
+			});
+			return;
+		}
+
+		// Check if the post has been deleted (postId is null)
+		if (!collaboration.postId) {
+			res.status(410).json({
+				success: false,
+				message:
+					"Le bien ou l'annonce associé à cette collaboration a été supprimé",
+				deleted: true,
+			});
+			return;
+		}
+
+		// Try to populate the post to check if it's archived
+		await collaboration.populate('postId');
+		const post = collaboration.postId as { status?: string } | null;
+
+		// If post doesn't exist or is archived
+		if (!post || post.status === 'archived') {
+			res.status(410).json({
+				success: false,
+				message:
+					"Le bien ou l'annonce associé à cette collaboration n'existe plus",
+				deleted: true,
 			});
 			return;
 		}
 
 		// Allow admin OR participants
 		const isAdmin = userType === 'admin';
-		const isOwner =
-			collaboration.postOwnerId && collaboration.postOwnerId._id
+		const isOwner = collaboration.postOwnerId
+			? collaboration.postOwnerId._id
 				? collaboration.postOwnerId._id.toString() === userId
-				: collaboration.postOwnerId.toString() === userId;
-		const isCollaborator =
-			collaboration.collaboratorId && collaboration.collaboratorId._id
+				: collaboration.postOwnerId.toString() === userId
+			: false;
+		const isCollaborator = collaboration.collaboratorId
+			? collaboration.collaboratorId._id
 				? collaboration.collaboratorId._id.toString() === userId
-				: collaboration.collaboratorId.toString() === userId;
+				: collaboration.collaboratorId.toString() === userId
+			: false;
 
 		if (!isAdmin && !isOwner && !isCollaborator) {
 			res.status(403).json({
