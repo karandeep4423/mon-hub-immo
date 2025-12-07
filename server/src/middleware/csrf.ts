@@ -21,13 +21,10 @@ const {
 	invalidCsrfTokenError,
 } = doubleCsrf({
 	getSecret: () => CSRF_SECRET,
-	// Use a stable identifier - the auth cookie or a fallback
-	// Using req.ip is unreliable behind proxies/load balancers
-	getSessionIdentifier: (req) => {
-		// Use the refresh token cookie as session identifier (stable across requests)
-		// Fall back to a constant if no cookie (for initial token fetch)
-		return req.cookies?.refreshToken || 'anonymous-session';
-	},
+	// Use a constant session identifier - the double-submit cookie pattern
+	// doesn't need a per-user session since security comes from the cookie+header match
+	// The secret already provides cryptographic security
+	getSessionIdentifier: () => 'csrf-session',
 	cookieName: '_csrf',
 	cookieOptions: {
 		httpOnly: true,

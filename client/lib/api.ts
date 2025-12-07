@@ -41,6 +41,11 @@ const fetchCsrfToken = async (): Promise<string> => {
 	}
 };
 
+// Export function to reset CSRF token (call after login/logout)
+export const resetCsrfToken = () => {
+	csrfToken = null;
+};
+
 const processQueue = (error: unknown) => {
 	failedQueue.forEach((prom) => {
 		if (error) {

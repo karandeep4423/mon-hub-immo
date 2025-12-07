@@ -7,6 +7,7 @@ import { Features } from '@/lib/constants';
 import { usePageStateStore } from './pageStateStore';
 import { showToastOnce } from '@/lib/utils/toastUtils';
 import { toast } from 'react-toastify';
+import { resetCsrfToken } from '@/lib/api';
 
 interface AuthState {
 	user: User | null;
@@ -39,6 +40,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 		logger.debug('[AuthStore] User logged in', { userId: userData._id });
 		// Tokens are stored in httpOnly cookies by server
 		set({ user: userData, loading: false });
+		// Reset CSRF token to get a fresh one after login
+		resetCsrfToken();
 		// Initialize favorites when user logs in
 		useFavoritesStore.getState().initializeFavorites();
 	},
@@ -53,6 +56,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 		} catch (error) {
 			logger.error('[AuthStore] Logout API call failed', error);
 		}
+
+		// Reset CSRF token after logout
+		resetCsrfToken();
 
 		// Clear page-level UI state persisted in session
 		try {
