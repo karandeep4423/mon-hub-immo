@@ -1511,3 +1511,43 @@ export const sendPaymentReminder = async (req: AuthRequest, res: Response) => {
 		});
 	}
 };
+
+// Admin delete collaboration (no ownership check)
+export const deleteAdminCollaboration = async (
+	req: AuthRequest,
+	res: Response,
+): Promise<void> => {
+	try {
+		const { id } = req.params;
+		const collaboration = await Collaboration.findById(id);
+
+		if (!collaboration) {
+			res.status(404).json({
+				success: false,
+				message: 'Collaboration introuvable',
+			});
+			return;
+		}
+
+		await collaboration.deleteOne();
+		logger.info('[Admin] Collaboration deleted', {
+			adminId: req.userId,
+			collaborationId: id,
+		});
+
+		res.status(200).json({
+			success: true,
+			message: 'Collaboration supprimée',
+		});
+	} catch (error) {
+		logger.error('[Admin] Failed to delete collaboration', {
+			error: (error as Error).message,
+			collaborationId: req.params.id,
+		});
+		res.status(500).json({
+			success: false,
+			message: 'Échec de la suppression de la collaboration',
+			error: (error as Error).message,
+		});
+	}
+};

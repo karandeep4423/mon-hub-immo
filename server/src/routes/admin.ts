@@ -15,12 +15,14 @@ import {
 	sendPaymentReminder,
 	grantAdminAccess,
 	revokeAdminAccess,
+	deleteAdminCollaboration,
 } from '../controllers/adminController';
 import {
 	getAdminProperties,
 	deleteAdminProperty,
 	updateAdminProperty,
 } from '../controllers/propertyController';
+import { deleteAdminSearchAd } from '../controllers/searchAdController';
 import { authenticateToken, requireAdmin } from '../middleware/auth';
 import { uploadCSV } from '../middleware/uploadMiddleware';
 
@@ -49,6 +51,12 @@ router.put('/properties/:id', updateAdminProperty);
 
 // DELETE - supprimer une propriété
 router.delete('/properties/:id', deleteAdminProperty);
+
+// DELETE - supprimer une annonce de recherche (admin)
+router.delete('/search-ads/:id', deleteAdminSearchAd);
+
+// DELETE - supprimer une collaboration (admin)
+router.delete('/collaborations/:id', deleteAdminCollaboration);
 
 // PUT - valider/refuser un utilisateur
 router.put('/users/:id/validate', validateUser);
