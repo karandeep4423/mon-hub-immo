@@ -393,6 +393,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 			res.status(403).json({
 				success: false,
 				message: 'Account blocked by admin',
+				code: 'ACCOUNT_BLOCKED',
 			});
 			return;
 		}

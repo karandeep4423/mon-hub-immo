@@ -104,6 +104,7 @@ export const authenticateToken = async (
 			res.status(403).json({
 				success: false,
 				message: 'Account blocked by admin',
+				code: 'ACCOUNT_BLOCKED',
 			});
 			return;
 		}
