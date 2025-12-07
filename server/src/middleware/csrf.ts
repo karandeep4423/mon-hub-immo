@@ -11,6 +11,12 @@ import { logger } from '../utils/logger';
 const CSRF_SECRET =
 	process.env.CSRF_SECRET || 'csrf-secret-change-in-production';
 
+// Log CSRF configuration on startup (not the secret itself)
+logger.info('[CSRF] Configuration loaded', {
+	hasCustomSecret: !!process.env.CSRF_SECRET,
+	isProduction: process.env.NODE_ENV === 'production',
+});
+
 // In production, set cookie domain for cross-subdomain support (api.monhubimmo.fr <-> monhubimmo.fr)
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -85,12 +91,20 @@ export const csrfErrorHandler = (
 	next: NextFunction,
 ) => {
 	if (err === invalidCsrfTokenError) {
+		// Get first 20 chars of each for debugging (don't log full tokens)
+		const cookieValue = req.cookies?._csrf || '';
+		const headerValue = (req.headers['x-csrf-token'] as string) || '';
+
 		logger.warn('[CSRF] Invalid CSRF token', {
 			method: req.method,
 			path: req.path,
 			ip: req.ip,
-			hasCsrfCookie: !!req.cookies?._csrf,
-			hasCsrfHeader: !!req.headers['x-csrf-token'],
+			hasCsrfCookie: !!cookieValue,
+			hasCsrfHeader: !!headerValue,
+			cookiePrefix: cookieValue.substring(0, 20),
+			headerPrefix: headerValue.substring(0, 20),
+			cookieLength: cookieValue.length,
+			headerLength: headerValue.length,
 			origin: req.get('origin'),
 			cookies: Object.keys(req.cookies || {}),
 		});
