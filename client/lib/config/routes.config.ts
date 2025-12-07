@@ -30,6 +30,7 @@ export const PUBLIC_ROUTES = [
 	'/auth/forgot-password',
 	'/auth/reset-password',
 	'/auth/welcome',
+	'/auth/blocked',
 	'/home',
 	'/property',
 	'/search-ads',

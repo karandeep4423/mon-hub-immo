@@ -9,6 +9,8 @@ import { getVerificationCodeTemplate } from './email/templates/verificationCode'
 import { getPasswordResetTemplate } from './email/templates/passwordReset';
 import { getPasswordResetConfirmationTemplate } from './email/templates/passwordResetConfirmation';
 import { getAccountLockedTemplate } from './email/templates/accountLocked';
+import { getAccountBlockedTemplate } from './email/templates/accountBlocked';
+import { getAccountUnblockedTemplate } from './email/templates/accountUnblocked';
 import { getPaymentReminderTemplate } from './email/templates/paymentReminder';
 import { getPaymentSuccessTemplate } from './email/templates/paymentSuccess';
 import { getPaymentFailedTemplate } from './email/templates/paymentFailed';
@@ -24,6 +26,8 @@ export { getVerificationCodeTemplate } from './email/templates/verificationCode'
 export { getPasswordResetTemplate } from './email/templates/passwordReset';
 export { getPasswordResetConfirmationTemplate } from './email/templates/passwordResetConfirmation';
 export { getAccountLockedTemplate } from './email/templates/accountLocked';
+export { getAccountBlockedTemplate } from './email/templates/accountBlocked';
+export { getAccountUnblockedTemplate } from './email/templates/accountUnblocked';
 
 interface EmailOptions {
 	to: string;
@@ -163,6 +167,32 @@ export const sendAccountLockedEmail = async (opts: {
 		to,
 		subject: 'Alerte de sécurité - Compte verrouillé',
 		html: getAccountLockedTemplate(name, lockDurationMinutes, unlockTime),
+	});
+};
+
+export const sendAccountBlockedEmail = async (opts: {
+	to: string;
+	name: string;
+}): Promise<void> => {
+	const { to, name } = opts;
+	logger.info('[EmailService] sendAccountBlockedEmail');
+	await sendEmail({
+		to,
+		subject: 'Compte suspendu - MonHubImmo',
+		html: getAccountBlockedTemplate(name),
+	});
+};
+
+export const sendAccountUnblockedEmail = async (opts: {
+	to: string;
+	name: string;
+}): Promise<void> => {
+	const { to, name } = opts;
+	logger.info('[EmailService] sendAccountUnblockedEmail');
+	await sendEmail({
+		to,
+		subject: 'Compte réactivé - MonHubImmo',
+		html: getAccountUnblockedTemplate(name),
 	});
 };
 

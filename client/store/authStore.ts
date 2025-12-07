@@ -118,12 +118,40 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 				set({ user: null, loading: false });
 			}
 		} catch (error: unknown) {
-			// Silently handle auth errors (401/400) - user just not logged in
+			// Check for blocked user error first
 			const hasResponse =
 				error && typeof error === 'object' && 'response' in error;
-			const status = hasResponse
-				? (error as { response?: { status?: number } }).response?.status
-				: 0;
+			const errorResponse = hasResponse
+				? (
+						error as {
+							response?: {
+								status?: number;
+								data?: { message?: string; code?: string };
+							};
+						}
+					).response
+				: null;
+			const status = errorResponse?.status || 0;
+			const errorMessage = errorResponse?.data?.message || '';
+			const errorCode = errorResponse?.data?.code || '';
+
+			// Handle blocked user - redirect to blocked page
+			const isBlockedUser =
+				status === 403 &&
+				(errorCode === 'ACCOUNT_BLOCKED' ||
+					errorMessage.toLowerCase().includes('blocked'));
+
+			if (isBlockedUser) {
+				logger.warn('[AuthStore] Account is blocked by admin');
+				set({ user: null, loading: false });
+				// Redirect to blocked page
+				if (typeof window !== 'undefined') {
+					window.location.replace('/auth/blocked');
+				}
+				return;
+			}
+
+			// Silently handle auth errors (401/400) - user just not logged in
 			const isAuthError = status === 401 || status === 400;
 
 			if (isAuthError) {

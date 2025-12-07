@@ -16,6 +16,8 @@ import {
 	generateVerificationCode,
 	sendAccountValidated,
 	sendPaymentReminderEmail,
+	sendAccountBlockedEmail,
+	sendAccountUnblockedEmail,
 	sendEmail,
 } from '../utils/emailService';
 import { getAdminCreatedAccountTemplate } from '../utils/email/templates/adminCreatedAccount';
@@ -284,6 +286,34 @@ export const blockUser = async (req: AuthRequest, res: Response) => {
 			metadata: { blockedBy: adminId },
 		});
 
+		// Send email notification to the blocked user
+		try {
+			logger.info('[AdminController] Sending account blocked email', {
+				to: user.email,
+				name: `${user.firstName} ${user.lastName}`,
+			});
+			await sendAccountBlockedEmail({
+				to: user.email,
+				name: `${user.firstName} ${user.lastName}`,
+			});
+			logger.info(
+				'[AdminController] Account blocked email sent successfully',
+			);
+		} catch (emailError) {
+			// Log but don't fail the response - blocking succeeded
+			logger.error(
+				'[AdminController] Failed to send account blocked email',
+				{
+					error:
+						emailError instanceof Error
+							? emailError.message
+							: String(emailError),
+					userId,
+					userEmail: user.email,
+				},
+			);
+		}
+
 		logger.info('[AdminController] blockUser success', { adminId, userId });
 		res.json({ success: true, user });
 	} catch (error) {
@@ -326,6 +356,34 @@ export const unblockUser = async (req: AuthRequest, res: Response) => {
 			req,
 			metadata: { unblockedBy: adminId },
 		});
+
+		// Send email notification to the unblocked user
+		try {
+			logger.info('[AdminController] Sending account unblocked email', {
+				to: user.email,
+				name: `${user.firstName} ${user.lastName}`,
+			});
+			await sendAccountUnblockedEmail({
+				to: user.email,
+				name: `${user.firstName} ${user.lastName}`,
+			});
+			logger.info(
+				'[AdminController] Account unblocked email sent successfully',
+			);
+		} catch (emailError) {
+			// Log but don't fail the response - unblocking succeeded
+			logger.error(
+				'[AdminController] Failed to send account unblocked email',
+				{
+					error:
+						emailError instanceof Error
+							? emailError.message
+							: String(emailError),
+					userId,
+					userEmail: user.email,
+				},
+			);
+		}
 
 		logger.info('[AdminController] unblockUser success', {
 			adminId,
