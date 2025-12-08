@@ -29,6 +29,7 @@ export const COOKIE_MAX_AGE = {
 
 /**
  * Get secure cookie options based on environment
+ * SECURITY: Always enforces secure cookies in production
  */
 export const getSecureCookieOptions = (maxAge: number): CookieOptions => {
 	const isProduction = process.env.NODE_ENV === 'production';
@@ -37,7 +38,6 @@ export const getSecureCookieOptions = (maxAge: number): CookieOptions => {
 	const cookieDomain =
 		process.env.COOKIE_DOMAIN ||
 		(isProduction ? '.monhubimmo.fr' : undefined);
-	//const cookieDomain = process.env.COOKIE_DOMAIN;
 
 	// If running in production, we assume frontend and API may be on different
 	// subdomains (www.monhubimmo.fr -> api.monhubimmo.fr). In that case cookies
@@ -46,13 +46,23 @@ export const getSecureCookieOptions = (maxAge: number): CookieOptions => {
 	// in production.
 	const crossSite =
 		process.env.CROSS_SITE_COOKIES === 'true' ||
-		(isProduction && Boolean(cookieDomain)); // set to true for production by default when cookieDomain is determined
+		(isProduction && Boolean(cookieDomain));
 
 	const forceSecure = process.env.FORCE_SECURE_COOKIES === 'true';
 
-	// If SameSite is 'none', cookies MUST be secure
-	const secure = crossSite ? true : isProduction || forceSecure;
-	const sameSite: 'strict' | 'lax' | 'none' = crossSite ? 'none' : 'lax';
+	// SECURITY FIX: Always enforce secure cookies in production
+	// In production: secure is ALWAYS true regardless of crossSite
+	// In development: secure is true if crossSite OR forceSecure is set
+	const secure = isProduction ? true : crossSite || forceSecure;
+
+	// SECURITY FIX: Use stricter SameSite in production when not cross-site
+	// Production: 'strict' if same-site, 'none' if cross-site
+	// Development: 'lax' if same-site, 'none' if cross-site
+	const sameSite: 'strict' | 'lax' | 'none' = crossSite
+		? 'none'
+		: isProduction
+			? 'strict'
+			: 'lax';
 
 	const options: CookieOptions = {
 		httpOnly: true,
