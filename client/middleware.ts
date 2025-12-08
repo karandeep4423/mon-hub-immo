@@ -72,6 +72,8 @@ export function middleware(request: NextRequest) {
 		// Only redirect away from auth pages when a fresh access token exists.
 		// A refresh-only session should be allowed to load the page so the client can refresh silently.
 		if (hasAccess) {
+			// Note: We redirect to /dashboard here since we can't access user type in middleware
+			// The dashboard page will handle redirecting admins to /admin
 			return NextResponse.redirect(
 				new URL(REDIRECT_PATHS.DASHBOARD, request.url),
 			);

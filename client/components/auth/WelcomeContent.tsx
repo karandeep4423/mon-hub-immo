@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useRequireAuth } from '@/hooks';
 import { Button } from '../ui/Button';
 import { Features } from '@/lib/constants';
+import { getRoleBasedRedirect } from '@/lib/config/routes.config';
 
 export const WelcomeContent: React.FC = () => {
 	const router = useRouter();
@@ -55,9 +56,7 @@ export const WelcomeContent: React.FC = () => {
 			</div>
 
 			<Button
-				onClick={() =>
-					router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE)
-				}
+				onClick={() => router.push(getRoleBasedRedirect(user.userType))}
 				className="w-full"
 				size="lg"
 			>

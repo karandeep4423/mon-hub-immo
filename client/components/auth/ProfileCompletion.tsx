@@ -9,6 +9,7 @@ import { useRequireAuth } from '@/hooks';
 import { authService } from '@/lib/api/authApi';
 import { useForm } from '@/hooks/useForm';
 import { Features } from '@/lib/constants';
+import { getRoleBasedRedirect } from '@/lib/config/routes.config';
 import {
 	showProfileCompletionSuccess,
 	authToastError,
@@ -246,7 +247,9 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 					updateUser(response.user);
 					if (editMode) {
 						authToastSuccess('✅ Profil mis à jour avec succès');
-						router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
+						router.push(
+							getRoleBasedRedirect(response.user.userType),
+						);
 					} else {
 						// After profile completion, always redirect to payment
 						// The ProfileGuard will handle access control based on payment status
@@ -361,7 +364,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 
 		if (user.userType !== 'agent') {
 			authToastError(Features.Auth.AUTH_TOAST_MESSAGES.AGENT_ONLY_ACCESS);
-			router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
+			router.push(getRoleBasedRedirect(user.userType));
 			return;
 		}
 
@@ -370,7 +373,7 @@ export const ProfileCompletion: React.FC<ProfileCompletionProps> = ({
 			if (!user.isPaid && !user.accessGrantedByAdmin) {
 				router.push('/payment');
 			} else {
-				router.push(Features.Dashboard.DASHBOARD_ROUTES.BASE);
+				router.push(getRoleBasedRedirect(user.userType));
 			}
 			return;
 		}

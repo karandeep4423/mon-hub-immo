@@ -62,8 +62,21 @@ export const DYNAMIC_PROTECTED_PATTERNS = [
 export const REDIRECT_PATHS = {
 	LOGIN: '/auth/login',
 	DASHBOARD: '/dashboard',
+	ADMIN: '/admin',
 	HOME: '/home',
 } as const;
+
+/**
+ * Get role-based redirect path after login
+ * @param userType - The user's role (admin, agent, apporteur)
+ * @returns The appropriate dashboard path
+ */
+export const getRoleBasedRedirect = (userType?: string): string => {
+	if (userType === 'admin') {
+		return REDIRECT_PATHS.ADMIN;
+	}
+	return REDIRECT_PATHS.DASHBOARD;
+};
 
 /**
  * Check if a route requires authentication
@@ -118,4 +131,13 @@ export const isPublicRoute = (pathname: string): boolean => {
  */
 export const shouldRedirectAuthenticated = (pathname: string): boolean => {
 	return AUTH_ROUTES.some((route) => pathname.startsWith(route));
+};
+
+/**
+ * Check if route is admin-only
+ * @param pathname - The route pathname to check
+ * @returns true if route requires admin access
+ */
+export const isAdminRoute = (pathname: string): boolean => {
+	return pathname.startsWith('/admin');
 };

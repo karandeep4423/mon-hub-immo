@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { authService } from '@/lib/api/authApi';
 import { loginSchema } from '@/lib/validation';
 import { LoginData } from '@/types/auth';
+import { getRoleBasedRedirect } from '@/lib/config/routes.config';
 // Migrated: Features.Auth.AUTH_UI_TEXT;
 import Link from 'next/link';
 import { useForm } from '@/hooks/useForm';
@@ -49,9 +50,11 @@ export const LoginWithUserType: React.FC = () => {
 								Features.Auth.AUTH_ROUTES.COMPLETE_PROFILE,
 							);
 						} else {
-							router.push(
-								Features.Dashboard.DASHBOARD_ROUTES.BASE,
+							// Redirect based on user role
+							const redirectPath = getRoleBasedRedirect(
+								response.user.userType,
 							);
+							router.push(redirectPath);
 						}
 					} else if (response.requiresVerification) {
 						authToastWarning(
