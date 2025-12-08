@@ -10,8 +10,6 @@ import { toast } from 'react-toastify';
 import { FiCheck, FiCreditCard, FiShield, FiRefreshCw } from 'react-icons/fi';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
-const PRICE_MONTHLY = 19;
-
 const features = [
 	'Accès illimité à la plateforme',
 	'Publication de biens immobiliers',
@@ -128,7 +126,7 @@ export default function PaymentPage() {
 						</h2>
 						<div className="flex items-baseline justify-center">
 							<span className="text-5xl font-bold">
-								{PRICE_MONTHLY}€
+								{process.env.NEXT_PUBLIC_STRIPE_PRICE}€
 							</span>
 							<span className="text-xl ml-2 text-brand-100">
 								/mois
