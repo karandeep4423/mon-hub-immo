@@ -29,7 +29,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
 	initialize: async () => {
 		const { isInitialized, refreshUser } = get();
-		if (isInitialized) return;
+		if (isInitialized) {
+			return;
+		}
 
 		// Check for existing session from httpOnly cookies
 		set({ isInitialized: true });
@@ -118,45 +120,89 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 				set({ user: null, loading: false });
 			}
 		} catch (error: unknown) {
-			// Check for blocked user error first
-			const hasResponse =
-				error && typeof error === 'object' && 'response' in error;
-			const errorResponse = hasResponse
-				? (
-						error as {
-							response?: {
-								status?: number;
-								data?: { message?: string; code?: string };
-							};
-						}
-					).response
-				: null;
-			const status = errorResponse?.status || 0;
-			const errorMessage = errorResponse?.data?.message || '';
-			const errorCode = errorResponse?.data?.code || '';
+			// Extract error data from either ApiError (wrapped) or direct AxiosError
+			let status = 0;
+			let errorMessage = '';
+			let errorCode = '';
+			let errorResponse = null;
 
-			// Handle blocked user - redirect to blocked page
+			// Check if it's an ApiError (wrapped by handleApiError)
+			if (
+				error &&
+				typeof error === 'object' &&
+				'statusCode' in error &&
+				'originalError' in error
+			) {
+				const apiError = error as any;
+				status = apiError.statusCode || 0;
+				errorMessage = apiError.message || '';
+
+				// Extract the original AxiosError for the error code
+				if (
+					apiError.originalError &&
+					typeof apiError.originalError === 'object' &&
+					'response' in apiError.originalError
+				) {
+					const axiosError = apiError.originalError as any;
+					errorResponse = axiosError.response;
+					errorCode = axiosError.response?.data?.code || '';
+					if (!errorMessage) {
+						errorMessage = axiosError.response?.data?.message || '';
+					}
+				}
+			}
+			// Fallback to direct AxiosError structure
+			else if (
+				error &&
+				typeof error === 'object' &&
+				'response' in error
+			) {
+				const axiosError = error as any;
+				errorResponse = axiosError.response;
+				status = axiosError.response?.status || 0;
+				errorMessage = axiosError.response?.data?.message || '';
+				errorCode = axiosError.response?.data?.code || '';
+			}
+
+			// Handle account status errors (blocked, deleted, unvalidated)
 			const isBlockedUser =
-				status === 403 &&
-				(errorCode === 'ACCOUNT_BLOCKED' ||
-					errorMessage.toLowerCase().includes('blocked'));
+				status === 403 && errorCode === 'ACCOUNT_BLOCKED';
+			const isDeletedUser =
+				(status === 403 || status === 401) &&
+				errorCode === 'ACCOUNT_DELETED';
+			const isUnvalidatedUser =
+				status === 403 && errorCode === 'ACCOUNT_UNVALIDATED';
 
-			if (isBlockedUser) {
-				logger.warn('[AuthStore] Account is blocked by admin');
+			if (isBlockedUser || isDeletedUser || isUnvalidatedUser) {
+				const errorType = isBlockedUser
+					? 'blocked'
+					: isDeletedUser
+						? 'deleted'
+						: 'unvalidated';
+				logger.warn(
+					`[AuthStore] Account is ${errorType} - clearing session`,
+				);
+
 				// Force logout to clear cookies and prevent middleware redirect loop
 				try {
 					await authService.logout();
 				} catch (e) {
 					logger.error(
-						'[AuthStore] Failed to logout blocked user',
+						`[AuthStore] Failed to logout ${errorType} user`,
 						e,
 					);
 				}
 
 				set({ user: null, loading: false });
-				// Redirect to blocked page
+
+				// Redirect to appropriate error page
 				if (typeof window !== 'undefined') {
-					window.location.replace('/auth/blocked');
+					const redirectPath = isBlockedUser
+						? '/auth/blocked'
+						: isDeletedUser
+							? '/auth/deleted'
+							: '/auth/unvalidated';
+					window.location.replace(redirectPath);
 				}
 				return;
 			}

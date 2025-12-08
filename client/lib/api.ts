@@ -92,9 +92,7 @@ api.interceptors.response.use(
 	(response) => response,
 	async (error) => {
 		const currentPath =
-			typeof window !== 'undefined' ? window.location.pathname || '' : '';
-
-		// Helper to check if user profile is incomplete (agent without completed profile)
+			typeof window !== 'undefined' ? window.location.pathname || '' : ''; // Helper to check if user profile is incomplete (agent without completed profile)
 		// This is used to suppress payment redirects when profile isn't done yet
 		const isProfileIncomplete = (): boolean => {
 			try {
@@ -160,6 +158,16 @@ api.interceptors.response.use(
 		if (error.response?.status === 403) {
 			try {
 				const code = error.response?.data?.code;
+
+				// Let authStore handle account status errors (blocked, deleted, unvalidated)
+				// Don't interfere with these specific error codes
+				if (
+					code === 'ACCOUNT_BLOCKED' ||
+					code === 'ACCOUNT_DELETED' ||
+					code === 'ACCOUNT_UNVALIDATED'
+				) {
+					return Promise.reject(error);
+				}
 
 				if (code === 'PROFILE_INCOMPLETE') {
 					// Don't redirect if already on complete-profile or payment pages
@@ -299,6 +307,20 @@ api.interceptors.response.use(
 					window.location.pathname.startsWith('/auth');
 
 				if (!isOnAuthPage && !is400Error) {
+					// Clear cookies by calling logout before redirecting
+					// This prevents middleware redirect loop
+					try {
+						const { authService } = await import(
+							'@/lib/api/authApi'
+						);
+						await authService.logout();
+					} catch (logoutError) {
+						logger.warn(
+							'[API] Failed to clear cookies on 401',
+							logoutError,
+						);
+					}
+
 					showToastOnce(
 						Features.Auth.AUTH_TOAST_MESSAGES.SESSION_EXPIRED,
 						'error',

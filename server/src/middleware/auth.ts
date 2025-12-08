@@ -84,12 +84,13 @@ export const authenticateToken = async (
 		if (!user) {
 			if (authDebug)
 				logger.warn(
-					'[authenticateToken] Utilisateur non trouv\u00e9 en base',
+					'[authenticateToken] Utilisateur non trouvé en base (hard deleted)',
 					{ userId: decoded.userId },
 				);
 			res.status(401).json({
 				success: false,
-				message: 'Utilisateur non trouv\u00e9',
+				code: 'ACCOUNT_DELETED',
+				message: 'Utilisateur non trouvé',
 			});
 			return;
 		}
@@ -103,6 +104,7 @@ export const authenticateToken = async (
 				);
 			res.status(403).json({
 				success: false,
+				code: 'ACCOUNT_BLOCKED',
 				message: 'Account blocked by admin',
 			});
 			return;
@@ -117,6 +119,7 @@ export const authenticateToken = async (
 				);
 			res.status(403).json({
 				success: false,
+				code: 'ACCOUNT_DELETED',
 				message: 'Account has been deleted',
 			});
 			return;
@@ -131,6 +134,7 @@ export const authenticateToken = async (
 				);
 			res.status(403).json({
 				success: false,
+				code: 'ACCOUNT_UNVALIDATED',
 				message: "Compte non valid\u00e9 par l'administrateur",
 			});
 			return;

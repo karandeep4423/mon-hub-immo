@@ -56,6 +56,13 @@ export function middleware(request: NextRequest) {
 		return NextResponse.next();
 	}
 
+	// Allow access to error pages even with cookies
+	// These pages need to display error messages to users with stale/invalid tokens
+	const errorPages = ['/auth/blocked', '/auth/deleted', '/auth/unvalidated'];
+	if (errorPages.some((page) => pathname.startsWith(page))) {
+		return NextResponse.next();
+	}
+
 	// Protected routes - require authentication
 	if (isProtectedRoute(pathname)) {
 		if (!canAccessProtected) {
@@ -72,6 +79,10 @@ export function middleware(request: NextRequest) {
 		// Only redirect away from auth pages when a fresh access token exists.
 		// A refresh-only session should be allowed to load the page so the client can refresh silently.
 		if (hasAccess) {
+			console.log(
+				'[MIDDLEWARE] 🔄 Redirecting authenticated user from auth page to /dashboard',
+				{ from: pathname },
+			);
 			// Note: We redirect to /dashboard here since we can't access user type in middleware
 			// The dashboard page will handle redirecting admins to /admin
 			return NextResponse.redirect(

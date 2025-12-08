@@ -383,9 +383,16 @@ export class AuthApi {
 	 */
 	static async logout(): Promise<void> {
 		try {
+			console.log(
+				'[AuthApi] 🔓 Calling logout endpoint to clear cookies...',
+			);
 			// Call server to clear httpOnly cookies
 			await api.post('/auth/logout');
+			console.log(
+				'[AuthApi] ✅ Logout endpoint successful, cookies should be cleared',
+			);
 		} catch (error) {
+			console.error('[AuthApi] ❌ Logout API call failed:', error);
 			logger.error('[AuthApi] Logout API call failed', error);
 		}
 	}
