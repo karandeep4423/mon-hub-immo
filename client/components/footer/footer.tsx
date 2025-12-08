@@ -63,18 +63,10 @@ export const Footer = () => {
 						<div className=" text-left space-y-2 text-sm">
 							<div>
 								<a
-									href="/home"
-									className="hover:text-[#00b4d8]"
-								>
-									Découvrir MonHubImmo
-								</a>
-							</div>
-							<div>
-								<a
 									href="/auth/signup"
 									className="hover:text-[#00b4d8]"
 								>
-									Inscription (3 mois offerts)
+									Inscription
 								</a>
 							</div>
 							<div>

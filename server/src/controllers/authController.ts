@@ -1737,6 +1737,9 @@ export const updateProfile = async (
 				profileImage: user.profileImage,
 				professionalInfo: user.professionalInfo,
 				profileCompleted: user.profileCompleted,
+				isPaid: Boolean(user.isPaid || user.accessGrantedByAdmin),
+				accessGrantedByAdmin: Boolean(user.accessGrantedByAdmin),
+				subscriptionStatus: user.subscriptionStatus || null,
 			},
 		});
 	} catch (error) {
