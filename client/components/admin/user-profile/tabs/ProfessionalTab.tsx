@@ -254,7 +254,8 @@ export function ProfessionalTab({
 								label="Communes couvertes"
 								value={
 									(form.professionalInfo
-										?.coveredCities as string) || ''
+										?.coveredCities as unknown as string) ||
+									''
 								}
 								onChange={(e) =>
 									handleProfessionalChange(
