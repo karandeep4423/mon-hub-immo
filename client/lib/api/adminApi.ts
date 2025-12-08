@@ -116,6 +116,23 @@ export const adminService = {
 		return api.delete(`/admin/properties/${propertyId}`);
 	},
 
+	/**
+	 * Updates a search ad (admin).
+	 * @param searchAdId - The ID of the search ad to update.
+	 * @param payload - The search ad data to update.
+	 */
+	updateSearchAd: (searchAdId: string, payload: Record<string, unknown>) => {
+		return api.put(`/admin/search-ads/${searchAdId}`, payload);
+	},
+
+	/**
+	 * Deletes a search ad (admin).
+	 * @param searchAdId - The ID of the search ad to delete.
+	 */
+	deleteSearchAd: (searchAdId: string) => {
+		return api.delete(`/admin/search-ads/${searchAdId}`);
+	},
+
 	// ==================== Collaborations ====================
 	/**
 	 * Fetches all collaborations (admin view).

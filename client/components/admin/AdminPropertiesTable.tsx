@@ -176,7 +176,18 @@ export function AdminPropertiesTableModern({
 		if (!selectedPropertyId) return;
 		setDeleteLoading(true);
 		try {
-			await adminService.deleteProperty(selectedPropertyId);
+			// Find the property to determine its type
+			const propertyToDelete = properties.find(
+				(p) => p._id === selectedPropertyId,
+			);
+
+			// Call the appropriate delete method based on type
+			if (propertyToDelete?.type === 'search') {
+				await adminService.deleteSearchAd(selectedPropertyId);
+			} else {
+				await adminService.deleteProperty(selectedPropertyId);
+			}
+
 			refetch?.();
 			closeDeleteModal();
 		} catch {
