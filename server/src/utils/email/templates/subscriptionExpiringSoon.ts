@@ -56,7 +56,7 @@ export const getSubscriptionExpiringSoonTemplate = (
 							<p style="text-align:center; margin: 24px 0;"><a class="cta" href="${billingUrl}">Renouveler mon abonnement</a></p>
 						</div>
 						<div class="footer">
-							<p>Une question ? Contactez-nous à support@monhubimmo.com</p>
+							<p>Une question ? Contactez-nous à contact@monhubimmo.fr</p>
 							<p>&copy; 2025 MonHubImmo. Tous droits réservés.</p>
 						</div>
 					</div>

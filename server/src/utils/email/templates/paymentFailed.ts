@@ -74,7 +74,7 @@ export const getPaymentFailedTemplate = (
 							${isUrgent ? '<p style="color: #DC2626; font-weight: bold;">⏰ Vous disposez de 48h pour régulariser votre situation.</p>' : ''}
 						</div>
 						<div class="footer">
-							<p>Besoin d'aide ? Contactez-nous à support@monhubimmo.com</p>
+							<p>Besoin d'aide ? Contactez-nous à contact@monhubimmo.fr</p>
 							<p>&copy; 2025 MonHubImmo. Tous droits réservés.</p>
 						</div>
 					</div>

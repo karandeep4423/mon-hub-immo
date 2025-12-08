@@ -58,7 +58,7 @@ export const getPaymentSuccessTemplate = (
 							<p style="text-align:center; margin: 18px 0;"><a class="cta" href="${process.env.FRONTEND_URL || 'https://monhubimmo.com'}/dashboard">Accéder à mon tableau de bord</a></p>
 						</div>
 						<div class="footer">
-							<p>Une question ? Contactez-nous à support@monhubimmo.com</p>
+							<p>Une question ? Contactez-nous à contact@monhubimmo.fr</p>
 							<p>&copy; 2025 MonHubImmo. Tous droits réservés.</p>
 						</div>
 					</div>

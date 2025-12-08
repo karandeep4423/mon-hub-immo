@@ -52,7 +52,7 @@ export const getSubscriptionCanceledTemplate = (
 							
 							<p style="text-align:center; margin: 18px 0;"><a class="cta" href="${process.env.FRONTEND_URL || 'https://monhubimmo.com'}/dashboard">Réactiver mon abonnement</a></p>
 							
-							<p style="color: #6B7280; font-size: 14px;">Nous serions ravis de connaître la raison de votre départ. N'hésitez pas à nous faire part de vos commentaires à support@monhubimmo.com</p>
+							<p style="color: #6B7280; font-size: 14px;">Nous serions ravis de connaître la raison de votre départ. N'hésitez pas à nous faire part de vos commentaires à contact@monhubimmo.fr</p>
 						</div>
 						<div class="footer">
 							<p>Merci d'avoir utilisé MonHubImmo.</p>

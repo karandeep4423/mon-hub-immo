@@ -167,10 +167,10 @@ const PolitiqueConfidentialite = () => {
 									<p className="text-blue-700">
 										Contactez-nous à :{' '}
 										<a
-											href="mailto:contact@monhubimmo.com"
+											href="mailto:contact@monhubimmo.fr"
 											className="underline font-medium"
 										>
-											contact@monhubimmo.com
+											contact@monhubimmo.fr
 										</a>
 									</p>
 								</div>
@@ -213,10 +213,10 @@ const PolitiqueConfidentialite = () => {
 									<p className="text-blue-700">
 										📧{' '}
 										<a
-											href="mailto:contact@monhubimmo.com"
+											href="mailto:contact@monhubimmo.fr"
 											className="underline font-medium"
 										>
-											contact@monhubimmo.com
+											contact@monhubimmo.fr
 										</a>
 									</p>
 								</div>
