@@ -393,6 +393,42 @@ export const updateSearchAdStatus = async (req: AuthRequest, res: Response) => {
 };
 
 // Admin delete search ad (no ownership check)
+export const updateAdminSearchAd = async (
+	req: AuthRequest,
+	res: Response,
+): Promise<void> => {
+	try {
+		const { id } = req.params;
+		const searchAd = await SearchAd.findById(id);
+
+		if (!searchAd) {
+			res.status(404).json({
+				success: false,
+				message: 'Annonce de recherche introuvable',
+			});
+			return;
+		}
+
+		// Sanitize HTML description if being updated
+		const updateData = { ...req.body };
+		if (updateData.description) {
+			updateData.description = sanitizeHtmlContent(
+				updateData.description,
+			);
+		}
+
+		Object.assign(searchAd, updateData);
+		await searchAd.save();
+		res.status(200).json({ success: true, data: searchAd });
+	} catch (error) {
+		res.status(400).json({
+			success: false,
+			message: "Échec de la mise à jour de l'annonce de recherche",
+			error: (error as Error).message,
+		});
+	}
+};
+
 export const deleteAdminSearchAd = async (
 	req: AuthRequest,
 	res: Response,

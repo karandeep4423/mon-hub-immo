@@ -3,7 +3,7 @@ import { htmlTextLength } from '../utils/sanitize';
 
 export interface ISearchAd extends Document {
 	authorId: Types.ObjectId;
-	authorType: 'agent' | 'apporteur';
+	authorType: 'agent' | 'apporteur' | 'admin';
 	status: 'active' | 'paused' | 'fulfilled' | 'sold' | 'rented' | 'archived';
 
 	// --- Critères de recherche ---
@@ -83,7 +83,7 @@ const SearchAdSchema = new Schema<ISearchAd>(
 		authorId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 		authorType: {
 			type: String,
-			enum: ['agent', 'apporteur'],
+			enum: ['agent', 'apporteur', 'admin'],
 			required: true,
 		},
 		status: {

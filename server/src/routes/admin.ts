@@ -22,7 +22,10 @@ import {
 	deleteAdminProperty,
 	updateAdminProperty,
 } from '../controllers/propertyController';
-import { deleteAdminSearchAd } from '../controllers/searchAdController';
+import {
+	deleteAdminSearchAd,
+	updateAdminSearchAd,
+} from '../controllers/searchAdController';
 import { authenticateToken, requireAdmin } from '../middleware/auth';
 import { uploadCSV } from '../middleware/uploadMiddleware';
 
@@ -51,6 +54,9 @@ router.put('/properties/:id', updateAdminProperty);
 
 // DELETE - supprimer une propriété
 router.delete('/properties/:id', deleteAdminProperty);
+
+// PUT - update a search ad (admin)
+router.put('/search-ads/:id', updateAdminSearchAd);
 
 // DELETE - supprimer une annonce de recherche (admin)
 router.delete('/search-ads/:id', deleteAdminSearchAd);
