@@ -253,9 +253,8 @@ export function ProfessionalTab({
 							<Textarea
 								label="Communes couvertes"
 								value={
-									form.professionalInfo?.coveredCities?.join(
-										', ',
-									) || ''
+									(form.professionalInfo
+										?.coveredCities as string) || ''
 								}
 								onChange={(e) =>
 									handleProfessionalChange(

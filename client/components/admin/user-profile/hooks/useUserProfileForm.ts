@@ -22,7 +22,14 @@ export function useUserProfileForm(
 ): UseUserProfileFormReturn {
 	const [form, setForm] = useState<UserProfile>({
 		...user,
-		professionalInfo: user.professionalInfo || {},
+		professionalInfo: {
+			...(user.professionalInfo || {}),
+			// Convert coveredCities array to string for editing
+			coveredCities: (Array.isArray(user.professionalInfo?.coveredCities)
+				? user.professionalInfo.coveredCities.join(', ')
+				: user.professionalInfo?.coveredCities ||
+					'') as unknown as string[],
+		},
 	});
 	const [hasChanges, setHasChanges] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
@@ -57,14 +64,8 @@ export function useUserProfileForm(
 							| 'co-mandat'
 						)[])
 					: [];
-			} else if (field === 'coveredCities') {
-				processedValue = value
-					? value
-							.split(',')
-							.map((c) => c.trim())
-							.filter(Boolean)
-					: [];
 			}
+			// Note: coveredCities is kept as string during editing, converted to array only on save
 
 			setForm((prev) => ({
 				...prev,
@@ -81,6 +82,24 @@ export function useUserProfileForm(
 	const handleSave = useCallback(async () => {
 		setIsSaving(true);
 		try {
+			// Convert coveredCities string back to array before saving
+			const professionalInfo = form.professionalInfo
+				? {
+						...form.professionalInfo,
+						coveredCities:
+							typeof form.professionalInfo.coveredCities ===
+							'string'
+								? (
+										form.professionalInfo
+											.coveredCities as string
+									)
+										.split(',')
+										.map((c) => c.trim())
+										.filter(Boolean)
+								: form.professionalInfo.coveredCities,
+					}
+				: undefined;
+
 			const payload = {
 				firstName: form.firstName,
 				lastName: form.lastName,
@@ -88,7 +107,7 @@ export function useUserProfileForm(
 				phone: form.phone || undefined,
 				userType: form.type || form.userType,
 				type: form.type || form.userType,
-				professionalInfo: form.professionalInfo || undefined,
+				professionalInfo,
 			};
 
 			await adminService.updateUser(user._id, payload);
