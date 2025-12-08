@@ -213,7 +213,7 @@ export const SubscriptionManager = () => {
 				<div className="flex items-center justify-between">
 					<span className="text-gray-600">Formule</span>
 					<span className="font-medium text-gray-900">
-						Mensuel - 19€/mois
+						Mensuel - {process.env.NEXT_PUBLIC_STRIPE_PRICE}€/mois
 					</span>
 				</div>
 
