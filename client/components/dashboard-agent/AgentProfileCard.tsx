@@ -8,30 +8,10 @@ import { ProfileUpdateModal } from './ProfileUpdateModal';
 import { ProfileAvatar, RichTextDisplay } from '../ui';
 import { User } from '@/types/auth';
 import { storage, STORAGE_KEYS } from '@/lib/utils/storageManager';
-import { api } from '@/lib/api';
-import { logger } from '@/lib/utils/logger';
-import { handleApiError } from '@/lib/utils/errorHandler';
-import { toast } from 'react-toastify';
-import { useFetch } from '@/hooks/useFetch';
-import {
-	FiExternalLink,
-	FiCheckCircle,
-	FiClock,
-	FiAlertCircle,
-	FiCreditCard,
-} from 'react-icons/fi';
+import { SubscriptionManager } from './SubscriptionManager';
 
 interface AgentProfileCardProps {
 	user: User;
-}
-
-interface SubscriptionData {
-	status: string;
-	plan: string;
-	isPaid: boolean;
-	currentPeriodEnd?: string;
-	cancelAtPeriodEnd?: boolean;
-	message?: string;
 }
 
 // Helper component for professional info items with icons
@@ -138,91 +118,7 @@ const StatCard = ({
 export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 	const [showUpdateModal, setShowUpdateModal] = useState(false);
 	const [isInfoOpen, setIsInfoOpen] = useState<boolean>(true);
-	const [portalLoading, setPortalLoading] = useState(false);
 	const router = useRouter();
-
-	// Fetch subscription data
-	const { data: subscription, refetch: refetchSubscription } =
-		useFetch<SubscriptionData>(
-			() => api.get('/payment/subscription').then((res) => res.data),
-			{ showErrorToast: false },
-		);
-
-	// Refetch subscription when returning from Stripe portal
-	useEffect(() => {
-		const handleFocus = () => {
-			refetchSubscription();
-		};
-		window.addEventListener('focus', handleFocus);
-		return () => window.removeEventListener('focus', handleFocus);
-	}, [refetchSubscription]);
-
-	// Handle manage subscription button
-	const handleManageSubscription = async () => {
-		setPortalLoading(true);
-		try {
-			const response = await api.post('/payment/create-portal-session');
-			const { url } = response.data;
-			if (url) {
-				window.location.href = url;
-			}
-		} catch (error) {
-			const apiError = handleApiError(
-				error,
-				'AgentProfileCard',
-				"Erreur lors de l'ouverture du portail",
-			);
-			logger.error('[AgentProfileCard] Portal error:', apiError);
-			toast.error(apiError.message);
-		} finally {
-			setPortalLoading(false);
-		}
-	};
-
-	// Get subscription status badge
-	const getStatusBadge = () => {
-		if (!subscription || subscription.status === 'none') return null;
-
-		if (subscription.plan === 'free_admin_granted') {
-			return (
-				<span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-					<FiCheckCircle className="w-3 h-3" />
-					Accès gratuit
-				</span>
-			);
-		}
-
-		if (
-			subscription.status === 'active' &&
-			subscription.cancelAtPeriodEnd
-		) {
-			return (
-				<span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-					<FiClock className="w-3 h-3" />
-					Annulation programmée
-				</span>
-			);
-		}
-
-		switch (subscription.status) {
-			case 'active':
-				return (
-					<span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-						<FiCheckCircle className="w-3 h-3" />
-						Actif
-					</span>
-				);
-			case 'past_due':
-				return (
-					<span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-						<FiAlertCircle className="w-3 h-3" />
-						Paiement en retard
-					</span>
-				);
-			default:
-				return null;
-		}
-	};
 
 	// Restore persisted collapse state
 	useEffect(() => {
@@ -372,139 +268,8 @@ export const AgentProfileCard: React.FC<AgentProfileCardProps> = ({ user }) => {
 				</div>
 
 				{/* Subscription Section */}
-				{subscription && subscription.status !== 'none' && (
-					<>
-						<div className="border-t border-gray-100 my-4 sm:my-6" />
-						<div className="flex items-center gap-2 mb-3 sm:mb-4">
-							<div className="p-1.5 sm:p-2 bg-brand-50 rounded-lg">
-								<FiCreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-brand" />
-							</div>
-							<h4 className="text-sm sm:text-md font-semibold text-gray-900">
-								Mon abonnement
-							</h4>
-						</div>
-
-						{/* Desktop: Side by side layout | Mobile: Stacked */}
-						<div className="flex flex-col lg:flex-row lg:items-start lg:gap-6">
-							{/* Left: Subscription Info */}
-							<div className="flex-1 space-y-3">
-								{/* Status + Plan Row */}
-								<div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 sm:p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100">
-									<div className="flex items-center gap-3 flex-1">
-										{getStatusBadge()}
-										<div className="h-6 w-px bg-gray-200 hidden sm:block" />
-										<div className="flex-1">
-											<p className="text-xs text-gray-500">
-												Formule
-											</p>
-											<p className="text-sm sm:text-base font-semibold text-gray-900">
-												{subscription.plan ===
-												'free_admin_granted'
-													? 'Accès offert'
-													: 'Mensuel - 19€/mois'}
-											</p>
-										</div>
-									</div>
-									{/* Next renewal on same row for desktop */}
-									{subscription.status === 'active' &&
-										!subscription.cancelAtPeriodEnd &&
-										subscription.currentPeriodEnd && (
-											<div className="sm:text-right pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
-												<p className="text-xs text-gray-500">
-													Prochain renouvellement
-												</p>
-												<p className="text-sm sm:text-base font-medium text-gray-700">
-													{new Date(
-														subscription.currentPeriodEnd,
-													).toLocaleDateString(
-														'fr-FR',
-														{
-															day: 'numeric',
-															month: 'long',
-															year: 'numeric',
-														},
-													)}
-												</p>
-											</div>
-										)}
-								</div>
-
-								{/* Show end date when subscription is canceled but still active */}
-								{subscription.cancelAtPeriodEnd &&
-									subscription.currentPeriodEnd && (
-										<div className="bg-yellow-50 rounded-xl p-3 sm:p-4 border border-yellow-100">
-											<p className="text-sm text-yellow-800">
-												Votre accès reste actif
-												jusqu&apos;au{' '}
-												<span className="font-semibold">
-													{new Date(
-														subscription.currentPeriodEnd,
-													).toLocaleDateString(
-														'fr-FR',
-														{
-															day: 'numeric',
-															month: 'long',
-															year: 'numeric',
-														},
-													)}
-												</span>
-											</p>
-										</div>
-									)}
-							</div>
-
-							{/* Right: Action Button */}
-							{subscription.plan !== 'free_admin_granted' && (
-								<div className="mt-4 lg:mt-0 lg:w-auto flex flex-col items-center lg:items-end">
-									<button
-										onClick={handleManageSubscription}
-										disabled={portalLoading}
-										className="w-full sm:w-auto flex items-center justify-center gap-2 bg-brand text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl hover:bg-brand-dark transition-colors disabled:opacity-50 text-sm sm:text-base font-medium shadow-sm hover:shadow-md"
-									>
-										{portalLoading ? (
-											<span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-										) : (
-											<>
-												<FiExternalLink className="w-4 h-4" />
-												Gérer mon abonnement
-											</>
-										)}
-									</button>
-									<p className="text-[10px] sm:text-xs text-gray-500 mt-2 text-center lg:text-right">
-										Paiement, factures ou annulation
-									</p>
-								</div>
-							)}
-						</div>
-					</>
-				)}
-
-				{/* No subscription - show subscribe button */}
-				{subscription && subscription.status === 'none' && (
-					<>
-						<div className="border-t border-gray-100 my-4 sm:my-6" />
-						<div className="flex flex-col xs:flex-row xs:items-center justify-between gap-2 xs:gap-0 mb-3 sm:mb-4">
-							<div className="flex items-center gap-2">
-								<div className="p-1.5 sm:p-2 bg-gray-100 rounded-lg">
-									<FiCreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
-								</div>
-								<h4 className="text-sm sm:text-md font-semibold text-gray-900">
-									Mon abonnement
-								</h4>
-							</div>
-							<span className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-								Inactif
-							</span>
-						</div>
-						<a
-							href="/payment"
-							className="w-full flex items-center justify-center gap-2 bg-brand text-white px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg hover:bg-brand-dark transition-colors shadow-brand text-sm sm:text-base"
-						>
-							<FiCreditCard className="w-4 h-4" />
-							Activer mon abonnement - 19€/mois
-						</a>
-					</>
-				)}
+				<div className="border-t border-gray-100 my-4 sm:my-6" />
+				<SubscriptionManager />
 
 				{/* Professional Information - Collapsible when profile is completed */}
 				{user.profileCompleted && user.professionalInfo && (
