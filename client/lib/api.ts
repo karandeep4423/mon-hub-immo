@@ -27,6 +27,14 @@ let failedQueue: Array<{
 
 // CSRF token management
 let csrfToken: string | null = null;
+let csrfCookie: string | null = null;
+
+// Helper to get current CSRF cookie value
+const getCurrentCsrfCookie = (): string | null => {
+	if (typeof document === 'undefined') return null;
+	const match = document.cookie.match(/(?:^|;\s*)_csrf=([^;]*)/);
+	return match ? decodeURIComponent(match[1]) : null;
+};
 
 const fetchCsrfToken = async (): Promise<string> => {
 	try {
@@ -34,6 +42,11 @@ const fetchCsrfToken = async (): Promise<string> => {
 			withCredentials: true,
 		});
 		csrfToken = response.data.csrfToken;
+		// Store the cookie value that corresponds to this token
+		csrfCookie = getCurrentCsrfCookie();
+		logger.debug('[API] CSRF token fetched', {
+			hasCookie: !!csrfCookie,
+		});
 		return response.data.csrfToken as string;
 	} catch (error) {
 		logger.error('[API] Failed to fetch CSRF token', error);
@@ -44,6 +57,7 @@ const fetchCsrfToken = async (): Promise<string> => {
 // Export function to reset CSRF token (call after login/logout)
 export const resetCsrfToken = () => {
 	csrfToken = null;
+	csrfCookie = null;
 };
 
 const processQueue = (error: unknown) => {
@@ -67,8 +81,15 @@ api.interceptors.request.use(
 				config.method.toLowerCase(),
 			)
 		) {
-			// Fetch CSRF token if we don't have one
-			if (!csrfToken) {
+			// CSRF FIX: Check if cookie has changed since we last fetched the token
+			const currentCookie = getCurrentCsrfCookie();
+			const cookieChanged = csrfCookie && currentCookie !== csrfCookie;
+
+			// Fetch CSRF token if we don't have one OR if the cookie changed
+			if (!csrfToken || cookieChanged) {
+				if (cookieChanged) {
+					logger.debug('[API] CSRF cookie changed, refetching token');
+				}
 				try {
 					await fetchCsrfToken();
 				} catch (error) {

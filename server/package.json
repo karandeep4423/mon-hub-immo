@@ -2,11 +2,11 @@
 	"name": "server",
 	"version": "1.0.0",
 	"description": "",
+	"type": "commonjs",
 	"main": "server.js",
 	"scripts": {
 		"start": "node dist/server.js",
 		"dev": "ts-node-dev src/server.ts",
-		"test": "jest --runInBand",
 		"build": "tsc",
 		"lint": "eslint .",
 		"migrate:progress-steps": "ts-node src/scripts/migrateProgressSteps.ts",

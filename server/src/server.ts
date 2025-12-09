@@ -22,6 +22,7 @@ import { logger } from './utils/logger';
 import {
 	csrfProtection,
 	generateCsrfToken,
+	ensureCsrfSession,
 	csrfErrorHandler,
 } from './middleware/csrf';
 import { generalLimiter } from './middleware/rateLimiter';
@@ -163,12 +164,22 @@ app.use(
 		],
 		credentials: true,
 		// Let the client request include the Private-Network preflight header
-		allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token', 'Access-Control-Request-Private-Network'],
+		allowedHeaders: [
+			'Content-Type',
+			'Authorization',
+			'X-Requested-With',
+			'X-CSRF-Token',
+			'Access-Control-Request-Private-Network',
+		],
 		methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
 	}),
 );
 // Stripe webhook must receive raw body for signature verification
-app.post('/api/webhook/stripe', express.raw({ type: 'application/json' }), stripeWebhookHandler as any);
+app.post(
+	'/api/webhook/stripe',
+	express.raw({ type: 'application/json' }),
+	stripeWebhookHandler as express.RequestHandler,
+);
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -212,19 +223,30 @@ app.get('/api/health', (req, res) => {
 });
 
 // CSRF token endpoint (must be before protected routes)
-app.get('/api/csrf-token', csrfProtection, generateCsrfToken);
+// Note: ensureCsrfSession must run before generateCsrfToken to set session cookie
+app.get('/api/csrf-token', ensureCsrfSession, generateCsrfToken);
 
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/message', messageRoutes);
-app.use('/api/property', csrfProtection, propertyRoutes);
-app.use('/api/collaboration', csrfProtection, collaborationRoutes);
-app.use('/api/contract', csrfProtection, contractRoutes);
-app.use('/api/search-ads', csrfProtection, searchAdRoutes);
-app.use('/api/upload', csrfProtection, uploadRoutes);
+app.use('/api/property', ensureCsrfSession, csrfProtection, propertyRoutes);
+app.use(
+	'/api/collaboration',
+	ensureCsrfSession,
+	csrfProtection,
+	collaborationRoutes,
+);
+app.use('/api/contract', ensureCsrfSession, csrfProtection, contractRoutes);
+app.use('/api/search-ads', ensureCsrfSession, csrfProtection, searchAdRoutes);
+app.use('/api/upload', ensureCsrfSession, csrfProtection, uploadRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/favorites', csrfProtection, favoritesRoutes);
-app.use('/api/appointments', csrfProtection, appointmentRoutes);
+app.use('/api/favorites', ensureCsrfSession, csrfProtection, favoritesRoutes);
+app.use(
+	'/api/appointments',
+	ensureCsrfSession,
+	csrfProtection,
+	appointmentRoutes,
+);
 app.use('/api/admin', adminRouter);
 app.use('/api/admin/chat', adminChatRoutes);
 // Mount payment routes (requires authentication inside route)
