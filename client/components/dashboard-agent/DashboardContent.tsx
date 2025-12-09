@@ -173,7 +173,9 @@ export const DashboardContent: React.FC = () => {
 										href="/payment"
 										className="inline-flex items-center gap-2 bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors"
 									>
-										Activer mon abonnement - 19€/mois
+										Activer mon abonnement -{' '}
+										{process.env.NEXT_PUBLIC_STRIPE_PRICE}
+										€/mois
 									</a>
 								</div>
 							)}

@@ -38,9 +38,8 @@ export const HeroSearchSection = ({
 							et agents immobiliers.
 						</p>
 						<h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 leading-tight">
-							Prenez rendez-vous en ligne avec un agent
-							<br className="hidden sm:block" />
-							immobilier de votre secteur en 1 clic
+							Prenez rendez-vous en ligne avec un agent immobilier
+							de votre secteur en 1 clic
 						</h1>
 						<p className="text-sm sm:text-base mb-6 sm:mb-8 opacity-90">
 							Estimation, mise en vente, recherche de biens, tout

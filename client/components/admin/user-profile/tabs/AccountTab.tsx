@@ -248,7 +248,7 @@ export function AccountTab({
 								</p>
 								<p className="font-semibold text-blue-700">
 									{form.subscriptionPlan === 'monthly'
-										? 'Mensuel (19€/mois)'
+										? `Mensuel (${process.env.NEXT_PUBLIC_STRIPE_PRICE}€/mois)`
 										: 'Aucun plan'}
 								</p>
 							</div>

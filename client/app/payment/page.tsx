@@ -135,6 +135,13 @@ export default function PaymentPage() {
 						<p className="mt-3 text-brand-100">
 							Annulez à tout moment
 						</p>
+						<div className="mt-4 text-sm text-brand-100 space-y-1">
+							<p>Abonnement Agent : 2,00 € HT / mois</p>
+							<p>TVA : 0,40 €</p>
+							<p className="font-semibold text-white">
+								Total : 2,40 € TTC / mois
+							</p>
+						</div>
 					</div>
 
 					{/* Features */}
