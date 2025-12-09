@@ -130,12 +130,32 @@ export const setRefreshTokenCookie = (res: Response, token: string): void => {
 
 /**
  * Set both access and refresh token cookies
+ * Also clears stale CSRF cookies to ensure session identifier consistency
  */
 export const setAuthCookies = (
 	res: Response,
 	accessToken: string,
 	refreshToken: string,
 ): void => {
+	const isProduction = process.env.NODE_ENV === 'production';
+
+	// Clear stale CSRF cookies before setting auth cookies
+	// This ensures the CSRF token will be regenerated with the new user session
+	// Clear host-specific cookie (no domain)
+	res.clearCookie('_csrf', { path: '/' });
+	// Clear domain-scoped cookie
+	if (isProduction) {
+		res.clearCookie('_csrf', { path: '/', domain: '.monhubimmo.fr' });
+	}
+	// Clear the anonymous session cookie since user is now authenticated
+	res.clearCookie('_csrf_session', { path: '/' });
+	if (isProduction) {
+		res.clearCookie('_csrf_session', {
+			path: '/',
+			domain: '.monhubimmo.fr',
+		});
+	}
+
 	setAccessTokenCookie(res, accessToken);
 	setRefreshTokenCookie(res, refreshToken);
 };
@@ -190,11 +210,26 @@ export const clearRefreshTokenCookie = (res: Response): void => {
 
 /**
  * Clear all auth cookies
+ * Also clears CSRF cookies to ensure clean session state
  */
 export const clearAuthCookies = (res: Response): void => {
+	const isProduction = process.env.NODE_ENV === 'production';
+
 	clearAccessTokenCookie(res);
 	clearRefreshTokenCookie(res);
-	logger.info('[CookieHelper] All auth cookies cleared');
+
+	// Also clear CSRF cookies on logout to ensure clean session state
+	res.clearCookie('_csrf', { path: '/' });
+	res.clearCookie('_csrf_session', { path: '/' });
+	if (isProduction) {
+		res.clearCookie('_csrf', { path: '/', domain: '.monhubimmo.fr' });
+		res.clearCookie('_csrf_session', {
+			path: '/',
+			domain: '.monhubimmo.fr',
+		});
+	}
+
+	logger.info('[CookieHelper] All auth and CSRF cookies cleared');
 };
 
 /**

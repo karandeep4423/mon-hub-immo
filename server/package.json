@@ -9,6 +9,10 @@
 		"dev": "ts-node-dev src/server.ts",
 		"build": "tsc",
 		"lint": "eslint .",
+		"test": "jest",
+		"test:watch": "jest --watch",
+		"test:coverage": "jest --coverage",
+		"test:csrf": "jest src/middleware/csrf.test.ts --verbose",
 		"migrate:progress-steps": "ts-node src/scripts/migrateProgressSteps.ts",
 		"migrate:clear-appointments": "ts-node src/scripts/clearAppointments.ts",
 		"script:fix-locks": "ts-node scripts/fix-account-locks.ts"

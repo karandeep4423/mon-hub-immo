@@ -27,37 +27,51 @@ let failedQueue: Array<{
 
 // CSRF token management
 let csrfToken: string | null = null;
-let csrfCookie: string | null = null;
+let csrfTokenFetchedAt: number | null = null;
+let csrfTokenFetchPromise: Promise<string> | null = null;
 
-// Helper to get current CSRF cookie value
-const getCurrentCsrfCookie = (): string | null => {
-	if (typeof document === 'undefined') return null;
-	const match = document.cookie.match(/(?:^|;\s*)_csrf=([^;]*)/);
-	return match ? decodeURIComponent(match[1]) : null;
+// CSRF token max age in milliseconds (50 minutes - slightly less than server's 1 hour)
+// This ensures we refresh the token before it becomes invalid
+const CSRF_TOKEN_MAX_AGE = 50 * 60 * 1000;
+
+// Helper to check if CSRF token needs refresh
+const shouldRefreshCsrfToken = (): boolean => {
+	if (!csrfToken || !csrfTokenFetchedAt) return true;
+	return Date.now() - csrfTokenFetchedAt > CSRF_TOKEN_MAX_AGE;
 };
 
 const fetchCsrfToken = async (): Promise<string> => {
-	try {
-		const response = await axios.get(`${API_BASE_URL}/csrf-token`, {
-			withCredentials: true,
-		});
-		csrfToken = response.data.csrfToken;
-		// Store the cookie value that corresponds to this token
-		csrfCookie = getCurrentCsrfCookie();
-		logger.debug('[API] CSRF token fetched', {
-			hasCookie: !!csrfCookie,
-		});
-		return response.data.csrfToken as string;
-	} catch (error) {
-		logger.error('[API] Failed to fetch CSRF token', error);
-		throw error;
+	// If there's already a fetch in progress, wait for it
+	// This prevents multiple concurrent requests from creating race conditions
+	if (csrfTokenFetchPromise) {
+		return csrfTokenFetchPromise;
 	}
+
+	csrfTokenFetchPromise = (async () => {
+		try {
+			const response = await axios.get(`${API_BASE_URL}/csrf-token`, {
+				withCredentials: true,
+			});
+			csrfToken = response.data.csrfToken;
+			csrfTokenFetchedAt = Date.now();
+			logger.debug('[API] CSRF token fetched');
+			return response.data.csrfToken as string;
+		} catch (error) {
+			logger.error('[API] Failed to fetch CSRF token', error);
+			throw error;
+		} finally {
+			csrfTokenFetchPromise = null;
+		}
+	})();
+
+	return csrfTokenFetchPromise;
 };
 
 // Export function to reset CSRF token (call after login/logout)
 export const resetCsrfToken = () => {
 	csrfToken = null;
-	csrfCookie = null;
+	csrfTokenFetchedAt = null;
+	csrfTokenFetchPromise = null;
 };
 
 const processQueue = (error: unknown) => {
@@ -81,15 +95,8 @@ api.interceptors.request.use(
 				config.method.toLowerCase(),
 			)
 		) {
-			// CSRF FIX: Check if cookie has changed since we last fetched the token
-			const currentCookie = getCurrentCsrfCookie();
-			const cookieChanged = csrfCookie && currentCookie !== csrfCookie;
-
-			// Fetch CSRF token if we don't have one OR if the cookie changed
-			if (!csrfToken || cookieChanged) {
-				if (cookieChanged) {
-					logger.debug('[API] CSRF cookie changed, refetching token');
-				}
+			// Fetch CSRF token if we don't have one OR if it's expired
+			if (shouldRefreshCsrfToken()) {
 				try {
 					await fetchCsrfToken();
 				} catch (error) {
@@ -296,6 +303,11 @@ api.interceptors.response.use(
 
 				if (response.data.success) {
 					// Token is set in httpOnly cookie by server
+					// CRITICAL: Reset CSRF token after access token refresh
+					// The CSRF token is bound to the session (user ID from JWT),
+					// so we need a fresh CSRF token with the new access token
+					csrfToken = null;
+					csrfTokenFetchedAt = null;
 					processQueue(null);
 					return api(originalRequest);
 				}

@@ -24,6 +24,68 @@ logger.info('[CSRF] Configuration loaded', {
 const isProduction = process.env.NODE_ENV === 'production';
 
 /**
+ * Extract userId from JWT without verifying expiration
+ * This ensures consistent session identifier even when token is expired
+ * but the user is still authenticated (will be refreshed)
+ */
+const extractUserIdFromToken = (token: string): string | null => {
+	try {
+		// First try to verify normally (handles signature validation)
+		const decoded = jwt.verify(token, JWT_SECRET) as { userId?: string };
+		if (decoded?.userId) {
+			return decoded.userId;
+		}
+	} catch (error) {
+		// If expired but signature is valid, we can still use the userId
+		// This handles the race condition where token expires between CSRF generation and use
+		if (error instanceof jwt.TokenExpiredError) {
+			try {
+				// Decode without verification to get userId (signature was already validated above)
+				const decoded = jwt.decode(token) as { userId?: string } | null;
+				if (decoded?.userId) {
+					return decoded.userId;
+				}
+			} catch {
+				// Decode failed, fall through to null
+			}
+		}
+		// For other errors (invalid signature, malformed), return null
+	}
+	return null;
+};
+
+/**
+ * Middleware to clear stale CSRF cookies that might conflict with the new ones
+ * This handles the case where users have old cookies from previous deployments
+ * with different domain/sameSite settings
+ */
+export const clearStaleCsrfCookies = (
+	req: Request,
+	res: Response,
+	next: NextFunction,
+) => {
+	// Only run in production where domain issues can occur
+	if (!isProduction) {
+		return next();
+	}
+
+	// Clear any _csrf cookie without domain (api.monhubimmo.fr specific)
+	// This ensures we only use the .monhubimmo.fr scoped cookie
+	res.clearCookie('_csrf', {
+		path: '/',
+		// No domain = clears the host-specific cookie (api.monhubimmo.fr)
+	});
+
+	// Also clear with sameSite strict in case that was set before
+	res.clearCookie('_csrf', {
+		path: '/',
+		sameSite: 'strict',
+	});
+
+	next();
+};
+
+/**
  * Middleware to ensure CSRF session identifier exists in cookies before CSRF library reads it
  * SECURITY: This must be unique per user/session to prevent token sharing
  */
@@ -33,18 +95,13 @@ export const ensureCsrfSession = (
 	next: NextFunction,
 ) => {
 	// For authenticated users, session ID = user ID (no cookie needed)
+	// Use extractUserIdFromToken to handle expired tokens consistently
 	const accessToken = req.cookies?.accessToken;
 	if (accessToken) {
-		try {
-			const decoded = jwt.verify(accessToken, JWT_SECRET) as {
-				userId?: string;
-			};
-			if (decoded?.userId) {
-				// Authenticated - no session cookie needed
-				return next();
-			}
-		} catch {
-			// Token invalid/expired, fall through to session cookie
+		const userId = extractUserIdFromToken(accessToken);
+		if (userId) {
+			// Authenticated user found - no session cookie needed
+			return next();
 		}
 	}
 
@@ -86,23 +143,22 @@ const {
 } = doubleCsrf({
 	getSecret: () => CSRF_SECRET,
 	// SECURITY: Use unique session identifier per user/session
-	// - Authenticated users: User ID from JWT (unique per user)
+	// - Authenticated users: User ID from JWT (even if expired, signature must be valid)
 	// - Anonymous users: Session cookie (unique per browser session)
 	// This prevents token sharing between different users/sessions
 	// IMPORTANT: ensureCsrfSession middleware MUST run before this to set the session cookie
+	//
+	// CRITICAL FIX: We extract userId even from expired tokens to maintain
+	// consistent session identifier. This prevents CSRF failures when the
+	// access token expires between token generation and validation.
+	// The JWT signature is still verified, only expiration is ignored for session ID.
 	getSessionIdentifier: (req: Request) => {
-		// For authenticated users, use user ID from JWT
+		// For authenticated users, extract user ID from JWT (even if expired)
 		const accessToken = req.cookies?.accessToken;
 		if (accessToken) {
-			try {
-				const decoded = jwt.verify(accessToken, JWT_SECRET) as {
-					userId?: string;
-				};
-				if (decoded?.userId) {
-					return `user-${decoded.userId}`;
-				}
-			} catch {
-				// Token invalid, use session cookie
+			const userId = extractUserIdFromToken(accessToken);
+			if (userId) {
+				return `user-${userId}`;
 			}
 		}
 
@@ -175,10 +231,43 @@ export const csrfErrorHandler = (
 	next: NextFunction,
 ) => {
 	if (err === invalidCsrfTokenError) {
+		// Get diagnostic info for debugging
+		const csrfCookie = req.cookies?.['_csrf'];
+		const csrfHeader = req.headers['x-csrf-token'] as string | undefined;
+		const accessToken = req.cookies?.accessToken;
+
+		// Try to get session identifier for debugging
+		let sessionId = 'unknown';
+		if (accessToken) {
+			const userId = extractUserIdFromToken(accessToken);
+			if (userId) {
+				sessionId = `user-${userId}`;
+			}
+		}
+		if (sessionId === 'unknown') {
+			const sessionCookie = req.cookies?.['_csrf_session'];
+			if (sessionCookie) {
+				sessionId = `session-${sessionCookie.substring(0, 8)}...`;
+			}
+		}
+
 		logger.warn('[CSRF] Invalid CSRF token', {
 			method: req.method,
 			path: req.path,
 			ip: req.ip,
+			sessionId,
+			hasCsrfCookie: !!csrfCookie,
+			hasCsrfHeader: !!csrfHeader,
+			cookieLength: csrfCookie?.length,
+			headerLength: csrfHeader?.length,
+			// Log prefixes for debugging (not full values for security)
+			cookiePrefix: csrfCookie?.substring(0, 20),
+			headerPrefix: csrfHeader?.substring(0, 20),
+			// Check if there are multiple _csrf values in raw cookie header
+			rawCookieHeader: req.headers.cookie?.includes('_csrf')
+				? 'contains _csrf'
+				: 'no _csrf',
+			cookieCount: (req.headers.cookie?.match(/_csrf=/g) || []).length,
 		});
 
 		res.status(403).json({

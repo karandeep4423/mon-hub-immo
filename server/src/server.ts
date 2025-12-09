@@ -24,6 +24,7 @@ import {
 	generateCsrfToken,
 	ensureCsrfSession,
 	csrfErrorHandler,
+	clearStaleCsrfCookies,
 } from './middleware/csrf';
 import { generalLimiter } from './middleware/rateLimiter';
 import adminRouter from './routes/admin';
@@ -223,26 +224,63 @@ app.get('/api/health', (req, res) => {
 });
 
 // CSRF token endpoint (must be before protected routes)
-// Note: ensureCsrfSession must run before generateCsrfToken to set session cookie
-app.get('/api/csrf-token', ensureCsrfSession, generateCsrfToken);
+// Note: clearStaleCsrfCookies and ensureCsrfSession must run before generateCsrfToken
+app.get(
+	'/api/csrf-token',
+	clearStaleCsrfCookies,
+	ensureCsrfSession,
+	generateCsrfToken,
+);
 
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/message', messageRoutes);
-app.use('/api/property', ensureCsrfSession, csrfProtection, propertyRoutes);
+app.use(
+	'/api/property',
+	clearStaleCsrfCookies,
+	ensureCsrfSession,
+	csrfProtection,
+	propertyRoutes,
+);
 app.use(
 	'/api/collaboration',
+	clearStaleCsrfCookies,
 	ensureCsrfSession,
 	csrfProtection,
 	collaborationRoutes,
 );
-app.use('/api/contract', ensureCsrfSession, csrfProtection, contractRoutes);
-app.use('/api/search-ads', ensureCsrfSession, csrfProtection, searchAdRoutes);
-app.use('/api/upload', ensureCsrfSession, csrfProtection, uploadRoutes);
+app.use(
+	'/api/contract',
+	clearStaleCsrfCookies,
+	ensureCsrfSession,
+	csrfProtection,
+	contractRoutes,
+);
+app.use(
+	'/api/search-ads',
+	clearStaleCsrfCookies,
+	ensureCsrfSession,
+	csrfProtection,
+	searchAdRoutes,
+);
+app.use(
+	'/api/upload',
+	clearStaleCsrfCookies,
+	ensureCsrfSession,
+	csrfProtection,
+	uploadRoutes,
+);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/favorites', ensureCsrfSession, csrfProtection, favoritesRoutes);
+app.use(
+	'/api/favorites',
+	clearStaleCsrfCookies,
+	ensureCsrfSession,
+	csrfProtection,
+	favoritesRoutes,
+);
 app.use(
 	'/api/appointments',
+	clearStaleCsrfCookies,
 	ensureCsrfSession,
 	csrfProtection,
 	appointmentRoutes,
