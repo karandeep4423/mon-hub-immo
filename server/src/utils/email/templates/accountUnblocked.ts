@@ -125,7 +125,7 @@ export const getAccountUnblockedTemplate = (name: string): string => `
 							<p>Vous pouvez désormais vous reconnecter et retrouver l'accès à toutes les fonctionnalités de MonHubImmo.</p>
 
 							<div class="cta-container">
-								<a href="${process.env.CLIENT_URL || 'https://www.monhubimmo.fr'}/auth/login" class="cta-button">Se connecter maintenant</a>
+								<a href="${process.env.FRONTEND_URL || 'https://www.monhubimmo.fr'}/auth/login" class="cta-button">Se connecter maintenant</a>
 							</div>
 
 							<div class="features-box">

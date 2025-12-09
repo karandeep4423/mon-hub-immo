@@ -194,9 +194,7 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 			// Send verification email
 			try {
 				const baseUrl =
-					process.env.CLIENT_URL ||
-					process.env.FRONTEND_URL ||
-					'http://localhost:3000';
+					process.env.FRONTEND_URL || 'http://localhost:3000';
 				const verifyUrl = `${baseUrl}/auth/verify-email?email=${encodeURIComponent(email)}`;
 				const emailTemplate = getVerificationCodeTemplate(
 					`${existingPending.firstName} ${existingPending.lastName}`,
@@ -278,10 +276,7 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 
 		// Send verification email with code
 		try {
-			const baseUrl =
-				process.env.CLIENT_URL ||
-				process.env.FRONTEND_URL ||
-				'http://localhost:3000';
+			const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 			const verifyUrl = `${baseUrl}/auth/verify-email?email=${encodeURIComponent(sanitizedEmail)}`;
 			const emailTemplate = getVerificationCodeTemplate(
 				`${sanitizedFirstName} ${sanitizedLastName}`,
@@ -374,9 +369,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 					// Send verification email
 					try {
 						const baseUrl =
-							process.env.CLIENT_URL ||
-							process.env.FRONTEND_URL ||
-							'http://localhost:3000';
+							process.env.FRONTEND_URL || 'http://localhost:3000';
 						const verifyUrl = `${baseUrl}/auth/verify-email?email=${encodeURIComponent(email)}`;
 						const emailTemplate = getVerificationCodeTemplate(
 							`${pendingUser.firstName} ${pendingUser.lastName}`,
@@ -598,9 +591,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
 			try {
 				const baseUrl =
-					process.env.CLIENT_URL ||
-					process.env.FRONTEND_URL ||
-					'http://localhost:3000';
+					process.env.FRONTEND_URL || 'http://localhost:3000';
 				const verifyUrl = `${baseUrl}/auth/verify-email?email=${encodeURIComponent(email)}`;
 				const emailTemplate = getVerificationCodeTemplate(
 					`${user.firstName} ${user.lastName}`,
@@ -1124,9 +1115,7 @@ export const setPasswordFromInvite = async (
 
 				// Send verification code email
 				const baseUrl =
-					process.env.CLIENT_URL ||
-					process.env.FRONTEND_URL ||
-					'http://localhost:3000';
+					process.env.FRONTEND_URL || 'http://localhost:3000';
 				const verifyUrl = `${baseUrl}/auth/verify-email?email=${encodeURIComponent(user.email)}`;
 				await sendEmail({
 					to: user.email,
@@ -1228,10 +1217,7 @@ export const resendVerificationCode = async (
 
 		// Send verification email
 		try {
-			const baseUrl =
-				process.env.CLIENT_URL ||
-				process.env.FRONTEND_URL ||
-				'http://localhost:3000';
+			const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 			const verifyUrl = `${baseUrl}/auth/verify-email?email=${encodeURIComponent(email)}`;
 			const emailTemplate = getVerificationCodeTemplate(
 				`${pendingVerification.firstName} ${pendingVerification.lastName}`,
@@ -1314,7 +1300,7 @@ export const forgotPassword = async (
 
 		// Send password reset email
 		try {
-			const inviteUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/auth/reset-password?email=${encodeURIComponent(email)}`;
+			const inviteUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/reset-password?email=${encodeURIComponent(email)}`;
 			const emailTemplate = getPasswordResetTemplate(
 				`${user.firstName} ${user.lastName}`,
 				resetCode,

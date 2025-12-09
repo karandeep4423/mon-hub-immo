@@ -77,10 +77,7 @@ export const sendAccountValidated = async (opts: {
 }): Promise<void> => {
 	const { to, name, email } = opts;
 	logger.info('[EmailService] sendAccountValidated');
-	const baseUrl =
-		process.env.CLIENT_URL ||
-		process.env.FRONTEND_URL ||
-		'http://localhost:3000';
+	const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 	const loginUrl = `${baseUrl}/auth/login`;
 	await sendEmail({
 		to,

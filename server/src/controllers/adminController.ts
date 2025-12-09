@@ -794,10 +794,7 @@ export const createAdminUser = async (req: AuthRequest, res: Response) => {
 		);
 
 		// Build URLs
-		const baseUrl =
-			process.env.CLIENT_URL ||
-			process.env.FRONTEND_URL ||
-			'http://localhost:3000';
+		const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 		const verifyUrl = `${baseUrl}/auth/verify-email?email=${encodeURIComponent(newUser.email)}`;
 
 		// Send ONE comprehensive email with all information
@@ -1314,9 +1311,7 @@ export const importUsersFromCSV = async (req: Request, res: Response) => {
 						);
 
 						const baseUrl =
-							process.env.CLIENT_URL ||
-							process.env.FRONTEND_URL ||
-							'http://localhost:3000';
+							process.env.FRONTEND_URL || 'http://localhost:3000';
 						const verifyUrl = `${baseUrl}/auth/verify-email?email=${encodeURIComponent(existing.email)}`;
 						const inviteUrl = `${baseUrl}/auth/set-password?email=${encodeURIComponent(existing.email)}&token=${encodeURIComponent(String(existing.passwordResetCode))}`;
 
@@ -1402,9 +1397,7 @@ export const importUsersFromCSV = async (req: Request, res: Response) => {
 						);
 
 						const baseUrl =
-							process.env.CLIENT_URL ||
-							process.env.FRONTEND_URL ||
-							'http://localhost:3000';
+							process.env.FRONTEND_URL || 'http://localhost:3000';
 						const verifyUrl = `${baseUrl}/auth/verify-email?email=${encodeURIComponent(u.email)}`;
 						const inviteUrl = `${baseUrl}/auth/set-password?email=${encodeURIComponent(u.email)}&token=${encodeURIComponent(String(u.passwordResetCode))}`;
 
@@ -1660,7 +1653,7 @@ export const sendPaymentReminder = async (req: AuthRequest, res: Response) => {
 		}
 
 		// Generate payment URL
-		const paymentUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/payment`;
+		const paymentUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/payment`;
 
 		await sendPaymentReminderEmail({
 			to: user.email,
