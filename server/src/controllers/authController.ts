@@ -1975,6 +1975,9 @@ export const getAllAgents = async (
 			userType: 'agent',
 			profileCompleted: true,
 			isEmailVerified: true,
+			isValidated: true,
+			isBlocked: { $ne: true },
+			isDeleted: { $ne: true },
 		})
 			.select(
 				'firstName lastName email phone profileImage professionalInfo createdAt',

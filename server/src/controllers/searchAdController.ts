@@ -137,9 +137,21 @@ export const getAllSearchAds = async (
 		}
 
 		const searchAds = await SearchAd.find(filter)
-			.populate('authorId', 'firstName lastName profileImage userType')
+			.populate({
+				path: 'authorId',
+				select: 'firstName lastName profileImage userType isBlocked isDeleted isValidated',
+				match: {
+					isBlocked: { $ne: true },
+					isDeleted: { $ne: true },
+					isValidated: true,
+				},
+			})
 			.sort({ createdAt: -1 });
-		res.status(200).json({ success: true, data: searchAds });
+		// Filter out ads where author is null (blocked/deleted/invalidated)
+		const filteredSearchAds = searchAds.filter(
+			(ad) => ad.authorId !== null,
+		);
+		res.status(200).json({ success: true, data: filteredSearchAds });
 	} catch (error) {
 		res.status(500).json({
 			success: false,
@@ -187,11 +199,29 @@ export const getSearchAdById = async (
 	res: Response,
 ): Promise<void> => {
 	try {
-		const searchAd = await SearchAd.findById(req.params.id).populate(
-			'authorId',
-			'firstName lastName profileImage',
-		);
+		const searchAd = await SearchAd.findById(req.params.id).populate({
+			path: 'authorId',
+			select: 'firstName lastName profileImage isBlocked isDeleted isValidated',
+		});
 		if (!searchAd) {
+			res.status(404).json({
+				success: false,
+				message: 'Annonce de recherche introuvable',
+				deleted: true,
+			});
+			return;
+		}
+
+		// Check if author is blocked, deleted, or invalidated
+		if (
+			!searchAd.authorId ||
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			(searchAd.authorId as any).isBlocked === true ||
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			(searchAd.authorId as any).isDeleted === true ||
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			(searchAd.authorId as any).isValidated === false
+		) {
 			res.status(404).json({
 				success: false,
 				message: 'Annonce de recherche introuvable',

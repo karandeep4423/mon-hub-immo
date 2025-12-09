@@ -53,6 +53,30 @@ export const createAppointment = async (
 			return;
 		}
 
+		// Check if agent account is blocked, deleted, or not validated
+		if (agent.isBlocked) {
+			res.status(403).json({
+				success: false,
+				message:
+					"Ce profil d'agent n'est plus disponible pour les rendez-vous",
+			});
+			return;
+		}
+		if (agent.isDeleted) {
+			res.status(404).json({
+				success: false,
+				message: 'Agent non trouvé',
+			});
+			return;
+		}
+		if (!agent.isValidated) {
+			res.status(403).json({
+				success: false,
+				message: "Ce profil d'agent n'est pas encore validé",
+			});
+			return;
+		}
+
 		// Prevent agents from booking appointments (only anonymous users can book)
 		if (loggedInUserId) {
 			const loggedInUser = await User.findById(loggedInUserId);

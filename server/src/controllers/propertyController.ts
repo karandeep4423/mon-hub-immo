@@ -425,7 +425,15 @@ export const getProperties = async (
 
 		// Execute query
 		let query = Property.find(filter)
-			.populate('owner', 'firstName lastName email profileImage userType')
+			.populate({
+				path: 'owner',
+				select: 'firstName lastName email profileImage userType isBlocked isDeleted isValidated',
+				match: {
+					isBlocked: { $ne: true },
+					isDeleted: { $ne: true },
+					isValidated: true,
+				},
+			})
 			.sort(sort)
 			.skip(skip);
 
@@ -434,10 +442,13 @@ export const getProperties = async (
 			query = query.limit(Number(limit));
 		}
 
-		const [properties, total] = await Promise.all([
-			query.lean().exec(),
-			Property.countDocuments(filter),
-		]);
+		const propertiesRaw = await query.lean().exec();
+
+		// Filter out properties where owner is null (blocked/deleted/invalidated)
+		const properties = propertiesRaw.filter((prop) => prop.owner !== null);
+
+		// Calculate total count based on filtered results
+		const total = properties.length;
 
 		// Calculate pagination info
 		const totalPages = limit ? Math.ceil(total / Number(limit)) : 1;
@@ -650,13 +661,31 @@ export const getPropertyById = async (
 		}
 
 		const property = await Property.findById(id)
-			.populate(
-				'owner',
-				'firstName lastName email profileImage userType phone',
-			)
+			.populate({
+				path: 'owner',
+				select: 'firstName lastName email profileImage userType phone isBlocked isDeleted isValidated',
+			})
 			.lean();
 
 		if (!property) {
+			res.status(404).json({
+				success: false,
+				message: 'Bien non trouvé',
+				deleted: true,
+			});
+			return;
+		}
+
+		// Check if owner is blocked, deleted, or invalidated
+		if (
+			!property.owner ||
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			(property.owner as any).isBlocked === true ||
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			(property.owner as any).isDeleted === true ||
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			(property.owner as any).isValidated === false
+		) {
 			res.status(404).json({
 				success: false,
 				message: 'Bien non trouvé',
