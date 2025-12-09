@@ -70,18 +70,18 @@ export default function Header() {
 									) : (
 										<Link
 											href={
-												Features.Auth.AUTH_ROUTES.SIGNUP
+												Features.Auth.AUTH_ROUTES.LOGIN
 											}
-											className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition-all duration-200"
+											className="px-4 py-2 rounded-xl bg-brand text-white text-sm font-semibold hover:bg-brand-600 shadow-md hover:shadow-brand transition-all duration-200 active:scale-98"
 										>
-											Nous rejoindre
+											Se connecter
 										</Link>
 									)}
 									<Link
-										href={Features.Auth.AUTH_ROUTES.LOGIN}
+										href={Features.Auth.AUTH_ROUTES.SIGNUP}
 										className="px-4 py-2 rounded-xl bg-brand text-white text-sm font-semibold hover:bg-brand-600 shadow-md hover:shadow-brand transition-all duration-200 active:scale-98"
 									>
-										Se connecter
+										Nous rejoindre
 									</Link>
 								</>
 							)}
@@ -166,21 +166,17 @@ export default function Header() {
 									</Link>
 								) : (
 									<Link
-										href={Features.Auth.AUTH_ROUTES.SIGNUP}
-										className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm text-center font-semibold hover:bg-gray-200 transition-all duration-200"
-										onClick={() =>
-											setIsMobileMenuOpen(false)
-										}
+										href={Features.Auth.AUTH_ROUTES.LOGIN}
+										className="px-4 py-2 rounded-xl bg-brand text-white text-sm font-semibold hover:bg-brand-600 shadow-md hover:shadow-brand transition-all duration-200 active:scale-98"
 									>
-										Nous rejoindre
+										Se connecter
 									</Link>
 								)}
 								<Link
-									href={Features.Auth.AUTH_ROUTES.LOGIN}
-									className={`px-4 py-2 rounded-xl bg-brand text-white text-sm text-center font-semibold hover:bg-brand-600 shadow-md transition-all duration-200 ${pathname === '/' ? 'col-span-2' : ''}`}
-									onClick={() => setIsMobileMenuOpen(false)}
+									href={Features.Auth.AUTH_ROUTES.SIGNUP}
+									className="px-4 py-2 rounded-xl bg-brand text-white text-sm font-semibold hover:bg-brand-600 shadow-md hover:shadow-brand transition-all duration-200 active:scale-98"
 								>
-									Se connecter
+									Nous rejoindre
 								</Link>
 							</div>
 						)}
