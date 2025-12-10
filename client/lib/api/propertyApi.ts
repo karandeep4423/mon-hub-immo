@@ -271,6 +271,7 @@ export interface PropertyFormData {
  * @property {number} [minSurface] - Minimum surface area in m²
  * @property {number} [maxSurface] - Maximum surface area in m²
  * @property {string} [transactionType] - Filter by transaction type
+ * @property {string} [ownerType] - Filter by owner type (agent or apporteur)
  * @property {number} [limit] - Number of results per page
  * @property {number} [page] - Page number for pagination
  */
@@ -285,6 +286,7 @@ export interface PropertyFilters {
 	minSurface?: number;
 	maxSurface?: number;
 	transactionType?: string;
+	ownerType?: string;
 	limit?: number;
 	page?: number;
 }

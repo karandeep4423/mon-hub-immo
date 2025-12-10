@@ -364,6 +364,7 @@ export const getProperties = async (
 			maxSurface,
 			rooms,
 			search,
+			ownerType,
 			sortBy = 'createdAt',
 			sortOrder = 'desc',
 		} = req.query;
@@ -413,6 +414,21 @@ export const getProperties = async (
 		if (search) {
 			// Sanitize search input
 			filter.$text = { $search: sanitizeInput(search) as string };
+		}
+
+		// If ownerType filter is specified, get owner IDs with that userType first
+		if (ownerType) {
+			const sanitizedOwnerType = sanitizeInput(ownerType);
+			const matchingOwners = await User.find({
+				userType: sanitizedOwnerType,
+				isBlocked: { $ne: true },
+				isDeleted: { $ne: true },
+				isValidated: true,
+			})
+				.select('_id')
+				.lean();
+			const ownerIds = matchingOwners.map((o) => o._id);
+			filter.owner = { $in: ownerIds };
 		}
 
 		// Build sort object

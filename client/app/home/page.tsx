@@ -436,6 +436,7 @@ function HomeContent() {
 		const filters: PropertyFilters = {};
 		if (debouncedSearchTerm) filters.search = debouncedSearchTerm;
 		if (typeFilter) filters.propertyType = typeFilter;
+		if (profileFilter) filters.ownerType = profileFilter;
 
 		// Add location filters - use myArea locations when in "Mon secteur" mode
 		const locationsToFilter =
@@ -461,6 +462,7 @@ function HomeContent() {
 	}, [
 		debouncedSearchTerm,
 		typeFilter,
+		profileFilter,
 		selectedLocations,
 		myAreaLocations,
 		contentFilter,
