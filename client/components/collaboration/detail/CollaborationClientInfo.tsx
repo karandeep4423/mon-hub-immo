@@ -15,7 +15,7 @@ interface CollaborationClientInfoProps {
 export const CollaborationClientInfo: React.FC<
 	CollaborationClientInfoProps
 > = ({ collaboration, property }) => {
-	const isActive = [' accepted', 'active', 'completed'].includes(
+	const isActive = ['accepted', 'active', 'completed'].includes(
 		collaboration.status,
 	);
 
