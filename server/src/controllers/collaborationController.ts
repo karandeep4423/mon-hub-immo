@@ -176,7 +176,7 @@ export const proposeCollaboration = async (
 			postOwnerId = searchAd.authorId as Types.ObjectId;
 		}
 
-		// Check for existing collaboration
+		// Check for existing active collaboration
 		const existingCollaboration = await Collaboration.findOne({
 			postId,
 			collaboratorId: userId, // Current user is the collaborator
@@ -190,6 +190,13 @@ export const proposeCollaboration = async (
 			});
 			return;
 		}
+
+		// Delete any old cancelled/rejected collaboration to allow re-collaboration
+		await Collaboration.deleteOne({
+			postId,
+			collaboratorId: userId,
+			status: { $in: ['cancelled', 'rejected'] },
+		});
 
 		// Block if the post already has an active/pending/accepted collaboration with someone else
 		const collabWithAnother = await Collaboration.findOne({
