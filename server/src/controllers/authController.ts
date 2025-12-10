@@ -1964,6 +1964,8 @@ export const getAllAgents = async (
 			isValidated: true,
 			isBlocked: { $ne: true },
 			isDeleted: { $ne: true },
+			// Only show paid agents or those with admin-granted access
+			$or: [{ isPaid: true }, { accessGrantedByAdmin: true }],
 		})
 			.select(
 				'firstName lastName email phone profileImage professionalInfo createdAt',
