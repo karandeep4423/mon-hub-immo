@@ -45,9 +45,6 @@ export const CollaborationParticipants: React.FC<
 								Propriétaire
 							</p>
 						</div>
-						<span className="px-2.5 py-0.5 text-xs font-medium rounded-full bg-brand-100 text-brand-800">
-							Agent
-						</span>
 					</div>
 				)}
 
@@ -70,9 +67,6 @@ export const CollaborationParticipants: React.FC<
 								Collaborateur
 							</p>
 						</div>
-						<span className="px-2.5 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
-							Apporteur
-						</span>
 					</div>
 				)}
 			</div>
