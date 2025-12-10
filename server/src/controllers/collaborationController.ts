@@ -1417,6 +1417,42 @@ export const completeCollaboration = async (
 		// Save the collaboration to persist changes
 		await collaboration.save();
 
+		// Auto-update post status if sale was concluded through collaboration
+		if (completionReason === 'vente_conclue_collaboration') {
+			logger.info(
+				'[CollaborationController] Updating post status after successful collaboration',
+				{
+					postType: collaboration.postType,
+					postId: collaboration.postId,
+				},
+			);
+			if (collaboration.postType === 'Property') {
+				const property = await Property.findById(collaboration.postId);
+				if (property) {
+					property.status =
+						property.transactionType === 'Location'
+							? 'rented'
+							: 'sold';
+					await property.save();
+					logger.info(
+						'[CollaborationController] Property status updated',
+						{
+							propertyId: property._id,
+							newStatus: property.status,
+						},
+					);
+				}
+			} else if (collaboration.postType === 'SearchAd') {
+				await SearchAd.findByIdAndUpdate(collaboration.postId, {
+					status: 'fulfilled',
+				});
+				logger.info(
+					'[CollaborationController] SearchAd status updated to fulfilled',
+					{ searchAdId: collaboration.postId },
+				);
+			}
+		}
+
 		res.status(200).json({
 			success: true,
 			message: 'Collaboration completed successfully',
