@@ -271,9 +271,6 @@ export const ContractViewModal: React.FC<ContractViewModalProps> = ({
 									{collaboration.postOwnerId.firstName}{' '}
 									{collaboration.postOwnerId.lastName}
 								</p>
-								<span className="inline-block mt-2 text-xs bg-info-light text-info px-2 py-1 rounded-full">
-									Agent Propriétaire
-								</span>
 							</div>
 							<div className="bg-white rounded-lg p-4 border border-gray-200">
 								<p className="text-sm text-gray-600 mb-1">
@@ -283,9 +280,6 @@ export const ContractViewModal: React.FC<ContractViewModalProps> = ({
 									{collaboration.collaboratorId.firstName}{' '}
 									{collaboration.collaboratorId.lastName}
 								</p>
-								<span className="inline-block mt-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-									Agent Apporteur
-								</span>
 							</div>
 						</div>
 					</div>
@@ -314,7 +308,7 @@ export const ContractViewModal: React.FC<ContractViewModalProps> = ({
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<div className="bg-white rounded-lg p-4 border-2 border-blue-200">
 								<p className="text-sm text-gray-600 mb-1">
-									Agent propriétaire
+									Propriétaire
 								</p>
 								<p className="text-3xl font-bold text-brand">
 									{100 - collaboration.proposedCommission}%
@@ -322,7 +316,7 @@ export const ContractViewModal: React.FC<ContractViewModalProps> = ({
 							</div>
 							<div className="bg-white rounded-lg p-4 border-2 border-green-200">
 								<p className="text-sm text-gray-600 mb-1">
-									Agent apporteur
+									Collaborateur
 								</p>
 								<p className="text-3xl font-bold text-green-600">
 									{collaboration.proposedCommission}%

@@ -248,8 +248,8 @@ export const ActivityManager: React.FC<ActivityManagerProps> = ({
 										<span>•</span>
 										<span className="capitalize">
 											{activity.author.role === 'agent'
-												? 'Agent propriétaire'
-												: 'Agent apporteur'}
+												? 'Propriétaire'
+												: 'Collaborateur'}
 										</span>
 									</div>
 								</div>

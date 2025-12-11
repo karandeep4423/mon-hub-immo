@@ -245,7 +245,7 @@ export const ProgressTracker: React.FC<ExtendedProgressTrackingProps> = ({
 														{ownerUser.lastName}
 													</span>
 													<span className="text-xs px-2 py-0.5 bg-brand-100 text-brand-800 rounded-full">
-														Mandataire
+														Propriétaire
 													</span>
 													{isOwner && (
 														<span className="text-xs text-brand font-medium">
