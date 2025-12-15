@@ -389,25 +389,25 @@ const Home = () => {
 				{/* Modern Header with Tabs */}
 				<div className="bg-white shadow-sm border-b border-gray-200">
 					<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-						<div className="py-6">
-							<h1 className="text-3xl font-bold text-gray-900 mb-6">
+						<div className="py-4 sm:py-6">
+							<h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 sm:mb-6">
 								{
 									Features.Dashboard.DASHBOARD_UI_TEXT
 										.apporteurDashboard
 								}
 							</h1>
 							{/* Tab Navigation */}
-							<nav className="flex space-x-2 overflow-x-auto">
+							<nav className="grid grid-cols-2 gap-2 sm:flex sm:space-x-2 sm:overflow-x-auto pb-2 -mb-2 sm:scrollbar-hide">
 								<button
 									onClick={() => setActiveTab('overview')}
-									className={`flex items-center px-5 py-3 text-sm font-semibold rounded-xl transition-all duration-200 whitespace-nowrap ${
+									className={`flex items-center justify-center sm:justify-start px-3 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-200 whitespace-nowrap ${
 										activeTab === 'overview'
 											? 'bg-brand text-white shadow-md'
 											: 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
 									}`}
 								>
 									<svg
-										className="w-5 h-5 mr-2"
+										className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2"
 										fill="none"
 										stroke="currentColor"
 										viewBox="0 0 24 24"
@@ -426,14 +426,14 @@ const Home = () => {
 								</button>
 								<button
 									onClick={() => setActiveTab('properties')}
-									className={`flex items-center px-5 py-3 text-sm font-semibold rounded-xl transition-all duration-200 whitespace-nowrap ${
+									className={`flex items-center justify-center sm:justify-start px-3 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-200 whitespace-nowrap ${
 										activeTab === 'properties'
 											? 'bg-brand text-white shadow-md'
 											: 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
 									}`}
 								>
 									<svg
-										className="w-5 h-5 mr-2"
+										className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2"
 										fill="none"
 										stroke="currentColor"
 										viewBox="0 0 24 24"
@@ -454,14 +454,14 @@ const Home = () => {
 									onClick={() =>
 										setActiveTab('collaborations')
 									}
-									className={`flex items-center px-5 py-3 text-sm font-semibold rounded-xl transition-all duration-200 whitespace-nowrap ${
+									className={`flex items-center justify-center sm:justify-start px-3 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-200 whitespace-nowrap ${
 										activeTab === 'collaborations'
 											? 'bg-brand text-white shadow-md'
 											: 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
 									}`}
 								>
 									<svg
-										className="w-5 h-5 mr-2"
+										className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2"
 										fill="none"
 										stroke="currentColor"
 										viewBox="0 0 24 24"
@@ -480,14 +480,14 @@ const Home = () => {
 								</button>
 								<button
 									onClick={() => setActiveTab('searches')}
-									className={`flex items-center px-5 py-3 text-sm font-semibold rounded-xl transition-all duration-200 whitespace-nowrap ${
+									className={`flex items-center justify-center sm:justify-start px-3 sm:px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold rounded-xl transition-all duration-200 whitespace-nowrap ${
 										activeTab === 'searches'
 											? 'bg-brand text-white shadow-md'
 											: 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
 									}`}
 								>
 									<svg
-										className="w-5 h-5 mr-2"
+										className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2"
 										fill="none"
 										stroke="currentColor"
 										viewBox="0 0 24 24"

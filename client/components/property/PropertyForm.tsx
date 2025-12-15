@@ -233,26 +233,28 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({
 	};
 
 	return (
-		<div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+		<div className="max-w-4xl mx-auto p-4 sm:p-6 bg-white rounded-lg shadow-lg">
 			<div className="mb-8">
-				<div className="flex items-center justify-between mb-4">
-					<h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+				<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+					<h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
 						{isEditing ? (
 							<>
-								<Edit className="w-6 h-6 text-blue-600" />
-								{Components.UI.BUTTON_TEXT.editProperty}
+								<Edit className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 flex-shrink-0" />
+								<span>
+									{Components.UI.BUTTON_TEXT.editProperty}
+								</span>
 							</>
 						) : (
 							<>
-								<PlusCircle className="w-6 h-6 text-green-600" />
-								Créer une nouvelle annonce
+								<PlusCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 flex-shrink-0" />
+								<span>Créer une nouvelle annonce</span>
 							</>
 						)}
 					</h2>
 					{onCancel && (
 						<button
 							onClick={onCancel}
-							className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200 shadow-sm hover:shadow"
+							className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200 shadow-sm hover:shadow self-start sm:self-auto"
 						>
 							<ArrowLeft className="w-4 h-4" />
 							Retour à la liste
@@ -260,11 +262,14 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({
 					)}
 				</div>
 
-				<div className="flex items-center space-x-4 mb-6">
+				<div className="flex items-center justify-between sm:justify-start sm:space-x-4 mb-6 overflow-x-auto pb-2">
 					{Array.from({ length: totalSteps }, (_, i) => (
-						<div key={i} className="flex items-center">
+						<div
+							key={i}
+							className="flex items-center flex-shrink-0"
+						>
 							<div
-								className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+								className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium ${
 									i + 1 <= currentStep
 										? 'bg-brand-600 text-white'
 										: 'bg-gray-200 text-gray-600'
@@ -274,7 +279,7 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({
 							</div>
 							{i < totalSteps - 1 && (
 								<div
-									className={`w-12 h-1 ${
+									className={`w-6 sm:w-12 h-1 mx-1 sm:mx-0 ${
 										i + 1 < currentStep
 											? 'bg-brand-600'
 											: 'bg-gray-200'
