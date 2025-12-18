@@ -67,6 +67,9 @@ const buildProfessionalInfoPayload = (data: ProfileCompletionFormData) => ({
 	alertFrequency: data.alertFrequency,
 });
 
+// Regex for valid city names (letters, accents, spaces, apostrophes, hyphens)
+const CITY_NAME_REGEX = /^[a-zA-ZÀ-ÿ\u0100-\u017F\s'-]+$/;
+
 // Validation helper
 const validateFormData = (
 	data: ProfileCompletionFormData,
@@ -84,6 +87,23 @@ const validateFormData = (
 	}
 	if (!data.coveredCities?.trim()) {
 		errors.coveredCities = 'Au moins une commune couverte est requise';
+	} else {
+		// Validate each city name format
+		const cities = data.coveredCities
+			.split(',')
+			.map((c) => c.trim())
+			.filter(Boolean);
+
+		if (cities.length === 0) {
+			errors.coveredCities = 'Au moins une commune couverte est requise';
+		} else {
+			const invalidCity = cities.find(
+				(city) => !CITY_NAME_REGEX.test(city),
+			);
+			if (invalidCity) {
+				errors.coveredCities = `Nom de ville invalide: "${invalidCity}". Utilisez uniquement des lettres et séparez les villes par des virgules (pas de points, chiffres ou autres caractères)`;
+			}
+		}
 	}
 	if (!data.yearsExperience?.trim()) {
 		errors.yearsExperience = "Les années d'expérience sont requises";

@@ -216,7 +216,7 @@ export const AUTH_PLACEHOLDERS = {
 	// Location
 	SEARCH_CITY: 'Rechercher une ville...',
 	POSTAL_CODE: '22100',
-	CITIES: 'Dinan, Saint-Malo, Dinard...',
+	CITIES: 'Dinan, Saint-Malo, Dinard (séparées par des virgules)',
 
 	// Bio
 	BIO: 'Présentez-vous en quelques mots...',

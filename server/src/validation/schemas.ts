@@ -160,7 +160,16 @@ export const completeProfileSchema = z.object({
 			.min(1, "Le rayon d'intervention est requis (minimum 1 km)")
 			.max(200, "Le rayon d'intervention ne peut pas dépasser 200 km"),
 		coveredCities: z
-			.array(z.string().min(2, 'Nom de ville invalide').max(100))
+			.array(
+				z
+					.string()
+					.min(2, 'Nom de ville invalide')
+					.max(100)
+					.regex(
+						/^[a-zA-ZÀ-ÿ\u0100-\u017F\s'-]+$/,
+						'Nom de ville invalide - utilisez uniquement des lettres, séparez les villes par des virgules',
+					),
+			)
 			.min(1, 'Au moins une commune couverte est requise'),
 		yearsExperience: z
 			.number()
