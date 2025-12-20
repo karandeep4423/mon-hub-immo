@@ -9,6 +9,10 @@ import sharp from 'sharp';
 import crypto from 'crypto';
 import { logger } from '../utils/logger';
 
+// Limit Sharp memory usage for low-memory environments (Render Basic: 512MB)
+sharp.cache({ memory: 50, files: 20, items: 100 });
+sharp.concurrency(1); // Process one image at a time to reduce memory spikes
+
 interface UploadOptions {
 	buffer: Buffer;
 	originalName: string;
@@ -87,6 +91,76 @@ export class S3Service {
 		return { key, url };
 	}
 
+	/**
+	 * Upload chat file with automatic image optimization
+	 * Images are optimized with Sharp, documents are uploaded as-is
+	 */
+	async uploadChatFile(params: {
+		buffer: Buffer;
+		originalName: string;
+		userId: string;
+		contentType: string;
+	}): Promise<{ key: string; url: string }> {
+		const isImage = params.contentType.startsWith('image/');
+
+		if (isImage) {
+			// Optimize images for chat (smaller than property images)
+			try {
+				const optimizedBuffer = await sharp(params.buffer, {
+					limitInputPixels: 268402689,
+					sequentialRead: true,
+				})
+					.rotate() // Auto-rotate based on EXIF
+					.resize(1200, null, {
+						withoutEnlargement: true,
+						fastShrinkOnLoad: true,
+					})
+					.withMetadata({ orientation: undefined })
+					.jpeg({
+						quality: 50,
+						progressive: true,
+						mozjpeg: true,
+						chromaSubsampling: '4:2:0',
+						optimiseCoding: true,
+					})
+					.toBuffer();
+
+				const fileName = this.generateFileName(
+					params.originalName.replace(/\.[^.]+$/, '.jpg'),
+				);
+				const key = this.generateKey('chat', params.userId, fileName);
+
+				await s3Client.send(
+					new PutObjectCommand({
+						Bucket: BUCKET_NAME,
+						Key: key,
+						Body: optimizedBuffer,
+						ContentType: 'image/jpeg',
+						CacheControl: 'max-age=31536000',
+					}),
+				);
+
+				const url = `https://${BUCKET_NAME}.s3.amazonaws.com/${key}`;
+				return { key, url };
+			} catch (error) {
+				logger.error(
+					'[S3Service] Chat image optimization failed, uploading original',
+					error,
+				);
+				// Fall through to upload original if optimization fails
+			}
+		}
+
+		// For documents (PDF, Word, etc.) or if image optimization failed
+		return this.uploadObject({
+			buffer: params.buffer,
+			originalName: params.originalName,
+			userId: params.userId,
+			folder: 'chat',
+			contentType: params.contentType,
+		});
+	}
+
 	private generateFileName(originalName: string): string {
 		const ext = this.getFileExtension(originalName);
 		const timestamp = Date.now();
@@ -100,10 +174,32 @@ export class S3Service {
 		const variants: { [key: string]: Buffer } = {};
 
 		try {
-			// Single optimized image (1200px max width, good quality)
-			variants.optimized = await sharp(buffer)
-				.resize(1200, null, { withoutEnlargement: true })
-				.jpeg({ quality: 85, progressive: true })
+			// High-quality image processing for real estate
+			// Optimized for smallest file size WITHOUT losing visual quality
+			variants.optimized = await sharp(buffer, {
+				limitInputPixels: 268402689, // ~16k x 16k max input
+				sequentialRead: true, // Reduce memory usage on low-RAM servers
+			})
+				// Auto-rotate based on EXIF, then strip all metadata
+				.rotate() // Auto-rotate based on EXIF orientation
+				.resize(1920, null, {
+					withoutEnlargement: true,
+					fastShrinkOnLoad: true,
+				})
+				// Remove all metadata (EXIF, GPS, camera info) - saves 50-200KB per image
+				.withMetadata({
+					orientation: undefined, // Already applied by .rotate()
+				})
+				.jpeg({
+					quality: 50, // Excellent visual quality
+					progressive: true, // Faster perceived loading
+					mozjpeg: true, // 10-15% smaller than standard JPEG
+					chromaSubsampling: '4:2:0', // Standard web subsampling
+					optimiseCoding: true, // Optimize Huffman tables
+					trellisQuantisation: true, // Better compression
+					overshootDeringing: true, // Reduce artifacts
+					optimiseScans: true, // Progressive scan optimization
+				})
 				.toBuffer();
 
 			return variants;

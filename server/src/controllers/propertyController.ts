@@ -739,6 +739,10 @@ export const createProperty = async (
 	req: AuthenticatedRequest,
 	res: Response,
 ): Promise<void> => {
+	// Track uploaded images for cleanup on failure
+	let mainImageData: { url: string; key: string } | undefined;
+	const galleryImagesData: Array<{ url: string; key: string }> = [];
+
 	try {
 		// Validate property data
 		const validationResult = validatePropertyData(req.body);
@@ -756,10 +760,10 @@ export const createProperty = async (
 			| Express.Multer.File[]
 			| undefined;
 
-		// Upload images first
-		let mainImageData: { url: string; key: string } | undefined;
-		const galleryImagesData: Array<{ url: string; key: string }> = [];
+		// Generate propertyId before upload so images go to correct folder
+		const propertyId = new mongoose.Types.ObjectId();
 
+		// Upload images first
 		if (files && !Array.isArray(files)) {
 			// Upload main image
 			if (files.mainImage && files.mainImage[0]) {
@@ -768,6 +772,7 @@ export const createProperty = async (
 					originalName: files.mainImage[0].originalname,
 					userId: req.user!.id,
 					folder: 'properties',
+					propertyId: propertyId.toString(),
 					isMainImage: true,
 				});
 				mainImageData = {
@@ -784,6 +789,7 @@ export const createProperty = async (
 						originalName: file.originalname,
 						userId: req.user!.id,
 						folder: 'properties',
+						propertyId: propertyId.toString(),
 						isMainImage: false,
 					});
 					galleryImagesData.push({
@@ -806,6 +812,7 @@ export const createProperty = async (
 		// Create property with uploaded images
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const propertyData: any = {
+			_id: propertyId, // Use pre-generated ID to match S3 folder structure
 			...validationResult.data,
 			mainImage: mainImageData,
 			galleryImages: galleryImagesData,
@@ -877,6 +884,31 @@ export const createProperty = async (
 		});
 	} catch (error) {
 		logger.error('[PropertyController] Property creation error', error);
+
+		// CLEANUP: Delete uploaded images if property save failed
+		// This prevents orphaned images in S3
+		const imagesToCleanup: string[] = [];
+		if (mainImageData?.key) {
+			imagesToCleanup.push(mainImageData.key);
+		}
+		for (const img of galleryImagesData) {
+			if (img.key) {
+				imagesToCleanup.push(img.key);
+			}
+		}
+		if (imagesToCleanup.length > 0) {
+			try {
+				await s3Service.deleteMultipleImages(imagesToCleanup);
+				logger.info(
+					`[PropertyController] Cleaned up ${imagesToCleanup.length} orphaned images after failed property creation`,
+				);
+			} catch (cleanupError) {
+				logger.error(
+					'[PropertyController] Failed to cleanup orphaned images',
+					cleanupError,
+				);
+			}
+		}
 
 		// Handle Mongoose validation errors
 		if (error instanceof Error && error.name === 'ValidationError') {

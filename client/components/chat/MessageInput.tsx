@@ -7,8 +7,9 @@ import { isEnterKeyPress } from './utils/keyboardUtils';
 import { Button } from '@/components/ui/Button';
 import { ChatApi } from '@/lib/api/chatApi';
 import { Features } from '@/lib/constants';
-
+import { handleApiError } from '@/lib/utils/errorHandler';
 import { logger } from '@/lib/utils/logger';
+import { toast } from 'react-toastify';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -181,7 +182,13 @@ const MessageInput: React.FC<MessageInputProps> = React.memo(
 					}));
 					await sendMessage({ attachments });
 				} catch (err) {
-					logger.error('Failed to upload/send attachments', err);
+					const apiError = handleApiError(
+						err,
+						'MessageInput',
+						"Échec de l'envoi du fichier",
+					);
+					logger.error('Failed to upload/send attachments', apiError);
+					toast.error(apiError.message);
 				} finally {
 					setIsUploading(false);
 					if (fileInputRef.current) fileInputRef.current.value = '';

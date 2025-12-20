@@ -90,11 +90,12 @@ router.post('/chat-file', (req: AuthRequest, res: Response) => {
 				});
 			}
 
-			const uploaded = await s3Service.uploadObject({
+			// Use uploadChatFile for automatic image optimization
+			// Images are optimized, documents (PDF, Word) are uploaded as-is
+			const uploaded = await s3Service.uploadChatFile({
 				buffer: req.file.buffer,
 				originalName: req.file.originalname,
 				userId: req.user.id,
-				folder: 'chat',
 				contentType: req.file.mimetype,
 			});
 
