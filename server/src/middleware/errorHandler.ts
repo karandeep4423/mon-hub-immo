@@ -1,4 +1,5 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
+import multer from 'multer';
 import { AppError } from '../utils/AppError';
 import { logger } from '../utils/logger';
 
@@ -21,12 +22,32 @@ export const errorHandler = (
 	err: AppError | Error,
 	req: Request,
 	res: Response,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	_next: NextFunction,
 ): void => {
 	let error = { ...err } as AppError;
 	error.message = err.message;
 
 	// Log error
 	logger.error(`[ErrorHandler] ${err.message}`, { stack: err.stack });
+
+	// Multer file upload errors
+	if (err instanceof multer.MulterError) {
+		let message = 'Erreur lors du téléchargement du fichier';
+		if (err.code === 'LIMIT_FILE_SIZE') {
+			message = 'Le fichier est trop volumineux (max 5MB)';
+		} else if (err.code === 'LIMIT_FILE_COUNT') {
+			message = 'Trop de fichiers envoyés';
+		} else if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+			message = 'Type de fichier inattendu';
+		}
+		error = new AppError(message, 400);
+	}
+
+	// File filter errors (thrown as regular Error by multer fileFilter)
+	if (err.message && err.message.includes('Type de fichier non supporté')) {
+		error = new AppError(err.message, 400);
+	}
 
 	// Mongoose bad ObjectId
 	if (err.name === 'CastError') {

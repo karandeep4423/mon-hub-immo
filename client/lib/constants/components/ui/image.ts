@@ -37,7 +37,8 @@ export const IMAGE_UPLOADER_MESSAGES = {
 	deleteError: "Échec de la suppression de l'image",
 	invalidFormat: 'Format de fichier non valide',
 	fileTooLarge: 'Le fichier est trop volumineux',
-	fileTooLargeWithSize: 'Le fichier est trop volumineux (max 5MB)',
+	fileTooLargeWithSize: (sizeMB: number) =>
+		`Le fichier est trop volumineux (max ${sizeMB}MB)`,
 	fileTypeNotSupported: 'Type de fichier non supporté',
 	maxImagesReached: (max: number) => `Maximum ${max} images autorisées`,
 	uploadGenericError: 'Erreur lors du téléchargement',

@@ -26,6 +26,7 @@ import {
 	csrfErrorHandler,
 	clearStaleCsrfCookies,
 } from './middleware/csrf';
+import { errorHandler } from './middleware/errorHandler';
 import { generalLimiter } from './middleware/rateLimiter';
 import adminRouter from './routes/admin';
 import adminChatRoutes from './routes/adminChat';
@@ -293,6 +294,9 @@ app.use('/api/payment', paymentRoutes);
 
 // CSRF error handler (must be after routes that use CSRF)
 app.use(csrfErrorHandler);
+
+// Global error handler (catches Multer, S3, and other unhandled errors)
+app.use(errorHandler);
 
 // Handle 404 routes
 app.use('*', (req, res) => {

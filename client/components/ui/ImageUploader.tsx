@@ -37,8 +37,9 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 				const error = rejectedFiles[0].errors[0];
 				if (error.code === 'file-too-large') {
 					setUploadError(
-						Components.UI.IMAGE_UPLOADER_MESSAGES
-							.fileTooLargeWithSize,
+						Components.UI.IMAGE_UPLOADER_MESSAGES.fileTooLargeWithSize(
+							Math.round(maxSize / 1024 / 1024),
+						),
 					);
 				} else if (error.code === 'file-invalid-type') {
 					setUploadError(
@@ -73,7 +74,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 			setImages(updatedImages);
 			onImagesChange(updatedImages);
 		},
-		[images, maxImages, onImagesChange],
+		[images, maxImages, maxSize, onImagesChange],
 	);
 
 	const removeImage = (id: string) => {

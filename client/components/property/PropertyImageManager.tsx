@@ -167,7 +167,7 @@ export const PropertyImageManager: React.FC<PropertyImageManagerProps> = ({
 					</h4>
 					<ImageUploader
 						onImagesChange={handleGalleryImagesChange}
-						maxImages={9}
+						maxImages={20}
 						disabled={disabled}
 					/>
 				</div>
@@ -176,7 +176,7 @@ export const PropertyImageManager: React.FC<PropertyImageManagerProps> = ({
 					(!existingGalleryImages ||
 						existingGalleryImages.length === 0) && (
 						<p className="text-sm text-gray-500 mt-2">
-							Ajoutez jusqu&apos;à 9 images supplémentaires pour
+							Ajoutez jusqu&apos;à 20 images supplémentaires pour
 							votre galerie
 						</p>
 					)}
