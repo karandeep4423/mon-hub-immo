@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ImageUploader } from '../ui/ImageUploader';
 import Image from 'next/image';
 import { Components } from '@/lib/constants';
+import { GripVertical } from 'lucide-react';
 
 interface ImageFile {
 	file: File;
@@ -16,6 +17,9 @@ interface PropertyImageManagerProps {
 	existingGalleryImages?: Array<{ url: string; key: string }>;
 	onExistingMainImageRemove?: () => void;
 	onExistingGalleryImageRemove?: (imageKey: string) => void;
+	onExistingGalleryImagesReorder?: (
+		images: Array<{ url: string; key: string }>,
+	) => void;
 	className?: string;
 	disabled?: boolean;
 }
@@ -27,11 +31,14 @@ export const PropertyImageManager: React.FC<PropertyImageManagerProps> = ({
 	existingGalleryImages = [],
 	onExistingMainImageRemove,
 	onExistingGalleryImageRemove,
+	onExistingGalleryImagesReorder,
 	className = '',
 	disabled = false,
 }) => {
 	const [mainImage, setMainImage] = useState<ImageFile[]>([]);
 	const [galleryImages, setGalleryImages] = useState<ImageFile[]>([]);
+	const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+	const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
 	const handleMainImageChange = (images: ImageFile[]) => {
 		setMainImage(images);
@@ -41,6 +48,47 @@ export const PropertyImageManager: React.FC<PropertyImageManagerProps> = ({
 	const handleGalleryImagesChange = (images: ImageFile[]) => {
 		setGalleryImages(images);
 		onGalleryImagesChange?.(images);
+	};
+
+	// Drag and drop reordering for existing gallery images
+	const handleDragStart = (e: React.DragEvent, index: number) => {
+		setDraggedIndex(index);
+		e.dataTransfer.effectAllowed = 'move';
+		e.dataTransfer.setData('text/plain', index.toString());
+	};
+
+	const handleDragOver = (e: React.DragEvent, index: number) => {
+		e.preventDefault();
+		e.dataTransfer.dropEffect = 'move';
+		if (draggedIndex !== index) {
+			setDragOverIndex(index);
+		}
+	};
+
+	const handleDragLeave = () => {
+		setDragOverIndex(null);
+	};
+
+	const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+		e.preventDefault();
+		if (draggedIndex === null || draggedIndex === dropIndex) {
+			setDraggedIndex(null);
+			setDragOverIndex(null);
+			return;
+		}
+
+		const newImages = [...existingGalleryImages];
+		const [draggedImage] = newImages.splice(draggedIndex, 1);
+		newImages.splice(dropIndex, 0, draggedImage);
+
+		onExistingGalleryImagesReorder?.(newImages);
+		setDraggedIndex(null);
+		setDragOverIndex(null);
+	};
+
+	const handleDragEnd = () => {
+		setDraggedIndex(null);
+		setDragOverIndex(null);
 	};
 
 	return (
@@ -123,19 +171,44 @@ export const PropertyImageManager: React.FC<PropertyImageManagerProps> = ({
 						<h4 className="text-sm font-medium text-gray-700 mb-2">
 							Images actuelles:
 						</h4>
-						<div className=" h-full object-cover   grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4  w-full">
+						<p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+							<GripVertical className="w-3 h-3" />
+							Glissez pour réorganiser l&apos;ordre des images
+						</p>
+						<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 w-full">
 							{existingGalleryImages.map((image, index) => (
 								<div
 									key={image.key || index}
-									className="relative inline-block w-32 h-32"
+									draggable={!disabled}
+									onDragStart={(e) =>
+										handleDragStart(e, index)
+									}
+									onDragOver={(e) => handleDragOver(e, index)}
+									onDragLeave={handleDragLeave}
+									onDrop={(e) => handleDrop(e, index)}
+									onDragEnd={handleDragEnd}
+									className={`relative group cursor-grab active:cursor-grabbing transition-all duration-200 ${
+										draggedIndex === index
+											? 'opacity-50 scale-95'
+											: ''
+									} ${
+										dragOverIndex === index
+											? 'ring-2 ring-brand-500 ring-offset-2'
+											: ''
+									}`}
 								>
-									<Image
-										src={image.url}
-										alt={`Image galerie ${index + 1}`}
-										width={200}
-										height={200}
-										className="w-full h-full object-cover rounded-lg border-2 border-gray-200"
-									/>
+									<div className="aspect-square w-full rounded-lg overflow-hidden border-2 border-gray-200 relative">
+										<Image
+											src={image.url}
+											alt={`Image galerie ${index + 1}`}
+											fill
+											className="object-cover pointer-events-none"
+										/>
+										{/* Drag handle */}
+										<div className="absolute top-1 left-1 bg-white/80 rounded p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+											<GripVertical className="w-4 h-4 text-gray-600" />
+										</div>
+									</div>
 									<button
 										type="button"
 										onClick={() =>
@@ -151,9 +224,6 @@ export const PropertyImageManager: React.FC<PropertyImageManagerProps> = ({
 								</div>
 							))}
 						</div>
-						<p className="text-xs text-gray-500 mt-2">
-							Cliquez sur × pour supprimer une image de la galerie
-						</p>
 					</div>
 				)}
 

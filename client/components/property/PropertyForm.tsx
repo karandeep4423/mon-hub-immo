@@ -105,6 +105,12 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({
 		);
 	};
 
+	const handleExistingGalleryImagesReorder = (
+		images: Array<{ url: string; key: string }>,
+	) => {
+		setExistingGalleryImages(images);
+	};
+
 	const handleNext = () => {
 		logger.debug('[PropertyForm] handleNext called:', {
 			currentStep,
@@ -342,6 +348,9 @@ export const PropertyForm: React.FC<PropertyFormProps> = ({
 						}
 						handleExistingGalleryImageRemove={
 							handleExistingGalleryImageRemove
+						}
+						handleExistingGalleryImagesReorder={
+							handleExistingGalleryImagesReorder
 						}
 						isUploading={isUploading}
 					/>

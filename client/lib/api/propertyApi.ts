@@ -716,7 +716,7 @@ export class PropertyService {
 				mainImage: newMainImage,
 				galleryImages:
 					newGalleryImages.length > 0 ? newGalleryImages : undefined,
-				// Existing images to keep
+				// Existing images to keep (in reordered state)
 				existingMainImage: !newMainImage
 					? existingMainImage
 					: undefined,

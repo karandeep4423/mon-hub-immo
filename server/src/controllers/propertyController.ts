@@ -1049,7 +1049,7 @@ export const updateProperty = async (
 		// Handle gallery images
 		const galleryImagesData: ImageKeyData[] = [];
 
-		// Add existing gallery images that should be kept
+		// Add existing gallery images that should be kept (in the new order from client)
 		if (existingGalleryImages && Array.isArray(existingGalleryImages)) {
 			galleryImagesData.push(...existingGalleryImages);
 		}

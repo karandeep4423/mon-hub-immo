@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { useDropzone, FileRejection } from 'react-dropzone';
 import imageCompression from 'browser-image-compression';
 import { Components } from '@/lib/constants';
+import { GripVertical } from 'lucide-react';
 
 interface ImageFile {
 	file: File;
@@ -40,6 +41,50 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 	const [images, setImages] = useState<ImageFile[]>([]);
 	const [uploadError, setUploadError] = useState<string>('');
 	const [isCompressing, setIsCompressing] = useState(false);
+	const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+	const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+	// Drag and drop reordering handlers
+	const handleDragStart = (e: React.DragEvent, index: number) => {
+		setDraggedIndex(index);
+		e.dataTransfer.effectAllowed = 'move';
+		e.dataTransfer.setData('text/plain', index.toString());
+	};
+
+	const handleDragOver = (e: React.DragEvent, index: number) => {
+		e.preventDefault();
+		e.dataTransfer.dropEffect = 'move';
+		if (draggedIndex !== index) {
+			setDragOverIndex(index);
+		}
+	};
+
+	const handleDragLeave = () => {
+		setDragOverIndex(null);
+	};
+
+	const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+		e.preventDefault();
+		if (draggedIndex === null || draggedIndex === dropIndex) {
+			setDraggedIndex(null);
+			setDragOverIndex(null);
+			return;
+		}
+
+		const newImages = [...images];
+		const [draggedImage] = newImages.splice(draggedIndex, 1);
+		newImages.splice(dropIndex, 0, draggedImage);
+
+		setImages(newImages);
+		onImagesChange(newImages);
+		setDraggedIndex(null);
+		setDragOverIndex(null);
+	};
+
+	const handleDragEnd = () => {
+		setDraggedIndex(null);
+		setDragOverIndex(null);
+	};
 
 	const onDrop = useCallback(
 		async (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
@@ -81,11 +126,6 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 			try {
 				const compressedImages = await Promise.all(
 					acceptedFiles.map(async (file) => {
-						const originalSize = file.size / 1024 / 1024; // MB
-						console.log(
-							`[ImageUploader] Original: ${file.name} - ${originalSize.toFixed(2)} MB`,
-						);
-
 						const compressedFile = await imageCompression(
 							file,
 							COMPRESSION_OPTIONS,
@@ -102,11 +142,6 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 							{
 								type: 'image/jpeg',
 							},
-						);
-
-						const compressedSize = jpegFile.size / 1024 / 1024; // MB
-						console.log(
-							`[ImageUploader] Compressed to JPEG: ${jpegFileName} - ${compressedSize.toFixed(2)} MB (${((1 - compressedSize / originalSize) * 100).toFixed(0)}% reduction)`,
 						);
 
 						return {
@@ -225,30 +260,66 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 				</div>
 			)}
 
-			{/* Image Previews */}
+			{/* Image Previews - Drag to reorder */}
 			{images.length > 0 && (
-				<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-					{images.map((image) => (
-						<div key={image.id} className="relative group">
-							<div className="aspect-square rounded-lg overflow-hidden bg-gray-100 relative">
-								<Image
-									src={image.preview}
-									alt={Components.UI.IMAGE_ALT_TEXT.preview}
-									fill
-									className="object-cover"
-									unoptimized
-								/>
-							</div>
-							<button
-								type="button"
-								onClick={() => removeImage(image.id)}
-								className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+				<>
+					<p className="text-xs text-gray-500 flex items-center gap-1">
+						<GripVertical className="w-3 h-3" />
+						Glissez les images pour les réorganiser. La première
+						image sera l&apos;image principale.
+					</p>
+					<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+						{images.map((image, index) => (
+							<div
+								key={image.id}
+								draggable
+								onDragStart={(e) => handleDragStart(e, index)}
+								onDragOver={(e) => handleDragOver(e, index)}
+								onDragLeave={handleDragLeave}
+								onDrop={(e) => handleDrop(e, index)}
+								onDragEnd={handleDragEnd}
+								className={`relative group cursor-grab active:cursor-grabbing transition-all duration-200 ${
+									draggedIndex === index
+										? 'opacity-50 scale-95'
+										: ''
+								} ${
+									dragOverIndex === index
+										? 'ring-2 ring-brand-500 ring-offset-2'
+										: ''
+								}`}
 							>
-								×
-							</button>
-						</div>
-					))}
-				</div>
+								<div className="aspect-square rounded-lg overflow-hidden bg-gray-100 relative">
+									<Image
+										src={image.preview}
+										alt={
+											Components.UI.IMAGE_ALT_TEXT.preview
+										}
+										fill
+										className="object-cover pointer-events-none"
+										unoptimized
+									/>
+									{/* Main image badge */}
+									{index === 0 && (
+										<div className="absolute top-1 left-1 bg-brand-600 text-white text-xs px-2 py-0.5 rounded">
+											Principale
+										</div>
+									)}
+									{/* Drag handle */}
+									<div className="absolute top-1 right-8 bg-white/80 rounded p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+										<GripVertical className="w-4 h-4 text-gray-600" />
+									</div>
+								</div>
+								<button
+									type="button"
+									onClick={() => removeImage(image.id)}
+									className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+								>
+									×
+								</button>
+							</div>
+						))}
+					</div>
+				</>
 			)}
 
 			{/* Image Count */}

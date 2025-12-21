@@ -33,6 +33,7 @@ interface PropertyFormStep4Props {
 	existingGalleryImages: ExistingImage[];
 	handleExistingMainImageRemove: () => void;
 	handleExistingGalleryImageRemove: (imageKey: string) => void;
+	handleExistingGalleryImagesReorder?: (images: ExistingImage[]) => void;
 	isUploading: boolean;
 }
 
@@ -46,6 +47,7 @@ export const PropertyFormStep4: React.FC<PropertyFormStep4Props> = ({
 	existingGalleryImages,
 	handleExistingMainImageRemove,
 	handleExistingGalleryImageRemove,
+	handleExistingGalleryImagesReorder,
 	isUploading,
 }) => {
 	return (
@@ -61,6 +63,9 @@ export const PropertyFormStep4: React.FC<PropertyFormStep4Props> = ({
 				existingGalleryImages={existingGalleryImages}
 				onExistingMainImageRemove={handleExistingMainImageRemove}
 				onExistingGalleryImageRemove={handleExistingGalleryImageRemove}
+				onExistingGalleryImagesReorder={
+					handleExistingGalleryImagesReorder
+				}
 				disabled={isUploading}
 			/>
 			{errors.mainImage && (
