@@ -1,6 +1,11 @@
 // client/lib/propertyService.ts
 import { api } from '../api';
 import { handleApiError } from '../utils/errorHandler';
+import {
+	uploadPropertyImages,
+	type UploadedImageData,
+} from '../services/s3UploadService';
+import { logger } from '../utils/logger';
 
 /**
  * Sanitize clientInfo to remove empty strings from enum fields
@@ -532,13 +537,14 @@ export class PropertyService {
 	}
 
 	/**
-	 * Create a new property with images in single request
+	 * Create a new property with direct S3 image uploads
 	 *
 	 * @static
 	 * @async
 	 * @param {Omit<PropertyFormData, 'mainImage' | 'galleryImages'>} propertyData - Property data excluding image fields
-	 * @param {File} [mainImageFile] - Main property image file
-	 * @param {File[]} [galleryImageFiles=[]] - Additional gallery image files
+	 * @param {File} [mainImageFile] - Main property image file (JPEG)
+	 * @param {File[]} [galleryImageFiles=[]] - Additional gallery image files (JPEG)
+	 * @param {Function} [onUploadProgress] - Optional callback for upload progress
 	 * @returns {Promise<Property>} The created property
 	 * @throws {Error} If the API request fails
 	 *
@@ -547,7 +553,8 @@ export class PropertyService {
 	 * const property = await PropertyService.createProperty(
 	 *   { title: 'Appartement Paris', price: 300000, ... },
 	 *   mainImageFile,
-	 *   [gallery1, gallery2]
+	 *   [gallery1, gallery2],
+	 *   (current, total, name) => console.log(`Uploading ${name}: ${current}/${total}`)
 	 * );
 	 * ```
 	 */
@@ -555,57 +562,71 @@ export class PropertyService {
 		propertyData: Omit<PropertyFormData, 'mainImage' | 'galleryImages'>,
 		mainImageFile?: File,
 		galleryImageFiles: File[] = [],
+		onUploadProgress?: (
+			current: number,
+			total: number,
+			fileName: string,
+		) => void,
 	): Promise<Property> {
-		try {
-			const formData = new FormData();
+		let uploadedImages: {
+			propertyId: string;
+			mainImage?: UploadedImageData;
+			galleryImages: UploadedImageData[];
+		} | null = null;
 
+		try {
+			// Step 1: Upload images directly to S3
+			if (!mainImageFile) {
+				throw new Error("L'image principale est requise");
+			}
+
+			logger.info(
+				'[PropertyService] Starting direct S3 upload for new property',
+			);
+
+			uploadedImages = await uploadPropertyImages({
+				mainImageFile,
+				galleryImageFiles,
+				onProgress: onUploadProgress,
+			});
+
+			logger.info(
+				`[PropertyService] Uploaded images to S3, propertyId: ${uploadedImages.propertyId}`,
+			);
+
+			// Step 2: Create property with image keys
 			// Sanitize clientInfo before sending
 			const sanitizedData = {
 				...propertyData,
 				clientInfo: sanitizeClientInfo(propertyData.clientInfo),
 			};
 
-			// Add property data
-			Object.entries(sanitizedData).forEach(([key, value]) => {
-				if (value !== undefined && value !== null) {
-					if (Array.isArray(value)) {
-						value.forEach((item, index) => {
-							formData.append(`${key}[${index}]`, String(item));
-						});
-					} else if (
-						typeof value === 'object' &&
-						key === 'clientInfo'
-					) {
-						// Stringify nested objects like clientInfo
-						formData.append(key, JSON.stringify(value));
-					} else {
-						formData.append(key, String(value));
-					}
-				}
-			});
-
-			// Add main image
-			if (mainImageFile) {
-				formData.append('mainImage', mainImageFile);
-			}
-
-			// Add gallery images
-			galleryImageFiles.forEach((file) => {
-				formData.append('galleryImages', file);
-			});
+			const requestBody = {
+				...sanitizedData,
+				propertyId: uploadedImages.propertyId,
+				mainImage: uploadedImages.mainImage,
+				galleryImages: uploadedImages.galleryImages,
+			};
 
 			const response = await api.post<PropertyResponse>(
 				'property/create-property',
-				formData,
-				{
-					headers: {
-						'Content-Type': 'multipart/form-data',
-					},
-					timeout: 120000, // 2 minutes timeout for image uploads
-				},
+				requestBody,
 			);
+
+			logger.info(
+				`[PropertyService] Property created: ${response.data.data._id}`,
+			);
+
 			return response.data.data;
 		} catch (error) {
+			// If property creation fails but images were uploaded, they will be orphaned
+			// The server will clean them up, but we log for debugging
+			if (uploadedImages) {
+				logger.warn(
+					`[PropertyService] Property creation failed after S3 upload. Images may be orphaned: ${uploadedImages.propertyId}`,
+				);
+			}
+
 			throw handleApiError(
 				error,
 				'PropertyService.createProperty',
@@ -615,16 +636,17 @@ export class PropertyService {
 	}
 
 	/**
-	 * Update a property with images in single request
+	 * Update a property with direct S3 image uploads
 	 *
 	 * @static
 	 * @async
 	 * @param {string} propertyId - The ID of the property to update
 	 * @param {Omit<PropertyFormData, 'mainImage' | 'galleryImages'>} propertyData - Updated property data
-	 * @param {File} [newMainImageFile] - New main image file (optional)
-	 * @param {File[]} [newGalleryImageFiles=[]] - New gallery image files
+	 * @param {File} [newMainImageFile] - New main image file (optional, JPEG)
+	 * @param {File[]} [newGalleryImageFiles=[]] - New gallery image files (JPEG)
 	 * @param {{ url: string; key: string } | null} [existingMainImage] - Existing main image to keep
 	 * @param {Array<{ url: string; key: string }>} [existingGalleryImages=[]] - Existing gallery images to keep
+	 * @param {Function} [onUploadProgress] - Optional callback for upload progress
 	 * @returns {Promise<Property>} The updated property
 	 * @throws {Error} If the API request fails
 	 *
@@ -636,7 +658,8 @@ export class PropertyService {
 	 *   newMainImage,
 	 *   [],
 	 *   existingMainImage,
-	 *   existingGallery
+	 *   existingGallery,
+	 *   (current, total, name) => console.log(`Uploading ${name}`)
 	 * );
 	 * ```
 	 */
@@ -647,70 +670,66 @@ export class PropertyService {
 		newGalleryImageFiles: File[] = [],
 		existingMainImage?: { url: string; key: string } | null,
 		existingGalleryImages: Array<{ url: string; key: string }> = [],
+		onUploadProgress?: (
+			current: number,
+			total: number,
+			fileName: string,
+		) => void,
 	): Promise<Property> {
 		try {
-			const formData = new FormData();
+			// Step 1: Upload new images directly to S3 if any
+			let newMainImage: UploadedImageData | undefined;
+			const newGalleryImages: UploadedImageData[] = [];
 
+			if (newMainImageFile || newGalleryImageFiles.length > 0) {
+				logger.info(
+					'[PropertyService] Starting direct S3 upload for property update',
+				);
+
+				const uploadResult = await uploadPropertyImages({
+					mainImageFile: newMainImageFile,
+					galleryImageFiles: newGalleryImageFiles,
+					propertyId, // Use existing property ID for folder structure
+					onProgress: onUploadProgress,
+				});
+
+				if (uploadResult.mainImage) {
+					newMainImage = uploadResult.mainImage;
+				}
+				newGalleryImages.push(...uploadResult.galleryImages);
+
+				logger.info(
+					`[PropertyService] Uploaded ${newMainImage ? 1 : 0} main + ${newGalleryImages.length} gallery images to S3`,
+				);
+			}
+
+			// Step 2: Prepare request body
 			// Sanitize clientInfo before sending
 			const sanitizedData = {
 				...propertyData,
 				clientInfo: sanitizeClientInfo(propertyData.clientInfo),
 			};
 
-			// Add property data
-			Object.entries(sanitizedData).forEach(([key, value]) => {
-				if (value !== undefined && value !== null) {
-					if (Array.isArray(value)) {
-						value.forEach((item, index) => {
-							formData.append(`${key}[${index}]`, String(item));
-						});
-					} else if (
-						typeof value === 'object' &&
-						key === 'clientInfo'
-					) {
-						// Stringify nested objects like clientInfo
-						formData.append(key, JSON.stringify(value));
-					} else {
-						formData.append(key, String(value));
-					}
-				}
-			});
-
-			// Add new main image if provided
-			if (newMainImageFile) {
-				formData.append('mainImage', newMainImageFile);
-			}
-
-			// Add new gallery images
-			newGalleryImageFiles.forEach((file) => {
-				formData.append('galleryImages', file);
-			});
-
-			// Add existing images to keep
-			if (existingMainImage) {
-				formData.append(
-					'existingMainImage',
-					JSON.stringify(existingMainImage),
-				);
-			}
-
-			if (existingGalleryImages.length > 0) {
-				formData.append(
-					'existingGalleryImages',
-					JSON.stringify(existingGalleryImages),
-				);
-			}
+			const requestBody = {
+				...sanitizedData,
+				// New images uploaded via presigned URL
+				mainImage: newMainImage,
+				galleryImages:
+					newGalleryImages.length > 0 ? newGalleryImages : undefined,
+				// Existing images to keep
+				existingMainImage: !newMainImage
+					? existingMainImage
+					: undefined,
+				existingGalleryImages,
+			};
 
 			const response = await api.put<PropertyResponse>(
 				`/property/${propertyId}/update`,
-				formData,
-				{
-					headers: {
-						'Content-Type': 'multipart/form-data',
-					},
-					timeout: 120000, // 2 minutes timeout for image uploads
-				},
+				requestBody,
 			);
+
+			logger.info(`[PropertyService] Property updated: ${propertyId}`);
+
 			return response.data.data;
 		} catch (error) {
 			throw handleApiError(

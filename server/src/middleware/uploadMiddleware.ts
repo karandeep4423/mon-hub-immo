@@ -30,7 +30,7 @@ const fileFilter = (
 
 const limits = {
 	fileSize: 5 * 1024 * 1024, // 5MB
-	files: 20, // Max 20 files at once
+	files: 21, // Max 21 files (1 main + 20 gallery)
 };
 
 export const uploadMiddleware = multer({
@@ -39,17 +39,8 @@ export const uploadMiddleware = multer({
 	limits,
 });
 
-// Single image upload
+// Single image upload (for profile images)
 export const uploadSingle = uploadMiddleware.single('image');
-
-// Multiple images upload for property galleries
-export const uploadMultiple = uploadMiddleware.array('images', 20);
-
-// Mixed upload for property (main + gallery)
-export const uploadProperty = uploadMiddleware.fields([
-	{ name: 'mainImage', maxCount: 1 },
-	{ name: 'galleryImages', maxCount: 20 },
-]);
 
 // ========================
 // Chat files (images + docs)
@@ -140,8 +131,8 @@ const csvFileFilter = (
 	const allowedExtensions = ['.csv'];
 
 	const hasValidMime = allowedMimes.includes(file.mimetype);
-	const hasValidExt = allowedExtensions.some(ext =>
-		file.originalname.toLowerCase().endsWith(ext)
+	const hasValidExt = allowedExtensions.some((ext) =>
+		file.originalname.toLowerCase().endsWith(ext),
 	);
 
 	if (hasValidMime || hasValidExt) {

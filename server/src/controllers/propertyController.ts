@@ -734,14 +734,22 @@ export const getPropertyById = async (
 			message: 'Erreur lors de la récupération du bien',
 		});
 	}
-}; // Create property with images
+};
+
+// Interface for direct S3 upload image data
+interface ImageKeyData {
+	key: string;
+	url: string;
+}
+
+// Create property with pre-uploaded images (direct S3 upload)
 export const createProperty = async (
 	req: AuthenticatedRequest,
 	res: Response,
 ): Promise<void> => {
-	// Track uploaded images for cleanup on failure
-	let mainImageData: { url: string; key: string } | undefined;
-	const galleryImagesData: Array<{ url: string; key: string }> = [];
+	// Track image keys for cleanup on failure
+	let mainImageData: ImageKeyData | undefined;
+	const galleryImagesData: ImageKeyData[] = [];
 
 	try {
 		// Validate property data
@@ -755,53 +763,24 @@ export const createProperty = async (
 			return;
 		}
 
-		const files = req.files as
-			| { [fieldname: string]: Express.Multer.File[] }
-			| Express.Multer.File[]
-			| undefined;
+		// Extract image data from request body (sent after direct S3 upload)
+		const { propertyId, mainImage, galleryImages } = req.body as {
+			propertyId?: string;
+			mainImage?: ImageKeyData;
+			galleryImages?: ImageKeyData[];
+		};
 
-		// Generate propertyId before upload so images go to correct folder
-		const propertyId = new mongoose.Types.ObjectId();
-
-		// Upload images first
-		if (files && !Array.isArray(files)) {
-			// Upload main image
-			if (files.mainImage && files.mainImage[0]) {
-				const mainImageVariants = await s3Service.uploadImage({
-					buffer: files.mainImage[0].buffer,
-					originalName: files.mainImage[0].originalname,
-					userId: req.user!.id,
-					folder: 'properties',
-					propertyId: propertyId.toString(),
-					isMainImage: true,
-				});
-				mainImageData = {
-					url: mainImageVariants[0]?.url,
-					key: mainImageVariants[0]?.key,
-				};
-			}
-
-			// Upload gallery images
-			if (files.galleryImages) {
-				for (const file of files.galleryImages) {
-					const galleryImageVariants = await s3Service.uploadImage({
-						buffer: file.buffer,
-						originalName: file.originalname,
-						userId: req.user!.id,
-						folder: 'properties',
-						propertyId: propertyId.toString(),
-						isMainImage: false,
-					});
-					galleryImagesData.push({
-						url: galleryImageVariants[0]?.url,
-						key: galleryImageVariants[0]?.key,
-					});
-				}
-			}
+		// Validate propertyId
+		if (!propertyId || !mongoose.Types.ObjectId.isValid(propertyId)) {
+			res.status(400).json({
+				success: false,
+				message: 'ID de propriété invalide',
+			});
+			return;
 		}
 
-		// Ensure main image is provided
-		if (!mainImageData) {
+		// Validate main image is provided
+		if (!mainImage?.key || !mainImage?.url) {
 			res.status(400).json({
 				success: false,
 				message: "L'image principale est requise",
@@ -809,10 +788,36 @@ export const createProperty = async (
 			return;
 		}
 
+		// Verify images exist in S3 before creating property
+		const keysToVerify = [mainImage.key];
+		if (galleryImages && Array.isArray(galleryImages)) {
+			keysToVerify.push(...galleryImages.map((img) => img.key));
+		}
+
+		const verification = await s3Service.verifyImagesExist(keysToVerify);
+		if (!verification.valid) {
+			logger.warn(
+				`[PropertyController] Missing images in S3: ${verification.missing.join(', ')}`,
+			);
+			res.status(400).json({
+				success: false,
+				message:
+					'Certaines images sont manquantes. Veuillez réessayer.',
+				missingImages: verification.missing,
+			});
+			return;
+		}
+
+		// Store image data for cleanup on failure
+		mainImageData = mainImage;
+		if (galleryImages && Array.isArray(galleryImages)) {
+			galleryImagesData.push(...galleryImages);
+		}
+
 		// Create property with uploaded images
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const propertyData: any = {
-			_id: propertyId, // Use pre-generated ID to match S3 folder structure
+			_id: new mongoose.Types.ObjectId(propertyId),
 			...validationResult.data,
 			mainImage: mainImageData,
 			galleryImages: galleryImagesData,
@@ -952,7 +957,9 @@ export const createProperty = async (
 			}),
 		});
 	}
-}; // Update property with images
+};
+
+// Update property with pre-uploaded images (direct S3 upload)
 export const updateProperty = async (
 	req: AuthenticatedRequest,
 	res: Response,
@@ -997,56 +1004,50 @@ export const updateProperty = async (
 			return;
 		}
 
-		const files = req.files as
-			| { [fieldname: string]: Express.Multer.File[] }
-			| Express.Multer.File[]
-			| undefined;
-
-		// Parse existing images to keep (sent as JSON in body)
-		const existingMainImage = req.body.existingMainImage
-			? JSON.parse(req.body.existingMainImage)
-			: null;
-		const existingGalleryImages = req.body.existingGalleryImages
-			? JSON.parse(req.body.existingGalleryImages)
-			: [];
+		// Extract image data from request body (direct S3 upload flow)
+		const {
+			mainImage,
+			galleryImages,
+			existingMainImage,
+			existingGalleryImages,
+		} = req.body as {
+			mainImage?: ImageKeyData;
+			galleryImages?: ImageKeyData[];
+			existingMainImage?: ImageKeyData;
+			existingGalleryImages?: ImageKeyData[];
+		};
 
 		// Collect images to delete from S3
 		const imagesToDelete: string[] = [];
 
 		// Handle main image updates
-		let mainImageData: { url: string; key: string } | undefined;
+		let mainImageData: ImageKeyData | undefined;
 
-		if (
-			files &&
-			!Array.isArray(files) &&
-			files.mainImage &&
-			files.mainImage[0]
-		) {
-			// New main image uploaded, delete old one
+		if (mainImage?.key && mainImage?.url) {
+			// New main image uploaded via presigned URL
+			// Verify it exists in S3
+			const exists = await s3Service.verifyImageExists(mainImage.key);
+			if (!exists) {
+				res.status(400).json({
+					success: false,
+					message:
+						"L'image principale n'a pas été téléchargée correctement",
+				});
+				return;
+			}
+
+			// Delete old main image
 			if (existingProperty.mainImage?.key) {
 				imagesToDelete.push(existingProperty.mainImage.key);
 			}
-
-			// Upload new main image
-			const mainImageVariants = await s3Service.uploadImage({
-				buffer: files.mainImage[0].buffer,
-				originalName: files.mainImage[0].originalname,
-				userId: req.user!.id,
-				folder: 'properties',
-				propertyId: id,
-				isMainImage: true,
-			});
-			mainImageData = {
-				url: mainImageVariants[0]?.url,
-				key: mainImageVariants[0]?.key,
-			};
-		} else if (existingMainImage) {
+			mainImageData = mainImage;
+		} else if (existingMainImage?.key && existingMainImage?.url) {
 			// Keep existing main image
 			mainImageData = existingMainImage;
 		}
 
-		// Handle gallery images updates
-		const galleryImagesData: Array<{ url: string; key: string }> = [];
+		// Handle gallery images
+		const galleryImagesData: ImageKeyData[] = [];
 
 		// Add existing gallery images that should be kept
 		if (existingGalleryImages && Array.isArray(existingGalleryImages)) {
@@ -1057,9 +1058,8 @@ export const updateProperty = async (
 		if (existingProperty.galleryImages) {
 			for (const oldImage of existingProperty.galleryImages) {
 				if (oldImage.key) {
-					const isKept = existingGalleryImages.some(
-						(kept: { key: string; url: string }) =>
-							kept.key === oldImage.key,
+					const isKept = existingGalleryImages?.some(
+						(kept: ImageKeyData) => kept.key === oldImage.key,
 					);
 					if (!isKept) {
 						imagesToDelete.push(oldImage.key);
@@ -1068,22 +1068,22 @@ export const updateProperty = async (
 			}
 		}
 
-		// Upload new gallery images
-		if (files && !Array.isArray(files) && files.galleryImages) {
-			for (const file of files.galleryImages) {
-				const galleryImageVariants = await s3Service.uploadImage({
-					buffer: file.buffer,
-					originalName: file.originalname,
-					userId: req.user!.id,
-					folder: 'properties',
-					propertyId: id,
-					isMainImage: false,
-				});
-				galleryImagesData.push({
-					url: galleryImageVariants[0]?.url,
-					key: galleryImageVariants[0]?.key,
-				});
+		// Add new gallery images (uploaded via presigned URL)
+		if (galleryImages && Array.isArray(galleryImages)) {
+			// Verify all new images exist in S3
+			const newKeys = galleryImages.map((img) => img.key);
+			if (newKeys.length > 0) {
+				const verification = await s3Service.verifyImagesExist(newKeys);
+				if (!verification.valid) {
+					res.status(400).json({
+						success: false,
+						message: 'Certaines images de galerie sont manquantes',
+						missingImages: verification.missing,
+					});
+					return;
+				}
 			}
+			galleryImagesData.push(...galleryImages);
 		}
 
 		// Delete removed images from S3
@@ -1100,7 +1100,9 @@ export const updateProperty = async (
 				);
 				// Continue with property update even if S3 cleanup fails
 			}
-		} // Ensure main image is provided
+		}
+
+		// Ensure main image is provided
 		if (!mainImageData) {
 			res.status(400).json({
 				success: false,

@@ -36,6 +36,7 @@
 		"@typescript-eslint/eslint-plugin": "^8.37.0",
 		"@typescript-eslint/parser": "^8.37.0",
 		"axios": "^1.10.0",
+		"browser-image-compression": "^2.0.2",
 		"dompurify": "^3.3.0",
 		"emoji-picker-react": "^4.15.0",
 		"eslint-config-prettier": "^10.1.5",

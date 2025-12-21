@@ -14,7 +14,6 @@ import { requireActiveSubscription } from '../middleware/subscription';
 import { requireOwnership, requireRole } from '../middleware/authorize';
 import { Property } from '../models/Property';
 import { updatePropertyStatusValidation } from '../middleware/validation';
-import { uploadProperty } from '../middleware/uploadMiddleware';
 
 const router = Router();
 
@@ -22,28 +21,22 @@ const router = Router();
 router.get('/', getProperties);
 router.get('/:id', getPropertyById);
 
-// Combined property creation with image upload
-// Agents, apporteurs, and admins can create/manage properties
+// Property creation with direct S3 upload (no multer)
+// Images are uploaded directly to S3 via presigned URLs, then property is created with image keys
 router.post(
 	'/create-property',
 	authenticateToken,
 	requireActiveSubscription,
 	requireRole(['agent', 'apporteur', 'admin']),
-	uploadProperty,
 	createProperty,
 );
 
 // Protected routes (require authentication + active subscription)
 router.use(authenticateToken, requireActiveSubscription);
 
-// Combined property update with image upload
-// Ownership verified by middleware
-router.put(
-	'/:id/update',
-	requireOwnership(Property),
-	uploadProperty,
-	updateProperty,
-);
+// Property update with direct S3 upload (no multer)
+// Images are uploaded directly to S3 via presigned URLs
+router.put('/:id/update', requireOwnership(Property), updateProperty);
 
 // Delete property - ownership verified by middleware
 router.delete('/:id', requireOwnership(Property), deleteProperty);

@@ -3,15 +3,20 @@ import {
 	PutObjectCommand,
 	DeleteObjectCommand,
 	CopyObjectCommand,
+	HeadObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import sharp from 'sharp';
 import crypto from 'crypto';
 import { logger } from '../utils/logger';
 
+// Constants for presigned URL configuration
+const PRESIGNED_URL_EXPIRY = 900; // 15 minutes
+const ALLOWED_CONTENT_TYPE = 'image/jpeg';
+
 // Limit Sharp memory usage for low-memory environments (Render Basic: 512MB)
 sharp.cache({ memory: 50, files: 20, items: 100 });
-sharp.concurrency(1); // Process one image at a time to reduce memory spikes
+sharp.concurrency(4); // Process 4 images in parallel - balanced for 512MB RAM
 
 interface UploadOptions {
 	buffer: Buffer;
@@ -298,32 +303,133 @@ export class S3Service {
 		}
 	}
 
-	async generatePresignedUploadUrl(
-		userId: string,
-		fileName: string,
-	): Promise<{ url: string; key: string }> {
-		const key = this.generateKey(
-			'temp',
-			userId,
-			this.generateFileName(fileName),
-		);
+	/**
+	 * Generate presigned URLs for property image uploads (direct client upload)
+	 * @param propertyId - Property ID (generated on client for new properties)
+	 * @param mainImage - Whether to generate URL for main image
+	 * @param galleryCount - Number of gallery images to upload
+	 */
+	async generatePropertyUploadUrls(
+		propertyId: string,
+		mainImage: boolean,
+		galleryCount: number,
+	): Promise<{
+		mainImage?: { uploadUrl: string; key: string; publicUrl: string };
+		galleryImages: Array<{
+			uploadUrl: string;
+			key: string;
+			publicUrl: string;
+		}>;
+	}> {
+		const result: {
+			mainImage?: { uploadUrl: string; key: string; publicUrl: string };
+			galleryImages: Array<{
+				uploadUrl: string;
+				key: string;
+				publicUrl: string;
+			}>;
+		} = {
+			galleryImages: [],
+		};
 
 		try {
-			const command = new PutObjectCommand({
-				Bucket: BUCKET_NAME,
-				Key: key,
-				ContentType: 'image/jpeg',
-			});
+			// Generate main image URL
+			if (mainImage) {
+				const fileName = this.generateFileName('main.jpg');
+				const key = `properties/${propertyId}/main/${fileName}`;
 
-			const url = await getSignedUrl(s3Client, command, {
-				expiresIn: 900,
-			}); // 15 minutes
+				const command = new PutObjectCommand({
+					Bucket: BUCKET_NAME,
+					Key: key,
+					ContentType: ALLOWED_CONTENT_TYPE,
+					CacheControl: 'max-age=31536000',
+				});
 
-			return { url, key };
+				const uploadUrl = await getSignedUrl(s3Client, command, {
+					expiresIn: PRESIGNED_URL_EXPIRY,
+				});
+
+				result.mainImage = {
+					uploadUrl,
+					key,
+					publicUrl: `https://${BUCKET_NAME}.s3.amazonaws.com/${key}`,
+				};
+			}
+
+			// Generate gallery image URLs
+			for (let i = 0; i < galleryCount; i++) {
+				const fileName = this.generateFileName(`gallery-${i}.jpg`);
+				const key = `properties/${propertyId}/gallery/${fileName}`;
+
+				const command = new PutObjectCommand({
+					Bucket: BUCKET_NAME,
+					Key: key,
+					ContentType: ALLOWED_CONTENT_TYPE,
+					CacheControl: 'max-age=31536000',
+				});
+
+				const uploadUrl = await getSignedUrl(s3Client, command, {
+					expiresIn: PRESIGNED_URL_EXPIRY,
+				});
+
+				result.galleryImages.push({
+					uploadUrl,
+					key,
+					publicUrl: `https://${BUCKET_NAME}.s3.amazonaws.com/${key}`,
+				});
+			}
+
+			logger.debug(
+				`[S3Service] Generated ${mainImage ? 1 : 0} main + ${galleryCount} gallery presigned URLs for property ${propertyId}`,
+			);
+
+			return result;
 		} catch (error) {
-			logger.error('[S3Service] Error generating presigned URL', error);
-			throw new Error('Failed to generate upload URL');
+			logger.error(
+				'[S3Service] Error generating property upload URLs',
+				error,
+			);
+			throw new Error('Failed to generate upload URLs');
 		}
+	}
+
+	/**
+	 * Verify that an image was successfully uploaded to S3
+	 * @param key - The S3 key to verify
+	 */
+	async verifyImageExists(key: string): Promise<boolean> {
+		try {
+			await s3Client.send(
+				new HeadObjectCommand({
+					Bucket: BUCKET_NAME,
+					Key: key,
+				}),
+			);
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
+	/**
+	 * Verify multiple images exist in S3
+	 * @param keys - Array of S3 keys to verify
+	 */
+	async verifyImagesExist(
+		keys: string[],
+	): Promise<{ valid: boolean; missing: string[] }> {
+		const results = await Promise.all(
+			keys.map(async (key) => ({
+				key,
+				exists: await this.verifyImageExists(key),
+			})),
+		);
+
+		const missing = results.filter((r) => !r.exists).map((r) => r.key);
+		return {
+			valid: missing.length === 0,
+			missing,
+		};
 	}
 }
 

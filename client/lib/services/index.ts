@@ -14,3 +14,9 @@ export {
 	setGeolocationPreference,
 	getGeolocationPreference,
 } from './geolocationService';
+export type { UploadedImageData } from './s3UploadService';
+export {
+	getPropertyUploadUrls,
+	uploadToS3,
+	uploadPropertyImages,
+} from './s3UploadService';

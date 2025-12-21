@@ -8,6 +8,7 @@ import { s3Service } from '../services/s3Service';
 import { authenticateToken } from '../middleware/auth';
 import { AuthRequest } from '../types/auth';
 import { logger } from '../utils/logger';
+import mongoose from 'mongoose';
 
 interface UploadedImageData {
 	url: string;
@@ -203,5 +204,71 @@ router.post('/identity-card', (req: AuthRequest, res: Response) => {
 		}
 	});
 });
+
+// @route   POST api/upload/presigned-urls/property
+// @desc    Get presigned URLs for direct S3 upload of property images
+// @access  Private (authenticated users)
+router.post(
+	'/presigned-urls/property',
+	async (req: AuthRequest, res: Response) => {
+		try {
+			if (!req.user) {
+				return res.status(401).json({
+					success: false,
+					message: 'Authentification requise',
+				});
+			}
+
+			const { propertyId, mainImage, galleryCount } = req.body as {
+				propertyId?: string;
+				mainImage?: boolean;
+				galleryCount?: number;
+			};
+
+			// Validate propertyId - must be a valid MongoDB ObjectId
+			const finalPropertyId =
+				propertyId && mongoose.Types.ObjectId.isValid(propertyId)
+					? propertyId
+					: new mongoose.Types.ObjectId().toString();
+
+			// Validate gallery count (max 20)
+			const validGalleryCount = Math.min(
+				Math.max(0, galleryCount || 0),
+				20,
+			);
+
+			if (!mainImage && validGalleryCount === 0) {
+				return res.status(400).json({
+					success: false,
+					message: 'At least one image URL must be requested',
+				});
+			}
+
+			const urls = await s3Service.generatePropertyUploadUrls(
+				finalPropertyId,
+				mainImage ?? false,
+				validGalleryCount,
+			);
+
+			return res.status(200).json({
+				success: true,
+				data: {
+					propertyId: finalPropertyId,
+					...urls,
+				},
+			});
+		} catch (error) {
+			logger.error(
+				'[UploadRoutes] Error generating presigned URLs',
+				error,
+			);
+			return res.status(500).json({
+				success: false,
+				message:
+					'Erreur lors de la génération des URLs de téléchargement',
+			});
+		}
+	},
+);
 
 export default router;
