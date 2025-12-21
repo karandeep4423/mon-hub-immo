@@ -10,6 +10,7 @@ import { Features } from '@/lib/constants';
 import { handleApiError } from '@/lib/utils/errorHandler';
 import { logger } from '@/lib/utils/logger';
 import { toast } from 'react-toastify';
+import imageCompression from 'browser-image-compression';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -34,6 +35,39 @@ const inferAttachmentType = (mime: string): AttachmentType => {
 	if (m.includes('msword')) return 'doc';
 	if (m.includes('officedocument.word')) return 'docx';
 	return 'file';
+};
+
+// Chat image compression options (smaller than property images)
+const CHAT_IMAGE_COMPRESSION_OPTIONS: Parameters<typeof imageCompression>[1] = {
+	maxSizeMB: 0.3, // 0.3MB max for chat images
+	maxWidthOrHeight: 1200, // Smaller than property images
+	useWebWorker: true,
+	initialQuality: 0.3,
+	fileType: 'image/webp',
+	preserveExif: false,
+};
+
+/**
+ * Compress image file for chat upload
+ * Non-image files pass through unchanged
+ */
+const compressFileIfImage = async (file: File): Promise<File> => {
+	if (!file.type.startsWith('image/')) {
+		return file; // Non-image files pass through
+	}
+
+	try {
+		const compressed = await imageCompression(
+			file,
+			CHAT_IMAGE_COMPRESSION_OPTIONS,
+		);
+		// Rename to .jpg
+		const jpegFileName = file.name.replace(/\.[^.]+$/, '.jpg');
+		return new File([compressed], jpegFileName, { type: 'image/jpeg' });
+	} catch {
+		logger.warn('[MessageInput] Image compression failed, using original');
+		return file;
+	}
 };
 
 // ============================================================================
@@ -170,8 +204,16 @@ const MessageInput: React.FC<MessageInputProps> = React.memo(
 				if (files.length === 0 || !selectedUser) return;
 				try {
 					setIsUploading(true);
+
+					// Compress images before upload (non-images pass through)
+					const processedFiles = await Promise.all(
+						files.map((file) => compressFileIfImage(file)),
+					);
+
 					const uploaded = await Promise.all(
-						files.map((file) => ChatApi.uploadChatFile(file)),
+						processedFiles.map((file) =>
+							ChatApi.uploadChatFile(file),
+						),
 					);
 					const attachments = uploaded.map((data) => ({
 						url: data.url,
