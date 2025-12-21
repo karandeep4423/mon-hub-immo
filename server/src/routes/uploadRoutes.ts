@@ -1,4 +1,5 @@
 import { Router, Response } from 'express';
+import multer from 'multer';
 import {
 	uploadSingle,
 	uploadChatSingle,
@@ -9,6 +10,25 @@ import { authenticateToken } from '../middleware/auth';
 import { AuthRequest } from '../types/auth';
 import { logger } from '../utils/logger';
 import mongoose from 'mongoose';
+
+/**
+ * Translate multer error codes to French messages
+ */
+function getMulterErrorMessage(err: unknown): string {
+	if (err instanceof multer.MulterError) {
+		switch (err.code) {
+			case 'LIMIT_FILE_SIZE':
+				return 'Le fichier est trop volumineux (max 5MB)';
+			case 'LIMIT_FILE_COUNT':
+				return 'Trop de fichiers envoyés';
+			case 'LIMIT_UNEXPECTED_FILE':
+				return 'Fichier inattendu';
+			default:
+				return 'Erreur lors du téléchargement du fichier';
+		}
+	}
+	return (err as Error).message || 'Erreur inconnue';
+}
 
 interface UploadedImageData {
 	url: string;
@@ -32,7 +52,7 @@ router.post('/single', (req: AuthRequest, res: Response) => {
 		if (err) {
 			return res.status(400).json({
 				success: false,
-				message: (err as Error).message,
+				message: getMulterErrorMessage(err),
 			});
 		}
 
@@ -79,7 +99,7 @@ router.post('/chat-file', (req: AuthRequest, res: Response) => {
 		if (err) {
 			return res.status(400).json({
 				success: false,
-				message: (err as Error).message,
+				message: getMulterErrorMessage(err),
 			});
 		}
 
@@ -167,7 +187,7 @@ router.post('/identity-card', (req: AuthRequest, res: Response) => {
 		if (err) {
 			return res.status(400).json({
 				success: false,
-				message: (err as Error).message,
+				message: getMulterErrorMessage(err),
 			});
 		}
 
