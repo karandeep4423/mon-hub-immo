@@ -28,6 +28,7 @@ interface AgentCardProps {
 
 export const AgentCard: React.FC<AgentCardProps> = ({ agent }) => {
 	const [showBookingModal, setShowBookingModal] = useState(false);
+	const [isExpanded, setIsExpanded] = useState(false);
 	const { user } = useAuth();
 
 	const isAgent = user?.userType === 'agent';
@@ -132,10 +133,25 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent }) => {
 					{/* Personal Pitch */}
 					{agent.professionalInfo?.personalPitch && (
 						<div className="border-t pt-4">
-							<RichTextDisplay
-								content={agent.professionalInfo.personalPitch}
-								className="text-sm text-gray-600"
-							/>
+							<div
+								className={`relative ${!isExpanded ? 'max-h-24 overflow-hidden' : ''}`}
+							>
+								<RichTextDisplay
+									content={
+										agent.professionalInfo.personalPitch
+									}
+									className="text-sm text-gray-600"
+								/>
+								{!isExpanded && (
+									<div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent" />
+								)}
+							</div>
+							<button
+								onClick={() => setIsExpanded(!isExpanded)}
+								className="mt-2 text-sm font-medium text-brand-600 hover:text-brand-700 transition-colors"
+							>
+								{isExpanded ? 'Voir moins' : 'Voir plus'}
+							</button>
 						</div>
 					)}
 				</div>
