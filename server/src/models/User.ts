@@ -257,10 +257,11 @@ const userSchema = new Schema<IUser>(
 			},
 			personalPitch: {
 				type: String,
-				required: [true, 'La bio personnelle est requise'],
+				// Not required at schema level - admin can create users without it
+				// Validation enforced at profile completion
 				validate: {
 					validator: function (v: string) {
-						if (!v) return false;
+						if (!v) return true; // Allow empty for admin-created users
 						const length = htmlTextLength(v);
 						return length >= 250 && length <= 650;
 					},
