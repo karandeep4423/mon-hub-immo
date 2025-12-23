@@ -257,12 +257,14 @@ const userSchema = new Schema<IUser>(
 			},
 			personalPitch: {
 				type: String,
+				required: [true, 'La bio personnelle est requise'],
 				validate: {
 					validator: function (v: string) {
-						if (!v) return true;
-						return htmlTextLength(v) <= 650;
+						if (!v) return false;
+						const length = htmlTextLength(v);
+						return length >= 250 && length <= 650;
 					},
-					message: 'Bio personnelle trop longue (max 650 caractères)',
+					message: 'La bio doit contenir entre 250 et 650 caractères',
 				},
 			},
 			collaborateWithAgents: {

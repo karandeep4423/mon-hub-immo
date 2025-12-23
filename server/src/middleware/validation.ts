@@ -119,13 +119,12 @@ const professionalInfoRules = {
 		.toInt(),
 
 	personalPitch: body('professionalInfo.personalPitch')
-		.optional()
+		.exists({ checkFalsy: true })
+		.withMessage('La bio personnelle est requise')
 		.trim()
 		.escape()
-		.isLength({ max: 1000 })
-		.withMessage(
-			'La présentation personnelle ne peut pas dépasser 1000 caractères',
-		),
+		.isLength({ min: 250, max: 1000 })
+		.withMessage('La bio doit contenir entre 250 et 650 caractères'),
 
 	mandateTypes: body('professionalInfo.mandateTypes')
 		.optional()
@@ -302,6 +301,15 @@ export const resendVerificationValidation = [baseRules.email];
 
 // Property validation rules
 const propertyBaseRules = {
+	mandateNumber: body('mandateNumber')
+		.optional()
+		.trim()
+		.escape()
+		.isLength({ max: 50 })
+		.withMessage(
+			'Le numéro de mandat doit contenir moins de 50 caractères',
+		),
+
 	title: body('title')
 		.trim()
 		.escape()
@@ -405,6 +413,12 @@ const propertyBaseRules = {
 		.optional()
 		.isInt({ min: 0, max: 10 })
 		.withMessage('Le nombre de salles de bain doit être entre 0 et 10')
+		.toInt(),
+
+	showerRooms: body('showerRooms')
+		.optional()
+		.isInt({ min: 0, max: 10 })
+		.withMessage("Le nombre de salles d'eau doit être entre 0 et 10")
 		.toInt(),
 
 	floor: body('floor')

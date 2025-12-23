@@ -87,6 +87,19 @@ export const PropertyFormStep3: React.FC<PropertyFormStep3Props> = ({
 					/>
 
 					<NumberInput
+						label="Nombre de salles d'eau"
+						value={formData.showerRooms}
+						onChange={(value) =>
+							handleInputChange('showerRooms', value)
+						}
+						name="showerRooms"
+						placeholder="0"
+						min={0}
+						max={10}
+						icon={<Bath className="w-4 h-4 text-teal-600" />}
+					/>
+
+					<NumberInput
 						label="Nombre de niveaux"
 						value={formData.levels}
 						onChange={(value) => handleInputChange('levels', value)}

@@ -125,14 +125,78 @@ export const CollaborationClientInfo: React.FC<
 						Informations propriétaire
 					</h4>
 					<div className="space-y-3 text-sm">
-						{clientInfo.ownerInfo.urgentToSell && (
-							<div className="text-orange-600">
-								⚡ Pressés de vendre
+						{clientInfo.ownerInfo.urgentToSell !== undefined && (
+							<div
+								className={
+									clientInfo.ownerInfo.urgentToSell
+										? 'text-orange-600'
+										: 'text-gray-600'
+								}
+							>
+								⚡{' '}
+								{clientInfo.ownerInfo.urgentToSell
+									? 'Pressés de vendre'
+									: 'Pas pressés de vendre'}
 							</div>
 						)}
-						{clientInfo.ownerInfo.openToNegotiation && (
-							<div className="text-green-600">
-								💬 Ouverts à la négociation
+						{clientInfo.ownerInfo.openToNegotiation !==
+							undefined && (
+							<div
+								className={
+									clientInfo.ownerInfo.openToNegotiation
+										? 'text-green-600'
+										: 'text-gray-600'
+								}
+							>
+								💬{' '}
+								{clientInfo.ownerInfo.openToNegotiation
+									? 'Ouverts à la négociation'
+									: 'Pas ouverts à la négociation'}
+							</div>
+						)}
+						{clientInfo.ownerInfo.presentDuringVisits !==
+							undefined && (
+							<div
+								className={
+									clientInfo.ownerInfo.presentDuringVisits
+										? 'text-blue-600'
+										: 'text-gray-600'
+								}
+							>
+								👁️{' '}
+								{clientInfo.ownerInfo.presentDuringVisits
+									? 'Présents pendant les visites'
+									: 'Absents pendant les visites'}
+							</div>
+						)}
+						{clientInfo.ownerInfo.flexibleSchedule !==
+							undefined && (
+							<div
+								className={
+									clientInfo.ownerInfo.flexibleSchedule
+										? 'text-purple-600'
+										: 'text-gray-600'
+								}
+							>
+								📅{' '}
+								{clientInfo.ownerInfo.flexibleSchedule
+									? 'Souples sur les horaires'
+									: 'Horaires non flexibles'}
+							</div>
+						)}
+						{clientInfo.ownerInfo.acceptConditionalOffers !==
+							undefined && (
+							<div
+								className={
+									clientInfo.ownerInfo.acceptConditionalOffers
+										? 'text-teal-600'
+										: 'text-gray-600'
+								}
+							>
+								📝{' '}
+								{clientInfo.ownerInfo.acceptConditionalOffers
+									? 'Acceptent les offres conditionnelles'
+									: "N'acceptent pas les offres conditionnelles"}
 							</div>
 						)}
 						{clientInfo.ownerInfo.mandateType && (
@@ -141,7 +205,28 @@ export const CollaborationClientInfo: React.FC<
 									Mandat:
 								</span>
 								<span className="ml-2 text-gray-600 capitalize">
-									{clientInfo.ownerInfo.mandateType}
+									{clientInfo.ownerInfo.mandateType ===
+									'exclusive'
+										? 'Exclusif'
+										: clientInfo.ownerInfo.mandateType ===
+											  'simple'
+											? 'Simple'
+											: clientInfo.ownerInfo
+														.mandateType ===
+												  'shared'
+												? 'Partagé'
+												: clientInfo.ownerInfo
+														.mandateType}
+								</span>
+							</div>
+						)}
+						{clientInfo.ownerInfo.saleReasons && (
+							<div>
+								<span className="font-medium text-gray-700">
+									Raisons de la vente:
+								</span>
+								<span className="ml-2 text-gray-600">
+									{clientInfo.ownerInfo.saleReasons}
 								</span>
 							</div>
 						)}

@@ -37,14 +37,18 @@ export const PreferencesAndTermsSection: React.FC<
 		<>
 			{/* Personal Pitch */}
 			<RichTextEditor
-				label="Petite bio (pitch personnel)"
+				label="Petite bio (pitch personnel) *"
 				value={values.personalPitch}
 				onChange={handlePitchChange}
 				placeholder={Features.Auth.AUTH_PLACEHOLDERS.BIO}
 				minHeight="120px"
 				showCharCount
 				maxLength={650}
+				error={errors.personalPitch}
 			/>
+			<p className="text-xs text-gray-500 -mt-2">
+				Minimum 250 caractères requis
+			</p>
 
 			{/* Collaboration preferences */}
 			<div className="mt-4 space-y-3">

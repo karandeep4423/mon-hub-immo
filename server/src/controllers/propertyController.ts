@@ -100,6 +100,15 @@ const validatePropertyData = (data: Record<string, unknown>) => {
 			convertedData.bathrooms = bathrooms;
 		}
 	}
+	if (typeof data.showerRooms === 'string' && data.showerRooms !== '') {
+		const showerRooms = parseInt(data.showerRooms, 10);
+		if (isNaN(showerRooms)) {
+			fieldErrors.showerRooms =
+				"Le nombre de salles d'eau doit être un nombre valide";
+		} else {
+			convertedData.showerRooms = showerRooms;
+		}
+	}
 	if (typeof data.levels === 'string' && data.levels !== '') {
 		const levels = parseInt(data.levels, 10);
 		if (isNaN(levels)) {
@@ -322,6 +331,17 @@ const validatePropertyData = (data: Record<string, unknown>) => {
 			fieldErrors.bathrooms = 'Nombre de salles de bain minimum: 0';
 		} else if (convertedData.bathrooms > 10) {
 			fieldErrors.bathrooms = 'Nombre de salles de bain maximum: 10';
+		}
+	}
+
+	if (
+		convertedData.showerRooms !== undefined &&
+		typeof convertedData.showerRooms === 'number'
+	) {
+		if (convertedData.showerRooms < 0) {
+			fieldErrors.showerRooms = "Nombre de salles d'eau minimum: 0";
+		} else if (convertedData.showerRooms > 10) {
+			fieldErrors.showerRooms = "Nombre de salles d'eau maximum: 10";
 		}
 	}
 

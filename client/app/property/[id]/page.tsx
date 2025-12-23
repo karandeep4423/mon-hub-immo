@@ -261,6 +261,29 @@ function PropertyDetailsPageContent() {
 										{property.transactionType}
 									</span>
 								</div>
+								{property.mandateNumber && (
+									<div className="flex items-center text-sm text-gray-600">
+										<svg
+											className="w-4 h-4 text-indigo-500 mr-2"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth="2"
+												d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
+											/>
+										</svg>
+										<span className="font-medium">
+											Mandat:
+										</span>
+										<span className="ml-1">
+											{property.mandateNumber}
+										</span>
+									</div>
+								)}
 							</div>
 
 							{/* Price Breakdown - Agency Fees */}

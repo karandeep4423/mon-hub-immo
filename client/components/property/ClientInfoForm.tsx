@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Input, NumberInput, Textarea } from '@/components/ui';
+import { Input, NumberInput, Textarea, RadioGroup } from '@/components/ui';
 import { FormProvider } from '@/context/FormContext';
 import { Select } from '@/components/ui/CustomSelect';
 import type { Property } from '@/lib/api/propertyApi';
@@ -246,56 +246,34 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 					</div>
 
 					<div className="space-y-4">
-						<div className="flex items-center space-x-2">
-							<input
-								type="checkbox"
-								id="urgentToSell"
-								checked={
-									clientInfo.ownerInfo?.urgentToSell || false
-								}
-								onChange={(e) =>
-									handleNestedChange(
-										'ownerInfo',
-										'urgentToSell',
-										e.target.checked,
-									)
-								}
-								disabled={disabled}
-								className="h-4 w-4 text-brand focus:ring-brand/20 border-gray-300 rounded"
-							/>
-							<label
-								htmlFor="urgentToSell"
-								className="text-sm font-medium text-gray-700"
-							>
-								Sont-ils pressés de vendre ou non ?
-							</label>
-						</div>
-						<div className="flex items-center space-x-2">
-							<input
-								type="checkbox"
-								id="openToNegotiation"
-								checked={
-									clientInfo.ownerInfo?.openToNegotiation ||
-									false
-								}
-								onChange={(e) =>
-									handleNestedChange(
-										'ownerInfo',
-										'openToNegotiation',
-										e.target.checked,
-									)
-								}
-								disabled={disabled}
-								className="h-4 w-4 text-brand focus:ring-brand/20 border-gray-300 rounded"
-							/>
-							<label
-								htmlFor="openToNegotiation"
-								className="text-sm font-medium text-gray-700"
-							>
-								Sont-ils ouverts à la négociation ? (et si oui,
-								dans quelle mesure ?)
-							</label>
-						</div>
+						<RadioGroup
+							label="Sont-ils pressés de vendre ou non ?"
+							name="urgentToSell"
+							value={clientInfo.ownerInfo?.urgentToSell}
+							onChange={(value) =>
+								handleNestedChange(
+									'ownerInfo',
+									'urgentToSell',
+									value,
+								)
+							}
+							disabled={disabled}
+							inline
+						/>
+						<RadioGroup
+							label="Sont-ils ouverts à la négociation ? (et si oui, dans quelle mesure ?)"
+							name="openToNegotiation"
+							value={clientInfo.ownerInfo?.openToNegotiation}
+							onChange={(value) =>
+								handleNestedChange(
+									'ownerInfo',
+									'openToNegotiation',
+									value,
+								)
+							}
+							disabled={disabled}
+							inline
+						/>
 						<Select
 							label="Y a-t-il un mandat exclusif, simple ou partagé ?"
 							value={clientInfo.ownerInfo?.mandateType || ''}
@@ -337,84 +315,50 @@ export const ClientInfoForm: React.FC<ClientInfoFormProps> = ({
 								placeholder="Raisons de la vente..."
 							/>
 						</div>
-						<div className="flex items-center space-x-2">
-							<input
-								type="checkbox"
-								id="presentDuringVisits"
-								checked={
-									clientInfo.ownerInfo?.presentDuringVisits ||
-									false
-								}
-								onChange={(e) =>
-									handleNestedChange(
-										'ownerInfo',
-										'presentDuringVisits',
-										e.target.checked,
-									)
-								}
-								disabled={disabled}
-								className="h-4 w-4 text-brand focus:ring-brand/20 border-gray-300 rounded"
-							/>
-							<label
-								htmlFor="presentDuringVisits"
-								className="text-sm font-medium text-gray-700"
-							>
-								Est-ce qu&apos;ils sont présents pendant les
-								visites ?
-							</label>
-						</div>
-						<div className="flex items-center space-x-2">
-							<input
-								type="checkbox"
-								id="flexibleSchedule"
-								checked={
-									clientInfo.ownerInfo?.flexibleSchedule ||
-									false
-								}
-								onChange={(e) =>
-									handleNestedChange(
-										'ownerInfo',
-										'flexibleSchedule',
-										e.target.checked,
-									)
-								}
-								disabled={disabled}
-								className="h-4 w-4 text-brand focus:ring-brand/20 border-gray-300 rounded"
-							/>
-							<label
-								htmlFor="flexibleSchedule"
-								className="text-sm font-medium text-gray-700"
-							>
-								Sont-ils souples sur les horaires de visite ?
-							</label>
-						</div>
-						<div className="flex items-center space-x-2">
-							<input
-								type="checkbox"
-								id="acceptConditionalOffers"
-								checked={
-									clientInfo.ownerInfo
-										?.acceptConditionalOffers || false
-								}
-								onChange={(e) =>
-									handleNestedChange(
-										'ownerInfo',
-										'acceptConditionalOffers',
-										e.target.checked,
-									)
-								}
-								disabled={disabled}
-								className="h-4 w-4 text-brand focus:ring-brand/20 border-gray-300 rounded"
-							/>
-							<label
-								htmlFor="acceptConditionalOffers"
-								className="text-sm font-medium text-gray-700"
-							>
-								Acceptent-ils les propositions d&apos;achat avec
-								conditions (vente en cascade, financer un nouvel
-								achat, etc.)
-							</label>
-						</div>
+						<RadioGroup
+							label="Est-ce qu'ils sont présents pendant les visites ?"
+							name="presentDuringVisits"
+							value={clientInfo.ownerInfo?.presentDuringVisits}
+							onChange={(value) =>
+								handleNestedChange(
+									'ownerInfo',
+									'presentDuringVisits',
+									value,
+								)
+							}
+							disabled={disabled}
+							inline
+						/>
+						<RadioGroup
+							label="Sont-ils souples sur les horaires de visite ?"
+							name="flexibleSchedule"
+							value={clientInfo.ownerInfo?.flexibleSchedule}
+							onChange={(value) =>
+								handleNestedChange(
+									'ownerInfo',
+									'flexibleSchedule',
+									value,
+								)
+							}
+							disabled={disabled}
+							inline
+						/>
+						<RadioGroup
+							label="Acceptent-ils les propositions d'achat avec conditions (vente en cascade, financer un nouvel achat, etc.)"
+							name="acceptConditionalOffers"
+							value={
+								clientInfo.ownerInfo?.acceptConditionalOffers
+							}
+							onChange={(value) =>
+								handleNestedChange(
+									'ownerInfo',
+									'acceptConditionalOffers',
+									value,
+								)
+							}
+							disabled={disabled}
+							inline
+						/>
 					</div>
 				</div>
 			</div>

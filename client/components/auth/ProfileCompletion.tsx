@@ -112,6 +112,19 @@ const validateFormData = (
 		errors.network = 'Le réseau ou statut est requis';
 	}
 
+	// Validate personalPitch (bio) - required with minimum 250 characters
+	if (!data.personalPitch?.trim()) {
+		errors.personalPitch = 'La bio personnelle est requise';
+	} else {
+		const tempDiv = document.createElement('div');
+		tempDiv.innerHTML = data.personalPitch;
+		const bioTextLength = (tempDiv.textContent || tempDiv.innerText || '')
+			.length;
+		if (bioTextLength < 250) {
+			errors.personalPitch = `La bio doit contenir au moins 250 caractères (${bioTextLength}/250)`;
+		}
+	}
+
 	return errors;
 };
 

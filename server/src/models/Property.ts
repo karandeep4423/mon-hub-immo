@@ -3,6 +3,7 @@ import { htmlTextLength } from '../utils/sanitize';
 import { IUser } from './User';
 
 export interface IProperty extends Document {
+	mandateNumber?: string;
 	title: string;
 	description: string;
 	price: number;
@@ -25,6 +26,7 @@ export interface IProperty extends Document {
 	rooms?: number;
 	bedrooms?: number;
 	bathrooms?: number;
+	showerRooms?: number;
 	floor?: number;
 	totalFloors?: number;
 
@@ -146,6 +148,14 @@ export interface IProperty extends Document {
 
 const propertySchema = new Schema<IProperty>(
 	{
+		mandateNumber: {
+			type: String,
+			trim: true,
+			maxlength: [
+				50,
+				'Le numéro de mandat doit contenir moins de 50 caractères',
+			],
+		},
 		title: {
 			type: String,
 			required: [true, 'Le titre est requis'],
@@ -246,6 +256,11 @@ const propertySchema = new Schema<IProperty>(
 			type: Number,
 			min: [0, 'Nombre de salles de bain minimum: 0'],
 			max: [10, 'Nombre de salles de bain maximum: 10'],
+		},
+		showerRooms: {
+			type: Number,
+			min: [0, "Nombre de salles d'eau minimum: 0"],
+			max: [10, "Nombre de salles d'eau maximum: 10"],
 		},
 		floor: {
 			type: Number,

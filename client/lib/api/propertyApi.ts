@@ -60,6 +60,7 @@ const sanitizeClientInfo = (
  */
 export interface Property {
 	_id: string;
+	mandateNumber?: string;
 	title: string;
 	description: string;
 	price: number;
@@ -78,6 +79,7 @@ export interface Property {
 	rooms?: number;
 	bedrooms?: number;
 	bathrooms?: number;
+	showerRooms?: number;
 	floor?: number;
 	totalFloors?: number;
 	hasParking?: boolean;
@@ -202,6 +204,7 @@ export interface Property {
 }
 
 export interface PropertyFormData {
+	mandateNumber?: string;
 	title: string;
 	description: string;
 	price: number;
@@ -215,6 +218,7 @@ export interface PropertyFormData {
 	rooms?: number;
 	bedrooms?: number;
 	bathrooms?: number;
+	showerRooms?: number;
 	floor?: number;
 	totalFloors?: number;
 	hasParking?: boolean;

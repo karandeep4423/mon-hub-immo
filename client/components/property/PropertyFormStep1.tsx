@@ -16,6 +16,7 @@ import {
 	Ruler,
 	ArrowLeftRight,
 	Briefcase,
+	Hash,
 } from 'lucide-react';
 
 interface PropertyFormStep1Props {
@@ -43,6 +44,16 @@ export const PropertyFormStep1: React.FC<PropertyFormStep1Props> = ({
 }) => {
 	return (
 		<div className="space-y-6">
+			<Input
+				label="Numéro de mandat"
+				type="text"
+				value={formData.mandateNumber || ''}
+				onChange={(e) =>
+					handleInputChange('mandateNumber', e.target.value)
+				}
+				placeholder="Ex: MAN-2024-001"
+				icon={<Hash className="w-4 h-4 text-indigo-600" />}
+			/>
 			<h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
 				<Home className="w-5 h-5 text-blue-600" />
 				Informations générales

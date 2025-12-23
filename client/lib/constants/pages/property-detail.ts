@@ -56,6 +56,7 @@ export const PROPERTY_DETAIL_INFO = {
 	rooms: 'Pièces',
 	bedrooms: 'Chambres',
 	bathrooms: 'Salles de bain',
+	showerRooms: "Salles d'eau",
 	floor: 'Étage',
 	totalFloors: "Nombre d'étages",
 	constructionYear: 'Année de construction',

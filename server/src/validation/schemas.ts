@@ -117,11 +117,17 @@ export const updateProfileSchema = z.object({
 				.optional(),
 			yearsExperience: z.number().int().min(0).max(50).optional(),
 			personalPitch: z
-				.string()
-				.refine((val) => htmlTextLength(val) <= 650, {
-					message: 'La bio ne peut pas dépasser 650 caractères',
-				})
-				.optional(),
+				.string({ required_error: 'La bio personnelle est requise' })
+				.refine(
+					(val) => {
+						const length = htmlTextLength(val);
+						return length >= 250 && length <= 650;
+					},
+					{
+						message:
+							'La bio doit contenir entre 250 et 650 caractères',
+					},
+				),
 			mandateTypes: z
 				.array(z.enum(['simple', 'exclusif', 'co-mandat']))
 				.optional(),

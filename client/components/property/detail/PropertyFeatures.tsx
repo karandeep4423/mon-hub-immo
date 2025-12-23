@@ -38,6 +38,14 @@ export const PropertyFeatures = ({ property }: PropertyFeaturesProps) => {
 					/>
 				)}
 
+				{property.showerRooms && (
+					<FeatureItem
+						icon="bath"
+						color="cyan"
+						label={`${property.showerRooms} salle${property.showerRooms > 1 ? 's' : ''} d'eau`}
+					/>
+				)}
+
 				{/* Surface Information */}
 				{property.surface && (
 					<FeatureItem

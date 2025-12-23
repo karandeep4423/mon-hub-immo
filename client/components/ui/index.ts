@@ -51,4 +51,5 @@ export { RichTextDisplay } from './RichTextDisplay';
 export { DataTable } from './DataTable';
 export { StatCard } from './StatCard';
 export { Checkbox } from './Checkbox';
+export { RadioGroup } from './RadioGroup';
 export { ReadOnlyField } from './ReadOnlyField';
