@@ -51,7 +51,7 @@ export interface UserProfile {
 	stripeCustomerId?: string;
 	stripeSubscriptionId?: string;
 	subscriptionStatus?: string;
-	subscriptionPlan?: 'monthly' | null;
+	subscriptionPlan?: 'monthly' | 'annual' | null;
 	subscriptionStartDate?: string | Date;
 	subscriptionEndDate?: string | Date;
 	lastPaymentDate?: string | Date;

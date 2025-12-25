@@ -15,6 +15,16 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
 
+// Price IDs from Stripe Dashboard
+const MONTHLY_PRICE_ID = process.env.STRIPE_PRICE_ID as string;
+const ANNUAL_PRICE_ID = process.env.STRIPE_ANNUAL_PRICE_ID as string;
+
+// Map price IDs to plan types
+const PRICE_TO_PLAN: Record<string, 'monthly' | 'annual'> = {
+	[MONTHLY_PRICE_ID]: 'monthly',
+	[ANNUAL_PRICE_ID]: 'annual',
+};
+
 // Log webhook secret status at import time (helps debug configuration issues)
 logger.info(
 	`[Stripe Webhook] Initializing - webhookSecret configured: ${Boolean(webhookSecret)}, length: ${webhookSecret?.length || 0}`,
@@ -196,12 +206,18 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 	// Accept both 'active' and 'trialing' as valid paid statuses
 	const isActive = ['active', 'trialing'].includes(sub.status);
 
+	// Determine plan type from subscription price ID or metadata
+	const subscriptionPriceId = sub.items?.data?.[0]?.price?.id;
+	const planFromMetadata = session.metadata?.plan || sub.metadata?.plan;
+	const planType =
+		PRICE_TO_PLAN[subscriptionPriceId] || planFromMetadata || 'monthly';
+
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const updateData: any = {
 		stripeCustomerId: customerId,
 		stripeSubscriptionId: subscriptionId,
 		subscriptionStatus: sub.status,
-		subscriptionPlan: 'monthly',
+		subscriptionPlan: planType,
 		isPaid: isActive,
 	};
 
@@ -264,6 +280,13 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
 	const startDate = safeDate(sub.current_period_start);
 	const endDate = safeDate(sub.current_period_end);
 
+	// Determine plan type from subscription price ID
+	const subscriptionPriceId = sub.items?.data?.[0]?.price?.id;
+	const planType =
+		PRICE_TO_PLAN[subscriptionPriceId] ||
+		user.subscriptionPlan ||
+		'monthly';
+
 	// Check if cancellation is scheduled
 	// Stripe has two ways to schedule cancellation:
 	// 1. cancel_at_period_end: true - cancels at end of billing period
@@ -283,6 +306,7 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
 		subscriptionStatus: isCancellationScheduled
 			? 'pending_cancellation'
 			: sub.status,
+		subscriptionPlan: planType,
 		isPaid: isActive,
 	};
 

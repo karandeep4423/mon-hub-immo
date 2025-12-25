@@ -82,7 +82,7 @@ export interface IUser extends Document {
 	stripeCustomerId?: string;
 	stripeSubscriptionId?: string;
 	subscriptionStatus?: string;
-	subscriptionPlan?: 'monthly';
+	subscriptionPlan?: 'monthly' | 'annual';
 	subscriptionStartDate?: Date;
 	subscriptionEndDate?: Date;
 	// Payment tracking
@@ -432,7 +432,7 @@ const userSchema = new Schema<IUser>(
 		},
 		subscriptionPlan: {
 			type: String,
-			enum: ['monthly', null],
+			enum: ['monthly', 'annual', null],
 			default: null,
 		},
 		subscriptionStartDate: {

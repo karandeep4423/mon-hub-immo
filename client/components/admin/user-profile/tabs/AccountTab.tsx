@@ -247,9 +247,11 @@ export function AccountTab({
 									Plan
 								</p>
 								<p className="font-semibold text-blue-700">
-									{form.subscriptionPlan === 'monthly'
-										? `Mensuel (${process.env.NEXT_PUBLIC_STRIPE_PRICE}€/mois)`
-										: 'Aucun plan'}
+									{form.subscriptionPlan === 'annual'
+										? `Annuel (${process.env.NEXT_PUBLIC_STRIPE_ANNUAL_PRICE || '28.80'}€/an)`
+										: form.subscriptionPlan === 'monthly'
+											? `Mensuel (${process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE || '2.40'}€/mois)`
+											: 'Aucun plan'}
 								</p>
 							</div>
 						</div>

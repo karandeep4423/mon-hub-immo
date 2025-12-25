@@ -16,15 +16,27 @@ import {
 } from 'react-icons/fi';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
+type PlanType = 'monthly' | 'annual' | 'free_admin_granted' | 'none';
+
 interface SubscriptionData {
 	status: string;
-	plan: string;
+	plan: PlanType;
 	isPaid: boolean;
 	currentPeriodStart?: string;
 	currentPeriodEnd?: string;
 	cancelAtPeriodEnd?: boolean;
 	message?: string;
 }
+
+const getPlanLabel = (plan: PlanType): string => {
+	switch (plan) {
+		case 'annual':
+			return `Annuel - ${process.env.NEXT_PUBLIC_STRIPE_ANNUAL_PRICE || '28.80'}€/an`;
+		case 'monthly':
+		default:
+			return `Mensuel - ${process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE || '2.40'}€/mois`;
+	}
+};
 
 interface SubscriptionManagerProps {
 	compact?: boolean;
@@ -197,8 +209,7 @@ export const SubscriptionManager = ({
 					className="w-full flex items-center justify-center gap-2 bg-brand text-white px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg hover:bg-brand-dark transition-colors shadow-brand text-sm sm:text-base"
 				>
 					<FiCreditCard className="w-4 h-4" />
-					Activer mon abonnement -{' '}
-					{process.env.NEXT_PUBLIC_STRIPE_PRICE}€/mois
+					Activer mon abonnement
 				</a>
 			</div>
 		) : (
@@ -297,9 +308,7 @@ export const SubscriptionManager = ({
 										Formule
 									</p>
 									<p className="text-sm sm:text-base font-semibold text-gray-900">
-										Mensuel -{' '}
-										{process.env.NEXT_PUBLIC_STRIPE_PRICE}
-										€/mois
+										{getPlanLabel(subscription.plan)}
 									</p>
 								</div>
 							</div>
@@ -393,7 +402,7 @@ export const SubscriptionManager = ({
 				<div className="flex items-center justify-between">
 					<span className="text-gray-600">Formule</span>
 					<span className="font-medium text-gray-900">
-						Mensuel - {process.env.NEXT_PUBLIC_STRIPE_PRICE}€/mois
+						{getPlanLabel(subscription.plan)}
 					</span>
 				</div>
 

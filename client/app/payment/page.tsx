@@ -21,31 +21,61 @@ const features = [
 	'Support prioritaire',
 ];
 
+type PlanType = 'monthly' | 'annual';
+
+interface PlanConfig {
+	id: PlanType;
+	name: string;
+	priceTTC: string;
+	priceHT: string;
+	tva: string;
+	period: string;
+	periodLabel: string;
+	badge?: string;
+	savings?: string;
+}
+
+const plans: PlanConfig[] = [
+	{
+		id: 'monthly',
+		name: 'Mensuel',
+		priceTTC: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE || '2.40',
+		priceHT: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_HT || '2.00',
+		tva: '0,40',
+		period: '/mois',
+		periodLabel: 'mois',
+	},
+	{
+		id: 'annual',
+		name: 'Annuel',
+		priceTTC: process.env.NEXT_PUBLIC_STRIPE_ANNUAL_PRICE || '28.80',
+		priceHT: process.env.NEXT_PUBLIC_STRIPE_ANNUAL_PRICE_HT || '24.00',
+		tva: '4,80',
+		period: '/an',
+		periodLabel: 'an',
+		badge: 'Économisez 17%',
+		savings: '2 mois offerts',
+	},
+];
+
 export default function PaymentPage() {
 	const router = useRouter();
 	const { user, loading: authLoading } = useAuth();
-	const [loading, setLoading] = useState(false);
+	const [loadingPlan, setLoadingPlan] = useState<PlanType | null>(null);
 
 	useEffect(() => {
-		// Redirect if not logged in
 		if (!authLoading && !user) {
 			router.push('/auth/login?redirect=/payment');
 			return;
 		}
-
-		// Redirect if not an agent
 		if (!authLoading && user && user.userType !== 'agent') {
 			router.push('/dashboard');
 			return;
 		}
-
-		// Redirect if profile not completed - must complete profile first
 		if (!authLoading && user && !user.profileCompleted) {
 			router.push('/auth/complete-profile');
 			return;
 		}
-
-		// Redirect if already paid or has admin access
 		if (
 			!authLoading &&
 			user &&
@@ -56,10 +86,13 @@ export default function PaymentPage() {
 		}
 	}, [user, authLoading, router]);
 
-	const handleSubscribe = async () => {
-		setLoading(true);
+	const handleSubscribe = async (plan: PlanType) => {
+		setLoadingPlan(plan);
 		try {
-			const response = await api.post('/payment/create-checkout-session');
+			const response = await api.post(
+				'/payment/create-checkout-session',
+				{ plan },
+			);
 			const { url } = response.data;
 
 			if (url) {
@@ -78,7 +111,7 @@ export default function PaymentPage() {
 			logger.error('[PaymentPage] Checkout error:', apiError);
 			toast.error(apiError.message);
 		} finally {
-			setLoading(false);
+			setLoadingPlan(null);
 		}
 	};
 
@@ -96,14 +129,12 @@ export default function PaymentPage() {
 
 	return (
 		<div className="min-h-screen bg-gray-50">
-			{/* Hero Section with Brand Gradient */}
+			{/* Hero Section */}
 			<div className="bg-brand-gradient relative overflow-hidden">
-				{/* Decorative Background Pattern */}
 				<div className="absolute inset-0 opacity-10">
 					<div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full -translate-x-1/2 -translate-y-1/2"></div>
 					<div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full translate-x-1/2 translate-y-1/2"></div>
 				</div>
-
 				<div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center text-white">
 					<h1 className="text-3xl sm:text-4xl font-bold mb-4">
 						Accédez à MonHubImmo
@@ -115,90 +146,121 @@ export default function PaymentPage() {
 				</div>
 			</div>
 
-			{/* Main Content */}
-			<div className="max-w-4xl mt-2 mx-auto px-4 sm:px-6 lg:px-8  pb-16">
-				{/* Pricing Card */}
-				<div className="bg-white rounded-2xl shadow-lg overflow-hidden max-w-md mx-auto border border-gray-100">
-					{/* Card Header */}
-					<div className="bg-brand-gradient px-8 py-10 text-center text-white">
-						<h2 className="text-2xl font-semibold mb-2">
-							Abonnement Agent
-						</h2>
-						<div className="flex items-baseline justify-center">
-							<span className="text-5xl font-bold">
-								{process.env.NEXT_PUBLIC_STRIPE_PRICE}€
-							</span>
-							<span className="text-xl ml-2 text-brand-100">
-								/mois
-							</span>
-						</div>
-						<p className="mt-3 text-brand-100">
-							Annulez à tout moment
-						</p>
-						<div className="mt-4 text-sm text-brand-100 space-y-1">
-							<p>Abonnement Agent : 2,00 € HT / mois</p>
-							<p>TVA : 0,40 €</p>
-							<p className="font-semibold text-white">
-								Total : 2,40 € TTC / mois
-							</p>
-						</div>
-					</div>
-
-					{/* Features */}
-					<div className="px-8 py-8">
-						<ul className="space-y-4">
-							{features.map((feature, index) => (
-								<li key={index} className="flex items-start">
-									<div className="w-5 h-5 rounded-full bg-brand-50 flex items-center justify-center mt-0.5 mr-3 flex-shrink-0">
-										<FiCheck className="h-3 w-3 text-brand" />
-									</div>
-									<span className="text-gray-700">
-										{feature}
-									</span>
-								</li>
-							))}
-						</ul>
-					</div>
-
-					{/* CTA Button */}
-					<div className="px-8 pb-8">
-						<button
-							onClick={handleSubscribe}
-							disabled={loading}
-							className="w-full bg-brand hover:bg-brand-dark text-white py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-brand hover:shadow-brand-lg"
+			{/* Pricing Cards */}
+			<div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+				<div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+					{plans.map((plan) => (
+						<div
+							key={plan.id}
+							className={`bg-white rounded-2xl shadow-lg overflow-hidden border transition-all ${
+								plan.id === 'annual'
+									? 'border-brand ring-2 ring-brand/20'
+									: 'border-gray-100'
+							}`}
 						>
-							{loading ? (
-								<>
-									<LoadingSpinner size="sm" />
-									<span>Redirection...</span>
-								</>
-							) : (
-								<>
-									<FiCreditCard className="h-5 w-5" />
-									<span>Souscrire maintenant</span>
-								</>
+							{/* Badge for annual plan */}
+							{plan.badge && (
+								<div className="bg-yellow-400 text-gray-900 text-center py-2 text-sm font-semibold">
+									{plan.badge}
+								</div>
 							)}
-						</button>
-					</div>
 
-					{/* Trust Badges */}
-					<div className="bg-gray-50 px-8 py-6 border-t border-gray-100">
-						<div className="flex items-center justify-center gap-6 text-sm text-gray-500">
-							<div className="flex items-center gap-2">
-								<FiShield className="h-4 w-4 text-brand" />
-								<span>Paiement sécurisé</span>
+							{/* Card Header - Brand gradient for both */}
+							<div className="bg-brand-gradient px-8 py-10 text-center text-white">
+								<h2 className="text-2xl font-semibold mb-2">
+									Abonnement {plan.name}
+								</h2>
+								<div className="flex items-baseline justify-center">
+									<span className="text-5xl font-bold">
+										{plan.priceTTC}€
+									</span>
+									<span className="text-xl ml-2 text-brand-100">
+										{plan.period}
+									</span>
+								</div>
+								{plan.savings ? (
+									<p className="mt-3 text-brand-100">
+										{plan.savings}
+									</p>
+								) : (
+									<p className="mt-3 text-brand-100">
+										Annulez à tout moment
+									</p>
+								)}
+								<div className="mt-4 text-sm text-brand-100 space-y-1">
+									<p>
+										Abonnement Agent : {plan.priceHT} € HT /{' '}
+										{plan.periodLabel}
+									</p>
+									<p>TVA : {plan.tva} €</p>
+									<p className="font-semibold text-white">
+										Total : {plan.priceTTC} € TTC /{' '}
+										{plan.periodLabel}
+									</p>
+								</div>
 							</div>
-							<div className="flex items-center gap-2">
-								<FiRefreshCw className="h-4 w-4 text-brand" />
-								<span>Sans engagement</span>
+
+							{/* Features */}
+							<div className="px-8 py-8">
+								<ul className="space-y-4">
+									{features.map((feature, index) => (
+										<li
+											key={index}
+											className="flex items-start"
+										>
+											<div className="w-5 h-5 rounded-full bg-brand-50 flex items-center justify-center mt-0.5 mr-3 flex-shrink-0">
+												<FiCheck className="h-3 w-3 text-brand" />
+											</div>
+											<span className="text-gray-700">
+												{feature}
+											</span>
+										</li>
+									))}
+								</ul>
+							</div>
+
+							{/* CTA Button */}
+							<div className="px-8 pb-8">
+								<button
+									onClick={() => handleSubscribe(plan.id)}
+									disabled={loadingPlan !== null}
+									className="w-full bg-brand hover:bg-brand-dark text-white py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-brand hover:shadow-brand-lg"
+								>
+									{loadingPlan === plan.id ? (
+										<>
+											<LoadingSpinner size="sm" />
+											<span>Redirection...</span>
+										</>
+									) : (
+										<>
+											<FiCreditCard className="h-5 w-5" />
+											<span>Souscrire maintenant</span>
+										</>
+									)}
+								</button>
+							</div>
+
+							{/* Trust Badges */}
+							<div className="bg-gray-50 px-8 py-6 border-t border-gray-100">
+								<div className="flex items-center justify-center gap-6 text-sm text-gray-500">
+									<div className="flex items-center gap-2">
+										<FiShield className="h-4 w-4 text-brand" />
+										<span>Paiement sécurisé</span>
+									</div>
+									<div className="flex items-center gap-2">
+										<FiRefreshCw className="h-4 w-4 text-brand" />
+										<span>Sans engagement</span>
+									</div>
+								</div>
 							</div>
 						</div>
-						<p className="text-center text-xs text-gray-400 mt-4">
-							Paiement géré par Stripe. Vos données bancaires ne
-							sont jamais stockées sur nos serveurs.
-						</p>
-					</div>
+					))}
 				</div>
+
+				<p className="text-center text-xs text-gray-400 mt-6">
+					Paiement géré par Stripe. Vos données bancaires ne sont
+					jamais stockées sur nos serveurs.
+				</p>
 
 				{/* FAQ Section */}
 				<div className="mt-12">
@@ -219,22 +281,23 @@ export default function PaymentPage() {
 						</div>
 						<div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
 							<h4 className="font-medium text-gray-900">
+								Puis-je changer de formule ?
+							</h4>
+							<p className="text-gray-600 mt-2 text-sm">
+								Oui, vous pouvez passer du mensuel à
+								l&apos;annuel (ou inversement) à tout moment
+								depuis votre portail de facturation. Le
+								changement prendra effet à la prochaine période.
+							</p>
+						</div>
+						<div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+							<h4 className="font-medium text-gray-900">
 								Quels moyens de paiement acceptez-vous ?
 							</h4>
 							<p className="text-gray-600 mt-2 text-sm">
 								Nous acceptons toutes les cartes bancaires
 								(Visa, Mastercard, American Express) via notre
 								partenaire de paiement sécurisé Stripe.
-							</p>
-						</div>
-						<div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
-							<h4 className="font-medium text-gray-900">
-								Y a-t-il une période d&apos;essai ?
-							</h4>
-							<p className="text-gray-600 mt-2 text-sm">
-								Nous ne proposons pas de période d&apos;essai,
-								mais vous pouvez annuler à tout moment sans
-								frais supplémentaires.
 							</p>
 						</div>
 					</div>

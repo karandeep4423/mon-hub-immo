@@ -11,8 +11,15 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
 
 const router = Router();
 
-// Price ID from Stripe Dashboard (€19/month)
+// Price IDs from Stripe Dashboard
 const MONTHLY_PRICE_ID = process.env.STRIPE_PRICE_ID as string;
+const ANNUAL_PRICE_ID = process.env.STRIPE_ANNUAL_PRICE_ID as string;
+
+// Map price IDs to plan types
+const PRICE_TO_PLAN: Record<string, 'monthly' | 'annual'> = {
+	[MONTHLY_PRICE_ID]: 'monthly',
+	[ANNUAL_PRICE_ID]: 'annual',
+};
 
 /**
  * Create Stripe Checkout Session
@@ -23,6 +30,7 @@ router.post(
 	authenticateToken,
 	async (req: AuthRequest, res: Response) => {
 		try {
+			const { plan = 'monthly' } = req.body;
 			const userId = req.userId;
 			if (!userId) {
 				return res.status(401).json({ error: 'Non authentifié' });
@@ -62,6 +70,14 @@ router.post(
 				await User.findByIdAndUpdate(userId, { stripeCustomerId });
 			}
 
+			// Select price ID based on plan
+			const priceId =
+				plan === 'annual' ? ANNUAL_PRICE_ID : MONTHLY_PRICE_ID;
+
+			if (!priceId) {
+				return res.status(400).json({ error: 'Plan non disponible' });
+			}
+
 			// Create checkout session
 			const session = await stripe.checkout.sessions.create({
 				customer: stripeCustomerId,
@@ -69,7 +85,7 @@ router.post(
 				mode: 'subscription',
 				line_items: [
 					{
-						price: MONTHLY_PRICE_ID,
+						price: priceId,
 						quantity: 1,
 					},
 				],
@@ -77,10 +93,12 @@ router.post(
 				cancel_url: `${process.env.FRONTEND_URL}/payment/cancel`,
 				metadata: {
 					userId: userId.toString(),
+					plan: plan,
 				},
 				subscription_data: {
 					metadata: {
 						userId: userId.toString(),
+						plan: plan,
 					},
 				},
 				// Collect billing address for invoices
@@ -220,9 +238,17 @@ router.get(
 					? new Date(periodEnd * 1000).toISOString()
 					: null;
 
+			// Determine plan type from subscription price ID or user's stored plan
+			const subscriptionPriceId =
+				subscription.items?.data?.[0]?.price?.id;
+			const planType =
+				PRICE_TO_PLAN[subscriptionPriceId] ||
+				user.subscriptionPlan ||
+				'monthly';
+
 			res.json({
 				status: subscription.status,
-				plan: 'monthly',
+				plan: planType,
 				currentPeriodStart: periodStart
 					? new Date(periodStart * 1000).toISOString()
 					: null,
@@ -399,12 +425,18 @@ router.get(
 									)
 								: undefined;
 
+							// Determine plan type from subscription price ID
+							const subscriptionPriceId =
+								subscription.items?.data?.[0]?.price?.id;
+							const planType =
+								PRICE_TO_PLAN[subscriptionPriceId] || 'monthly';
+
 							// eslint-disable-next-line @typescript-eslint/no-explicit-any
 							const updateData: any = {
 								stripeCustomerId: customerId,
 								stripeSubscriptionId: subscriptionId,
 								subscriptionStatus: subscription.status,
-								subscriptionPlan: 'monthly',
+								subscriptionPlan: planType,
 								isPaid: isActive,
 							};
 

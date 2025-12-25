@@ -29,7 +29,7 @@ export interface AdminUser {
 	stripeCustomerId?: string;
 	stripeSubscriptionId?: string;
 	subscriptionStatus?: string;
-	subscriptionPlan?: 'monthly' | null;
+	subscriptionPlan?: 'monthly' | 'annual' | null;
 	subscriptionStartDate?: string;
 	subscriptionEndDate?: string;
 	lastPaymentDate?: string;
