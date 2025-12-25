@@ -381,7 +381,7 @@ export const PropertyFormStep1: React.FC<PropertyFormStep1Props> = ({
 			{userType === 'agent' && (
 				<div className="border-t pt-6 mt-6">
 					<h4 className="text-md font-semibold mb-4 text-gray-800">
-						💰 Frais d&apos;agence (optionnel)
+						💰 Frais d&apos;agence
 					</h4>
 					<p className="text-sm text-gray-600 mb-4">
 						Le prix saisi ci-dessus correspond au{' '}
