@@ -148,37 +148,60 @@ export const ProfileUpdateModal: React.FC<ProfileUpdateModalProps> = ({
 		>
 			{/* Form */}
 			<form onSubmit={handleSubmit} className="space-y-6">
-				<div className="grid grid-cols-2 gap-4">
-					<Input
-						label="First Name"
-						type="text"
-						name="firstName"
-						value={formData.firstName}
-						onChange={(e) =>
-							setFieldValue('firstName', e.target.value)
-						}
-						error={errors.firstName}
-						placeholder="John"
-						required
-						disabled={isSubmitting}
-					/>
-					<Input
-						label="Last Name"
-						type="text"
-						name="lastName"
-						value={formData.lastName}
-						onChange={(e) =>
-							setFieldValue('lastName', e.target.value)
-						}
-						error={errors.lastName}
-						placeholder="Doe"
-						required
-						disabled={isSubmitting}
-					/>
+				{/* Avatar first on mobile, then fields. On desktop: fields left, avatar right */}
+				<div className="flex flex-col-reverse md:flex-row md:items-start gap-6">
+					{/* Name fields on left */}
+					<div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+						<Input
+							label="Prénom"
+							type="text"
+							name="firstName"
+							value={formData.firstName}
+							onChange={(e) =>
+								setFieldValue('firstName', e.target.value)
+							}
+							error={errors.firstName}
+							placeholder="John"
+							required
+							disabled={isSubmitting}
+						/>
+						<Input
+							label="Nom"
+							type="text"
+							name="lastName"
+							value={formData.lastName}
+							onChange={(e) =>
+								setFieldValue('lastName', e.target.value)
+							}
+							error={errors.lastName}
+							placeholder="Doe"
+							required
+							disabled={isSubmitting}
+						/>
+					</div>
+
+					{/* Avatar on right (desktop) / top (mobile) */}
+					<div className="flex justify-center md:justify-end">
+						<ProfileImageUploader
+							currentImageUrl={formData.profileImage}
+							onImageUploaded={handleImageUploaded}
+							onRemove={handleImageRemove}
+							disabled={isSubmitting}
+							size="medium"
+							userName={`${formData.firstName} ${formData.lastName}`}
+						/>
+					</div>
 				</div>
 
+				{/* Show error if any */}
+				{errors.profileImage && (
+					<p className="text-sm text-red-600 mt-1">
+						{errors.profileImage}
+					</p>
+				)}
+
 				<Input
-					label="Phone Number"
+					label="Téléphone"
 					type="tel"
 					name="phone"
 					value={formData.phone}
@@ -187,22 +210,6 @@ export const ProfileUpdateModal: React.FC<ProfileUpdateModalProps> = ({
 					placeholder="+1234567890"
 					disabled={isSubmitting}
 				/>
-
-				<ProfileImageUploader
-					currentImageUrl={formData.profileImage}
-					onImageUploaded={handleImageUploaded}
-					onRemove={handleImageRemove}
-					disabled={isSubmitting}
-					size="medium"
-					uploadingText="Uploading profile image..."
-				/>
-
-				{/* Show error if any */}
-				{errors.profileImage && (
-					<p className="text-sm text-red-600 mt-1">
-						{errors.profileImage}
-					</p>
-				)}
 
 				{/* Read-only fields */}
 				<div className="bg-gray-50 rounded-lg p-4 space-y-3">

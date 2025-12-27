@@ -1,17 +1,11 @@
-import React, { useState } from 'react';
-import { ImageUploader } from './ImageUploader';
+import React, { useState, useRef } from 'react';
 import { LoadingSpinner } from './LoadingSpinner';
 import Image from 'next/image';
 import { api } from '@/lib/api';
 import { logger } from '@/lib/utils/logger';
 import { useMutation } from '@/hooks/useMutation';
 import { UI } from '@/lib/constants/components';
-
-interface ImageFile {
-	file: File;
-	preview: string;
-	id: string;
-}
+import { Camera } from 'lucide-react';
 
 interface ProfileImageUploaderProps {
 	currentImageUrl?: string;
@@ -22,6 +16,7 @@ interface ProfileImageUploaderProps {
 	showRemove?: boolean;
 	onRemove?: () => void;
 	uploadingText?: string;
+	userName?: string;
 }
 
 export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
@@ -33,10 +28,28 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 	showRemove = true,
 	onRemove,
 	uploadingText = 'Uploading...',
+	userName = '',
 }) => {
 	const [uploadError, setUploadError] = useState<string>('');
+	const [isHovered, setIsHovered] = useState(false);
+	const fileInputRef = useRef<HTMLInputElement>(null);
 
-	// Upload mutation
+	// Size configurations
+	const sizeConfig = {
+		small: { container: 'w-16 h-16', icon: 'w-4 h-4', text: 'text-xs' },
+		medium: { container: 'w-24 h-24', icon: 'w-5 h-5', text: 'text-sm' },
+		large: { container: 'w-32 h-32', icon: 'w-6 h-6', text: 'text-base' },
+	};
+
+	// Get initials from userName
+	const getInitials = (name: string): string => {
+		if (!name) return '?';
+		const parts = name.trim().split(' ');
+		if (parts.length >= 2) {
+			return (parts[0][0] + parts[1][0]).toUpperCase();
+		}
+		return name.substring(0, 2).toUpperCase();
+	};
 	const { mutate: uploadImage, loading: isUploading } = useMutation<
 		string,
 		File
@@ -154,94 +167,145 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 		}
 	};
 
-	const handleRemoveImage = () => {
+	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0];
+		if (file) {
+			// Validate file type
+			const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+			if (!validTypes.includes(file.type)) {
+				setUploadError(
+					'Format non supporté. Utilisez JPG, PNG ou WebP.',
+				);
+				return;
+			}
+			// Validate file size (5MB)
+			if (file.size > 5 * 1024 * 1024) {
+				setUploadError('Le fichier est trop volumineux (max 5MB).');
+				return;
+			}
+			setUploadError('');
+			uploadImage(file);
+		}
+		// Reset input so same file can be selected again
+		e.target.value = '';
+	};
+
+	const handleClick = () => {
+		if (!disabled && !isUploading) {
+			fileInputRef.current?.click();
+		}
+	};
+
+	const handleRemoveImage = (e: React.MouseEvent) => {
+		e.stopPropagation();
 		if (onRemove) {
 			onRemove();
 		}
 	};
 
 	return (
-		<div className={`space-y-4 ${className}`}>
-			{/* Current Image Display */}
-			{currentImageUrl && (
-				<div className="flex flex-col items-center space-y-2">
-					<div className="text-center">
-						<p className="text-sm font-medium text-gray-700 mb-2">
-							Current Profile Image:
-						</p>
-						<div
-							className={`${UI.IMAGE_UPLOADER_SIZE_CLASSES[size]} bg-gray-200 rounded-full overflow-hidden relative mx-auto`}
+		<div className={`flex flex-col items-center ${className}`}>
+			{/* Hidden file input */}
+			<input
+				ref={fileInputRef}
+				type="file"
+				accept="image/jpeg,image/png,image/webp"
+				onChange={handleFileChange}
+				className="hidden"
+				disabled={disabled || isUploading}
+			/>
+
+			{/* Avatar Container */}
+			<div
+				className={`${sizeConfig[size].container} relative rounded-full cursor-pointer group`}
+				onMouseEnter={() => setIsHovered(true)}
+				onMouseLeave={() => setIsHovered(false)}
+				onClick={handleClick}
+			>
+				{/* Avatar Content */}
+				<div className="w-full h-full rounded-full overflow-hidden bg-gradient-to-br from-brand-100 to-brand-200 flex items-center justify-center border-2 border-brand-300 shadow-md">
+					{currentImageUrl ? (
+						<Image
+							src={currentImageUrl}
+							alt={UI.IMAGE_ALT_TEXT.profileImage}
+							width={
+								size === 'small'
+									? 64
+									: size === 'medium'
+										? 96
+										: 128
+							}
+							height={
+								size === 'small'
+									? 64
+									: size === 'medium'
+										? 96
+										: 128
+							}
+							className="w-full h-full object-cover"
+							onError={(e) => {
+								const target = e.target as HTMLImageElement;
+								target.style.display = 'none';
+							}}
+						/>
+					) : (
+						<span
+							className={`font-semibold text-brand-600 ${size === 'small' ? 'text-lg' : size === 'medium' ? 'text-2xl' : 'text-3xl'}`}
 						>
-							<Image
-								src={currentImageUrl}
-								alt={UI.IMAGE_ALT_TEXT.profileImage}
-								width={
-									size === 'small'
-										? 64
-										: size === 'medium'
-											? 80
-											: 128
-								}
-								height={
-									size === 'small'
-										? 64
-										: size === 'medium'
-											? 80
-											: 128
-								}
-								className="w-full h-full object-cover"
-								onError={(e) => {
-									const target = e.target as HTMLImageElement;
-									target.style.display = 'none';
-								}}
-							/>
-							{showRemove && (
-								<button
-									type="button"
-									onClick={handleRemoveImage}
-									disabled={disabled || isUploading}
-									className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 disabled:opacity-50"
-								>
-									×
-								</button>
-							)}
-						</div>
+							{getInitials(userName)}
+						</span>
+					)}
+				</div>
+
+				{/* Hover Overlay */}
+				{!isUploading && (
+					<div
+						className={`absolute inset-0 rounded-full bg-black/50 flex flex-col items-center justify-center transition-opacity duration-200 ${
+							isHovered ? 'opacity-100' : 'opacity-0'
+						}`}
+					>
+						<Camera
+							className={`${sizeConfig[size].icon} text-white mb-1`}
+						/>
+						<span
+							className={`${sizeConfig[size].text} text-white font-medium`}
+						>
+							{currentImageUrl ? 'Modifier' : 'Ajouter'}
+						</span>
 					</div>
-				</div>
-			)}
-			{/* Upload Status */}
-			{isUploading && (
-				<div className="text-center">
-					<LoadingSpinner size="sm" message={uploadingText} />
-				</div>
-			)}
-			{/* Upload Error */}
-			{uploadError && (
-				<div className="text-center">
-					<p className="text-sm text-red-600">{uploadError}</p>
-				</div>
-			)}
-			{/* Image Uploader */}
-			{!isUploading && (
-				<div>
-					<p className="text-sm font-medium text-gray-700 mb-2">
-						{currentImageUrl
-							? 'Upload New Image:'
-							: 'Upload Profile Image:'}
-					</p>
-					<ImageUploader
-						onImagesChange={handleImageSelection}
-						maxImages={1}
-						className="border-brand-600 border-2"
-						disabled={disabled || isUploading}
-					/>
-				</div>
-			)}{' '}
-			{/* Help Text */}
-			<div className="text-xs text-gray-500 text-center">
-				<p>Supported formats: JPG, PNG, WebP</p>
-				<p>Maximum size: 5MB</p>
+				)}
+
+				{/* Loading Overlay */}
+				{isUploading && (
+					<div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
+						<LoadingSpinner size="sm" />
+					</div>
+				)}
+
+				{/* Remove Button */}
+				{showRemove && currentImageUrl && !isUploading && (
+					<button
+						type="button"
+						onClick={handleRemoveImage}
+						disabled={disabled}
+						className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 disabled:opacity-50 shadow-md transition-colors z-10"
+					>
+						×
+					</button>
+				)}
 			</div>
+
+			{/* Error Message */}
+			{uploadError && (
+				<p className="text-xs text-red-600 mt-2 text-center">
+					{uploadError}
+				</p>
+			)}
+
+			{/* Help Text */}
+			<p className="text-xs text-gray-400 mt-2">
+				JPG, PNG, WebP • Max 5MB
+			</p>
 		</div>
 	);
 };
