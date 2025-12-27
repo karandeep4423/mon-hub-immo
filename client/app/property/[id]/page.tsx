@@ -212,11 +212,8 @@ function PropertyDetailsPageContent() {
 								<div className="flex items-baseline space-x-2 mb-2">
 									<h1 className="text-3xl font-bold text-gray-900">
 										{(
-											property.price +
-											(property.price *
-												(property.agencyFeesPercentage ||
-													0)) /
-												100
+											property.priceIncludingFees ||
+											property.price
 										).toLocaleString()}{' '}
 										€
 									</h1>
@@ -289,9 +286,8 @@ function PropertyDetailsPageContent() {
 							{/* Price Breakdown - Agency Fees */}
 							<PriceBreakdown
 								netPrice={property.price}
-								agencyFeesPercentage={
-									property.agencyFeesPercentage
-								}
+								agencyFeesAmount={property.agencyFeesAmount}
+								priceIncludingFees={property.priceIncludingFees}
 								className="mb-6"
 							/>
 
@@ -686,13 +682,7 @@ function PropertyDetailsPageContent() {
 										onClick={() =>
 											shareContent({
 												title: property.title,
-												text: `${property.title} - ${(
-													property.price +
-													(property.price *
-														(property.agencyFeesPercentage ||
-															0)) /
-														100
-												).toLocaleString()}€`,
+												text: `${property.title} - ${(property.priceIncludingFees || property.price).toLocaleString()}€`,
 											})
 										}
 									>

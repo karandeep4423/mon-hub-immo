@@ -165,7 +165,6 @@ export const usePropertyForm = ({
 		saleType: undefined,
 		annualCondoFees: undefined,
 		tariffLink: undefined,
-		agencyFeesPercentage: undefined,
 		agencyFeesAmount: undefined,
 		priceIncludingFees: undefined,
 		landArea: undefined,

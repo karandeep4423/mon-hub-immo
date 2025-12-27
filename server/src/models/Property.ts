@@ -66,8 +66,7 @@ export interface IProperty extends Document {
 	// Financial info
 	annualCondoFees?: number;
 	tariffLink?: string;
-	agencyFeesPercentage?: number; // % frais d'agence
-	agencyFeesAmount?: number; // Montant des frais d'agence calculé
+	agencyFeesAmount?: number; // Montant des frais d'agence
 	priceIncludingFees?: number; // Prix FAI (Frais d'Acquéreur Inclus)
 
 	// Additional property details
@@ -362,11 +361,6 @@ const propertySchema = new Schema<IProperty>(
 			type: String,
 			trim: true,
 			maxlength: [500, 'Lien des tarifs trop long'],
-		},
-		agencyFeesPercentage: {
-			type: Number,
-			min: [0, 'Le pourcentage ne peut pas être négatif'],
-			max: [100, 'Le pourcentage ne peut pas dépasser 100%'],
 		},
 		agencyFeesAmount: {
 			type: Number,

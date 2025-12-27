@@ -669,10 +669,10 @@ export default function CollaborationPage() {
 											'object' &&
 											(
 												collaboration.postId as PropertyDetails
-											)?.agencyFeesPercentage && (
+											)?.agencyFeesAmount && (
 												<Card className="p-6 bg-gradient-to-br from-brand-50 to-brand-100 border-2 border-brand-200">
 													<h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
-														<span>�</span> Prix et
+														<span>💰</span> Prix et
 														frais
 													</h3>
 
@@ -688,22 +688,7 @@ export default function CollaborationPage() {
 																€
 															</span>
 														</div>
-														<div className="flex justify-between items-center py-2 bg-gray-50 px-3 rounded">
-															<span className="text-gray-700">
-																% frais
-																d&apos;agence
-															</span>
-															<span className="text-lg font-semibold text-brand">
-																{
-																	(
-																		collaboration.postId as PropertyDetails
-																	)
-																		?.agencyFeesPercentage
-																}{' '}
-																%
-															</span>
-														</div>
-														<div className="flex justify-between items-center py-2 pl-6">
+														<div className="flex justify-between items-center py-2">
 															<span className="text-gray-600">
 																→ Frais
 																d&apos;agence
@@ -715,7 +700,7 @@ export default function CollaborationPage() {
 																€
 															</span>
 														</div>
-														<div className="flex justify-between items-center py-2 pl-6 border-t pt-3">
+														<div className="flex justify-between items-center py-2 border-t pt-3">
 															<span className="text-gray-600">
 																→ Prix FAI
 															</span>

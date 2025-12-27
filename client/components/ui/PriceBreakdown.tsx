@@ -4,21 +4,19 @@ import React from 'react';
 
 interface PriceBreakdownProps {
 	netPrice: number;
-	agencyFeesPercentage?: number;
+	agencyFeesAmount?: number;
+	priceIncludingFees?: number;
 	className?: string;
 }
 
 export const PriceBreakdown: React.FC<PriceBreakdownProps> = ({
 	netPrice,
-	agencyFeesPercentage = 0,
+	agencyFeesAmount = 0,
+	priceIncludingFees = 0,
 	className = '',
 }) => {
-	// Calculate agency fees and total price
-	const agencyFeesAmount = (netPrice * agencyFeesPercentage) / 100;
-	const priceIncludingFees = netPrice + agencyFeesAmount;
-
 	// If no agency fees, don't show the breakdown
-	if (!agencyFeesPercentage || agencyFeesPercentage === 0) {
+	if (!agencyFeesAmount || agencyFeesAmount === 0) {
 		return null;
 	}
 
@@ -45,19 +43,6 @@ export const PriceBreakdown: React.FC<PriceBreakdownProps> = ({
 						{netPrice.toLocaleString('fr-FR')} €
 					</span>
 				</div>
-
-				{/* Agency fee percentage */}
-				<div className="flex justify-between items-center">
-					<span className="text-sm text-gray-600">
-						% frais d&apos;agence
-					</span>
-					<span className="text-base font-semibold text-brand">
-						{agencyFeesPercentage} %
-					</span>
-				</div>
-
-				{/* Separator */}
-				<div className="border-t border-blue-200 my-2"></div>
 
 				{/* Agency fees amount */}
 				<div className="flex justify-between items-center">

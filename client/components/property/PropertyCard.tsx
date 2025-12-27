@@ -138,10 +138,8 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({
 						<div className="flex items-baseline space-x-2">
 							<p className="text-2xl font-bold text-black">
 								{(
-									property.price +
-									(property.price *
-										(property.agencyFeesPercentage || 0)) /
-										100
+									property.priceIncludingFees ||
+									property.price
 								).toLocaleString()}{' '}
 								€
 							</p>

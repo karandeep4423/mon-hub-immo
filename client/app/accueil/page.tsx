@@ -739,10 +739,6 @@ const FAQSection = () => {
 				'Est-ce que MonHubimmo prend une commission sur les ventes ?',
 			answer: "Non. MonHubimmo ne prend aucune commission. C'est uniquement un abonnement mensuel qui donne accès à toutes les fonctionnalités.",
 		},
-		{
-			question: 'Quand la plateforme sera-t-elle disponible ?',
-			answer: 'La sortie officielle est prévue très prochainement. En vous inscrivant dès maintenant, vous serez averti en priorité et bénéficierez de 3 mois gratuits au lancement.',
-		},
 	];
 
 	return (

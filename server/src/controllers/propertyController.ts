@@ -174,18 +174,6 @@ const validatePropertyData = (data: Record<string, unknown>) => {
 			convertedData.totalFloors = totalFloors;
 		}
 	}
-	if (
-		typeof data.agencyFeesPercentage === 'string' &&
-		data.agencyFeesPercentage !== ''
-	) {
-		const agencyFeesPercentage = parseFloat(data.agencyFeesPercentage);
-		if (isNaN(agencyFeesPercentage)) {
-			fieldErrors.agencyFeesPercentage =
-				'Le pourcentage doit être un nombre valide';
-		} else {
-			convertedData.agencyFeesPercentage = agencyFeesPercentage;
-		}
-	}
 
 	// Convert boolean fields from strings
 	const booleanFields = [

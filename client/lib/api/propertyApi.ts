@@ -118,8 +118,7 @@ export interface Property {
 	// Financial info
 	annualCondoFees?: number;
 	tariffLink?: string;
-	agencyFeesPercentage?: number; // % frais d'agence
-	agencyFeesAmount?: number; // Montant des frais d'agence calculé
+	agencyFeesAmount?: number; // Montant des frais d'agence
 	priceIncludingFees?: number; // Prix FAI (Frais d'Acquéreur Inclus)
 
 	// Additional property details
@@ -236,7 +235,6 @@ export interface PropertyFormData {
 	saleType?: Property['saleType'];
 	annualCondoFees?: Property['annualCondoFees'];
 	tariffLink?: Property['tariffLink'];
-	agencyFeesPercentage?: Property['agencyFeesPercentage'];
 	agencyFeesAmount?: Property['agencyFeesAmount'];
 	priceIncludingFees?: Property['priceIncludingFees'];
 	landArea?: Property['landArea'];

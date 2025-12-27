@@ -389,7 +389,7 @@ export const PropertyFormStep1: React.FC<PropertyFormStep1Props> = ({
 						honoraires et le prix FAI manuellement.
 					</p>
 
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 						<NumberInput
 							label="Honoraires (montant en €)"
 							value={formData.agencyFeesAmount}
@@ -400,19 +400,6 @@ export const PropertyFormStep1: React.FC<PropertyFormStep1Props> = ({
 							unit="€"
 							placeholder="35000"
 							min={0}
-						/>
-
-						<NumberInput
-							label="Pourcentage (%)"
-							value={formData.agencyFeesPercentage}
-							onChange={(value) =>
-								handleInputChange('agencyFeesPercentage', value)
-							}
-							name="agencyFeesPercentage"
-							unit="%"
-							placeholder="5"
-							min={0}
-							max={100}
 						/>
 
 						<NumberInput
