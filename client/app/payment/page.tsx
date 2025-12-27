@@ -48,13 +48,13 @@ const plans: PlanConfig[] = [
 	{
 		id: 'annual',
 		name: 'Annuel',
-		priceTTC: process.env.NEXT_PUBLIC_STRIPE_ANNUAL_PRICE || '28.80',
-		priceHT: process.env.NEXT_PUBLIC_STRIPE_ANNUAL_PRICE_HT || '24.00',
-		tva: '4,80',
+		priceTTC: process.env.NEXT_PUBLIC_STRIPE_ANNUAL_PRICE || '24.00',
+		priceHT: process.env.NEXT_PUBLIC_STRIPE_ANNUAL_PRICE_HT || '20.00',
+		tva: '4,00',
 		period: '/an',
 		periodLabel: 'an',
-		badge: 'Économisez 17%',
-		savings: '2 mois offerts',
+		badge: '2 mois offerts',
+		savings: 'Équivalent : 1,67€ TTC / mois',
 	},
 ];
 
