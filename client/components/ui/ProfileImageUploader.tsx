@@ -27,7 +27,7 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 	size = 'medium',
 	showRemove = true,
 	onRemove,
-	uploadingText = 'Uploading...',
+	uploadingText: _uploadingText = 'Uploading...',
 	userName = '',
 }) => {
 	const [uploadError, setUploadError] = useState<string>('');
@@ -156,14 +156,6 @@ export const ProfileImageUploader: React.FC<ProfileImageUploaderProps> = ({
 				error,
 			});
 			return null;
-		}
-	};
-
-	const handleImageSelection = (images: ImageFile[]) => {
-		setUploadError('');
-
-		if (images.length > 0) {
-			uploadImage(images[0].file);
 		}
 	};
 
